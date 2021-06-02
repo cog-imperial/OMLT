@@ -228,11 +228,11 @@ class TrainableNet(BaseNeuralNet):
 
 def ReLUNet(mode,*args,**kwargs):
     if mode == "bigm":
-        return BigMReluMode(*args,**kwargs)
+        return BigMReluNet(*args,**kwargs)
     elif mode == "complementarity":
-        return ComplementarityReluMode(*args,**kwargs)
+        return ComplementarityReluNet(*args,**kwargs)
     else:
-        error("Unknown ReLU mode provided.  Current supported modes are: `bigm` and `complementarity`")
+        error("Unknown ReLU encoding provided.  Current supported encodings are: `bigm` and `complementarity`")
 
 #Entire neural net can be one dense constraint OR neural net can be encoded into layered logic
 @declare_custom_block(name='NeuralNetBlock')
