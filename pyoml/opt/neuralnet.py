@@ -1,18 +1,22 @@
 import pyomo.environ as pyo
 import pyomo.mpec as mpec
+from pyomo.core.base.var import ScalarVar, IndexedVar
 from pyomo.core.base.block import _BlockData, declare_custom_block
 from .utils import _keras_sequential_to_dict
 
-#Build the full-space representation of a neural net
+#Build the full-space representation of a neural net. This is a module-level function for now.
 def build_neural_net(block,n_inputs,n_outputs,n_nodes,w,b):
     #block sets
-    block.INPUTS = pyo.Set(initialize=list(range(n_inputs)), ordered=True)
     block.NODES = pyo.Set(initialize=list(range(n_nodes)), ordered=True)
     block.INTERMEDIATE_NODES = pyo.Set(initialize=list(range(n_inputs, n_nodes)), ordered=True)
-    block.OUTPUTS = pyo.Set(initialize=list(range(n_nodes, n_nodes+n_outputs)), ordered=True)
+    block.INPUTS = list(block.inputs_set)
+    block.OUTPUTS = [i + n_nodes for i in list(block.outputs_set)]
 
-    # input variables
-    block.x = pyo.Var(block.INPUTS)
+    #mapping for inputs
+    block.x = dict(zip(block.INPUTS,block.inputs.values()))
+
+    #mapping for outputs
+    block.y = dict(zip(block.OUTPUTS,block.outputs.values()))
 
     # pre-activation values
     block.zhat = pyo.Var(block.INTERMEDIATE_NODES)
@@ -20,32 +24,62 @@ def build_neural_net(block,n_inputs,n_outputs,n_nodes,w,b):
     # post-activation values
     block.z = pyo.Var(block.NODES)
 
-    # output variables
-    block.y = pyo.Var(block.OUTPUTS)
-
     # set inputs
     @block.Constraint(block.INPUTS)
     def _inputs(m,i):
         return m.z[i] == m.x[i]
 
-    #pre-activation logic
+    # pre-activation logic
     @block.Constraint(block.INTERMEDIATE_NODES)
     def _linear(m,i):
         return m.zhat[i] == sum(w[i][j]*m.z[j] for j in w[i]) + b[i]
 
-    #output logic
+    # output logic
     @block.Constraint(block.OUTPUTS)
     def _outputs(m,i):
         return m.y[i] == sum(w[i][j]*m.z[j] for j in w[i]) + b[i]
 
-class BaseNeuralNet:
-
+import abc
+class DefinitionInterface(abc.ABC):
     def __init__(self):
-        self.n_nodes = 0
-        self.n_inputs = 0
-        self.n_outputs = 0
+        pass
+
+    @abc.abstractmethod
+    def n_inputs(self):
+        pass
+
+    @abc.abstractmethod
+    def n_outputs(self):
+        pass
+
+    @abc.abstractmethod
+    def build(self, neural_block):
+        pass
+
+class NeuralNetInterface(DefinitionInterface):
+    def __init__(self):
+        self.num_nodes = 0
+        self.num_inputs = 0
+        self.num_outputs = 0
         self.w = dict()
         self.b = dict()
+
+    def n_inputs(self):
+        return self.num_inputs
+
+    def n_outputs(self):
+        return self.num_outputs
+
+    def build(self,neural_block):
+        return NotImplementedError("The NeuralNetInterface cannot be built directly")
+
+    def _check_weights(self):
+        if self.w == dict():
+            raise ValueError("""No weights have been defined for the neural net definition.  Use set_weights(w,b,n_inputs,n_outputs,n_nodes)
+            to define the network.  Alternatively, you may use set_weights_keras(keras_model) if you have en existing
+            keras model.""")
+        else:
+            pass
 
     def set_weights(self,w,b,n_inputs,n_outputs,n_nodes):
         assert n_nodes >= n_inputs
@@ -53,13 +87,22 @@ class BaseNeuralNet:
         assert len(b) == n_nodes + n_outputs - n_inputs
         self.w = w
         self.b = b
-        self.n_inputs = n_inputs
-        self.n_outputs = n_outputs
-        self.n_nodes = len(w) - self.n_outputs + self.n_inputs
-        self.inputs = list(range(self.n_inputs))
-        self.outputs = list(range(self.n_nodes, self.n_nodes+self.n_outputs))
+        self.num_inputs = n_inputs
+        self.num_outputs = n_outputs
+        self.num_nodes = len(w) - self.num_outputs + self.num_inputs
 
-class FullSpaceNet(BaseNeuralNet):
+    def set_weights_keras(self,keras_model):
+        """
+            Unpack a keras model into dictionaries of weights and biases.  The dictionaries are used to build the underlying pyomo model.
+        """
+        w,b = _keras_sequential_to_dict(keras_model)  #TODO: sparse version
+        n_inputs = len(keras_model.get_weights()[0])
+        n_outputs = len(keras_model.get_weights()[-1])
+        n_nodes = len(w) - self.num_outputs + self.num_inputs
+        self.set_weights(w,b,n_inputs,n_outputs,n_nodes)
+
+
+class FullSpaceNonlinear(NeuralNetInterface):
     """
         Builder class that creates a neural network surrogate for a Pyomo model.
         This class exposes the intermediate neural network variables as Pyomo variables and constraints.
@@ -69,18 +112,22 @@ class FullSpaceNet(BaseNeuralNet):
         self.activation = activation
 
     def _build_neural_net(self,block):
-        build_neural_net(block,self.n_inputs,self.n_outputs,self.n_nodes,self.w,self.b)
+        self._check_weights()
+        build_neural_net(block,self.num_inputs,self.num_outputs,self.num_nodes,self.w,self.b)
 
     def _add_activation_constraint(self,block):
         @block.Constraint(block.INTERMEDIATE_NODES)
         def _z_activation(m,i):
             return m.z[i] == self.activation(m.zhat[i])
 
+    def set_activation_func(self,activation_function):
+        self.activation = activation
+
     def build(self,block):
         self._build_neural_net(block)
         self._add_activation_constraint(block)
 
-class ReducedSpaceNet(BaseNeuralNet):
+class ReducedSpaceNonlinear(NeuralNetInterface):
     """
         Builder class that creates a neural network surrogate for a Pyomo model.
         This class hides the intermediate nerual network variables inside Pyomo expressions.
@@ -109,27 +156,27 @@ class ReducedSpaceNet(BaseNeuralNet):
         return z
 
     def _build_neural_net(self,block):
-        block.INPUTS = pyo.Set(initialize=self.inputs, ordered=True)
-        block.OUTPUTS = pyo.Set(initialize=self.outputs, ordered=True)
+        self._check_weights()
+        block.INPUTS = list(block.inputs_set)
+        block.OUTPUTS = [i + self.num_nodes for i in list(block.outputs_set)]
 
-        block.x = pyo.Var(block.INPUTS)
-        block.y = pyo.Var(block.OUTPUTS)
+        #mapping for inputs
+        block.x = dict(zip(block.INPUTS,block.inputs.values()))
 
-        w = self.w
-        b = self.b
-        activation = self.activation
+        #mapping for outputs
+        block.y = dict(zip(block.OUTPUTS,block.outputs.values()))
 
         def neural_net_constraint_rule(block,i):
             expr = self._unpack_nn_expression(block,i)
             return block.y[i] == expr
 
-        block.NN = pyo.Constraint(block.OUTPUTS,rule=neural_net_constraint_rule)
+        block._neural_net_constraint = pyo.Constraint(block.OUTPUTS,rule=neural_net_constraint_rule)
 
     def build(self,block):
         self._build_neural_net(block)
 
 
-class BigMReluNet(BaseNeuralNet):
+class BigMReLU(NeuralNetInterface):
     """
         Builder class for creating a MILP representation of a
         ReLU or LeakyReLU neural network on a Pyomo model.
@@ -142,7 +189,8 @@ class BigMReluNet(BaseNeuralNet):
             raise NotImplementedError('LeakyReLU is not yet implemented')
 
     def _build_neural_net(self,block):
-        build_neural_net(block,self.n_inputs,self.n_outputs,self.n_nodes,self.w,self.b)
+        self._check_weights()
+        build_neural_net(block,self.num_inputs,self.num_outputs,self.num_nodes,self.w,self.b)
 
     def _add_activation_constraint(self,block):
         # activation indicator q=0 means z=zhat (positive part of the hinge)
@@ -166,8 +214,6 @@ class BigMReluNet(BaseNeuralNet):
         def _z_hat_negative(m,i):
             return m.z[i] <= self.M*(1.0-m.q[i])
 
-    def _build_neural_net(self,block):
-        build_neural_net(block,self.n_inputs,self.n_outputs,self.n_nodes,self.w,self.b)
 
     def build(self,block):
         self._build_neural_net(block)
@@ -180,14 +226,13 @@ class BigMReluNet(BaseNeuralNet):
     def _build_relaxation(self,block):
         pass
 
-class ComplementarityReluNet(BaseNeuralNet):
+class ComplementarityReLU(NeuralNetInterface):
     """
         Builder class for creating a MPEC representation of a
         ReLU or LeakyReLU neural network on a Pyomo model.
     """
     def __init__(self,leaky_alpha = None,transform = "mpec.simple_nonlinear"):
         super().__init__()
-
         if leaky_alpha is not None:
             raise NotImplementedError('LeakyReLU is not yet implemented')
         self.leaky_alpha = leaky_alpha
@@ -201,88 +246,73 @@ class ComplementarityReluNet(BaseNeuralNet):
         xfrm.apply_to(block)
 
     def _build_neural_net(self,block):
-        build_neural_net(block,self.n_inputs,self.n_outputs,self.n_nodes,self.w,self.b)
+        self._check_weights()
+        build_neural_net(block,self.num_inputs,self.num_outputs,self.num_nodes,self.w,self.b)
 
     def build(self,block):
         self._build_neural_net(block)
         self._add_activation_constraint(block)
 
-class TrainableNet(BaseNeuralNet):
+class TrainableNetwork(NeuralNetInterface):
     """
         Builds a Pyomo model that encodes the parameters of a neural net as variables.  The `TrainableNet` neural net builder
         can be used to train neural net parameters using Pyomo interfaced solvers.
     """
-    def __init__(self,build_mode = FullSpaceNet(pyo.tanh)):
+    def __init__(self,network_definition = FullSpaceNonlinear(pyo.tanh)):
         super().__init__()
-        self.build_mode = build_mode
+        self.network_definition = network_definition
 
     def build(self,block):
-
         block.PARAMETERS = pyo.Set(initialize = list(range(len(self.w))), ordered = True)
         block.w = pyo.Var(m.PARAMETERS,initialize = self.w)
         block.b = pyo.Var(m.PARAMETERS,initialize = self.b)
 
         self._build_neural_net(block)
-        self.build_mode._add_activation_constraint(block) #could be full_space, complementarity, etc...
+        self.network_definition._add_activation_constraint(block)
 
-
-def ReLUNet(mode,*args,**kwargs):
-    if mode == "bigm":
-        return BigMReluNet(*args,**kwargs)
-    elif mode == "complementarity":
-        return ComplementarityReluNet(*args,**kwargs)
+# TODO: look at "extract_var_data" function from coramin
+def extract_var_data(vars):
+    if type(vars) == list:
+        assert type(vars[0]) == ScalarVar
+        return vars
+    elif type(vars) == IndexedVar:
+        return list(vars.values())
+    elif type(vars) == ScalarVar:
+        return [vars]
     else:
-        error("Unknown ReLU encoding provided.  Current supported encodings are: `bigm` and `complementarity`")
+        raise ValueError("Unknown variable type {}".format(vars))
 
-#Entire neural net can be one dense constraint OR neural net can be encoded into layered logic
 @declare_custom_block(name='NeuralNetBlock')
 class NeuralBlockData(_BlockData):
-    #NOTE: argument to constructor don't work for custom blocks
-    # def __init__(self,mode = FullSpaceNet(activation = pyo.tanh)):
-    #     self.mode = mode
 
-    def __init__(self, component):#, mode = FullSpaceNet(activation = pyo.tanh)):
+    def __init__(self, component):
         super().__init__(component)
-        self.neural_net = None
+        self._network_defn = None
 
-    def set_neural_net(self,net):
-        self.neural_net = net
+    def define_network(self, *, network_definition: DefinitionInterface, input_vars=None, output_vars=None):
+        self._network_defn = network_definition
 
-    def set_weights(self,w,b,n_inputs,n_outputs,n_nodes):
-        """
-        This functions sets up a Pyomo model to capture a ReLU neural network.
+        self.inputs_set = pyo.Set(initialize=range(network_definition.n_inputs()), ordered=True)
+        self.outputs_set = pyo.Set(initialize=range(network_definition.n_outputs()), ordered=True)
 
-        Parameters
-        ----------
-           n_inputs : int
-              The number of inputs to the network
-           n_outputs : int
-              The number of outputs from the network
-           n_nodes : int
-              The total number of nodes in the network (equal to n_inputs + # of intermediate nodes)
-           w : dict of dict of floats
-              The weights for the network. This is a sparse structure indexed by w[i][j] where
-              w[i] is a dictionary of dictionaries, and w[i][j] is a dictionary of floats.
-              All indices are integer, corresponding to the node numbers 0 -> n_nodes
-           b : dict of floats
-              The biases for the network. This is a dictionary of floats and should have length of
-              n_nodes - n_inputs.
-        """
-        self.neural_net.set_weights(w,b,n_inputs,n_outputs,n_nodes)
+        if input_vars is None:
+            self.inputs = pyo.Var(self.inputs_set)
+            self._inputs_list = list(self.inputs)
+        else:
+            self._inputs_list = extract_var_data(input_vars)
+            assert len(self._inputs_list) == network_definition.n_inputs()
+            def _input_expr(m,i):
+                return self._inputs_list[i]
+            self.inputs = pyo.Expression(self.inputs_set, rule=_input_expr)
 
+        if output_vars is None:
+            self.outputs = pyo.Var(self.outputs_set)
+            self._outputs_list = list(self.outputs)
+        else:
+            self._outputs_list = extract_var_data(output_vars)
+            assert len(self._outputs_list) == network_definition.n_outputs()
+            def _output_expr(m,i):
+                return self._outputs_list[i]
+            self.outputs = pyo.Expression(self.outputs_set, rule=_output_expr)
 
-    def set_weights_keras(self,keras_model):
-        """
-            Unpack a keras model into dictionaries of weights and biases.  The dictionaries are used to build the underlying pyomo model.
-        """
-        w,b = _keras_sequential_to_dict(keras_model)  #TODO: sparse version
-        n_inputs = len(keras_model.get_weights()[0])
-        n_outputs = len(keras_model.get_weights()[-1])
-        n_nodes = len(w) - self.n_outputs + self.n_inputs
-        self.neural_net.set_weights(w,b,n_inputs,n_outputs,n_nodes)
-
-    def build(self):
-        """
-            Build the pyomo block using the given neural network object.
-        """
-        self.neural_net.build(self)
+        self._network_defn.build(self)

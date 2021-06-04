@@ -1,6 +1,6 @@
 import pytest
 import pyomo.environ as pyo
-from pyoml.opt.neuralnet import NeuralNetBlock,BigMReluNet,ComplementarityReluNet
+from pyoml.opt.neuralnet import NeuralNetBlock,BigMReLU,ComplementarityReLU
 
 
 def test_two_node_bigm():
@@ -28,21 +28,21 @@ def test_two_node_bigm():
     b = {1: 0, 2:0, 3:0, 4:0}
 
     m = pyo.ConcreteModel()
-    m.relu_block = NeuralNetBlock()
-    m.relu_block.set_neural_net(BigMReluNet(1e6))
-    m.relu_block.set_weights(w,b,n_inputs,n_outputs,n_nodes)
-    m.relu_block.build()
+    m.neural_net_block = NeuralNetBlock()
+    network_definition = BigMReLU(1e6)
+    network_definition.set_weights(w,b,n_inputs,n_outputs,n_nodes)
+    m.neural_net_block.define_network(network_definition = network_definition)
 
-    m.relu_block.x[0].fix(-2)
+    m.neural_net_block.x[0].fix(-2)
     m.obj1 = pyo.Objective(expr = 0)
     status = pyo.SolverFactory('cbc').solve(m, tee=False)
-    assert abs(pyo.value(m.relu_block.y[3]) - 10) < 1e-8
-    assert abs(pyo.value(m.relu_block.y[4]) - 2) < 1e-8
+    assert abs(pyo.value(m.neural_net_block.y[3]) - 10) < 1e-8
+    assert abs(pyo.value(m.neural_net_block.y[4]) - 2) < 1e-8
 
-    m.relu_block.x[0].fix(1)
+    m.neural_net_block.x[0].fix(1)
     status = pyo.SolverFactory('cbc').solve(m, tee=False)
-    assert abs(pyo.value(m.relu_block.y[3]) - 1) < 1e-8
-    assert abs(pyo.value(m.relu_block.y[4]) - 0) < 1e-8
+    assert abs(pyo.value(m.neural_net_block.y[3]) - 1) < 1e-8
+    assert abs(pyo.value(m.neural_net_block.y[4]) - 0) < 1e-8
 
 def test_two_node_complementarity():
     """
@@ -69,18 +69,18 @@ def test_two_node_complementarity():
     b = {1: 0, 2:0, 3:0, 4:0}
 
     m = pyo.ConcreteModel()
-    m.relu_block = NeuralNetBlock()
-    m.relu_block.set_neural_net(ComplementarityReluNet(transform = "mpec.simple_nonlinear"))
-    m.relu_block.set_weights(w,b,n_inputs,n_outputs,n_nodes)
-    m.relu_block.build()
+    m.neural_net_block = NeuralNetBlock()
+    network_definition = ComplementarityReLU(transform = "mpec.simple_nonlinear")
+    network_definition.set_weights(w,b,n_inputs,n_outputs,n_nodes)
+    m.neural_net_block.define_network(network_definition = network_definition)
 
-    m.relu_block.x[0].fix(-2)
+    m.neural_net_block.x[0].fix(-2)
     m.obj1 = pyo.Objective(expr = 0)
     status = pyo.SolverFactory('ipopt').solve(m, tee=False)
-    assert abs(pyo.value(m.relu_block.y[3]) - 10) < 1e-6
-    assert abs(pyo.value(m.relu_block.y[4]) - 2) < 1e-6
+    assert abs(pyo.value(m.neural_net_block.y[3]) - 10) < 1e-6
+    assert abs(pyo.value(m.neural_net_block.y[4]) - 2) < 1e-6
 
-    m.relu_block.x[0].fix(1)
+    m.neural_net_block.x[0].fix(1)
     status = pyo.SolverFactory('ipopt').solve(m, tee=False)
-    assert abs(pyo.value(m.relu_block.y[3]) - 1) < 1e-6
-    assert abs(pyo.value(m.relu_block.y[4]) - 0) < 1e-6
+    assert abs(pyo.value(m.neural_net_block.y[3]) - 1) < 1e-6
+    assert abs(pyo.value(m.neural_net_block.y[4]) - 0) < 1e-6
