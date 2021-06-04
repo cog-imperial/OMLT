@@ -70,8 +70,9 @@ class NeuralNetInterface(DefinitionInterface):
     def n_outputs(self):
         return self.num_outputs
 
+    @abc.abstractmethod
     def build(self,neural_block):
-        return NotImplementedError("The NeuralNetInterface cannot be built directly")
+        pass
 
     def _check_weights(self):
         if self.w == dict():
@@ -270,15 +271,19 @@ class TrainableNetwork(NeuralNetInterface):
         self._build_neural_net(block)
         self.network_definition._add_activation_constraint(block)
 
-# TODO: look at "extract_var_data" function from coramin
-def extract_var_data(vars):
-    if type(vars) == list:
-        assert type(vars[0]) == ScalarVar
-        return vars
-    elif type(vars) == IndexedVar:
-        return list(vars.values())
-    elif type(vars) == ScalarVar:
+def _extract_var_data(vars):
+    if isinstance(vars, ScalarVar):
         return [vars]
+    elif isinstance(vars,IndexedVar):
+        return list(vars.values())
+    elif isinstance(vars,list):
+        varlist = list()
+        for v in vars:
+            if v.is_indexed():
+                varlist.extend(v.values())
+            else:
+                varlist.append(v)
+        return varlist
     else:
         raise ValueError("Unknown variable type {}".format(vars))
 
@@ -299,7 +304,7 @@ class NeuralBlockData(_BlockData):
             self.inputs = pyo.Var(self.inputs_set)
             self._inputs_list = list(self.inputs)
         else:
-            self._inputs_list = extract_var_data(input_vars)
+            self._inputs_list = _extract_var_data(input_vars)
             assert len(self._inputs_list) == network_definition.n_inputs()
             def _input_expr(m,i):
                 return self._inputs_list[i]
@@ -309,7 +314,7 @@ class NeuralBlockData(_BlockData):
             self.outputs = pyo.Var(self.outputs_set)
             self._outputs_list = list(self.outputs)
         else:
-            self._outputs_list = extract_var_data(output_vars)
+            self._outputs_list = _extract_var_data(output_vars)
             assert len(self._outputs_list) == network_definition.n_outputs()
             def _output_expr(m,i):
                 return self._outputs_list[i]
