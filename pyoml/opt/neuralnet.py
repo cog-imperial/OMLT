@@ -99,7 +99,7 @@ class NeuralNetInterface(DefinitionInterface):
         w,b = _keras_sequential_to_dict(keras_model)  #TODO: sparse version
         n_inputs = len(keras_model.get_weights()[0])
         n_outputs = len(keras_model.get_weights()[-1])
-        n_nodes = len(w) - self.num_outputs + self.num_inputs
+        n_nodes = len(w) - n_outputs + n_inputs
         self.set_weights(w,b,n_inputs,n_outputs,n_nodes)
 
 
@@ -264,9 +264,9 @@ class TrainableNetwork(NeuralNetInterface):
         self.network_definition = network_definition
 
     def build(self,block):
-        block.PARAMETERS = pyo.Set(initialize = list(range(len(self.w))), ordered = True)
-        block.w = pyo.Var(m.PARAMETERS,initialize = self.w)
-        block.b = pyo.Var(m.PARAMETERS,initialize = self.b)
+        block.PARAMETERS = pyo.Set(initialize = list(range(len(self.network_definition.w))), ordered = True)
+        block.w = pyo.Var(block.PARAMETERS,initialize = self.network_definition.w)
+        block.b = pyo.Var(block.PARAMETERS,initialize = self.network_definition.b)
 
         self._build_neural_net(block)
         self.network_definition._add_activation_constraint(block)
