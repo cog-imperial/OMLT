@@ -11,7 +11,7 @@ def build_full_space_formulation(block, network_structure, skip_activations=Fals
     # Todo: provide an option to remove extraneous variables and constraints
     # Todo: support scaling
     net = network_structure
-    assert net.scaling_object is None
+    scaling = net.scaling_object
 
     # map x and y to the inputs and outputs and verify the lengths
     # this is needed since the indexing in the input - output block
@@ -27,6 +27,8 @@ def build_full_space_formulation(block, network_structure, skip_activations=Fals
     x = {input_node_ids[i]:inputs_list[i] for i in range(len(input_node_ids))}
     y = {output_node_ids[i]:outputs_list[i] for i in range(len(output_node_ids))}
 
+    block.input_node_ids = pyo.Set(initialize=input_node_ids, ordered=True)
+
     # add the intermediate variables
     block.nodes = pyo.Set(initialize=net.all_node_ids(), ordered=True)
     block.hidden_output_nodes = pyo.Set(initialize=hidden_output_node_ids, ordered=True)
@@ -34,10 +36,13 @@ def build_full_space_formulation(block, network_structure, skip_activations=Fals
     block.zhat = pyo.Var(block.hidden_output_nodes, initialize=0) # pre-activation
 
     # define the input constraints
+    inputs = x
+    if scaling is not None:
+        inputs = scaling.get_scaled_input_expressions(x)
     # Todo: We could eliminate these constraints and use x[i] directly where applicable
     block.input_constraints = pyo.Constraint(input_node_ids)
     for i in input_node_ids:
-        block.input_constraints[i] = block.z[i] == x[i]
+        block.input_constraints[i] = block.z[i] == inputs[i]
 
     # define the linear constraints
     block.linear_constraints = pyo.Constraint(block.hidden_output_nodes)
@@ -61,10 +66,13 @@ def build_full_space_formulation(block, network_structure, skip_activations=Fals
                 block.activation_constraints[i] = block.z[i] == activations[i](block.zhat[i])
 
     # define the output constraints
+    outputs = {i:block.z[i] for i in output_node_ids}
+    if scaling is not None:
+        outputs = scaling.get_unscaled_output_expressions(outputs)
     # Todo: we could eliminate these constraints and use y[i] directly where applicable
     block.output_constraints = pyo.Constraint(output_node_ids)
     for i in output_node_ids:
-        block.output_constraints[i] = y[i] == block.z[i]
+        block.output_constraints[i] = y[i] == outputs[i]
 
 
 def build_reduced_space_formulation(block, network_structure, skip_activations=False):
@@ -72,7 +80,7 @@ def build_reduced_space_formulation(block, network_structure, skip_activations=F
     # Todo: provide an option to remove extraneous variables and constraints
     # Todo: support scaling
     net = network_structure
-    assert net.scaling_object is None
+    scaling = net.scaling_object
 
     # map x and y to the inputs and outputs and verify the lengths
     # this is needed since the indexing in the input - output block
@@ -93,9 +101,12 @@ def build_reduced_space_formulation(block, network_structure, skip_activations=F
     block.zhat = pyo.Expression(block.hidden_output_nodes) # pre-activation
 
     # define the input constraints
+    inputs = x
+    if scaling is not None:
+        inputs = scaling.get_scaled_input_expressions(inputs)
     # Todo: We could eliminate these constraints and use x[i] directly where applicable
     for i in input_node_ids:
-        block.z[i] = x[i]
+        block.z[i] = inputs[i]
 
     # define the linear constraints
     block.linear_constraints = pyo.Constraint(block.hidden_output_nodes)
@@ -118,10 +129,13 @@ def build_reduced_space_formulation(block, network_structure, skip_activations=F
                 block.z[i] = activations[i](block.zhat[i])
 
     # define the output constraints
+    outputs = {i:block.z[i] for i in output_node_ids}
+    if scaling is not None:
+        outputs = scaling.get_unscaled_output_expressions(outputs)
     # Todo: we could eliminate these constraints and use y[i] directly where applicable
     block.output_constraints = pyo.Constraint(output_node_ids)
     for i in output_node_ids:
-        block.output_constraints[i] = y[i] == block.z[i]
+        block.output_constraints[i] = y[i] == outputs[i]
 
 # def _sparse_keras_sequential_to_dict(keras_model):
 #     chain = keras_model
