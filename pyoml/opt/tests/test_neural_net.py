@@ -1,6 +1,10 @@
 import pytest
+import keras
 import pyomo.environ as pyo
-from pyoml.opt.neuralnet import NeuralNetBlock, FullSpaceNonlinear, ReducedSpaceNonlinear
+from pyoml.opt.neuralnet import NeuralNetworkBlock, NodalNetworkStructure, FullSpaceContinuousFormulation
+#ReducedSpaceNonlinear
+from pyoml.opt.keras_reader import load_keras_sequential
+#Todo: add test of the different forms of activation function definitions
 
 def test_two_node_full_space():
     """
@@ -25,28 +29,50 @@ def test_two_node_full_space():
          3: {1: 1.0, 2: 5.0},
          4: {2: 1.0}}
     b = {1: 0, 2:0, 3:0, 4:0}
+    a = {1: pyo.tanh,
+         2: pyo.tanh}
+    
+    net = NodalNetworkStructure(n_inputs=1,
+                                n_hidden=2,
+                                n_outputs=2,
+                                weights=w,
+                                biases=b,
+                                node_activations=a)
 
     m = pyo.ConcreteModel()
-    m.neural_net_block = NeuralNetBlock()
-    network_definition = FullSpaceNonlinear(pyo.tanh)
-    network_definition.set_weights(w,b,n_inputs,n_outputs,n_nodes)
-    m.neural_net_block.define_network(network_definition = network_definition)
-    assert m.nvariables() == 8
-    assert m.nconstraints() == 7
+    m.neural_net_block = NeuralNetworkBlock()
+    formulation = FullSpaceContinuousFormulation(net)
+    m.neural_net_block.build_formulation(formulation)
+    assert m.nvariables() == 12
+    assert m.nconstraints() == 11
 
-    m.neural_net_block.x[0].fix(-2)
+    m.neural_net_block.inputs[0].fix(-2)
     m.obj1 = pyo.Objective(expr = 0)
+    status = pyo.SolverFactory('ipopt').solve(m, tee=True)
+    pyo.assert_optimal_termination(status)
+    assert abs(pyo.value(m.neural_net_block.outputs[0]) - 3.856110320303267) < 1e-8
+    assert abs(pyo.value(m.neural_net_block.outputs[1]) - 0.9640275800758169) < 1e-8
+
+    m.neural_net_block.inputs[0].fix(1)
     status = pyo.SolverFactory('ipopt').solve(m, tee=False)
+    pyo.assert_optimal_termination(status)
+    assert abs(pyo.value(m.neural_net_block.outputs[0]) - -3.046376623823058) < 1e-8
+    assert abs(pyo.value(m.neural_net_block.outputs[1]) - -0.7615941559557649) < 1e-8
 
-    assert abs(pyo.value(m.neural_net_block.y[3]) - 3.856110320303267) < 1e-8
-    assert abs(pyo.value(m.neural_net_block.y[4]) - 0.9640275800758169) < 1e-8
+def test_keras_load():
+    r1_NN = keras.models.load_model("./r1_model")
+    net = load_keras_sequential(r1_NN)
+    m = pyo.ConcreteModel()
+    m.neural_net_block = NeuralNetworkBlock()
+    formulation = FullSpaceContinuousFormulation(net)
+    m.neural_net_block.build_formulation(formulation)
+#        print('***', cfg['name'], cfg['units'], n_layer_inputs, n_layer_nodes)
+#    config = r1_NN.layers[0].get_config()
+#    print(config)
+#    print(dir(r1_NN))
+    assert False
 
-    m.neural_net_block.x[0].fix(1)
-    status = pyo.SolverFactory('ipopt').solve(m, tee=False)
-    assert abs(pyo.value(m.neural_net_block.y[3]) - -3.046376623823058) < 1e-8
-    assert abs(pyo.value(m.neural_net_block.y[4]) - -0.7615941559557649) < 1e-8
-
-def test_two_node_reduced_space_1():
+def xtest_two_node_reduced_space_1():
     """
     Test of the following model:
 
@@ -91,7 +117,7 @@ def test_two_node_reduced_space_1():
     assert abs(pyo.value(m.neural_net_block.y[4]) - -0.7615941559557649) < 1e-8
 
 
-def test_two_node_pass_variables():
+def xtest_two_node_pass_variables():
     """
     Test of the following model:
 
