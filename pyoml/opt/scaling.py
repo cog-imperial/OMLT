@@ -1,5 +1,11 @@
 import abc
 
+"""
+This module describes the interface for providing different scaling 
+expressions to the Pyomo model for the inputs and outputs of the
+neural network. An implementation of a common scaling approach is 
+included below.
+"""
 class ScalingInterface(abc.ABC):
     @abc.abstractmethod
     def get_scaled_input_expressions(self, input_vars):
@@ -34,21 +40,21 @@ class OffsetScaling(ScalingInterface):
             Array of the scaling factors (division) for each output from the network
         """
         super(OffsetScaling, self).__init__()
-        self._x_offset = offset_inputs
-        self._x_factor = factor_inputs
-        self._y_offset = offset_outputs
-        self._y_factor = factor_outputs
+        self.__x_offset = offset_inputs
+        self.__x_factor = factor_inputs
+        self.__y_offset = offset_outputs
+        self.__y_factor = factor_outputs
 
     def get_scaled_input_expressions(self, input_vars):
         x = input_vars
         ret = list()
         for i in range(len(x)):
-            ret.append((x[i]-self._x_offset[i])/self._x_factor[i])
+            ret.append((x[i]-self.__x_offset[i])/self.__x_factor[i])
         return ret
 
     def get_unscaled_output_expressions(self, scaled_output_vars):
         scaled_y = scaled_output_vars
         ret = list()
         for i in range(len(scaled_y)):
-            ret.append(y_scal[i]*self._y_factor[i] + self._y_offset[i])
+            ret.append(y_scal[i]*self.__y_factor[i] + self.__y_offset[i])
         return ret

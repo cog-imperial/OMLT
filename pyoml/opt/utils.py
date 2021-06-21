@@ -163,7 +163,9 @@ def _extract_var_data(vars):
     if isinstance(vars, ScalarVar):
         return [vars]
     elif isinstance(vars, IndexedVar):
-        return list(vars.values())
+        if vars.indexed_set().is_ordered():
+            return list(vars.values())
+        raise ValueError('Expected IndexedVar: {} to be indexed over an ordered set.'.format(vars))
     elif isinstance(vars, list):
         # Todo: the above if should check if the item supports iteration rather than only list?
         varlist = list()

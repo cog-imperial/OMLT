@@ -1,15 +1,21 @@
 from pyoml.opt.network_definition import NetworkDefinition
 
 def load_keras_sequential(nn):
-    # print('*** NETWORK DEFN ***')
-    # for l in nn.layers:
-    #     print('... Layer', l)
-    #     print('   weights')
-    #     print(l.get_weights()[0])
-    #     print('   biases')
-    #     print(l.get_weights()[1])
-    # print('^^^ NETWORK DEFN ^^^')
+    """
+    Load a keras neural network model (built with Sequential) into
+    a pyoml network definition object. This network definition object
+    can be used in different formulations.
 
+    Parameters
+    ----------
+    nn : keras.model
+        A keras model that was build with Sequential
+
+    Returns
+    -------
+    NetworkDefinition
+    """
+    # Todo: Add support for DistributionLambda layers
     n_inputs = len(nn.layers[0].get_weights()[0])
     n_outputs = len(nn.layers[-1].get_weights()[1])
     node_id_offset = n_inputs
@@ -40,24 +46,3 @@ def load_keras_sequential(nn):
                               biases=b,
                               node_activations=a
                             )
-
-def _keras_sequential_to_dict(keras_model):
-    chain = keras_model
-    n_inputs = len(chain.get_weights()[0])
-
-    w = dict()
-    b = dict()
-    node = n_inputs# + 1
-    from_offset = 0
-    for layer in chain.layers:
-        W,bias = layer.get_weights()
-        n_from,n_nodes = W.shape
-        for i in range(n_nodes):
-            w[node] = dict()
-            for j in range(n_from):
-                w[node][j+from_offset] = W[j,i]
-            b[node] = bias[i]
-            node += 1
-        from_offset += n_from
-
-    return w,b

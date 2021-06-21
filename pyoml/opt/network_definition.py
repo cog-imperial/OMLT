@@ -41,54 +41,54 @@ class NetworkDefinition(object):
             every node except the input nodes. If no entry is present, or the entry is None, it is assumed that
             the activation is identity (i.e. z_i = \hat z_i)
         scaling_object : instance of object supporting ScalingInterface
-            This object must support the ScalingInterface
+            This object must support the ScalingInterface (see scaling.py)
         """
-        self._n_inputs = n_inputs
-        self._n_hidden = n_hidden
-        self._n_outputs = n_outputs
+        self.__n_inputs = n_inputs
+        self.__n_hidden = n_hidden
+        self.__n_outputs = n_outputs
 
-        self._weights = weights
-        self._biases = biases
-        self._activations = node_activations
-        self._scaling_object = scaling_object
+        self.__weights = weights
+        self.__biases = biases
+        self.__activations = node_activations
+        self.__scaling_object = scaling_object
 
     @property
     def n_inputs(self):
         """ Return the number of input nodes"""
-        return self._n_inputs
+        return self.__n_inputs
 
     @property
     def n_hidden(self):
         """ Return the number of hidden nodes"""
-        return self._n_hidden
+        return self.__n_hidden
 
     @property
     def n_outputs(self):
         """ Return the number of output nodes"""
-        return self._n_outputs
+        return self.__n_outputs
 
     @property
     def weights(self):
         """ Return the weights dictionary as described above """
-        return self._weights
+        return self.__weights
 
     @property
     def biases(self):
         """ Return the biases dictionary as described above """
-        return self._biases
+        return self.__biases
 
     @property
     def activations(self):
         """ Return the activations dictionary as described above """
-        return self._activations
+        return self.__activations
 
     @property
     def scaling_object(self):
         """ Return an instance of the scaling object that supports the ScalingInterface"""
-        return self._scaling_object
+        return self.__scaling_object
 
     def set_scaling_object(self, scaling_object):
-        self._scaling_object = scaling_object
+        self.__scaling_object = scaling_object
 
     def input_node_ids(self):
         """ Return the ids associated with all the input nodes.
