@@ -80,7 +80,7 @@ class NeuralNetworkBlockData(_BaseInputOutputBlockData):
         self.__formulation._set_block(self)
 
         # tell the formulation object to construct the necessary models
-        self.formulation.build_formulation()
+        self.formulation._build_formulation()
 
     @property
     def formulation(self):
@@ -116,7 +116,7 @@ class _NeuralNetworkFormulationInterface(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def build_formulation(self):
+    def _build_formulation(self):
         pass
 
 class _NeuralNetworkFormulation(_NeuralNetworkFormulationInterface):

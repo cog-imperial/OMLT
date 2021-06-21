@@ -76,7 +76,7 @@ class _BaseInputOutputBlockData(_BlockData):
         if output_vars is None:
             self.outputs_set = pyo.Set(initialize=range(n_outputs), ordered=True)
             self.outputs = pyo.Var(self.outputs_set, initialize=0)
-            self.__outputs_list = list(self.outputs.values)
+            self.__outputs_list = list(self.outputs.values())
         else:
             self.__outputs_list = _extract_var_data(output_vars)
             assert len(self.__outputs_list) == network_definition.n_outputs()
