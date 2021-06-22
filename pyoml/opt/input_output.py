@@ -7,7 +7,7 @@ This module defines the base class for implementing a custom block
 within Pyomo based on input / output connections.
 """
 
-@declare_custom_block(name='BaseInputOutputBlock')
+@declare_custom_block(name='_BaseInputOutputBlock')
 class _BaseInputOutputBlockData(_BlockData):
     def __init__(self, component):
         """
@@ -55,6 +55,10 @@ class _BaseInputOutputBlockData(_BlockData):
         """
         self.__n_inputs = n_inputs
         self.__n_outputs = n_outputs
+        if n_inputs < 1 or n_outputs < 1:
+            # todo: implement this check higher up in the class hierarchy to provide more contextual error msg
+            raise ValueError('_BaseInputOutputBlock must have at least one input and at least one output.')
+
         self.__inputs_list = None
         self.__outputs_list = None
 
@@ -64,7 +68,8 @@ class _BaseInputOutputBlockData(_BlockData):
             self.__inputs_list = list(self.inputs.values())
         else:
             self.__inputs_list = _extract_var_data(input_vars)
-            assert len(self.__inputs_list) == n_inputs
+            if len(self.__inputs_list) != n_inputs:
+                raise ValueError('Length of input_vars does not match n_inputs.')
 
             # Discuss: This is kind of a cool idea
             # However, it may be confusing since the interface for vars and expressions is not the same?
@@ -79,7 +84,8 @@ class _BaseInputOutputBlockData(_BlockData):
             self.__outputs_list = list(self.outputs.values())
         else:
             self.__outputs_list = _extract_var_data(output_vars)
-            assert len(self.__outputs_list) == network_definition.n_outputs()
+            if len(self.__outputs_list) != n_outputs:
+                raise ValueError('Length of output_vars does not match n_outputs.')
 
             # Discuss: This is kind of a cool idea
             # However, it may be confusing since the interface for vars and expressions is not the same?
@@ -89,8 +95,10 @@ class _BaseInputOutputBlockData(_BlockData):
             #     return self._outputs_list[i]
             # self.outputs = pyo.Expression(self.outputs_set, rule=_output_expr)
 
+    @property
     def inputs_list(self):
-        return self.__inputs_list
+        return list(self.__inputs_list)
 
+    @property
     def outputs_list(self):
-        return self.__outputs_list
+        return list(self.__outputs_list)

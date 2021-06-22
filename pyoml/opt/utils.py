@@ -1,4 +1,5 @@
 import pyomo.environ as pyo
+from pyomo.core.base.var import ScalarVar, IndexedVar
 
 pyomo_activations = {
     'tanh': pyo.tanh,
@@ -17,12 +18,12 @@ def build_full_space_formulation(block, network_structure, skip_activations=Fals
     # this is needed since the indexing in the input - output block
     # is not consistent with the nodal network representation
     input_node_ids = net.input_node_ids()
-    inputs_list = block.inputs_list()
+    inputs_list = block.inputs_list
     hidden_output_node_ids = list()
     hidden_output_node_ids.extend(net.hidden_node_ids())
     hidden_output_node_ids.extend(net.output_node_ids())
     output_node_ids = net.output_node_ids()
-    outputs_list = block.outputs_list()
+    outputs_list = block.outputs_list
 
     x = {input_node_ids[i]:inputs_list[i] for i in range(len(input_node_ids))}
     y = {output_node_ids[i]:outputs_list[i] for i in range(len(output_node_ids))}
@@ -86,11 +87,11 @@ def build_reduced_space_formulation(block, network_structure, skip_activations=F
     # this is needed since the indexing in the input - output block
     # is not consistent with the nodal network representation
     input_node_ids = net.input_node_ids()
-    inputs_list = block.inputs_list()
+    inputs_list = block.inputs_list
     hidden_output_node_ids = net.hidden_node_ids()
     hidden_output_node_ids.extend(net.output_node_ids())
     output_node_ids = net.output_node_ids()
-    outputs_list = block.outputs_list()
+    outputs_list = block.outputs_list
     x = {input_node_ids[i]:inputs_list[i] for i in range(len(input_node_ids))}
     y = {output_node_ids[i]:outputs_list[i] for i in range(len(output_node_ids))}
 

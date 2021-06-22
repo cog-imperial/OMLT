@@ -1,6 +1,6 @@
 class NetworkDefinition(object):
     def __init__(self, n_inputs, n_hidden, n_outputs, weights, biases,
-                 node_activations, scaling_object=None):
+                 activations, scaling_object=None):
         """
         This class provides the neural network structure in a way that is *similar* to
         that provided in [1] as defined by:
@@ -36,8 +36,8 @@ class NetworkDefinition(object):
         biases : dict
             The biases for every node. With this representation, biases will have an entry for every node except
             the input nodes.
-        node_activations : dict
-            The activation functions for every node. With this representation, node_activations can have an entry for
+        activations : dict
+            The activation functions for every node. With this representation, activations can have an entry for
             every node except the input nodes. If no entry is present, or the entry is None, it is assumed that
             the activation is identity (i.e. z_i = \hat z_i)
         scaling_object : instance of object supporting ScalingInterface
@@ -49,8 +49,17 @@ class NetworkDefinition(object):
 
         self.__weights = weights
         self.__biases = biases
-        self.__activations = node_activations
+        self.__activations = activations
         self.__scaling_object = scaling_object
+
+        if len(weights) != n_hidden + n_outputs:
+            raise ValueError('The length of the weights dictionary should match '
+                             'n_hidden + n_outputs')
+        if len(biases) != n_hidden + n_outputs:
+            raise ValueError('The length of the biases dictionary should match '
+                             'n_hidden + n_outputs')
+
+        # todo: we should probably add more error checking here
 
     @property
     def n_inputs(self):
@@ -87,7 +96,8 @@ class NetworkDefinition(object):
         """ Return an instance of the scaling object that supports the ScalingInterface"""
         return self.__scaling_object
 
-    def set_scaling_object(self, scaling_object):
+    @scaling_object.setter
+    def scaling_object(self, scaling_object):
         self.__scaling_object = scaling_object
 
     def input_node_ids(self):
