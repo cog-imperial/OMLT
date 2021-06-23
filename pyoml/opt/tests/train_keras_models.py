@@ -2,6 +2,7 @@ import pytest
 import numpy as np
 
 import keras
+from pyomo.common.fileutils import this_file_dir
 from keras.models import Sequential, Model
 from keras.layers import Dense
 from keras.optimizers import Adamax
@@ -39,7 +40,7 @@ def train_models():
     nn.compile(optimizer=Adamax(learning_rate=0.01), loss='mae')
     history = nn.fit(x=x, y=y, validation_split=0.2,
                      batch_size=16, verbose=1, epochs=15)
-    nn.save('models/keras_linear_131')
+    nn.save(this_file_dir()+'/models/keras_linear_131')
 
     x,y,x_test = get_data('131')
     nn = Sequential(name='keras_linear_131_sigmoid')
@@ -53,7 +54,7 @@ def train_models():
     nn.compile(optimizer=Adamax(learning_rate=0.01), loss='mae')
     history = nn.fit(x=x, y=y, validation_split=0.2,
                      batch_size=16, verbose=1, epochs=15)
-    nn.save('models/keras_linear_131_sigmoid')
+    nn.save(this_file_dir()+'/models/keras_linear_131_sigmoid')
 
     x,y,x_test = get_data('131')
     nn = Sequential(name='keras_linear_131_sigmoid_output_activation')
@@ -68,7 +69,7 @@ def train_models():
     nn.compile(optimizer=Adamax(learning_rate=0.01), loss='mae')
     history = nn.fit(x=x, y=y, validation_split=0.2,
                      batch_size=16, verbose=1, epochs=15)
-    nn.save('models/keras_linear_131_sigmoid_output_activation')
+    nn.save(this_file_dir()+'/models/keras_linear_131_sigmoid_output_activation')
 
 
     x,y,x_test = get_data('131')
@@ -83,7 +84,7 @@ def train_models():
     nn.compile(optimizer=Adamax(learning_rate=0.01), loss='mae')
     history = nn.fit(x=x, y=y, validation_split=0.2,
                      batch_size=16, verbose=1, epochs=15)
-    nn.save('models/keras_linear_131_relu')
+    nn.save(this_file_dir()+'/models/keras_linear_131_relu')
 
     x,y,x_test = get_data('131')
     nn = Sequential(name='keras_linear_131_relu_output_activation')
@@ -98,7 +99,7 @@ def train_models():
     nn.compile(optimizer=Adamax(learning_rate=0.01), loss='mae')
     history = nn.fit(x=x, y=y, validation_split=0.2,
                      batch_size=16, verbose=1, epochs=15)
-    nn.save('models/keras_linear_131_relu_output_activation')
+    nn.save(this_file_dir()+'/models/keras_linear_131_relu_output_activation')
 
     x,y,x_test = get_data('131')
     nn = Sequential(name='keras_linear_131_sigmoid_softplus_output_activation')
@@ -113,7 +114,7 @@ def train_models():
     nn.compile(optimizer=Adamax(learning_rate=0.01), loss='mae')
     history = nn.fit(x=x, y=y, validation_split=0.2,
                      batch_size=16, verbose=1, epochs=15)
-    nn.save('models/keras_linear_131_sigmoid_softplus_output_activation')
+    nn.save(this_file_dir()+'/models/keras_linear_131_sigmoid_softplus_output_activation')
 
     x,y,x_test = get_data('131')
     nn = Sequential(name='keras_big')
@@ -137,7 +138,7 @@ def train_models():
     nn.compile(optimizer=Adamax(learning_rate=0.01), loss='mae')
     history = nn.fit(x=x, y=y, validation_split=0.2,
                      batch_size=16, verbose=1, epochs=15)
-    nn.save('models/big')
+    nn.save(this_file_dir()+'/models/big')
 
     x,y,x_test = get_data('2353')
     nn = Sequential(name='keras_linear_2353')
@@ -154,7 +155,7 @@ def train_models():
     history = nn.fit(x=x, y=y, validation_split=0.2,
                      batch_size=16, verbose=1, epochs=15)
 
-    nn.save('models/keras_linear_2353')
+    nn.save(this_file_dir()+'/models/keras_linear_2353')
 
 if __name__ == '__main__':
     train_models()

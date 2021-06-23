@@ -44,5 +44,5 @@ def load_keras_sequential(nn):
                               n_outputs=n_outputs,
                               weights=w,
                               biases=b,
-                              node_activations=a
+                              activations=a
                             )
