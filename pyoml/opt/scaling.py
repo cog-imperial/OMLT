@@ -56,5 +56,5 @@ class OffsetScaling(ScalingInterface):
         scaled_y = scaled_output_vars
         ret = list()
         for i in range(len(scaled_y)):
-            ret.append(y_scal[i]*self.__y_factor[i] + self.__y_offset[i])
+            ret.append(scaled_y[i]*self.__y_factor[i] + self.__y_offset[i])
         return ret
