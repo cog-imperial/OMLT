@@ -4,7 +4,7 @@ import numpy as np
 import keras
 from keras.models import Sequential, Model
 from keras.layers import Dense
-from keras.optimizers import Adamax 
+from keras.optimizers import Adamax
 
 def get_data(desc):
     if desc == '131':
@@ -40,7 +40,7 @@ def train_models():
     history = nn.fit(x=x, y=y, validation_split=0.2,
                      batch_size=16, verbose=1, epochs=15)
     nn.save('models/keras_linear_131')
-    
+
     x,y,x_test = get_data('131')
     nn = Sequential(name='keras_linear_131_sigmoid')
     nn.add(Dense(units=3, input_dim=1, \
@@ -69,6 +69,36 @@ def train_models():
     history = nn.fit(x=x, y=y, validation_split=0.2,
                      batch_size=16, verbose=1, epochs=15)
     nn.save('models/keras_linear_131_sigmoid_output_activation')
+
+
+    x,y,x_test = get_data('131')
+    nn = Sequential(name='keras_linear_131_relu')
+    nn.add(Dense(units=3, input_dim=1, \
+                 kernel_initializer=keras.initializers.RandomNormal(mean=1.0,stddev=0.05,seed=42),
+                 bias_initializer=keras.initializers.RandomNormal(mean=0.0,stddev=0.05,seed=43),
+                 activation='relu'))
+    nn.add(Dense(units=1, \
+                 kernel_initializer=keras.initializers.RandomNormal(mean=1.0,stddev=0.05,seed=62),
+                 bias_initializer=keras.initializers.RandomNormal(mean=0.0,stddev=0.05,seed=63)))
+    nn.compile(optimizer=Adamax(learning_rate=0.01), loss='mae')
+    history = nn.fit(x=x, y=y, validation_split=0.2,
+                     batch_size=16, verbose=1, epochs=15)
+    nn.save('models/keras_linear_131_relu')
+
+    x,y,x_test = get_data('131')
+    nn = Sequential(name='keras_linear_131_relu_output_activation')
+    nn.add(Dense(units=3, input_dim=1, \
+                 kernel_initializer=keras.initializers.RandomNormal(mean=1.0,stddev=0.05,seed=42),
+                 bias_initializer=keras.initializers.RandomNormal(mean=0.0,stddev=0.05,seed=43),
+                 activation='relu'))
+    nn.add(Dense(units=1, \
+                 kernel_initializer=keras.initializers.RandomNormal(mean=1.0,stddev=0.05,seed=62),
+                 bias_initializer=keras.initializers.RandomNormal(mean=0.0,stddev=0.05,seed=63),
+                 activation='relu'))
+    nn.compile(optimizer=Adamax(learning_rate=0.01), loss='mae')
+    history = nn.fit(x=x, y=y, validation_split=0.2,
+                     batch_size=16, verbose=1, epochs=15)
+    nn.save('models/keras_linear_131_relu_output_activation')
 
     x,y,x_test = get_data('131')
     nn = Sequential(name='keras_linear_131_sigmoid_softplus_output_activation')
@@ -109,7 +139,7 @@ def train_models():
                      batch_size=16, verbose=1, epochs=15)
     nn.save('models/big')
 
-    x,y,x_test = get_data('2353')    
+    x,y,x_test = get_data('2353')
     nn = Sequential(name='keras_linear_2353')
     nn.add(Dense(units=3, input_dim=2, \
                  kernel_initializer=keras.initializers.RandomNormal(mean=1.0,stddev=0.05,seed=42),
@@ -128,4 +158,3 @@ def train_models():
 
 if __name__ == '__main__':
     train_models()
-    

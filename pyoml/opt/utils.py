@@ -1,4 +1,5 @@
 import pyomo.environ as pyo
+import pyomo.mpec as mpec
 from pyomo.core.base.var import ScalarVar, IndexedVar
 
 pyomo_activations = {
@@ -138,6 +139,82 @@ def build_reduced_space_formulation(block, network_structure, skip_activations=F
     for i in output_node_ids:
         block.output_constraints[i] = y[i] == outputs[i]
 
+
+def build_relu_mip_formulation(block, network_structure, M = 1e6):
+    #build the full space structure without activations
+    build_full_space_formulation(block, network_structure, skip_activations=True)
+
+    net = network_structure
+    linear_nodes = list()
+    relu_nodes = list()
+    activations = net.activations
+    #block.activation_constraints = pyo.Constraint(block.hidden_output_nodes)
+    for i in block.hidden_output_nodes:
+        if i not in activations or activations[i] is None or activations[i] == 'linear':
+            linear_nodes.append(i)
+        elif activations[i] == 'relu':
+            relu_nodes.append(i)
+        else:
+            raise ValueError('Activation function {} not supported in the ReLU formulation'.format(activations[i]))
+
+    block.relu_nodes = pyo.Set(initialize=relu_nodes, ordered=True)
+    block.linear_nodes = pyo.Set(initialize=linear_nodes, ordered=True)
+
+    # # activation indicator q=0 means z=zhat (positive part of the hinge)
+    # # q=1 means we are on the zero part of the hinge
+    # block.hidden_nodes = net.hidden_node_ids()
+    block.q = pyo.Var(block.relu_nodes, within=pyo.Binary)
+    block._z_lower_bound = pyo.Constraint(block.relu_nodes)
+    block._z_hat_bound = pyo.Constraint(block.relu_nodes)
+    block._z_hat_positive = pyo.Constraint(block.relu_nodes)
+    block._z_hat_negative = pyo.Constraint(block.relu_nodes)
+    block._linear_activation = pyo.Constraint(block.linear_nodes)
+
+    #relu logic
+    for i in block.relu_nodes:
+        block._z_lower_bound[i] = block.z[i] >= 0
+        block._z_hat_bound[i] = block.z[i] >= block.zhat[i]
+        block._z_hat_positive[i] = block.z[i] <= block.zhat[i] + M*block.q[i]
+        block._z_hat_negative[i] = block.z[i] <= M*(1.0 - block.q[i])
+
+    #linear activations
+    for i in block.linear_nodes:
+        block._linear_activation[i] = block.z[i] == block.zhat[i]
+
+def build_relu_complementarity_formulation(block, network_structure, transform = 'mpec.simple_nonlinear'):
+    #build the full space structure without activations
+    build_full_space_formulation(block, network_structure, skip_activations=True)
+
+    net = network_structure
+    linear_nodes = list()
+    relu_nodes = list()
+    activations = net.activations
+    #block.activation_constraints = pyo.Constraint(block.hidden_output_nodes)
+    for i in block.hidden_output_nodes:
+        if i not in activations or activations[i] is None or activations[i] == 'linear':
+            linear_nodes.append(i)
+        elif activations[i] == 'relu':
+            relu_nodes.append(i)
+        else:
+            raise ValueError('Activation function {} not supported in the ReLU formulation'.format(activations[i]))
+
+    block.relu_nodes = pyo.Set(initialize=relu_nodes, ordered=True)
+    block.linear_nodes = pyo.Set(initialize=linear_nodes, ordered=True)
+
+    block._complementarity = mpec.Complementarity(block.relu_nodes)
+    block._linear_activation = pyo.Constraint(block.linear_nodes)
+
+    #relu logic
+    for i in block.relu_nodes:
+        block._complementarity[i] =  mpec.complements((block.z[i] - block.zhat[i]) >= 0, block.z[i] >= 0)
+    xfrm = pyo.TransformationFactory(transform)
+    xfrm.apply_to(block)
+
+    #linear activations
+    for i in block.linear_nodes:
+        block._linear_activation[i] = block.z[i] == block.zhat[i]
+
+#todo: encode keras sequential such that we remove dead weights and neurons
 # def _sparse_keras_sequential_to_dict(keras_model):
 #     chain = keras_model
 #     n_inputs = len(chain.get_weights()[0])
@@ -159,7 +236,6 @@ def build_reduced_space_formulation(block, network_structure, skip_activations=F
 #
 #     return w,b
 
-
 def _extract_var_data(vars):
     if isinstance(vars, ScalarVar):
         return [vars]
@@ -178,5 +254,3 @@ def _extract_var_data(vars):
         return varlist
     else:
         raise ValueError("Unknown variable type {}".format(vars))
-
-
