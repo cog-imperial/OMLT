@@ -1,8 +1,3 @@
-#  ___________________________________________________________________________
-#
-#  Software intended for BSD - copyright here once complete
-#  ___________________________________________________________________________
-
 from setuptools import setup, find_packages
 from distutils.core import Extension
 
@@ -19,7 +14,6 @@ URL = 'no-url-yet'
 
 setuptools_kwargs = {
     'zip_safe': False,
-    'install_requires': [],
     'scripts': [],
     'include_package_data': True,
     'install_requires' : ['pyomo>=5.6', 'numpy', 'pytest', 'pandas']
@@ -35,4 +29,5 @@ setup(name=DISTNAME,
       maintainer_email=MAINTAINER_EMAIL,
       license=LICENSE,
       url=URL,
+      python_requires='>=3.6',
       **setuptools_kwargs)
