@@ -1,0 +1,4 @@
+Todo list:
+- reconsider all the names
+- do the ReLU formulation
+- complete improved tests
