@@ -1,5 +1,7 @@
 import numpy as np
 import random
+from onnxconverter_common.data_types import FloatTensorType, Int64TensorType
+from onnxmltools.convert import convert_lightgbm
 
 ### requirements:
 # lightgbm, gurobipy
@@ -10,7 +12,8 @@ random.seed(10)
 ### we define a simple black-box function to generate data
 class SimpleCat:
     def __init__(self):
-        self.cat_idx = [3]
+        # self.cat_idx = [3]
+        self.cat_idx = []
         self.name = 'simple_cat'
 
     def get_bounds(self):
@@ -35,6 +38,7 @@ class SimpleCat:
             return 6 * (add1 + add2)
         elif cat == 1:
             return (add1 + add2) ** 2
+        return add1 + add2
 
 
 ### generate example dataset
@@ -107,11 +111,15 @@ else:
 # dump_model creates a dictionary that has all the
 # information needed to represent the model
 tree_dict = model.dump_model()
+initial_types = [('float_input', FloatTensorType([None, model.num_feature()]))]
+onnx = convert_lightgbm(model, initial_types=initial_types)
+with open('tree_dict.onnx', 'wb') as f:
+    f.write(onnx.SerializeToString())
 
 # remove comments to print the model to a file so you can have a look
-# import json
-# with open('tree_dict.json', 'w') as fp:
-#     json.dump(tree_dict, fp, indent=4)
+import json
+with open('tree_dict.json', 'w') as fp:
+    json.dump(tree_dict, fp, indent=4)
 
 # we re-order the dict so it works with the gbm model representation
 from gbrt_utils import order_tree_model_dict
@@ -205,7 +213,7 @@ opt_model._z_l = opt_model.addVars(
     name="z_l", vtype='C'
 )
 
-opt_model._y = opt_model.addVars(
+yv = opt_model._y = opt_model.addVars(
     misic_interval_index(opt_model),
     name="y",
     vtype=GRB.BINARY
@@ -223,7 +231,7 @@ def single_leaf_rule(model_, label, tree):
             == 1)
 
 
-opt_model.addConstrs(
+cons = opt_model.addConstrs(
     (single_leaf_rule(opt_model, label, tree)
      for (label, tree) in tree_index(opt_model)),
     name="single_leaf"
@@ -374,4 +382,4 @@ print(f"   best random point obj: {min(model.predict(test_data['X']))}")
 
 
 
-
+#opt_model.display()
