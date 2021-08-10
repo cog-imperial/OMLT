@@ -42,11 +42,28 @@ def add_formulation_to_block(block, gbt, input_vars):
     tree_ids = set(nodes_tree_ids)
     feature_ids = set(nodes_feature_ids)
 
-    branch_value_by_feature_id = dict()
-    for f in feature_ids:
-        nodes_feature_mask = nodes_feature_ids == f
-        branch_values = nodes_values[nodes_feature_mask & nodes_branch_mask]
-        branch_value_by_feature_id[f] = np.unique(np.sort(branch_values))
+    categorical_vars = dict()
+    continuous_vars = dict()
+
+    for var_idx, var in enumerate(input_vars):
+        # add one binary for each categorical variable
+        if var.is_integer() or var.is_binary():
+            categorical_vars[var_idx] = var
+        else:
+            continuous_vars[var_idx] = var
+
+    def categorical_split_values(var_idx):
+        var = categorical_vars[var_idx]
+        assert var.lb == int(var.lb)
+        assert var.ub == int(var.ub)
+        for v in range(int(var.lb), int(var.ub) + 1):
+            yield var_idx, v
+
+    def categorical_index():
+        for var_idx, _ in categorical_vars.items():
+            yield from categorical_split_values(var_idx)
+
+    block.x = pe.Var(categorical_index(), domain=pe.Binary)
 
     block.z_l = pe.Var(
         zip(nodes_tree_ids[nodes_leaf_mask], nodes_node_ids[nodes_leaf_mask]),
@@ -54,7 +71,17 @@ def add_formulation_to_block(block, gbt, input_vars):
         domain=pe.Reals,
     )
 
-    y_index = [(f, bi) for f in feature_ids for bi, _ in enumerate(branch_value_by_feature_id[f])]
+    branch_value_by_feature_id = dict()
+    for f in feature_ids:
+        nodes_feature_mask = nodes_feature_ids == f
+        branch_values = nodes_values[nodes_feature_mask & nodes_branch_mask]
+        branch_value_by_feature_id[f] = np.unique(np.sort(branch_values))
+
+    y_index = [
+        (f, bi)
+        for f in continuous_vars.keys()
+        for bi, _ in enumerate(branch_value_by_feature_id[f])
+    ]
     block.y = pe.Var(y_index, domain=pe.Binary)
 
     @block.Constraint(tree_ids)
@@ -74,7 +101,13 @@ def add_formulation_to_block(block, gbt, input_vars):
         branch_value = branch_value[0]
         branch_y_idx, = np.where(branch_value_by_feature_id[feature_id] == branch_value)
         assert len(branch_y_idx) == 1
-        return block.y[feature_id, branch_y_idx[0]]
+        if feature_id not in categorical_vars:
+            return block.y[feature_id, branch_y_idx[0]]
+
+        return sum(
+            block.x[feature_id, v]
+            for v in categorical_split_values(feature_id)
+        )
 
     def _sum_of_z_l(tree_id, start_node_id):
         tree_mask = nodes_tree_ids == tree_id
@@ -111,7 +144,14 @@ def add_formulation_to_block(block, gbt, input_vars):
         subtree_root = nodes_true_node_ids[node_mask][0]
         return _sum_of_z_l(tree_id, subtree_root) <= 1- - y
 
-    # TODO: add 2e for cat variables
+    @block.Constraint(categorical_vars.keys())
+    def categorical(b, feature_id):
+        """Equation 2e, Misic."""
+        var = categorical_vars[feature_id]
+        assert var.lb == int(var.lb)
+        assert var.ub == int(var.ub)
+        values = range(int(var.lb), int(var.ub) + 1)
+        return sum(b.x[feature_id, v] for v in values) == 1
 
     @block.Constraint(y_index)
     def order_y(b, feature_id, branch_y_idx):
