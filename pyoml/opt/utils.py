@@ -8,6 +8,7 @@ pyomo_activations = {
     'softplus': lambda x: pyo.log(pyo.exp(x) + 1)
 }
 
+
 def build_full_space_formulation(block, network_structure, skip_activations=False):
     # for now, we build the full model with extraneous variables and constraints
     # Todo: provide an option to remove extraneous variables and constraints
@@ -26,16 +27,16 @@ def build_full_space_formulation(block, network_structure, skip_activations=Fals
     output_node_ids = net.output_node_ids()
     outputs_list = block.outputs_list
 
-    x = {input_node_ids[i]:inputs_list[i] for i in range(len(input_node_ids))}
-    y = {output_node_ids[i]:outputs_list[i] for i in range(len(output_node_ids))}
+    x = {input_node_ids[i]: inputs_list[i] for i in range(len(input_node_ids))}
+    y = {output_node_ids[i]: outputs_list[i] for i in range(len(output_node_ids))}
 
     block.input_node_ids = pyo.Set(initialize=input_node_ids, ordered=True)
 
     # add the intermediate variables
     block.nodes = pyo.Set(initialize=net.all_node_ids(), ordered=True)
     block.hidden_output_nodes = pyo.Set(initialize=hidden_output_node_ids, ordered=True)
-    block.z = pyo.Var(block.nodes, initialize=0) # post-activation
-    block.zhat = pyo.Var(block.hidden_output_nodes, initialize=0) # pre-activation
+    block.z = pyo.Var(block.nodes, initialize=0)  # post-activation
+    block.zhat = pyo.Var(block.hidden_output_nodes, initialize=0)  # pre-activation
 
     # define the input constraints
     inputs = x
@@ -68,7 +69,7 @@ def build_full_space_formulation(block, network_structure, skip_activations=Fals
                 block.activation_constraints[i] = block.z[i] == activations[i](block.zhat[i])
 
     # define the output constraints
-    outputs = {i:block.z[i] for i in output_node_ids}
+    outputs = {i: block.z[i] for i in output_node_ids}
     if scaling is not None:
         outputs = scaling.get_unscaled_output_expressions(outputs)
     # Todo: we could eliminate these constraints and use y[i] directly where applicable
@@ -93,14 +94,14 @@ def build_reduced_space_formulation(block, network_structure, skip_activations=F
     hidden_output_node_ids.extend(net.output_node_ids())
     output_node_ids = net.output_node_ids()
     outputs_list = block.outputs_list
-    x = {input_node_ids[i]:inputs_list[i] for i in range(len(input_node_ids))}
-    y = {output_node_ids[i]:outputs_list[i] for i in range(len(output_node_ids))}
+    x = {input_node_ids[i]: inputs_list[i] for i in range(len(input_node_ids))}
+    y = {output_node_ids[i]: outputs_list[i] for i in range(len(output_node_ids))}
 
     # add the intermediate variables
     block.nodes = pyo.Set(initialize=net.all_node_ids(), ordered=True)
     block.hidden_output_nodes = pyo.Set(initialize=hidden_output_node_ids, ordered=True)
-    block.z = pyo.Expression(block.nodes) # post-activation
-    block.zhat = pyo.Expression(block.hidden_output_nodes) # pre-activation
+    block.z = pyo.Expression(block.nodes)  # post-activation
+    block.zhat = pyo.Expression(block.hidden_output_nodes)  # pre-activation
 
     # define the input constraints
     inputs = x
@@ -131,7 +132,7 @@ def build_reduced_space_formulation(block, network_structure, skip_activations=F
                 block.z[i] = activations[i](block.zhat[i])
 
     # define the output constraints
-    outputs = {i:block.z[i] for i in output_node_ids}
+    outputs = {i: block.z[i] for i in output_node_ids}
     if scaling is not None:
         outputs = scaling.get_unscaled_output_expressions(outputs)
     # Todo: we could eliminate these constraints and use y[i] directly where applicable
@@ -140,15 +141,15 @@ def build_reduced_space_formulation(block, network_structure, skip_activations=F
         block.output_constraints[i] = y[i] == outputs[i]
 
 
-def build_relu_mip_formulation(block, network_structure, M = 1e6):
-    #build the full space structure without activations
+def build_relu_mip_formulation(block, network_structure, M=1e6):
+    # build the full space structure without activations
     build_full_space_formulation(block, network_structure, skip_activations=True)
 
     net = network_structure
     linear_nodes = list()
     relu_nodes = list()
     activations = net.activations
-    #block.activation_constraints = pyo.Constraint(block.hidden_output_nodes)
+    # block.activation_constraints = pyo.Constraint(block.hidden_output_nodes)
     for i in block.hidden_output_nodes:
         if i not in activations or activations[i] is None or activations[i] == 'linear':
             linear_nodes.append(i)
@@ -170,26 +171,27 @@ def build_relu_mip_formulation(block, network_structure, M = 1e6):
     block._z_hat_negative = pyo.Constraint(block.relu_nodes)
     block._linear_activation = pyo.Constraint(block.linear_nodes)
 
-    #relu logic
+    # relu logic
     for i in block.relu_nodes:
         block._z_lower_bound[i] = block.z[i] >= 0
         block._z_hat_bound[i] = block.z[i] >= block.zhat[i]
-        block._z_hat_positive[i] = block.z[i] <= block.zhat[i] + M*block.q[i]
-        block._z_hat_negative[i] = block.z[i] <= M*(1.0 - block.q[i])
+        block._z_hat_positive[i] = block.z[i] <= block.zhat[i] + M * block.q[i]
+        block._z_hat_negative[i] = block.z[i] <= M * (1.0 - block.q[i])
 
-    #linear activations
+    # linear activations
     for i in block.linear_nodes:
         block._linear_activation[i] = block.z[i] == block.zhat[i]
 
-def build_relu_complementarity_formulation(block, network_structure, transform = 'mpec.simple_nonlinear'):
-    #build the full space structure without activations
+
+def build_relu_complementarity_formulation(block, network_structure, transform='mpec.simple_nonlinear'):
+    # build the full space structure without activations
     build_full_space_formulation(block, network_structure, skip_activations=True)
 
     net = network_structure
     linear_nodes = list()
     relu_nodes = list()
     activations = net.activations
-    #block.activation_constraints = pyo.Constraint(block.hidden_output_nodes)
+    # block.activation_constraints = pyo.Constraint(block.hidden_output_nodes)
     for i in block.hidden_output_nodes:
         if i not in activations or activations[i] is None or activations[i] == 'linear':
             linear_nodes.append(i)
@@ -204,17 +206,18 @@ def build_relu_complementarity_formulation(block, network_structure, transform =
     block._complementarity = mpec.Complementarity(block.relu_nodes)
     block._linear_activation = pyo.Constraint(block.linear_nodes)
 
-    #relu logic
+    # relu logic
     for i in block.relu_nodes:
-        block._complementarity[i] =  mpec.complements((block.z[i] - block.zhat[i]) >= 0, block.z[i] >= 0)
+        block._complementarity[i] = mpec.complements((block.z[i] - block.zhat[i]) >= 0, block.z[i] >= 0)
     xfrm = pyo.TransformationFactory(transform)
     xfrm.apply_to(block)
 
-    #linear activations
+    # linear activations
     for i in block.linear_nodes:
         block._linear_activation[i] = block.z[i] == block.zhat[i]
 
-#todo: encode keras sequential such that we remove dead weights and neurons
+
+# todo: encode keras sequential such that we remove dead weights and neurons
 # def _sparse_keras_sequential_to_dict(keras_model):
 #     chain = keras_model
 #     n_inputs = len(chain.get_weights()[0])
