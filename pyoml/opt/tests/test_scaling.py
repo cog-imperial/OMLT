@@ -57,7 +57,7 @@ def test_scaling_NN_block():
 
     for x in np.random.normal(1,0.5,10):
         model.input.fix(x)
-        result = SolverFactory('gurobi_direct').solve(model, tee=False)
+        result = SolverFactory('glpk').solve(model, tee=False)
 
         x_s = (x - scale_x[0])/scale_x[1]
         y_s = NN.predict(x=[x_s])
