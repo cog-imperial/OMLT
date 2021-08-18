@@ -5,12 +5,10 @@ def load_keras_sequential(nn):
     Load a keras neural network model (built with Sequential) into
     a pyoml network definition object. This network definition object
     can be used in different formulations.
-
     Parameters
     ----------
     nn : keras.model
         A keras model that was build with Sequential
-
     Returns
     -------
     NetworkDefinition

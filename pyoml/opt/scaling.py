@@ -45,16 +45,17 @@ class OffsetScaling(ScalingInterface):
         self.__y_offset = offset_outputs
         self.__y_factor = factor_outputs
 
+
     def get_scaled_input_expressions(self, input_vars):
         x = input_vars
-        ret = list()
-        for i in range(len(x)):
-            ret.append((x[i]-self.__x_offset[i])/self.__x_factor[i])
+        ret = {}
+        for i, j in enumerate(x.keys()):
+            ret[j] = (x[j]-self.__x_offset[i])/self.__x_factor[i]
         return ret
 
     def get_unscaled_output_expressions(self, scaled_output_vars):
         scaled_y = scaled_output_vars
-        ret = list()
-        for i in range(len(scaled_y)):
-            ret.append(scaled_y[i]*self.__y_factor[i] + self.__y_offset[i])
+        ret = {}
+        for i, j in enumerate(scaled_y.keys()):
+            ret[j] = scaled_y[j]*self.__y_factor[i] + self.__y_offset[i]
         return ret
