@@ -90,10 +90,10 @@ class NeuralNetworkBlockData(_BaseInputOutputBlockData):
         """
         return self.__formulation
 
-class _NeuralNetworkFormulationInterface(abc.ABC):
-    """ Base class interface for a neural network formulation object. This class
+class _PyomoFormulationInterface(abc.ABC):
+    """ Base class interface for a Pyomo formulation object. This class
     is largely internal, and developers of new formulations should derive from
-    :class:`pyoml.opt.neuralnet.NeuralNetworkFormulation`."""
+    :class:`pyoml.opt.neuralnet.PyomoFormulation`."""
     def __init__(self):
         pass
 
@@ -120,12 +120,12 @@ class _NeuralNetworkFormulationInterface(abc.ABC):
     def _build_formulation(self):
         pass
 
-class _NeuralNetworkFormulation(_NeuralNetworkFormulationInterface):
+class _PyomoFormulation(_PyomoFormulationInterface):
     def __init__(self, network_structure):
-        """ This is a base class for different neural network formulations. To create a new
+        """ This is a base class for different Pyomo formulations. To create a new
         formulation, inherit from this class and implement the build_formulation method. See
         :class:`pyoml.opt.neuralnet.FullSpaceContinuousFormulation` for an example."""
-        super(_NeuralNetworkFormulation, self).__init__()
+        super(_PyomoFormulation, self).__init__()
         self.__network_definition = network_structure
         self.__block = None
 
@@ -148,25 +148,25 @@ class _NeuralNetworkFormulation(_NeuralNetworkFormulationInterface):
 
     @property
     def n_inputs(self):
-        """ The number of inputs to the neural network. """
+        """ The number of inputs to the formulation. """
         return self.__network_definition.n_inputs
 
     @property
     def n_outputs(self):
-        """ The number of outputs from the neural network."""
+        """ The number of outputs from the formulation."""
         return self.__network_definition.n_outputs
 
     @abc.abstractmethod
     def _build_formulation(self):
-        """ This method is called by the NeuralNetworkBlock object to build the
-        corresponding mathematical formulation of the neural network model.
+        """ This method is called by the OptMLBlock object to build the
+        corresponding mathematical formulation of the model.
         See :class:`pyoml.opt.neuralnet.FullSpaceContinuousFormulation` for
         an example of an implementation.
         """
         pass
 
 
-class FullSpaceContinuousFormulation(_NeuralNetworkFormulation):
+class FullSpaceContinuousFormulation(_PyomoFormulation):
     def __init__(self, network_structure):
         """ This class provides a full-space formulation of a neural network,
         including all intermediate variables and activation functions.
@@ -202,7 +202,7 @@ class FullSpaceContinuousFormulation(_NeuralNetworkFormulation):
                                      skip_activations=False)
 
 
-class ReducedSpaceContinuousFormulation(_NeuralNetworkFormulation):
+class ReducedSpaceContinuousFormulation(_PyomoFormulation):
     def __init__(self, network_structure):
         """ This class builds a reduced-space formulation of the neural network where
         intermediate variables / constraints are eliminated."""
@@ -217,7 +217,7 @@ class ReducedSpaceContinuousFormulation(_NeuralNetworkFormulation):
                                         network_structure=self.network_definition,
                                         skip_activations=False)
 
-class ReLUBigMFormulation(_NeuralNetworkFormulation):
+class ReLUBigMFormulation(_PyomoFormulation):
     def __init__(self, network_structure,M = 1e6):
         """ This class provides a full-space formulation of a neural network with ReLU
         activation functions using a MILP representation.
@@ -233,7 +233,7 @@ class ReLUBigMFormulation(_NeuralNetworkFormulation):
                                      network_structure=self.network_definition,
                                      M = self.M)
 
-class ReLUComplementarityFormulation(_NeuralNetworkFormulation):
+class ReLUComplementarityFormulation(_PyomoFormulation):
     def __init__(self, network_structure,transform = 'mpec.simple_nonlinear'):
         """ This class provides a full-space formulation of a neural network with ReLU
         activation functions using a MILP representation.
