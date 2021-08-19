@@ -1,6 +1,6 @@
 import pytest
 import pyomo.environ as pyo
-from pyoml.opt.neuralnet import NeuralNetworkBlock, ReLUBigMFormulation, ReLUComplementarityFormulation
+from pyoml.opt.neuralnet import OptMLBlock, ReLUBigMFormulation, ReLUComplementarityFormulation
 from pyoml.opt.network_definition import NetworkDefinition
 
 
@@ -38,7 +38,7 @@ def test_two_node_bigm():
                             activations=a)
 
     m = pyo.ConcreteModel()
-    m.neural_net_block = NeuralNetworkBlock()
+    m.neural_net_block = OptMLBlock()
     formulation = ReLUBigMFormulation(net,M = 1e6)
     m.neural_net_block.build_formulation(formulation)
 
@@ -87,7 +87,7 @@ def test_two_node_complementarity():
                             activations=a)
 
     m = pyo.ConcreteModel()
-    m.neural_net_block = NeuralNetworkBlock()
+    m.neural_net_block = OptMLBlock()
     formulation = ReLUComplementarityFormulation(net,transform = "mpec.simple_nonlinear")
     m.neural_net_block.build_formulation(formulation)
 

@@ -1,7 +1,7 @@
 import pytest
 import keras
 import pyomo.environ as pyo
-from pyoml.opt.neuralnet import NeuralNetworkBlock, FullSpaceContinuousFormulation, ReducedSpaceContinuousFormulation
+from pyoml.opt.neuralnet import OptMLBlock, FullSpaceContinuousFormulation, ReducedSpaceContinuousFormulation
 from pyoml.opt.network_definition import NetworkDefinition
 from pyoml.opt.keras_reader import load_keras_sequential
 
@@ -30,7 +30,7 @@ def test_two_node_full_space():
     b = {1: 0, 2:0, 3:0, 4:0}
     a = {1: 'tanh',
          2: 'tanh'}
-    
+
     net = NetworkDefinition(n_inputs=n_inputs,
                             n_hidden=n_hidden,
                             n_outputs=n_outputs,
@@ -39,7 +39,7 @@ def test_two_node_full_space():
                             activations=a)
 
     m = pyo.ConcreteModel()
-    m.neural_net_block = NeuralNetworkBlock()
+    m.neural_net_block = OptMLBlock()
     formulation = FullSpaceContinuousFormulation(net)
     m.neural_net_block.build_formulation(formulation)
     assert m.nvariables() == 12
@@ -91,7 +91,7 @@ def test_two_node_reduced_space_1():
                             activations={})
 
     m = pyo.ConcreteModel()
-    m.neural_net_block = NeuralNetworkBlock()
+    m.neural_net_block = OptMLBlock()
     m.neural_net_block.build_formulation(ReducedSpaceContinuousFormulation(net))
     assert m.nvariables() == 3
     assert m.nconstraints() == 2
