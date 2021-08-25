@@ -1,8 +1,10 @@
 import pytest
 from pathlib import Path
-import pyomo.environ as pe
 import onnx
-from optml.gbt.formulation import add_formulation_to_block
+import pyomo.environ as pe
+from pyoml.opt.neuralnet import OptMLBlock
+from optml.gbt.model import GradientBoostedTreeModel
+from optml.gbt.formulation import add_formulation_to_block, BigMFormulation
 
 
 def test_formulation_with_continuous_variables():
@@ -14,15 +16,18 @@ def test_formulation_with_continuous_variables():
     m.x[3].setlb(0.0)
     m.x[3].setub(1.0)
 
+    m.z = pe.Var()
+
     m.gbt = pe.Block()
     add_formulation_to_block(
         m.gbt,
         model,
-        input_vars=[m.x[i] for i in range(4)]
+        input_vars=[m.x[i] for i in range(4)],
+        output_vars=[m.z]
     )
 
     assert len(list(m.gbt.component_data_objects(pe.Var))) == 202
-    assert len(list(m.gbt.component_data_objects(pe.Constraint))) == 422
+    assert len(list(m.gbt.component_data_objects(pe.Constraint))) == 423
 
     assert len(m.gbt.z_l) == 160
     assert len(m.gbt.y) == 42
@@ -45,11 +50,14 @@ def test_formulation_with_categorical_variables():
     # categorical variable
     m.y = pe.Var(bounds=(0, 1), domain=pe.Integers)
 
+    m.z = pe.Var()
+
     m.gbt = pe.Block()
     add_formulation_to_block(
         m.gbt,
         model,
-        input_vars=[m.x[0], m.x[1], m.x[2], m.y]
+        input_vars=[m.x[0], m.x[1], m.x[2], m.y],
+        output_vars=[m.z]
     )
 
     assert len(list(m.gbt.component_data_objects(pe.Var))) == 193
@@ -66,3 +74,15 @@ def test_formulation_with_categorical_variables():
     assert len(m.gbt.categorical) == 1
     assert len(m.gbt.var_lower) == 31
     assert len(m.gbt.var_upper) == 31
+
+
+def test_big_m_formulation_block():
+    onnx_model = onnx.load(Path(__file__).parent / 'continuous_model.onnx')
+    model = GradientBoostedTreeModel(onnx_model)
+
+    m = pe.ConcreteModel()
+    m.mod = OptMLBlock()
+    formulation = BigMFormulation(model)
+    m.mod.build_formulation(formulation)
+
+    m.obj = pe.Objective(expr=0)

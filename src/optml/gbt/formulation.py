@@ -1,9 +1,23 @@
 import pyomo.environ as pe
 import numpy as np
+from pyoml.opt.neuralnet import _PyomoFormulation
+from optml.gbt.model import GradientBoostedTreeModel
 
 
+class BigMFormulation(_PyomoFormulation):
+    def _build_formulation(self):
+        """ This method is called by the OptMLBlock to build the corresponding
+        mathematical formulation on the Pyomo block.
+        """
+        add_formulation_to_block(
+            block=self.block,
+            model_definition=self.network_definition,
+            input_vars=self.block.inputs_list,
+            output_vars=self.block.outputs_list,
+        )
 
-def add_formulation_to_block(block, gbt, input_vars):
+
+def add_formulation_to_block(block, model_definition, input_vars, output_vars):
     """
     References
     ----------
@@ -13,7 +27,10 @@ def add_formulation_to_block(block, gbt, input_vars):
      * Mistry, M., et al. "Mixed-integer convex nonlinear optimization with gradient-boosted trees embedded."
        INFORMS Journal on Computing (2020).
     """
-    # Assume only one feature for now
+    if isinstance(model_definition, GradientBoostedTreeModel):
+        gbt = model_definition.onnx_model
+    else:
+        gbt = model_definition
     graph = gbt.graph
 
     root_node = graph.node[0]
@@ -165,6 +182,8 @@ def add_formulation_to_block(block, gbt, input_vars):
     def var_lower(b, feature_id, branch_y_idx):
         """Equation 4a, Mistry."""
         x = input_vars[feature_id]
+        if x.lb is None:
+            return pe.Constraint.Skip
         branch_value = branch_value_by_feature_id[feature_id][branch_y_idx]
         return x >= x.lb + (branch_value - x.lb) * (1 - b.y[feature_id, branch_y_idx])
 
@@ -172,12 +191,14 @@ def add_formulation_to_block(block, gbt, input_vars):
     def var_upper(b, feature_id, branch_y_idx):
         """Equation 4b, Mistry."""
         x = input_vars[feature_id]
+        if x.ub is None:
+            return pe.Constraint.Skip
         branch_value = branch_value_by_feature_id[feature_id][branch_y_idx]
         return x <= x.ub + (branch_value - x.ub) * b.y[feature_id, branch_y_idx]
 
-    @block.Objective()
+    @block.Constraint()
     def tree_mean_value(b):
-        return sum(
+        return output_vars[0] == sum(
             weight * b.z_l[tree_id, node_id]
             for tree_id, node_id, weight in zip(target_tree_ids, target_node_ids, target_weights)
         )
