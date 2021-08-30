@@ -5,7 +5,7 @@ import tensorflow
 
 import pyomo.environ as pyo
 from pyomo.common.fileutils import this_file_dir
-from pyoml.opt.neuralnet import NeuralNetworkBlock, \
+from pyoml.opt.neuralnet import OptMLBlock, \
     FullSpaceContinuousFormulation, ReducedSpaceContinuousFormulation,\
     ReLUBigMFormulation, ReLUComplementarityFormulation
 
@@ -27,7 +27,7 @@ def _test_keras_linear_131(keras_fname, reduced_space=False):
     assert len(net.activations) == 4
 
     m = pyo.ConcreteModel()
-    m.neural_net_block = NeuralNetworkBlock()
+    m.neural_net_block = OptMLBlock()
     if reduced_space:
         formulation = ReducedSpaceContinuousFormulation(net)
     else:
@@ -55,7 +55,7 @@ def _test_keras_mip_relu_131(keras_fname):
     assert len(net.activations) == 4
 
     m = pyo.ConcreteModel()
-    m.neural_net_block = NeuralNetworkBlock()
+    m.neural_net_block = OptMLBlock()
     formulation = ReLUBigMFormulation(net)
     m.neural_net_block.build_formulation(formulation)
     m.obj = pyo.Objective(expr = 0)
@@ -81,7 +81,7 @@ def _test_keras_complementarity_relu_131(keras_fname):
     assert len(net.activations) == 4
 
     m = pyo.ConcreteModel()
-    m.neural_net_block = NeuralNetworkBlock()
+    m.neural_net_block = OptMLBlock()
     formulation = ReLUComplementarityFormulation(net)
     m.neural_net_block.build_formulation(formulation)
 
@@ -100,7 +100,7 @@ def _test_keras_linear_big(keras_fname, reduced_space=False):
     net = load_keras_sequential(nn)
 
     m = pyo.ConcreteModel()
-    m.neural_net_block = NeuralNetworkBlock()
+    m.neural_net_block = OptMLBlock()
     if reduced_space:
         formulation = ReducedSpaceContinuousFormulation(net)
     else:

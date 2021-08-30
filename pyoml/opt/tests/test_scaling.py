@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 from pyoml.opt.scaling import OffsetScaling
-from pyoml.opt.neuralnet import ReLUBigMFormulation, NeuralNetworkBlock
+from pyoml.opt.neuralnet import ReLUBigMFormulation, OptMLBlock
 from pyoml.opt.keras_reader import load_keras_sequential
 from pyomo.environ import *
 import tensorflow as tf
@@ -48,7 +48,7 @@ def test_scaling_NN_block():
     net.scaling_object = scaler
     formulation = ReLUBigMFormulation(net)
 
-    model.nn = NeuralNetworkBlock()
+    model.nn = OptMLBlock()
     model.nn.build_formulation(formulation, input_vars=[model.input], output_vars=[model.output])
 
     @model.Objective()
