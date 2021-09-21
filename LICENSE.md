@@ -5,13 +5,6 @@ Copyright 2021 National Technology & Engineering Solutions of Sandia, LLC
 (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S. 
 Government retains certain rights in this software.
 
-License Notice
-=================
-
-This software is distributed under the Revised BSD License (see
-below).  Parapint also leverages a variety of third-party software
-packages, which have separate licensing policies.
-
 Revised BSD License
 -------------------
 
