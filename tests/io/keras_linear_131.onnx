@@ -1,0 +1,21 @@
+tf2onnx1.8.5:ù
+œ
+dense_input:0
+FStatefulPartitionedCall/keras_linear_131/dense/MatMul/ReadVariableOp:07StatefulPartitionedCall/keras_linear_131/dense/MatMul:05StatefulPartitionedCall/keras_linear_131/dense/MatMul"MatMul
+˘
+7StatefulPartitionedCall/keras_linear_131/dense/MatMul:0
+GStatefulPartitionedCall/keras_linear_131/dense/BiasAdd/ReadVariableOp:08StatefulPartitionedCall/keras_linear_131/dense/BiasAdd:06StatefulPartitionedCall/keras_linear_131/dense/BiasAdd"Add
+Ä
+8StatefulPartitionedCall/keras_linear_131/dense/BiasAdd:0
+HStatefulPartitionedCall/keras_linear_131/dense_1/MatMul/ReadVariableOp:09StatefulPartitionedCall/keras_linear_131/dense_1/MatMul:07StatefulPartitionedCall/keras_linear_131/dense_1/MatMul"MatMul
+Œ
+9StatefulPartitionedCall/keras_linear_131/dense_1/MatMul:0
+IStatefulPartitionedCall/keras_linear_131/dense_1/BiasAdd/ReadVariableOp:0dense_18StatefulPartitionedCall/keras_linear_131/dense_1/BiasAdd"Addtf2onnx*^BHStatefulPartitionedCall/keras_linear_131/dense_1/MatMul/ReadVariableOp:0Jì?˛z?¿¸>*UBIStatefulPartitionedCall/keras_linear_131/dense_1/BiasAdd/ReadVariableOp:0J‘Âº;*\BFStatefulPartitionedCall/keras_linear_131/dense/MatMul/ReadVariableOp:0J_A?0?õ?*[BGStatefulPartitionedCall/keras_linear_131/dense/BiasAdd/ReadVariableOp:0JLÖ7=ë2Ω∂≤‚ºR6converted from pyoml/opt/tests/models/keras_linear_131Z%
+dense_input:0
+
+unk__7
+b
+dense_1
+
+unk__8
+B	
