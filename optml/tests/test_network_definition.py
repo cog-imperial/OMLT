@@ -1,5 +1,5 @@
 import pytest
-from pyoml.opt.neuralnet.network_definition import NetworkDefinition
+from optml.neuralnet.network_definition import NetworkDefinition
 
 # ToDo: Add tests for teh scaling object
 def test_network_definition():
@@ -40,6 +40,21 @@ def test_network_definition():
     assert nd.input_node_ids() == [0, 1]
     assert nd.hidden_node_ids() == [2, 3]
     assert nd.output_node_ids() == [4]
+
+    with pytest.warns(UserWarning, match="No input bounds were provided. This may lead to extrapolation outside of the training data"):
+        nd = NetworkDefinition(n_inputs, n_hidden, n_outputs, w, b, a)
+
+    input_bounds = [(0,2),(-1,1)]
+    nd = NetworkDefinition(n_inputs, n_hidden, n_outputs, w, b, a, input_bounds = input_bounds)
+    assert nd.input_bounds == input_bounds
+
+    with pytest.raises(ValueError):
+        input_bounds = [(0,2),]
+        nd = NetworkDefinition(n_inputs, n_hidden, n_outputs, w, b, a, input_bounds = input_bounds)
+
+    with pytest.raises(ValueError):
+        input_bounds = [(0,2),(3,)]
+        nd = NetworkDefinition(n_inputs, n_hidden, n_outputs, w, b, a, input_bounds = input_bounds)
 
     # Todo: this should be able to throw an error
     nd = NetworkDefinition(1, n_hidden, n_outputs, w, b, a)

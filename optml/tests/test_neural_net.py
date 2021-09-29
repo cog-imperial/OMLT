@@ -1,11 +1,11 @@
 import pytest
 import keras
 import pyomo.environ as pyo
-from pyoml.opt.block import OptMLBlock
-from pyoml.opt.neuralnet.full_space import FullSpaceContinuousFormulation, ReducedSpaceContinuousFormulation
-from pyoml.opt.neuralnet.reduced_space import ReducedSpaceContinuousFormulation
-from pyoml.opt.network_definition import NetworkDefinition
-from pyoml.opt.keras_reader import load_keras_sequential
+from optml.block import OptMLBlock
+from optml.neuralnet.full_space import FullSpaceContinuousFormulation
+from optml.neuralnet.reduced_space import ReducedSpaceContinuousFormulation
+from optml.neuralnet.network_definition import NetworkDefinition
+from optml.neuralnet.keras_reader import load_keras_sequential
 
 def test_two_node_full_space():
     """

@@ -21,15 +21,14 @@ class ReducedSpaceContinuousFormulation(_PyomoFormulation):
 def build_reduced_space_formulation(block, network_structure, skip_activations=False):
     # for now, we build the full model with extraneous variables and constraints
     # Todo: provide an option to remove extraneous variables and constraints
-    # Todo: support scaling
     net = network_structure
-    scaling = net.scaling_object
+    #scaling = net.scaling_object
 
     # map x and y to the inputs and outputs and verify the lengths
     # this is needed since the indexing in the input - output block
     # is not consistent with the nodal network representation
     input_node_ids = net.input_node_ids()
-    inputs_list = block.inputs_list
+    inputs_list = block.scaled_inputs_list #these are scaled inputs
     hidden_output_node_ids = net.hidden_node_ids()
     hidden_output_node_ids.extend(net.output_node_ids())
     output_node_ids = net.output_node_ids()
@@ -45,8 +44,8 @@ def build_reduced_space_formulation(block, network_structure, skip_activations=F
 
     # define the input constraints
     inputs = x
-    if scaling is not None:
-        inputs = scaling.get_scaled_input_expressions(inputs)
+    # if scaling is not None:
+    #     inputs = scaling.get_scaled_input_expressions(inputs)
     # Todo: We could eliminate these constraints and use x[i] directly where applicable
     for i in input_node_ids:
         block.z[i] = inputs[i]
@@ -73,8 +72,8 @@ def build_reduced_space_formulation(block, network_structure, skip_activations=F
 
     # define the output constraints
     outputs = {i: block.z[i] for i in output_node_ids}
-    if scaling is not None:
-        outputs = scaling.get_unscaled_output_expressions(outputs)
+    # if scaling is not None:
+    #     outputs = scaling.get_unscaled_output_expressions(outputs)
     # Todo: we could eliminate these constraints and use y[i] directly where applicable
     block.output_constraints = pyo.Constraint(output_node_ids)
     for i in output_node_ids:

@@ -1,10 +1,12 @@
 import pytest
 import numpy as np
 from optml import OptMLBlock, OffsetScaling
-from optml.neuralnet import ReLUBigMFormulation
-from optml.neuralnet import load_keras_sequential
+from optml.neuralnet.relu import ReLUBigMFormulation
+from optml.neuralnet.keras_reader import load_keras_sequential
 from pyomo.environ import *
-import tensorflow as tf
+from pyomo.common.fileutils import this_file_dir
+import keras
+import os
 
 def test_offset_scaling():
     xdata = np.random.normal(1,0.5,(2,10))
@@ -35,24 +37,23 @@ def test_offset_scaling():
     np.testing.assert_almost_equal(list(test_y_unscal.values()), list(y.values()))
 
 def test_scaling_NN_block():
-    NN = tf.keras.models.load_model("./models/keras_linear_131_relu")
+    NN = keras.models.load_model(os.path.join(this_file_dir(),'models/keras_linear_131_relu'))
 
     model = ConcreteModel()
     model.input = Var()
     model.output = Var()
 
-    scale_x = (1, -0.5)
+    scale_x = (1, 0.5)
     scale_y = (-0.25, 0.125)
 
     scaler = OffsetScaling(offset_inputs=[scale_x[0]],
-                            factor_inputs=[scale_x[1]],
-                            offset_outputs=[scale_y[0]],
-                            factor_outputs=[scale_y[1]])
+                        factor_inputs=[scale_x[1]],
+                        offset_outputs=[scale_y[0]],
+                        factor_outputs=[scale_y[1]])
 
-    net = load_keras_sequential(NN)
-    net.scaling_object = scaler
+    input_bounds = [(0,5),]
+    net = load_keras_sequential(NN,scaler,input_bounds)
     formulation = ReLUBigMFormulation(net)
-
     model.nn = OptMLBlock()
     model.nn.build_formulation(formulation, input_vars=[model.input], output_vars=[model.output])
 

@@ -1,6 +1,6 @@
 import pytest
 import pyomo.environ as pyo
-from pyoml.opt.block import _BaseInputOutputBlock
+from optml.block import _BaseInputOutputBlock
 
 def test_input_output_auto_creation():
     m  = pyo.ConcreteModel()

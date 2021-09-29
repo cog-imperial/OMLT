@@ -1,7 +1,8 @@
 import pytest
 import pyomo.environ as pyo
-from pyoml.opt.neuralnet import OptMLBlock, ReLUBigMFormulation, ReLUComplementarityFormulation
-from pyoml.opt.neuralnet.network_definition import NetworkDefinition
+from optml.block import OptMLBlock
+from optml.neuralnet.relu import ReLUBigMFormulation, ReLUComplementarityFormulation
+from optml.neuralnet.network_definition import NetworkDefinition
 
 
 def test_two_node_bigm():

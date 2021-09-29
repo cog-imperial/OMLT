@@ -6,14 +6,14 @@ import tensorflow
 import pyomo.environ as pyo
 from pyomo.common.fileutils import this_file_dir
 
-from pyoml.opt.block import OptMLBlock
-from pyoml.opt.neuralnet.full_space import FullSpaceContinuousFormulation
-from pyoml.opt.neuralnet.reduced_space import ReducedSpaceContinuousFormulation
-from pyoml.opt.neural.relu import ReLUBigMFormulation, ReLUComplementarityFormulation
+from optml.block import OptMLBlock
+from optml.neuralnet.full_space import FullSpaceContinuousFormulation
+from optml.neuralnet.reduced_space import ReducedSpaceContinuousFormulation
+from optml.neuralnet.relu import ReLUBigMFormulation, ReLUComplementarityFormulation
 
-from pyoml.opt.scaling import OffsetScaling
-from pyoml.opt.neuralnet.keras_reader import load_keras_sequential
-from pyoml.opt.tests.train_keras_models import get_data
+from optml.scaling import OffsetScaling
+from optml.neuralnet.keras_reader import load_keras_sequential
+from optml.tests.train_keras_models import get_data
 
 def _test_keras_linear_131(keras_fname, reduced_space=False):
     x,y,x_test = get_data('131')

@@ -1,7 +1,7 @@
 import pytest
 import keras
 import os.path
-from pyoml.opt.neuralnet.keras_reader import load_keras_sequential
+from optml.neuralnet.keras_reader import load_keras_sequential
 from pyomo.common.fileutils import this_file_dir
 
 def test_keras_reader():

@@ -1,10 +1,10 @@
-from pyoml.opt.tests.test_input_output import *
-from pyoml.opt.tests.test_keras import *
-from pyoml.opt.tests.test_keras_reader import *
-from pyoml.opt.tests.test_network_definition import *
-from pyoml.opt.tests.test_neural_net import *
-from pyoml.opt.tests.test_relu import *
-from pyoml.opt.tests.test_scaling import *
+from optml.tests.test_input_output import *
+from optml.tests.test_keras import *
+from optml.tests.test_keras_reader import *
+from optml.tests.test_network_definition import *
+from optml.tests.test_neural_net import *
+from optml.tests.test_relu import *
+from optml.tests.test_scaling import *
 
 if __name__ == '__main__':
     test_input_output_auto_creation()
