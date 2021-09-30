@@ -1,6 +1,8 @@
+import warnings
+
 class NetworkDefinition(object):
     def __init__(self, n_inputs, n_hidden, n_outputs, weights, biases,
-                 activations, scaling_object=None):
+                 activations, scaling_object=None, input_bounds=None):
         """
         This class provides the neural network structure in a way that is *similar* to
         that provided in [1] as defined by:
@@ -13,8 +15,8 @@ class NetworkDefinition(object):
         \end{align*}
 
         \noindent
-        Here, $\sigma$ refers to the activation function, $x$ refers to the inputs, $z$ the values before activation,
-        $\hat z$ the values after activation, and $y$ the outputs. Also, $n_x$ is the number of inputs,
+        Here, $\sigma$ refers to the activation function, $x$ refers to the inputs, $\hat z$ the values before activation,
+        $z$ the values after activation, and $y$ the outputs. Also, $n_x$ is the number of inputs,
         $n_h$ is the number of hidden nodes, and $n_y$ is the number of outputs.
 
         [1] Tjandraatmadja, C., Anderson, R., Huchette, J., Ma, W., Patel, K. and Vielma, J.P., 2020.
@@ -42,6 +44,9 @@ class NetworkDefinition(object):
             the activation is identity (i.e. z_i = \hat z_i)
         scaling_object : instance of object supporting ScalingInterface
             This object must support the ScalingInterface (see scaling.py)
+        input_bounds: list of tuples
+            List of tuples where each tuple contains the lower and upper bound for an UNSCALED input 
+            e.g. input_bounds = [(lb1,ub1),(lb2,ub2),(lb3,ub3)] for 3 inputs
         """
         self.__n_inputs = n_inputs
         self.__n_hidden = n_hidden
@@ -51,6 +56,7 @@ class NetworkDefinition(object):
         self.__biases = biases
         self.__activations = activations
         self.__scaling_object = scaling_object
+        self.__input_bounds = input_bounds
 
         if len(weights) != n_hidden + n_outputs:
             raise ValueError('The length of the weights dictionary should match '
@@ -58,6 +64,13 @@ class NetworkDefinition(object):
         if len(biases) != n_hidden + n_outputs:
             raise ValueError('The length of the biases dictionary should match '
                              'n_hidden + n_outputs')
+        if input_bounds == None:
+            warnings.warn("No input bounds were provided. This may lead to extrapolation outside of the training data")
+        else:
+            if len(input_bounds) != n_inputs:
+                raise ValueError('The length of the input_bounds list should match n_inputs')
+            if not all(len(i) == 2 for i in input_bounds):
+                raise ValueError('The elements of input_bounds must be tuples of length 2 containing (lower_bound,upper_bound)')
 
         # todo: we should probably add more error checking here
 
@@ -95,6 +108,11 @@ class NetworkDefinition(object):
     def scaling_object(self):
         """ Return an instance of the scaling object that supports the ScalingInterface"""
         return self.__scaling_object
+
+    @property
+    def input_bounds(self):
+        """ Return a list of tuples containing lower and upper bounds of neural network inputs"""
+        return self.__input_bounds
 
     @scaling_object.setter
     def scaling_object(self, scaling_object):

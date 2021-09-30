@@ -1,6 +1,6 @@
-from pyoml.opt.network_definition import NetworkDefinition
+from optml.neuralnet.network_definition import NetworkDefinition
 
-def load_keras_sequential(nn):
+def load_keras_sequential(nn,scaling_object=None,input_bounds=None):
     """
     Load a keras neural network model (built with Sequential) into
     a pyoml network definition object. This network definition object
@@ -8,7 +8,9 @@ def load_keras_sequential(nn):
     Parameters
     ----------
     nn : keras.model
-        A keras model that was build with Sequential
+        A keras model that was built with Sequential
+    scaling_object : instance of object supporting ScalingInterface (see scaling.py) 
+    input_bounds: list of tuples
     Returns
     -------
     NetworkDefinition
@@ -42,5 +44,7 @@ def load_keras_sequential(nn):
                               n_outputs=n_outputs,
                               weights=w,
                               biases=b,
-                              activations=a
+                              activations=a,
+                              scaling_object=scaling_object,
+                              input_bounds=input_bounds
                             )
