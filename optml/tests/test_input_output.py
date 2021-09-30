@@ -1,6 +1,8 @@
 import pytest
 import pyomo.environ as pyo
+import pyomo
 from optml.block import _BaseInputOutputBlock
+from optml.scaling import OffsetScaling
 
 def test_input_output_auto_creation():
     m  = pyo.ConcreteModel()
@@ -93,3 +95,44 @@ def test_provided_inputs_outputs():
     m.b6 = _BaseInputOutputBlock()
     with pytest.raises(ValueError):
         m.b6._setup_inputs_outputs(n_inputs=3, input_vars=[m.cin], n_outputs=2, output_vars=[m.cout[1]])
+
+def test_scaled_inputs_outputs():
+    m = pyo.ConcreteModel()
+    m.cin = pyo.Var(['A', 'B', 'C'])
+    m.cout = pyo.Var([1,2])
+
+    scale_x = (1, 0.5)
+    scale_y = (-0.25, 0.125)
+
+    scaler = OffsetScaling(offset_inputs=[scale_x[0],scale_x[0],scale_x[0]],
+                            factor_inputs=[scale_x[1],scale_x[1],scale_x[1]],
+                            offset_outputs=[scale_y[0],scale_y[0]],
+                            factor_outputs=[scale_y[1],scale_y[1]])
+
+    input_bounds = [(0,5),(-2,2),(0,1)]
+
+    m.b1 = _BaseInputOutputBlock()
+    m.b1._setup_inputs_outputs(n_inputs=3, input_vars=[m.cin], n_outputs=2, output_vars=[m.cout])
+    m.b1._setup_scaled_inputs_outputs(scaling_object=None, input_bounds=input_bounds, use_scaling_expressions=False)
+    assert m.b1.inputs_list == m.b1.scaled_inputs_list 
+    assert isinstance(m.b1.inputs_list[0],pyomo.core.base.var._GeneralVarData)
+    assert m.b1.scaled_inputs_list[0].lb == 0
+    assert m.b1.scaled_inputs_list[0].ub == 5
+
+    m.b2 = _BaseInputOutputBlock()
+    m.b2._setup_inputs_outputs(n_inputs=3, input_vars=[m.cin], n_outputs=2, output_vars=[m.cout])
+    m.b2._setup_scaled_inputs_outputs(scaling_object=scaler, input_bounds=None, use_scaling_expressions=True)
+    assert isinstance(m.b2.scaled_inputs_list[0],pyomo.core.expr.numeric_expr.DivisionExpression)
+    assert isinstance(m.b2.scaled_outputs_list[0],pyomo.core.expr.numeric_expr.DivisionExpression)
+
+    m.b3 = _BaseInputOutputBlock()
+    m.b3._setup_inputs_outputs(n_inputs=3, input_vars=[m.cin], n_outputs=2, output_vars=[m.cout])
+    m.b3._setup_scaled_inputs_outputs(scaling_object=scaler, input_bounds=None, use_scaling_expressions=False)
+    assert m.nvariables() == 10
+    assert m.nconstraints() == 5
+
+    m.b4 = _BaseInputOutputBlock()
+    m.b4._setup_inputs_outputs(n_inputs=3, input_vars=[m.cin], n_outputs=2, output_vars=[m.cout])
+    m.b4._setup_scaled_inputs_outputs(scaling_object=scaler, input_bounds=input_bounds, use_scaling_expressions=False)
+    assert m.b4.scaled_inputs_list[0].lb == -2
+    assert m.b4.scaled_inputs_list[0].ub == 8
