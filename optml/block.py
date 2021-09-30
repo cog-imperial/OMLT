@@ -164,12 +164,13 @@ class _BaseInputOutputBlockData(_BlockData):
                 self.__unscale_output_con[i] = self.outputs_list[i] == unscaled_output_expressions[i]
 
             # scale input bounds
-            input_lower = [input_bounds[i][0] for i in range(len(input_bounds))]
-            input_upper = [input_bounds[i][1] for i in range(len(input_bounds))]
-            scaled_lower = scaling_object.get_scaled_input_expressions(input_lower)
-            scaled_upper = scaling_object.get_scaled_input_expressions(input_upper)
-            scaled_input_bounds = list(zip(scaled_lower,scaled_upper))
-            self._setup_input_bounds(self.scaled_inputs_list,scaled_input_bounds)
+            if input_bounds:
+                input_lower = [input_bounds[i][0] for i in range(len(input_bounds))]
+                input_upper = [input_bounds[i][1] for i in range(len(input_bounds))]
+                scaled_lower = scaling_object.get_scaled_input_expressions(input_lower)
+                scaled_upper = scaling_object.get_scaled_input_expressions(input_upper)
+                scaled_input_bounds = list(zip(scaled_lower,scaled_upper))
+                self._setup_input_bounds(self.scaled_inputs_list,scaled_input_bounds)
         return  
 
     @property
