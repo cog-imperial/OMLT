@@ -1,8 +1,8 @@
 # OptML
 OptML is a Python package for representing machine learning models (such as neural networks) within the Pyomo optimization environment. The package provides various formulations for representing machine-learning models (such as full-space, reduced-space, and MILP), as well as an interface to import sequential Keras models.
 
-# NOTE:
-Current development of this package takes place at: https://github.com/cog-imperial/OptML
+# OptML development has moved:
+### Current development of this package takes place at: https://github.com/cog-imperial/OptML
 
 # Simple Example:
 ```python
@@ -58,9 +58,9 @@ model.nn.outputs_list
 model.nn.scaled_inputs_list 
 model.nn.scaled_outputs_list
 
-#fix the input variable (for demonstration purposes)
-model.nn.inputs_list[0].fix(2)
+#solve an inverse problem to find that input that most closely matches the output value of 0.5
+model.obj = pyo.Objective(expr=(m.output - 0.5)**2)
 status = pyo.SolverFactory('ipopt').solve(model, tee=False)
-print(pyo.value(model.nn.inputs_list[0]))
-print(pyo.value(model.nn.outputs_list[0]))
+print(pyo.value(model.input))
+print(pyo.value(model.output))
 ```
