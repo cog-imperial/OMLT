@@ -59,7 +59,7 @@ model.nn.scaled_inputs_list
 model.nn.scaled_outputs_list
 
 #solve an inverse problem to find that input that most closely matches the output value of 0.5
-model.obj = pyo.Objective(expr=(m.output - 0.5)**2)
+model.obj = pyo.Objective(expr=(model.output - 0.5)**2)
 status = pyo.SolverFactory('ipopt').solve(model, tee=False)
 print(pyo.value(model.input))
 print(pyo.value(model.output))
