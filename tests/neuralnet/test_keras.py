@@ -13,7 +13,7 @@ from optml.neuralnet.relu import ReLUBigMFormulation, ReLUComplementarityFormula
 
 from optml.scaling import OffsetScaling
 from optml.neuralnet.keras_reader import load_keras_sequential
-from optml.tests.train_keras_models import get_data
+from tests.neuralnet.train_keras_models import get_data
 
 def _test_keras_linear_131(keras_fname, reduced_space=False):
     x,y,x_test = get_data('131')

@@ -2,7 +2,7 @@ import pytest
 from pathlib import Path
 import onnx
 import pyomo.environ as pe
-from pyoml.opt.neuralnet import OptMLBlock
+from optml import OptMLBlock
 from optml.gbt.model import GradientBoostedTreeModel
 from optml.gbt.formulation import add_formulation_to_block, BigMFormulation
 

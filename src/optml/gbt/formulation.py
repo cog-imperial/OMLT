@@ -1,6 +1,6 @@
 import pyomo.environ as pe
 import numpy as np
-from pyoml.opt.neuralnet import _PyomoFormulation
+from optml.formulation import _PyomoFormulation
 from optml.gbt.model import GradientBoostedTreeModel
 
 

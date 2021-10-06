@@ -1,5 +1,5 @@
 from onnx import numpy_helper
-from pyoml.opt.network_definition import NetworkDefinition
+from optml.neuralnet.network_definition import NetworkDefinition
 
 
 def load_onnx_neural_network(onnx):

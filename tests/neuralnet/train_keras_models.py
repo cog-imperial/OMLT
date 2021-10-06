@@ -5,7 +5,7 @@ import keras
 from pyomo.common.fileutils import this_file_dir
 from keras.models import Sequential, Model
 from keras.layers import Dense
-from keras.optimizers import Adamax
+from tensorflow.keras.optimizers import Adamax
 
 def get_data(desc):
     if desc == '131':
