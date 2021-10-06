@@ -31,7 +31,6 @@ Contents
 
    Overview <readme>
    License <license>
-   Authors <authors>
    Changelog <changelog>
    Module Reference <api/modules>
 

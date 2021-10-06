@@ -9,6 +9,7 @@ Examples
 ========
 
 .. code-block:: Python
+
    import tensorflow 
    import pyomo.environ as pyo
    from optml import OptMLBlock, OffsetScaling

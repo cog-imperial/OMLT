@@ -5,6 +5,9 @@ Changelog
 Version 0.1
 ===========
 
-- Feature A added
-- FIX: nasty bug #1729 fixed
-- add your changes here!
+Added
+-----
+
+ - Neural Network formulations
+ - GBT formulation
+ - ONNX importer for Neural Networks and GBT
