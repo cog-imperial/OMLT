@@ -14,3 +14,7 @@ except PackageNotFoundError:  # pragma: no cover
     __version__ = "unknown"
 finally:
     del version, PackageNotFoundError
+
+# Top level exports
+from optml.block import OptMLBlock
+from optml.scaling import OffsetScaling
