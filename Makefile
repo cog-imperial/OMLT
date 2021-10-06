@@ -1,7 +1,7 @@
 .PHONY: develop test
 
 develop:
-	pip install -e .[testing]
+	python -m pip install -e .[testing]
 
 test:
-	tox
+	python -m tox
