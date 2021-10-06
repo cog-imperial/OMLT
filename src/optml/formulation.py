@@ -1,10 +1,12 @@
-import weakref
 import abc
+import weakref
+
 
 class _PyomoFormulationInterface(abc.ABC):
-    """ Base class interface for a Pyomo formulation object. This class
+    """Base class interface for a Pyomo formulation object. This class
     is largely internal, and developers of new formulations should derive from
     :class:`pyoml.opt.neuralnet.PyomoFormulation`."""
+
     def __init__(self):
         pass
 
@@ -31,9 +33,10 @@ class _PyomoFormulationInterface(abc.ABC):
     def _build_formulation(self):
         pass
 
+
 class _PyomoFormulation(_PyomoFormulationInterface):
     def __init__(self, network_structure):
-        """ This is a base class for different Pyomo formulations. To create a new
+        """This is a base class for different Pyomo formulations. To create a new
         formulation, inherit from this class and implement the build_formulation method. See
         :class:`pyoml.opt.neuralnet.FullSpaceContinuousFormulation` for an example."""
         super(_PyomoFormulation, self).__init__()
@@ -50,7 +53,7 @@ class _PyomoFormulation(_PyomoFormulationInterface):
 
     @property
     def network_definition(self):
-        """ The object providing a definition of the network structure. Network
+        """The object providing a definition of the network structure. Network
         definitions can be loaded from common training packages (e.g., see
         :func:`pyoml.opt.keras_reader.load_keras_sequential`.) For a description
         of the network definition object, see
@@ -79,7 +82,7 @@ class _PyomoFormulation(_PyomoFormulationInterface):
 
     @abc.abstractmethod
     def _build_formulation(self):
-        """ This method is called by the OptMLBlock object to build the
+        """This method is called by the OptMLBlock object to build the
         corresponding mathematical formulation of the model.
         See :class:`pyoml.opt.neuralnet.FullSpaceContinuousFormulation` for
         an example of an implementation.

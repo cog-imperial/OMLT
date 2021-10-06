@@ -1,5 +1,7 @@
 import pytest
+
 from optml.neuralnet.network_definition import NetworkDefinition
+
 
 # ToDo: Add tests for teh scaling object
 def test_network_definition():

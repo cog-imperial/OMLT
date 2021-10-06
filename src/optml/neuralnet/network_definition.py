@@ -1,8 +1,18 @@
 import warnings
 
+
 class NetworkDefinition(object):
-    def __init__(self, n_inputs, n_hidden, n_outputs, weights, biases,
-                 activations, scaling_object=None, input_bounds=None):
+    def __init__(
+        self,
+        n_inputs,
+        n_hidden,
+        n_outputs,
+        weights,
+        biases,
+        activations,
+        scaling_object=None,
+        input_bounds=None,
+    ):
         """
         This class provides the neural network structure in a way that is *similar* to
         that provided in [1] as defined by:
@@ -59,18 +69,28 @@ class NetworkDefinition(object):
         self.__input_bounds = input_bounds
 
         if len(weights) != n_hidden + n_outputs:
-            raise ValueError('The length of the weights dictionary should match '
-                             'n_hidden + n_outputs')
+            raise ValueError(
+                "The length of the weights dictionary should match "
+                "n_hidden + n_outputs"
+            )
         if len(biases) != n_hidden + n_outputs:
-            raise ValueError('The length of the biases dictionary should match '
-                             'n_hidden + n_outputs')
+            raise ValueError(
+                "The length of the biases dictionary should match "
+                "n_hidden + n_outputs"
+            )
         if input_bounds == None:
-            warnings.warn("No input bounds were provided. This may lead to extrapolation outside of the training data")
+            warnings.warn(
+                "No input bounds were provided. This may lead to extrapolation outside of the training data"
+            )
         else:
             if len(input_bounds) != n_inputs:
-                raise ValueError('The length of the input_bounds list should match n_inputs')
+                raise ValueError(
+                    "The length of the input_bounds list should match n_inputs"
+                )
             if not all(len(i) == 2 for i in input_bounds):
-                raise ValueError('The elements of input_bounds must be tuples of length 2 containing (lower_bound,upper_bound)')
+                raise ValueError(
+                    "The elements of input_bounds must be tuples of length 2 containing (lower_bound,upper_bound)"
+                )
 
         # todo: we should probably add more error checking here
 
@@ -119,24 +139,27 @@ class NetworkDefinition(object):
         self.__scaling_object = scaling_object
 
     def input_node_ids(self):
-        """ Return the ids associated with all the input nodes.
-        This is {0 .. n_x-1} """
+        """Return the ids associated with all the input nodes.
+        This is {0 .. n_x-1}"""
         return [i for i in range(self.n_inputs)]
 
     def hidden_node_ids(self):
-        """ Return the ids associated with all of the hidden nodes.
-        This is {n_x .. n_x+n_h-1} """
-        return [i for i in range(self.n_inputs, self.n_inputs+self.n_hidden)]
+        """Return the ids associated with all of the hidden nodes.
+        This is {n_x .. n_x+n_h-1}"""
+        return [i for i in range(self.n_inputs, self.n_inputs + self.n_hidden)]
 
     def output_node_ids(self):
-        """ Return the ids associated with all of the output nodes.
-        This is {n_x+n_h .. n_x+n_h+n_y-1} """
-        return [i for i in range(self.n_inputs + self.n_hidden,
-                                 self.n_inputs + self.n_hidden + self.n_outputs)]
+        """Return the ids associated with all of the output nodes.
+        This is {n_x+n_h .. n_x+n_h+n_y-1}"""
+        return [
+            i
+            for i in range(
+                self.n_inputs + self.n_hidden,
+                self.n_inputs + self.n_hidden + self.n_outputs,
+            )
+        ]
 
     def all_node_ids(self):
-        """ Return the ids associated with all of the nodes.
-        This is {0 .. n_x+n_h+n_y-1} """
+        """Return the ids associated with all of the nodes.
+        This is {0 .. n_x+n_h+n_y-1}"""
         return [i for i in range(0, self.n_inputs + self.n_hidden + self.n_outputs)]
-
-

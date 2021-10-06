@@ -1,6 +1,7 @@
 from optml.neuralnet.network_definition import NetworkDefinition
 
-def load_keras_sequential(nn,scaling_object=None,input_bounds=None):
+
+def load_keras_sequential(nn, scaling_object=None, input_bounds=None):
     """
     Load a keras neural network model (built with Sequential) into
     a pyoml network definition object. This network definition object
@@ -9,7 +10,7 @@ def load_keras_sequential(nn,scaling_object=None,input_bounds=None):
     ----------
     nn : keras.model
         A keras model that was built with Sequential
-    scaling_object : instance of object supporting ScalingInterface (see scaling.py) 
+    scaling_object : instance of object supporting ScalingInterface (see scaling.py)
     input_bounds: list of tuples
     Returns
     -------
@@ -30,21 +31,22 @@ def load_keras_sequential(nn,scaling_object=None,input_bounds=None):
         for i in range(n_layer_nodes):
             layer_w = dict()
             for j in range(n_layer_inputs):
-                layer_w[j+layer_offset] = weights[j,i]
+                layer_w[j + layer_offset] = weights[j, i]
             w[node_id_offset] = layer_w
             b[node_id_offset] = biases[i]
             # ToDo: leaky ReLU
-            a[node_id_offset] = cfg['activation']
+            a[node_id_offset] = cfg["activation"]
             node_id_offset += 1
         layer_offset += n_layer_inputs
     n_nodes = len(a) + n_inputs
     n_hidden = n_nodes - n_inputs - n_outputs
-    return NetworkDefinition(n_inputs=n_inputs,
-                              n_hidden=n_hidden,
-                              n_outputs=n_outputs,
-                              weights=w,
-                              biases=b,
-                              activations=a,
-                              scaling_object=scaling_object,
-                              input_bounds=input_bounds
-                            )
+    return NetworkDefinition(
+        n_inputs=n_inputs,
+        n_hidden=n_hidden,
+        n_outputs=n_outputs,
+        weights=w,
+        biases=b,
+        activations=a,
+        scaling_object=scaling_object,
+        input_bounds=input_bounds,
+    )

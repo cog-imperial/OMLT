@@ -1,4 +1,5 @@
 from onnx import numpy_helper
+
 from optml.neuralnet.network_definition import NetworkDefinition
 
 
@@ -48,14 +49,14 @@ class NetworkParser:
         self._node_map = dict()
 
         for input in self._graph.input:
-            nodes[input.name] = ('input', input.type, [])
+            nodes[input.name] = ("input", input.type, [])
             nodes_by_output[input.name] = input.name
             inputs.add(input.name)
             nid = self._next_node_id()
             self._node_map[input.name] = [nid]
 
         for output in self._graph.output:
-            nodes[output.name] = ('output', output.type, [])
+            nodes[output.name] = ("output", output.type, [])
             outputs.add(output.name)
 
         self._nodes = nodes
@@ -72,7 +73,7 @@ class NetworkParser:
 
         for node in self._graph.node:
             # add node not connected to anything
-            self._nodes[node.name] = ('node', node, [])
+            self._nodes[node.name] = ("node", node, [])
 
             # Map inputs by their output name
             node_inputs = [
@@ -97,7 +98,7 @@ class NetworkParser:
             type_, node, next_nodes = self._nodes[node_name]
 
             # no need to process inputs or outputs
-            if type_ == 'node':
+            if type_ == "node":
                 self._visit_node(node, next_nodes)
             else:
                 for next in next_nodes:
@@ -113,7 +114,7 @@ class NetworkParser:
             n_outputs=n_outputs,
             weights=self._weights,
             biases=self._biases,
-            activations=self._activations
+            activations=self._activations,
         )
 
     def _next_node_id(self):
@@ -122,16 +123,16 @@ class NetworkParser:
         return n
 
     def _visit_node(self, node, next_nodes):
-        if node.op_type == 'MatMul':
+        if node.op_type == "MatMul":
             next_nodes = self._consume_dense_nodes(node, next_nodes)
             for next in next_nodes:
                 self._node_stack.append(next)
         else:
-            raise Exception(f'Unhandled node type {node.op_type}')
+            raise Exception(f"Unhandled node type {node.op_type}")
 
     def _consume_dense_nodes(self, node, next_nodes):
         """Starting from a MatMul node, consume nodes to form a dense Ax + b node."""
-        assert node.op_type == 'MatMul'
+        assert node.op_type == "MatMul"
         assert len(node.input) == 2
 
         [in_0, in_1] = list(node.input)
@@ -148,8 +149,8 @@ class NetworkParser:
 
         # expect 'Add' node ahead
         type_, node, maybe_next_nodes = self._nodes[next_nodes[0]]
-        assert type_ == 'node'
-        assert node.op_type == 'Add'
+        assert type_ == "node"
+        assert node.op_type == "Add"
 
         # extract biases
         next_nodes = maybe_next_nodes
@@ -163,9 +164,7 @@ class NetworkParser:
             node_biases = self._initializers[in_1]
 
         assert node_weights.shape[1] == node_biases.shape[0]
-        new_node_ids = [
-            self._next_node_id() for _ in node_biases
-        ]
+        new_node_ids = [self._next_node_id() for _ in node_biases]
 
         assert len(node.output) == 1
 
@@ -182,7 +181,7 @@ class NetworkParser:
             self._weights[nid] = weights
             self._biases[nid] = node_biases[i]
             # TODO: use real activations
-            self._activations[nid] = 'linear'
+            self._activations[nid] = "linear"
 
         # look for activation type, if any
         return next_nodes

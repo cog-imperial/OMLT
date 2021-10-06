@@ -1,6 +1,8 @@
 import pyomo.environ as pyo
+
 from ..formulation import _PyomoFormulation
 from ..utils import pyomo_activations
+
 
 class FullSpaceContinuousFormulation(_PyomoFormulation):
     def __init__(self, network_structure):
@@ -30,12 +32,15 @@ class FullSpaceContinuousFormulation(_PyomoFormulation):
         super(FullSpaceContinuousFormulation, self).__init__(network_structure)
 
     def _build_formulation(self):
-        """ This method is called by the OptMLBlock to build the corresponding
+        """This method is called by the OptMLBlock to build the corresponding
         mathematical formulation on the Pyomo block.
         """
-        build_full_space_formulation(block=self.block,
-                                     network_structure=self.network_definition,
-                                     skip_activations=False)
+        build_full_space_formulation(
+            block=self.block,
+            network_structure=self.network_definition,
+            skip_activations=False,
+        )
+
 
 def build_full_space_formulation(block, network_structure, skip_activations=False):
     # for now, we build the full model with extraneous variables and constraints
@@ -46,7 +51,7 @@ def build_full_space_formulation(block, network_structure, skip_activations=Fals
     # this is needed since the indexing in the input - output block
     # is not consistent with the nodal network representation
     input_node_ids = net.input_node_ids()
-    inputs_list = block.scaled_inputs_list #these are scaled inputs
+    inputs_list = block.scaled_inputs_list  # these are scaled inputs
     hidden_output_node_ids = list()
     hidden_output_node_ids.extend(net.hidden_node_ids())
     hidden_output_node_ids.extend(net.output_node_ids())
@@ -77,21 +82,29 @@ def build_full_space_formulation(block, network_structure, skip_activations=Fals
     w = net.weights
     b = net.biases
     for i in block.hidden_output_nodes:
-        block.linear_constraints[i] = block.zhat[i] == sum(w[i][j] * block.z[j] for j in w[i]) + b[i]
+        block.linear_constraints[i] = (
+            block.zhat[i] == sum(w[i][j] * block.z[j] for j in w[i]) + b[i]
+        )
 
     # define the activation constraints
     if not skip_activations:
         activations = net.activations
         block.activation_constraints = pyo.Constraint(block.hidden_output_nodes)
         for i in block.hidden_output_nodes:
-            if i not in activations or activations[i] is None or activations[i] == 'linear':
+            if (
+                i not in activations
+                or activations[i] is None
+                or activations[i] == "linear"
+            ):
                 block.activation_constraints[i] = block.z[i] == block.zhat[i]
             elif type(activations[i]) is str:
                 afunc = pyomo_activations[activations[i]]
                 block.activation_constraints[i] = block.z[i] == afunc(block.zhat[i])
             else:
                 # better have given us a function that is valid for pyomo expressions
-                block.activation_constraints[i] = block.z[i] == activations[i](block.zhat[i])
+                block.activation_constraints[i] = block.z[i] == activations[i](
+                    block.zhat[i]
+                )
 
     # define the output constraints
     outputs = {i: block.z[i] for i in output_node_ids}

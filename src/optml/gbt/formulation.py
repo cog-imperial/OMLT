@@ -1,12 +1,13 @@
-import pyomo.environ as pe
 import numpy as np
+import pyomo.environ as pe
+
 from optml.formulation import _PyomoFormulation
 from optml.gbt.model import GradientBoostedTreeModel
 
 
 class BigMFormulation(_PyomoFormulation):
     def _build_formulation(self):
-        """ This method is called by the OptMLBlock to build the corresponding
+        """This method is called by the OptMLBlock to build the corresponding
         mathematical formulation on the Pyomo block.
         """
         add_formulation_to_block(
@@ -36,25 +37,27 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars):
     root_node = graph.node[0]
     attr = _node_attributes(root_node)
 
-    nodes_feature_ids = np.array(attr['nodes_featureids'].ints)
-    nodes_values = np.array(attr['nodes_values'].floats)
-    nodes_modes = np.array(attr['nodes_modes'].strings)
-    nodes_tree_ids = np.array(attr['nodes_treeids'].ints)
-    nodes_node_ids = np.array(attr['nodes_nodeids'].ints)
-    nodes_false_node_ids = np.array(attr['nodes_falsenodeids'].ints)
-    nodes_true_node_ids = np.array(attr['nodes_truenodeids'].ints)
-    nodes_hitrates = np.array(attr['nodes_hitrates'].floats)
-    nodes_missing_value_tracks_true = np.array(attr['nodes_missing_value_tracks_true'].ints)
+    nodes_feature_ids = np.array(attr["nodes_featureids"].ints)
+    nodes_values = np.array(attr["nodes_values"].floats)
+    nodes_modes = np.array(attr["nodes_modes"].strings)
+    nodes_tree_ids = np.array(attr["nodes_treeids"].ints)
+    nodes_node_ids = np.array(attr["nodes_nodeids"].ints)
+    nodes_false_node_ids = np.array(attr["nodes_falsenodeids"].ints)
+    nodes_true_node_ids = np.array(attr["nodes_truenodeids"].ints)
+    nodes_hitrates = np.array(attr["nodes_hitrates"].floats)
+    nodes_missing_value_tracks_true = np.array(
+        attr["nodes_missing_value_tracks_true"].ints
+    )
 
-    n_targets = attr['n_targets'].i
-    target_ids = np.array(attr['target_ids'].ints)
-    target_node_ids = np.array(attr['target_nodeids'].ints)
-    target_tree_ids = np.array(attr['target_treeids'].ints)
-    target_weights = np.array(attr['target_weights'].floats)
+    n_targets = attr["n_targets"].i
+    target_ids = np.array(attr["target_ids"].ints)
+    target_node_ids = np.array(attr["target_nodeids"].ints)
+    target_tree_ids = np.array(attr["target_treeids"].ints)
+    target_weights = np.array(attr["target_weights"].floats)
 
     # Compute derived data
-    nodes_leaf_mask = nodes_modes == b'LEAF'
-    nodes_branch_mask = nodes_modes == b'BRANCH_LEQ'
+    nodes_leaf_mask = nodes_modes == b"LEAF"
+    nodes_branch_mask = nodes_modes == b"BRANCH_LEQ"
 
     tree_ids = set(nodes_tree_ids)
     feature_ids = set(nodes_feature_ids)
@@ -105,9 +108,19 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars):
     def single_leaf(b, tree_id):
         """Equation 2b, Misic."""
         tree_mask = nodes_tree_ids == tree_id
-        return sum(b.z_l[tree_id, node_id] for node_id in nodes_node_ids[nodes_leaf_mask & tree_mask]) == 1
+        return (
+            sum(
+                b.z_l[tree_id, node_id]
+                for node_id in nodes_node_ids[nodes_leaf_mask & tree_mask]
+            )
+            == 1
+        )
 
-    nodes_tree_branch_ids = [(t, b) for t in tree_ids for b in nodes_node_ids[(nodes_tree_ids == t) & nodes_branch_mask]]
+    nodes_tree_branch_ids = [
+        (t, b)
+        for t in tree_ids
+        for b in nodes_node_ids[(nodes_tree_ids == t) & nodes_branch_mask]
+    ]
 
     def _branching_y(tree_id, branch_node_id):
         node_mask = (nodes_tree_ids == tree_id) & (nodes_node_ids == branch_node_id)
@@ -116,15 +129,14 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars):
         assert len(feature_id) == 1 and len(branch_value) == 1
         feature_id = feature_id[0]
         branch_value = branch_value[0]
-        branch_y_idx, = np.where(branch_value_by_feature_id[feature_id] == branch_value)
+        (branch_y_idx,) = np.where(
+            branch_value_by_feature_id[feature_id] == branch_value
+        )
         assert len(branch_y_idx) == 1
         if feature_id not in categorical_vars:
             return block.y[feature_id, branch_y_idx[0]]
 
-        return sum(
-            block.x[feature_id, v]
-            for v in categorical_split_values(feature_id)
-        )
+        return sum(block.x[feature_id, v] for v in categorical_split_values(feature_id))
 
     def _sum_of_z_l(tree_id, start_node_id):
         tree_mask = nodes_tree_ids == tree_id
@@ -135,7 +147,7 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars):
         sum_of_z_l = 0.0
         while visit_queue:
             node_id = visit_queue.pop()
-            if local_mode[node_id] == b'LEAF':
+            if local_mode[node_id] == b"LEAF":
                 sum_of_z_l += block.z_l[tree_id, node_id]
             else:
                 # add left and right child to list of nodes to visit
@@ -159,7 +171,7 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars):
         y = _branching_y(tree_id, branch_node_id)
 
         subtree_root = nodes_true_node_ids[node_mask][0]
-        return _sum_of_z_l(tree_id, subtree_root) <= 1- - y
+        return _sum_of_z_l(tree_id, subtree_root) <= 1 - -y
 
     @block.Constraint(categorical_vars.keys())
     def categorical(b, feature_id):
@@ -200,8 +212,11 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars):
     def tree_mean_value(b):
         return output_vars[0] == sum(
             weight * b.z_l[tree_id, node_id]
-            for tree_id, node_id, weight in zip(target_tree_ids, target_node_ids, target_weights)
+            for tree_id, node_id, weight in zip(
+                target_tree_ids, target_node_ids, target_weights
+            )
         )
+
 
 def _node_attributes(node):
     attr = dict()

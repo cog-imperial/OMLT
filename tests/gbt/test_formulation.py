@@ -1,14 +1,16 @@
-import pytest
 from pathlib import Path
+
 import onnx
 import pyomo.environ as pe
+import pytest
+
 from optml import OptMLBlock
+from optml.gbt.formulation import BigMFormulation, add_formulation_to_block
 from optml.gbt.model import GradientBoostedTreeModel
-from optml.gbt.formulation import add_formulation_to_block, BigMFormulation
 
 
 def test_formulation_with_continuous_variables():
-    model = onnx.load(Path(__file__).parent / 'continuous_model.onnx')
+    model = onnx.load(Path(__file__).parent / "continuous_model.onnx")
 
     m = pe.ConcreteModel()
 
@@ -20,10 +22,7 @@ def test_formulation_with_continuous_variables():
 
     m.gbt = pe.Block()
     add_formulation_to_block(
-        m.gbt,
-        model,
-        input_vars=[m.x[i] for i in range(4)],
-        output_vars=[m.z]
+        m.gbt, model, input_vars=[m.x[i] for i in range(4)], output_vars=[m.z]
     )
 
     assert len(list(m.gbt.component_data_objects(pe.Var))) == 202
@@ -40,9 +39,8 @@ def test_formulation_with_continuous_variables():
     assert len(m.gbt.var_upper) == 42
 
 
-
 def test_formulation_with_categorical_variables():
-    model = onnx.load(Path(__file__).parent / 'categorical_model.onnx')
+    model = onnx.load(Path(__file__).parent / "categorical_model.onnx")
 
     m = pe.ConcreteModel()
 
@@ -54,10 +52,7 @@ def test_formulation_with_categorical_variables():
 
     m.gbt = pe.Block()
     add_formulation_to_block(
-        m.gbt,
-        model,
-        input_vars=[m.x[0], m.x[1], m.x[2], m.y],
-        output_vars=[m.z]
+        m.gbt, model, input_vars=[m.x[0], m.x[1], m.x[2], m.y], output_vars=[m.z]
     )
 
     assert len(list(m.gbt.component_data_objects(pe.Var))) == 193
@@ -77,7 +72,7 @@ def test_formulation_with_categorical_variables():
 
 
 def test_big_m_formulation_block():
-    onnx_model = onnx.load(Path(__file__).parent / 'continuous_model.onnx')
+    onnx_model = onnx.load(Path(__file__).parent / "continuous_model.onnx")
     model = GradientBoostedTreeModel(onnx_model)
 
     m = pe.ConcreteModel()

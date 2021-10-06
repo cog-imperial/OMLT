@@ -69,6 +69,18 @@ Examples
    print(pyo.value(model.output))
 
 
+Development
+===========
+
+OptML uses `tox` to manage development tasks:
+
+ * `tox -av` to list available tasks
+ * `tox` to run tests
+ * `tox -e lint` to check formatting and code styles
+ * `tox -e format` to automatically format files
+ * `tox -e docs` to build the documentation
+ * `tox -e publish` to publish the package to PyPi
+
 Contributors
 ============
 
