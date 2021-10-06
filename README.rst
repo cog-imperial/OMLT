@@ -80,10 +80,18 @@ Contributors
      - Name
      - Acknowledgements
 
+   * - |jalving|_
+     - Jordan Jalving 
+     - 
+
    * - |fracek|_
      - Francesco Ceccon
      - This work was funded by an Engineering & Physical Sciences Research Council Research Fellowship [GrantNumber EP/P016871/1]
 
+
+.. _jalving: https://github.com/jalving
+.. |jalving| image:: https://avatars1.githubusercontent.com/u/16785413?s=120&v=4
+   :width: 80px
 
 .. _fracek: https://github.com/fracek
 .. |fracek| image:: https://avatars1.githubusercontent.com/u/282580?s=120&v=4
