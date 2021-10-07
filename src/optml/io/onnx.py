@@ -170,6 +170,16 @@ class NetworkParser:
 
         self._node_map[node.output[0]] = new_node_ids
 
+        # shared between all nodes
+        activation = "linear"
+        if len(next_nodes) == 1:
+            # check if Relu
+            type_, node, maybe_next_nodes = self._nodes[next_nodes[0]]
+            if node.op_type in ["Relu", "Sigmoid"]:
+                activation = node.op_type.lower()
+                next_nodes = maybe_next_nodes
+                self._node_map[node.output[0]] = new_node_ids
+
         # update weights and biases
         assert len(input_node) == node_weights.shape[0]
 
@@ -180,8 +190,7 @@ class NetworkParser:
             )
             self._weights[nid] = weights
             self._biases[nid] = node_biases[i]
-            # TODO: use real activations
-            self._activations[nid] = "linear"
+            self._activations[nid] = activation
 
         # look for activation type, if any
         return next_nodes

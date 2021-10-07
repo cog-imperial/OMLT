@@ -1,5 +1,4 @@
 import pyomo.environ as pyo
-
 from ..formulation import _PyomoFormulation
 from ..utils import pyomo_activations
 
@@ -75,6 +74,11 @@ def build_full_space_formulation(block, network_structure, skip_activations=Fals
     # Todo: We could eliminate these constraints and use x[i] directly where applicable
     block.input_constraints = pyo.Constraint(input_node_ids)
     for i in input_node_ids:
+        lb, ub = inputs[i].bounds
+        if lb is not None:
+            block.z[i].setlb(lb)
+        if ub is not None:
+            block.z[i].setub(ub)
         block.input_constraints[i] = block.z[i] == inputs[i]
 
     # define the linear constraints
