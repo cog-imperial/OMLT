@@ -1,7 +1,9 @@
+from warnings import warn
+
 import pyomo.environ as pyo
 import pyomo.mpec as mpec
-from warnings import warn
 from pyomo.contrib.fbbt.fbbt import compute_bounds_on_expr
+
 from ..formulation import _PyomoFormulation
 from .full_space import build_full_space_formulation
 

@@ -1,4 +1,5 @@
 import pyomo.environ as pyo
+
 from ..formulation import _PyomoFormulation
 from ..utils import pyomo_activations
 
