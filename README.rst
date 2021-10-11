@@ -99,6 +99,10 @@ Contributors
    * - |fracek|_
      - Francesco Ceccon
      - This work was funded by an Engineering & Physical Sciences Research Council Research Fellowship [GrantNumber EP/P016871/1]
+     
+   * - |tsaycal|_
+     - Calvin Tsay
+     - This work was funded by an Engineering & Physical Sciences Research Council Research Fellowship [GrantNumber EP/T001577/1], with additional support from an Imperial College Research Fellowship.
 
 
 .. _jalving: https://github.com/jalving
@@ -107,4 +111,8 @@ Contributors
 
 .. _fracek: https://github.com/fracek
 .. |fracek| image:: https://avatars1.githubusercontent.com/u/282580?s=120&v=4
+   :width: 80px
+   
+.. _tsaycal: https://github.com/tsaycal
+.. |tsaycal| image:: https://avatars.githubusercontent.com/u/50914878?s=120&v=4
    :width: 80px
