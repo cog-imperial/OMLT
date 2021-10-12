@@ -36,7 +36,7 @@ def build_reduced_space_formulation(block, network_structure, skip_activations=F
     hidden_output_node_ids = net.hidden_node_ids()
     hidden_output_node_ids.extend(net.output_node_ids())
     output_node_ids = net.output_node_ids()
-    outputs_list = block.outputs_list
+    outputs_list = block.scaled_outputs_list
     x = {input_node_ids[i]: inputs_list[i] for i in range(len(input_node_ids))}
     y = {output_node_ids[i]: outputs_list[i] for i in range(len(output_node_ids))}
 
