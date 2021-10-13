@@ -55,7 +55,7 @@ class _PyomoFormulation(_PyomoFormulationInterface):
     def network_definition(self):
         """The object providing a definition of the network structure. Network
         definitions can be loaded from common training packages (e.g., see
-        :func:`pyoml.opt.keras_reader.load_keras_sequential`.) For a description
+        :func:`optml.io.keras_reader.load_keras_sequential`.) For a description
         of the network definition object, see
         :class:`pyoml.opt.network_definition.NetworkDefinition`"""
         return self.__network_definition

@@ -41,10 +41,8 @@ def test_offset_scaling():
     np.testing.assert_almost_equal(list(test_y_unscal.values()), list(y.values()))
 
 
-def test_scaling_NN_block():
-    NN = keras.models.load_model(
-        os.path.join(this_file_dir(), "models/keras_linear_131_relu")
-    )
+def test_scaling_NN_block(datadir):
+    NN = keras.models.load_model(datadir.file("keras_linear_131_relu"))
 
     model = ConcreteModel()
     model.input = Var()

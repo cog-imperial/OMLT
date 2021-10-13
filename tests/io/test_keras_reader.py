@@ -4,13 +4,11 @@ import keras
 import pytest
 from pyomo.common.fileutils import this_file_dir
 
-from omlt.neuralnet.keras_reader import load_keras_sequential
+from optml.io.keras_reader import load_keras_sequential
 
 
-def test_keras_reader():
-    nn = keras.models.load_model(
-        os.path.join(this_file_dir(), "models/keras_linear_131")
-    )
+def test_keras_reader(datadir):
+    nn = keras.models.load_model(datadir.file("keras_linear_131"))
     net = load_keras_sequential(nn)
     assert net.n_inputs == 1
     assert net.n_outputs == 1
@@ -21,9 +19,7 @@ def test_keras_reader():
     for k in net.activations:
         assert net.activations[k] == "linear"  # or net.activations[k] is None
 
-    nn = keras.models.load_model(
-        os.path.join(this_file_dir(), "./models/keras_linear_131_sigmoid")
-    )
+    nn = keras.models.load_model(datadir.file("keras_linear_131_sigmoid"))
     net = load_keras_sequential(nn)
     assert net.n_inputs == 1
     assert net.n_outputs == 1
@@ -40,9 +36,7 @@ def test_keras_reader():
     assert net.activations[4] == "linear"  # or net.activations[4] is None
 
     nn = keras.models.load_model(
-        os.path.join(
-            this_file_dir(), "./models/keras_linear_131_sigmoid_output_activation"
-        )
+        datadir.file("keras_linear_131_sigmoid_output_activation")
     )
     net = load_keras_sequential(nn)
     assert net.n_inputs == 1
@@ -58,7 +52,7 @@ def test_keras_reader():
     for k in [1, 2, 3, 4]:
         assert net.activations[k] == "sigmoid"
 
-    nn = keras.models.load_model(os.path.join(this_file_dir(), "./models/big"))
+    nn = keras.models.load_model(datadir.file("big"))
     net = load_keras_sequential(nn)
     assert net.n_inputs == 1
     assert net.n_outputs == 1

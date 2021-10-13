@@ -1,10 +1,6 @@
-import os.path
-
 import keras
 import pyomo.environ as pyo
-import pytest
 import tensorflow
-from pyomo.common.fileutils import this_file_dir
 
 from omlt.block import OmltBlock
 from omlt.neuralnet.full_space import FullSpaceContinuousFormulation
@@ -120,60 +116,42 @@ def _test_keras_linear_big(keras_fname, reduced_space=False):
         assert abs(pyo.value(m.neural_net_block.outputs[0]) - nn_outputs[d][0]) < 1e-5
 
 
-def test_keras_linear_131_full():
-    _test_keras_linear_131(os.path.join(this_file_dir(), "models/keras_linear_131"))
+def test_keras_linear_131_full(datadir):
+    _test_keras_linear_131(datadir.file("keras_linear_131"))
+    _test_keras_linear_131(datadir.file("keras_linear_131_sigmoid"))
+    _test_keras_linear_131(datadir.file("keras_linear_131_sigmoid_output_activation"))
     _test_keras_linear_131(
-        os.path.join(this_file_dir(), "models/keras_linear_131_sigmoid")
-    )
-    _test_keras_linear_131(
-        os.path.join(
-            this_file_dir(), "models/keras_linear_131_sigmoid_output_activation"
-        )
-    )
-    _test_keras_linear_131(
-        os.path.join(
-            this_file_dir(),
-            "models/keras_linear_131_sigmoid_softplus_output_activation",
-        )
+        datadir.file("keras_lienar_131_sigmoid_softplus_output_activation")
     )
 
 
-def test_keras_linear_131_reduced():
+def test_keras_linear_131_reduced(datadir):
+    _test_keras_linear_131(datadir.file("keras_linear_131"), reduced_space=True)
     _test_keras_linear_131(
-        os.path.join(this_file_dir(), "models/keras_linear_131"), reduced_space=True
-    )
-    _test_keras_linear_131(
-        os.path.join(this_file_dir(), "models/keras_linear_131_sigmoid"),
+        datadir.file("keras_linear_131_sigmoid"),
         reduced_space=True,
     )
     _test_keras_linear_131(
-        os.path.join(
-            this_file_dir(), "models/keras_linear_131_sigmoid_output_activation"
-        ),
+        datadir.file("keras_linear_131_sigmoid_output_activation"),
         reduced_space=True,
     )
     _test_keras_linear_131(
-        os.path.join(
-            this_file_dir(),
-            "models/keras_linear_131_sigmoid_softplus_output_activation",
-        ),
+        datadir.file("keras_linear_131_sigmoid_softplus_output_activation"),
         reduced_space=True,
     )
 
 
-def test_keras_linear_131_relu():
+def test_keras_linear_131_relu(datadir):
     _test_keras_mip_relu_131(
-        os.path.join(this_file_dir(), "models/keras_linear_131_relu")
+        datadir.file("keras_linear_131_relu"),
     )
     _test_keras_complementarity_relu_131(
-        os.path.join(this_file_dir(), "models/keras_linear_131_relu")
+        datadir.file("keras_linear_131_relu"),
     )
 
 
-def test_keras_linear_big():
-    _test_keras_linear_big(
-        os.path.join(this_file_dir(), "models/big"), reduced_space=False
-    )
+def test_keras_linear_big(datadir):
+    _test_keras_linear_big(datadir.file("big"), reduced_space=False)
     # too slow
     # _test_keras_linear_big('./models/big', reduced_space=True)
 

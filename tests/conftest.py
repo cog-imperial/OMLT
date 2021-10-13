@@ -1,15 +1,9 @@
-"""
-    Dummy conftest.py for omlt.
-
-    If you don't know what this is for, just leave it empty.
-    Read more about conftest.py under:
-    - https://docs.pytest.org/en/stable/fixture.html
-    - https://docs.pytest.org/en/stable/writing_plugins.html
-"""
-
-# import pytest
-
+import pytest
+from pathlib import Path
 import numpy as np
+
+from pyomo.common.fileutils import this_file_dir
+
 
 
 def get_neural_network_data(desc):
@@ -40,3 +34,21 @@ def get_neural_network_data(desc):
         return x, y, x_test
 
     return None
+
+
+class _Datadir:
+    """
+    Give access to files in the `models` directory.
+    """
+
+    def __init__(self, basedir):
+        self._basedir = basedir
+
+    def file(self, filename):
+        return str(self._basedir / filename)
+
+
+@pytest.fixture
+def datadir():
+    basedir = Path(this_file_dir()) / "models"
+    return _Datadir(basedir)
