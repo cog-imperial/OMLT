@@ -3,12 +3,19 @@ from onnx import numpy_helper
 from optml.neuralnet.network_definition import NetworkDefinition
 
 
-def load_onnx_neural_network(onnx):
+def load_onnx_neural_network(onnx, scaling_object=None, input_bounds=None):
     """
     Load a NetworkDefinition from an onnx object.
+
+    Parameters
+    ----------
+    onnx :
+        onnx model
+    scaling_object : instance of object supporting ScalingInterface
+    input_bounds : list of tuples
     """
     parser = NetworkParser()
-    return parser.parse_network(onnx.graph)
+    return parser.parse_network(onnx.graph, scaling_object, input_bounds)
 
 
 class NetworkParser:
@@ -30,7 +37,7 @@ class NetworkParser:
         self._biases = None
         self._activations = None
 
-    def parse_network(self, graph):
+    def parse_network(self, graph, scaling_object, input_bounds):
         self._reset_state()
         self._graph = graph
 
@@ -129,6 +136,8 @@ class NetworkParser:
             weights=self._weights,
             biases=self._biases,
             activations=self._activations,
+            scaling_object=scaling_object,
+            input_bounds=input_bounds,
         )
 
     def _next_node_id(self):
