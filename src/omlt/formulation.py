@@ -21,12 +21,12 @@ class _PyomoFormulationInterface(abc.ABC):
 
     @property
     @abc.abstractmethod
-    def n_inputs(self):
+    def input_indexes(self):
         pass
 
     @property
     @abc.abstractmethod
-    def n_outputs(self):
+    def output_indexes(self):
         pass
 
     @abc.abstractmethod
@@ -61,18 +61,22 @@ class _PyomoFormulation(_PyomoFormulationInterface):
         return self.__network_definition
 
     @property
-    def n_inputs(self):
-        """The number of inputs to the formulation."""
-        return self.__network_definition.n_inputs
+    def input_indexes(self):
+        """The indexes of the formulation inputs."""
+        network_inputs = list(self.__network_definition.input_nodes)
+        assert len(network_inputs) == 1, 'Unsupported multiple network input variables'
+        return network_inputs[0].input_indexes
 
     @property
-    def n_outputs(self):
-        """The number of outputs from the formulation."""
-        return self.__network_definition.n_outputs
+    def output_indexes(self):
+        """The indexes of the formulation output."""
+        network_outputs = list(self.__network_definition.output_nodes)
+        assert len(network_outputs) == 1, 'Unsupported multiple network output variables'
+        return network_outputs[0].output_indexes
 
     @property
     def scaling_object(self):
-        """The scaling object used in the underying network definition."""
+        """The scaling object used in the underlying network definition."""
         return self.network_definition.scaling_object
 
     @property

@@ -1,7 +1,8 @@
 import pyomo.environ as pyo
 
-from ..formulation import _PyomoFormulation
-from ..utils import pyomo_activations
+from omlt.formulation import _PyomoFormulation
+from omlt.utils import pyomo_activations
+from omlt.neuralnet.layer import DenseLayer, InputLayer
 
 
 class FullSpaceContinuousFormulation(_PyomoFormulation):
@@ -46,75 +47,74 @@ def build_full_space_formulation(block, network_structure, skip_activations=Fals
     # for now, we build the full model with extraneous variables and constraints
     # Todo: provide an option to remove extraneous variables and constraints
     net = network_structure
+    layers = list(net.nodes)
+    layer_to_index_map = dict((id(l), i) for i, l in enumerate(layers))
 
-    # map x and y to the inputs and outputs and verify the lengths
-    # this is needed since the indexing in the input - output block
-    # is not consistent with the nodal network representation
-    input_node_ids = net.input_node_ids()
-    inputs_list = block.scaled_inputs_list  # these are scaled inputs
-    hidden_output_node_ids = list()
-    hidden_output_node_ids.extend(net.hidden_node_ids())
-    hidden_output_node_ids.extend(net.output_node_ids())
-    output_node_ids = net.output_node_ids()
-    outputs_list = block.scaled_outputs_list
+    @block.Block([i for i in range(len(layers))])
+    def layer(b, layer_no):
+        layer = layers[layer_no]
+        b.z = pyo.Var(layer.output_indexes, initialize=0)
+        if not isinstance(layer, InputLayer):
+            b.zhat = pyo.Var(layer.output_indexes, initialize=0)
+        else:
+            # TODO: set bounds on input variables in input layer
+            b.z.setlb(-1)
+            b.z.setub(1)
 
-    x = {input_node_ids[i]: inputs_list[i] for i in range(len(input_node_ids))}
-    y = {output_node_ids[i]: outputs_list[i] for i in range(len(output_node_ids))}
+        b.constraints = pyo.ConstraintList()
+        b.activations = pyo.ConstraintList()
+        return b
 
-    block.input_node_ids = pyo.Set(initialize=input_node_ids, ordered=True)
+    for layer_no, layer in enumerate(layers):
+        if isinstance(layer, DenseLayer):
+            layer_block = block.layer[layer_no]
+            layer_block.__dense_expr = []
+            # there should be only one input block for dense layers
+            for input_layer in net.predecessors(layer):
+                input_layer_no = layer_to_index_map[id(input_layer)]
+                input_layer_block = block.layer[input_layer_no]
+                for output_index in layer.output_indexes:
+                    # dense layers multiply only the last dimension of
+                    # their inputs
+                    expr = layer.biases[output_index[-1]]
+                    for local_index, input_index in layer.input_indexes_with_input_layer_indexes:
+                        expr += (
+                            layer.weights[local_index[-1], output_index[-1]] * 
+                            input_layer_block.z[input_index]
+                        )
 
-    # add the intermediate variables
-    block.nodes = pyo.Set(initialize=net.all_node_ids(), ordered=True)
-    block.hidden_output_nodes = pyo.Set(initialize=hidden_output_node_ids, ordered=True)
-    block.z = pyo.Var(block.nodes, initialize=0)  # post-activation
-    block.zhat = pyo.Var(block.hidden_output_nodes, initialize=0)  # pre-activation
+                    layer_block.__dense_expr.append((output_index, expr))
+                    layer_block.constraints.add(layer_block.zhat[output_index] == expr)
+        else:
+            # TODO: what to do with other layer types?
+            pass
 
-    # define the input constraints
-    inputs = x
+        # define the activation constraints
+        if not skip_activations:
+            for layer_no, layer in enumerate(layers):
+                if isinstance(layer, InputLayer):
+                    continue
+                activation = layer.activation
+                if activation is None or activation == "linear":
+                    layer_block = block.layer[layer_no]
+                    for output_index in layer.output_indexes:
+                        layer_block.activations.add(
+                            layer_block.z[output_index] == layer_block.zhat[output_index]
+                        )
+                elif type(activation) is str:
+                    afunc = pyomo_activations[activation]
+                    for output_index in layer.output_indexes:
+                        layer_block.activations.add(
+                            layer_block.z[output_index] == afunc(layer_block.zhat[output_index])
+                        )
+                else:
+                    # better have given us a function that is valid for pyomo expressions
+                    for output_index in layer.output_indexes:
+                        layer_block.activations.add(
+                            layer_block.z[output_index] == activation(layer_block.zhat[output_index])
+                        )
 
-    # Todo: We could eliminate these constraints and use x[i] directly where applicable
-    block.input_constraints = pyo.Constraint(input_node_ids)
-    for i in input_node_ids:
-        lb, ub = inputs[i].bounds
-        if lb is not None:
-            block.z[i].setlb(lb)
-        if ub is not None:
-            block.z[i].setub(ub)
-        block.input_constraints[i] = block.z[i] == inputs[i]
-
-    # define the linear constraints
-    block.linear_constraints = pyo.Constraint(block.hidden_output_nodes)
-    w = net.weights
-    b = net.biases
-    for i in block.hidden_output_nodes:
-        block.linear_constraints[i] = (
-            block.zhat[i] == sum(w[i][j] * block.z[j] for j in w[i]) + b[i]
-        )
-
-    # define the activation constraints
-    if not skip_activations:
-        activations = net.activations
-        block.activation_constraints = pyo.Constraint(block.hidden_output_nodes)
-        for i in block.hidden_output_nodes:
-            if (
-                i not in activations
-                or activations[i] is None
-                or activations[i] == "linear"
-            ):
-                block.activation_constraints[i] = block.z[i] == block.zhat[i]
-            elif type(activations[i]) is str:
-                afunc = pyomo_activations[activations[i]]
-                block.activation_constraints[i] = block.z[i] == afunc(block.zhat[i])
-            else:
-                # better have given us a function that is valid for pyomo expressions
-                block.activation_constraints[i] = block.z[i] == activations[i](
-                    block.zhat[i]
-                )
-
-    # define the output constraints
-    outputs = {i: block.z[i] for i in output_node_ids}
-
-    # Todo: we could eliminate these constraints and use y[i] directly where applicable
-    block.output_constraints = pyo.Constraint(output_node_ids)
-    for i in output_node_ids:
-        block.output_constraints[i] = y[i] == outputs[i]
+    # setup output variables and constraints
+    @block.Constraint(layers[-1].output_indexes)
+    def output_assignment(b, *output_index):
+        return b.outputs[output_index] == b.layer[len(layers) - 1].z[output_index]

@@ -44,75 +44,31 @@ class _BaseInputOutputBlockData(_BlockData):
         interactions with Pyomo.
         """
         super(_BaseInputOutputBlockData, self).__init__(component)
-        self.__n_inputs = None
-        self.__n_outputs = None
-        self.__inputs_list = None
-        self.__outputs_list = None
-        self.__scaled_inputs_list = None
-        self.__unscaled_outputs_list = None
+        self.__input_indexes = None
+        self.__output_indexes = None
 
     def _setup_inputs_outputs(
-        self, *, n_inputs, n_outputs, input_vars=None, output_vars=None
+        self, *, input_indexes, output_indexes, input_vars=None, output_vars=None
     ):
-        """
-        This function should be called by the derived class to setup the
-        list of inputs and outputs for the input / output block.
-
-        Parameters
-        ----------
-        n_inputs : int
-            The number of inputs to the block
-        n_outputs : int
-            The number of outputs from the block
-        input_vars : list or None
-            The list of var data objects that correspond to the inputs.
-            This list must match the order of inputs from 0 .. n_inputs-1.
-            Note that mixing Var, IndexedVar, and VarData objects is fully
-            supported, and any indexed variables will be expanded to form
-            the final list of input var data objects. Note that any IndexedVar
-            included should be defined over a sorted set.
-
-            If set to None, then an indexed variable "inputs" is created on the
-            automatically.
-        output_vars :  list or None
-            The list of var data objects that correspond to the outputs.
-            This list must match the order of inputs from 0 .. n_outputs-1.
-            Note that mixing Var, IndexedVar, and VarData objects is fully
-            supported, and any indexed variables will be expanded to form
-            the final list of input var data objects. Note that any IndexedVar
-            included should be defined over a sorted set.
-
-            If set to None, then an indexed variable "outputs" is created on the
-            automatically.
-        """
-        self.__n_inputs = n_inputs
-        self.__n_outputs = n_outputs
-        if n_inputs < 1 or n_outputs < 1:
+        self.__input_indexes = input_indexes
+        self.__output_indexes = output_indexes
+        if not input_indexes or not output_indexes:
             # todo: implement this check higher up in the class hierarchy to provide more contextual error msg
             raise ValueError(
                 "_BaseInputOutputBlock must have at least one input and at least one output."
             )
 
-        self.__inputs_list = None
-        self.__outputs_list = None
-
         if input_vars is None:
-            self.inputs_set = pyo.Set(initialize=range(n_inputs), ordered=True)
+            self.inputs_set = pyo.Set(initialize=input_indexes)
             self.inputs = pyo.Var(self.inputs_set, initialize=0)
-            self.__inputs_list = list(self.inputs.values())
         else:
-            self.__inputs_list = _extract_var_data(input_vars)
-            if len(self.__inputs_list) != n_inputs:
-                raise ValueError("Length of input_vars does not match n_inputs.")
+            raise NotImplementedError()
 
         if output_vars is None:
-            self.outputs_set = pyo.Set(initialize=range(n_outputs), ordered=True)
+            self.outputs_set = pyo.Set(initialize=output_indexes)
             self.outputs = pyo.Var(self.outputs_set, initialize=0)
-            self.__outputs_list = list(self.outputs.values())
         else:
-            self.__outputs_list = _extract_var_data(output_vars)
-            if len(self.__outputs_list) != n_outputs:
-                raise ValueError("Length of output_vars does not match n_outputs.")
+            raise NotImplementedError()
 
     def _setup_input_bounds(self, inputs_list, input_bounds=None):
         if input_bounds:
@@ -144,11 +100,13 @@ class _BaseInputOutputBlockData(_BlockData):
     ):
         if scaling_object == None:
             # if no scaling, set scaled lists to the original lists
-            self.__scaled_inputs_list = self.inputs_list
-            self.__scaled_outputs_list = self.outputs_list
-            self._setup_input_bounds(self.inputs_list, input_bounds)
+            # self.scaled_inputs = self.inputs
+            # self.scaled_outputs = self.outputs
+            # self._setup_input_bounds(self.inputs_list, input_bounds)
+            pass
 
         elif scaling_object and use_scaling_expressions:
+            raise NotImplementedError()
             # use pyomo Expressions for scaled and unscaled terms, variable bounds are not directly captured
             self.__scaled_inputs_list = scaling_object.get_scaled_input_expressions(
                 self.inputs_list
@@ -160,6 +118,7 @@ class _BaseInputOutputBlockData(_BlockData):
             self._setup_input_bounds(self.inputs_list, input_bounds)
 
         else:
+            raise NotImplementedError()
             # create pyomo variables for scaled and unscaled terms, input bounds are also scaled
             self.scaled_inputs_set = pyo.Set(
                 initialize=range(len(self.__inputs_list)), ordered=True
@@ -204,7 +163,6 @@ class _BaseInputOutputBlockData(_BlockData):
                 scaled_upper = scaling_object.get_scaled_input_expressions(input_upper)
                 scaled_input_bounds = list(zip(scaled_lower, scaled_upper))
                 self._setup_input_bounds(self.scaled_inputs_list, scaled_input_bounds)
-        return
 
     @property
     def inputs_list(self):
@@ -264,8 +222,8 @@ class OmltBlockData(_BaseInputOutputBlockData):
         """
         # call to the base class to define the inputs and the outputs
         super(OmltBlockData, self)._setup_inputs_outputs(
-            n_inputs=formulation.n_inputs,
-            n_outputs=formulation.n_outputs,
+            input_indexes=formulation.input_indexes,
+            output_indexes=formulation.output_indexes,
             input_vars=input_vars,
             output_vars=output_vars,
         )
