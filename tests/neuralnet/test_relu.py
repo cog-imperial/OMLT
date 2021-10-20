@@ -3,7 +3,8 @@ import pytest
 
 from optml.block import OptMLBlock
 from optml.neuralnet.network_definition import NetworkDefinition
-from optml.neuralnet.relu import ReLUBigMFormulation, ReLUComplementarityFormulation
+from optml.neuralnet.relu import (ReLUBigMFormulation,
+                                  ReLUComplementarityFormulation)
 
 
 def test_two_node_bigm():
