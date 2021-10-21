@@ -1,6 +1,13 @@
-====
-Omlt
-====
+.. raw:: html
+
+    <p align="center">
+      <img src="docs/_static/omlt_logo.png" width="300px" alt="Omlt">
+    </p>
+
+
+===============================================
+Omlt: Optimization and Machine Learning Toolkit
+===============================================
 
 Omlt is a Python package for representing machine learning models (such as neural networks) within the Pyomo optimization environment. The package provides various formulations for representing machine-learning models (such as full-space, reduced-space, and MILP), as well as an interface to import sequential Keras models.
 
