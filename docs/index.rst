@@ -1,8 +1,8 @@
-=====
-optml
-=====
+====
+OMLT
+====
 
-This is the documentation of **optml**.
+This is the documentation of **omlt**.
 
 .. note::
 

@@ -1,6 +1,6 @@
 from onnx import numpy_helper
 
-from optml.neuralnet.network_definition import NetworkDefinition
+from omlt.neuralnet.network_definition import NetworkDefinition
 
 
 def load_onnx_neural_network(onnx, scaling_object=None, input_bounds=None):
@@ -150,7 +150,7 @@ class NetworkParser:
             next_nodes = self._consume_dense_nodes(node, next_nodes)
             for next in next_nodes:
                 self._node_stack.append(next)
-        elif node.op_type == 'Gemm':
+        elif node.op_type == "Gemm":
             next_nodes = self._consume_gemm_dense_nodes(node, next_nodes)
             for next in next_nodes:
                 self._node_stack.append(next)
@@ -228,9 +228,9 @@ class NetworkParser:
         assert len(node.input) == 3
 
         attr = _collect_attributes(node)
-        alpha = attr['alpha']
-        beta = attr['beta']
-        assert attr['transB'] == 1
+        alpha = attr["alpha"]
+        beta = attr["beta"]
+        assert attr["transB"] == 1
         [in_0, in_1, in_2] = list(node.input)
         input_node = self._node_map[in_0]
         weight = self._initializers[in_1]
@@ -268,5 +268,5 @@ def _collect_attributes(node):
         elif attr.type == 2:  # INT
             r[attr.name] = int(attr.i)
         else:
-            raise RuntimeError(f'unhandled attribute type {attr.type}')
+            raise RuntimeError(f"unhandled attribute type {attr.type}")
     return r

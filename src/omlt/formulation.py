@@ -48,7 +48,7 @@ class _PyomoFormulation(_PyomoFormulationInterface):
 
     @property
     def block(self):
-        """ The underlying block containing the constraints / variables for this formulation."""
+        """The underlying block containing the constraints / variables for this formulation."""
         return self.__block()
 
     @property
@@ -62,27 +62,27 @@ class _PyomoFormulation(_PyomoFormulationInterface):
 
     @property
     def n_inputs(self):
-        """ The number of inputs to the formulation. """
+        """The number of inputs to the formulation."""
         return self.__network_definition.n_inputs
 
     @property
     def n_outputs(self):
-        """ The number of outputs from the formulation."""
+        """The number of outputs from the formulation."""
         return self.__network_definition.n_outputs
 
     @property
     def scaling_object(self):
-        """ The scaling object used in the underying network definition."""
+        """The scaling object used in the underying network definition."""
         return self.network_definition.scaling_object
 
     @property
     def input_bounds(self):
-        """ Return a list of tuples containing lower and upper bounds of neural network inputs"""
+        """Return a list of tuples containing lower and upper bounds of neural network inputs"""
         return self.network_definition.input_bounds
 
     @abc.abstractmethod
     def _build_formulation(self):
-        """This method is called by the OptMLBlock object to build the
+        """This method is called by the OmltBlock object to build the
         corresponding mathematical formulation of the model.
         See :class:`pyoml.opt.neuralnet.FullSpaceContinuousFormulation` for
         an example of an implementation.

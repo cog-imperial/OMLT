@@ -9,7 +9,7 @@ from .utils import _extract_var_data
 This module defines the base class for implementing a custom block
 within Pyomo based on input / output connections.
 
-This module also contains the implementation of the OptMLBlock class. This
+This module also contains the implementation of the OmltBlock class. This
 class is used in combination with a formulation object and optionally
 with a list of input variables and output variables corresponding to the inputs
 and outputs of the neural network.
@@ -19,13 +19,13 @@ or manipulation of the actual constraints.
 Example 1:
     import tensorflow.keras as keras
     from pyoml.opt.neuralnet.keras_reader import load_keras_sequential
-    from pyoml.opt import OptMLBlock, FullSpaceContinuousFormulation
+    from pyoml.opt import OmltBlock, FullSpaceContinuousFormulation
 
     nn = keras.models.load_model(keras_fname)
     net = load_keras_sequential(nn)
 
     m = pyo.ConcreteModel()
-    m.neural_net_block = OptMLBlock()
+    m.neural_net_block = OmltBlock()
     m.neural_net_block.build_formulation(FullSpaceContinuousFormulation(net))
 
     m.obj = pyo.Objective(expr=(m.neural_net_block.outputs[2]-4.0)**2)
@@ -223,10 +223,10 @@ class _BaseInputOutputBlockData(_BlockData):
         return list(self.__scaled_outputs_list)
 
 
-@declare_custom_block(name="OptMLBlock")
-class OptMLBlockData(_BaseInputOutputBlockData):
+@declare_custom_block(name="OmltBlock")
+class OmltBlockData(_BaseInputOutputBlockData):
     def __init__(self, component):
-        super(OptMLBlockData, self).__init__(component)
+        super(OmltBlockData, self).__init__(component)
         self.__formulation = None
         self.__scaling_object = None
 
@@ -263,14 +263,14 @@ class OptMLBlockData(_BaseInputOutputBlockData):
             block automatically.
         """
         # call to the base class to define the inputs and the outputs
-        super(OptMLBlockData, self)._setup_inputs_outputs(
+        super(OmltBlockData, self)._setup_inputs_outputs(
             n_inputs=formulation.n_inputs,
             n_outputs=formulation.n_outputs,
             input_vars=input_vars,
             output_vars=output_vars,
         )
 
-        super(OptMLBlockData, self)._setup_scaled_inputs_outputs(
+        super(OmltBlockData, self)._setup_scaled_inputs_outputs(
             scaling_object=formulation.scaling_object,
             input_bounds=formulation.input_bounds,
             use_scaling_expressions=False,
@@ -293,10 +293,10 @@ class OptMLBlockData(_BaseInputOutputBlockData):
 
     @property
     def scaling_object(self):
-        """ Return an instance of the scaling object that supports the ScalingInterface"""
+        """Return an instance of the scaling object that supports the ScalingInterface"""
         return self.formulation.scaling_object
 
     @property
     def input_bounds(self):
-        """ Return a list of tuples containing lower and upper bounds of neural network inputs"""
+        """Return a list of tuples containing lower and upper bounds of neural network inputs"""
         return self.formulation.input_bounds

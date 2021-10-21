@@ -18,5 +18,5 @@ finally:
     del version, PackageNotFoundError
 
 # Top level exports
-from optml.block import OptMLBlock
-from optml.scaling import OffsetScaling
+from omlt.block import OmltBlock
+from omlt.scaling import OffsetScaling

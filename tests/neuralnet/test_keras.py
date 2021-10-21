@@ -6,18 +6,18 @@ import pytest
 import tensorflow
 from pyomo.common.fileutils import this_file_dir
 
-from optml.block import OptMLBlock
-from optml.neuralnet.full_space import FullSpaceContinuousFormulation
-from optml.neuralnet.keras_reader import load_keras_sequential
-from optml.neuralnet.reduced_space import ReducedSpaceContinuousFormulation
-from optml.neuralnet.relu import (ReLUBigMFormulation,
-                                  ReLUComplementarityFormulation)
-from optml.scaling import OffsetScaling
-from tests.neuralnet.train_keras_models import get_data
+from omlt.block import OmltBlock
+from omlt.neuralnet.full_space import FullSpaceContinuousFormulation
+from omlt.neuralnet.keras_reader import load_keras_sequential
+from omlt.neuralnet.reduced_space import ReducedSpaceContinuousFormulation
+from omlt.neuralnet.relu import ReLUBigMFormulation, ReLUComplementarityFormulation
+from omlt.scaling import OffsetScaling
+
+from conftest import get_neural_network_data
 
 
 def _test_keras_linear_131(keras_fname, reduced_space=False):
-    x, y, x_test = get_data("131")
+    x, y, x_test = get_neural_network_data("131")
 
     nn = tensorflow.keras.models.load_model(keras_fname, compile=False)
     net = load_keras_sequential(nn)
@@ -30,7 +30,7 @@ def _test_keras_linear_131(keras_fname, reduced_space=False):
     assert len(net.activations) == 4
 
     m = pyo.ConcreteModel()
-    m.neural_net_block = OptMLBlock()
+    m.neural_net_block = OmltBlock()
     if reduced_space:
         formulation = ReducedSpaceContinuousFormulation(net)
     else:
@@ -46,7 +46,7 @@ def _test_keras_linear_131(keras_fname, reduced_space=False):
 
 
 def _test_keras_mip_relu_131(keras_fname):
-    x, y, x_test = get_data("131")
+    x, y, x_test = get_neural_network_data("131")
 
     nn = tensorflow.keras.models.load_model(keras_fname, compile=False)
     net = load_keras_sequential(nn)
@@ -59,7 +59,7 @@ def _test_keras_mip_relu_131(keras_fname):
     assert len(net.activations) == 4
 
     m = pyo.ConcreteModel()
-    m.neural_net_block = OptMLBlock()
+    m.neural_net_block = OmltBlock()
     formulation = ReLUBigMFormulation(net)
     m.neural_net_block.build_formulation(formulation)
     m.obj = pyo.Objective(expr=0)
@@ -73,7 +73,7 @@ def _test_keras_mip_relu_131(keras_fname):
 
 
 def _test_keras_complementarity_relu_131(keras_fname):
-    x, y, x_test = get_data("131")
+    x, y, x_test = get_neural_network_data("131")
 
     nn = tensorflow.keras.models.load_model(keras_fname, compile=False)
     net = load_keras_sequential(nn)
@@ -86,7 +86,7 @@ def _test_keras_complementarity_relu_131(keras_fname):
     assert len(net.activations) == 4
 
     m = pyo.ConcreteModel()
-    m.neural_net_block = OptMLBlock()
+    m.neural_net_block = OmltBlock()
     formulation = ReLUComplementarityFormulation(net)
     m.neural_net_block.build_formulation(formulation)
 
@@ -99,13 +99,13 @@ def _test_keras_complementarity_relu_131(keras_fname):
 
 
 def _test_keras_linear_big(keras_fname, reduced_space=False):
-    x, y, x_test = get_data("131")
+    x, y, x_test = get_neural_network_data("131")
 
     nn = keras.models.load_model(keras_fname, compile=False)
     net = load_keras_sequential(nn)
 
     m = pyo.ConcreteModel()
-    m.neural_net_block = OptMLBlock()
+    m.neural_net_block = OmltBlock()
     if reduced_space:
         formulation = ReducedSpaceContinuousFormulation(net)
     else:

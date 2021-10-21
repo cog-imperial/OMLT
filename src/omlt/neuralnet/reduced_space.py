@@ -11,7 +11,7 @@ class ReducedSpaceContinuousFormulation(_PyomoFormulation):
         super(ReducedSpaceContinuousFormulation, self).__init__(network_structure)
 
     def _build_formulation(self):
-        """This method is called by the OptMLBlock object to build the
+        """This method is called by the OmltBlock object to build the
         corresponding mathematical formulation of the neural network model.
         """
         # ToDo: This representation has performance issues with larger networks (likely in the nl writer)

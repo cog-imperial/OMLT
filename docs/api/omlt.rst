@@ -1,5 +1,5 @@
-optml package
-=============
+omlt package
+============
 
 Subpackages
 -----------
@@ -7,41 +7,41 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
-   optml.gbt
-   optml.io
-   optml.neuralnet
+   omlt.gbt
+   omlt.io
+   omlt.neuralnet
 
 Submodules
 ----------
 
-optml.block module
-------------------
+omlt.block module
+-----------------
 
-.. automodule:: optml.block
+.. automodule:: omlt.block
    :members:
    :undoc-members:
    :show-inheritance:
 
-optml.formulation module
-------------------------
+omlt.formulation module
+-----------------------
 
-.. automodule:: optml.formulation
+.. automodule:: omlt.formulation
    :members:
    :undoc-members:
    :show-inheritance:
 
-optml.scaling module
---------------------
+omlt.scaling module
+-------------------
 
-.. automodule:: optml.scaling
+.. automodule:: omlt.scaling
    :members:
    :undoc-members:
    :show-inheritance:
 
-optml.utils module
-------------------
+omlt.utils module
+-----------------
 
-.. automodule:: optml.utils
+.. automodule:: omlt.utils
    :members:
    :undoc-members:
    :show-inheritance:
@@ -49,7 +49,7 @@ optml.utils module
 Module contents
 ---------------
 
-.. automodule:: optml
+.. automodule:: omlt
    :members:
    :undoc-members:
    :show-inheritance:

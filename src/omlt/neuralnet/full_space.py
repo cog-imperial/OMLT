@@ -32,7 +32,7 @@ class FullSpaceContinuousFormulation(_PyomoFormulation):
         super(FullSpaceContinuousFormulation, self).__init__(network_structure)
 
     def _build_formulation(self):
-        """This method is called by the OptMLBlock to build the corresponding
+        """This method is called by the OmltBlock to build the corresponding
         mathematical formulation on the Pyomo block.
         """
         build_full_space_formulation(
