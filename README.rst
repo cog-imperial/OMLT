@@ -1,15 +1,15 @@
 .. raw:: html
 
     <p align="center">
-      <img src="docs/_static/omlt_logo.png" width="300px" alt="Omlt">
+      <img src="docs/_static/omlt_logo.png" width="300px" alt="OMLT">
     </p>
 
 
 ===============================================
-Omlt: Optimization and Machine Learning Toolkit
+OMLT: Optimization and Machine Learning Toolkit
 ===============================================
 
-Omlt is a Python package for representing machine learning models (such as neural networks) within the Pyomo optimization environment. The package provides various formulations for representing machine-learning models (such as full-space, reduced-space, and MILP), as well as an interface to import sequential Keras models.
+OMLT is a Python package for representing machine learning models (such as neural networks) within the Pyomo optimization environment. The package provides various formulations for representing machine-learning models (such as full-space, reduced-space, and MILP), as well as an interface to import sequential Keras models.
 
 
 Examples
@@ -27,7 +27,7 @@ Examples
    #load a Keras model
    nn = tensorflow.keras.models.load_model('omlt/tests/models/keras_linear_131_sigmoid', compile=False)
 
-   #create a Pyomo model with an Omlt block
+   #create a Pyomo model with an OMLT block
    model = pyo.ConcreteModel()
    model.nn = OmltBlock()
 
@@ -60,7 +60,7 @@ Examples
    #this requires a neural network with only linear and relu activations
    #formulation = ReLUBigMFormulation(net)
 
-   #build the formulation on the Omlt block
+   #build the formulation on the OMLT block
    model.nn.build_formulation(formulation, input_vars=[model.input], output_vars=[model.output])
 
    #query inputs and outputs, as well as scaled inputs and outputs 
@@ -79,7 +79,7 @@ Examples
 Development
 ===========
 
-Omlt uses `tox` to manage development tasks:
+OMLT uses `tox` to manage development tasks:
 
 * `tox -av` to list available tasks
 * `tox` to run tests
