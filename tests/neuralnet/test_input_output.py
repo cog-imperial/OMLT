@@ -2,8 +2,8 @@ import pyomo
 import pyomo.environ as pyo
 import pytest
 
-from optml.block import _BaseInputOutputBlock
-from optml.scaling import OffsetScaling
+from omlt.block import _BaseInputOutputBlock
+from omlt.scaling import OffsetScaling
 
 
 def test_input_output_auto_creation():

@@ -96,42 +96,42 @@ class NetworkDefinition(object):
 
     @property
     def n_inputs(self):
-        """ Return the number of input nodes"""
+        """Return the number of input nodes"""
         return self.__n_inputs
 
     @property
     def n_hidden(self):
-        """ Return the number of hidden nodes"""
+        """Return the number of hidden nodes"""
         return self.__n_hidden
 
     @property
     def n_outputs(self):
-        """ Return the number of output nodes"""
+        """Return the number of output nodes"""
         return self.__n_outputs
 
     @property
     def weights(self):
-        """ Return the weights dictionary as described above """
+        """Return the weights dictionary as described above"""
         return self.__weights
 
     @property
     def biases(self):
-        """ Return the biases dictionary as described above """
+        """Return the biases dictionary as described above"""
         return self.__biases
 
     @property
     def activations(self):
-        """ Return the activations dictionary as described above """
+        """Return the activations dictionary as described above"""
         return self.__activations
 
     @property
     def scaling_object(self):
-        """ Return an instance of the scaling object that supports the ScalingInterface"""
+        """Return an instance of the scaling object that supports the ScalingInterface"""
         return self.__scaling_object
 
     @property
     def input_bounds(self):
-        """ Return a list of tuples containing lower and upper bounds of neural network inputs"""
+        """Return a list of tuples containing lower and upper bounds of neural network inputs"""
         return self.__input_bounds
 
     @scaling_object.setter

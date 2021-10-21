@@ -1,8 +1,8 @@
-=====
-OptML
-=====
+====
+Omlt
+====
 
-OptML is a Python package for representing machine learning models (such as neural networks) within the Pyomo optimization environment. The package provides various formulations for representing machine-learning models (such as full-space, reduced-space, and MILP), as well as an interface to import sequential Keras models.
+Omlt is a Python package for representing machine learning models (such as neural networks) within the Pyomo optimization environment. The package provides various formulations for representing machine-learning models (such as full-space, reduced-space, and MILP), as well as an interface to import sequential Keras models.
 
 
 Examples
@@ -12,17 +12,17 @@ Examples
 
    import tensorflow 
    import pyomo.environ as pyo
-   from optml import OptMLBlock, OffsetScaling
-   from optml.neuralnet import FullSpaceContinuousFormulation, ReducedSpaceContinuousFormulation
-   from optml.neuralnet import ReLUBigMFormulation
-   from optml.neuralnet import load_keras_sequential
+   from omlt import OmltBlock, OffsetScaling
+   from omlt.neuralnet import FullSpaceContinuousFormulation, ReducedSpaceContinuousFormulation
+   from omlt.neuralnet import ReLUBigMFormulation
+   from omlt.neuralnet import load_keras_sequential
 
    #load a Keras model
-   nn = tensorflow.keras.models.load_model('optml/tests/models/keras_linear_131_sigmoid',compile = False)
+   nn = tensorflow.keras.models.load_model('omlt/tests/models/keras_linear_131_sigmoid', compile=False)
 
-   #create a Pyomo model with an OptML block
+   #create a Pyomo model with an Omlt block
    model = pyo.ConcreteModel()
-   model.nn = OptMLBlock()
+   model.nn = OmltBlock()
 
    #the neural net contains one input and one output
    model.input = pyo.Var()
@@ -53,7 +53,7 @@ Examples
    #this requires a neural network with only linear and relu activations
    #formulation = ReLUBigMFormulation(net)
 
-   #build the formulation on the OptML block
+   #build the formulation on the Omlt block
    model.nn.build_formulation(formulation, input_vars=[model.input], output_vars=[model.output])
 
    #query inputs and outputs, as well as scaled inputs and outputs 
@@ -72,7 +72,7 @@ Examples
 Development
 ===========
 
-OptML uses `tox` to manage development tasks:
+Omlt uses `tox` to manage development tasks:
 
 * `tox -av` to list available tasks
 * `tox` to run tests

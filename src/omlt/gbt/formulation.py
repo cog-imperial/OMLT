@@ -1,13 +1,13 @@
 import numpy as np
 import pyomo.environ as pe
 
-from optml.formulation import _PyomoFormulation
-from optml.gbt.model import GradientBoostedTreeModel
+from omlt.formulation import _PyomoFormulation
+from omlt.gbt.model import GradientBoostedTreeModel
 
 
 class BigMFormulation(_PyomoFormulation):
     def _build_formulation(self):
-        """This method is called by the OptMLBlock to build the corresponding
+        """This method is called by the OmltBlock to build the corresponding
         mathematical formulation on the Pyomo block.
         """
         add_formulation_to_block(

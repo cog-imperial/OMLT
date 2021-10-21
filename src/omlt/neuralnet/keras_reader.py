@@ -1,4 +1,4 @@
-from optml.neuralnet.network_definition import NetworkDefinition
+from omlt.neuralnet.network_definition import NetworkDefinition
 
 
 def load_keras_sequential(nn, scaling_object=None, input_bounds=None):
