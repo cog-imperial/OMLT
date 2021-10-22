@@ -1,10 +1,3 @@
-.. raw:: html
-
-    <p align="center">
-      <img src="docs/_static/omlt_logo.png" width="300px" alt="OMLT">
-    </p>
-
-
 ===============================================
 OMLT: Optimization and Machine Learning Toolkit
 ===============================================
