@@ -1,5 +1,5 @@
 """
-    Setup file for optml.
+    Setup file for omlt.
     Use setup.cfg to configure your project.
 
     This file was generated with PyScaffold 4.0.2.

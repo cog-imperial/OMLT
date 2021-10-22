@@ -4,9 +4,9 @@ import onnx
 import pyomo.environ as pe
 import pytest
 
-from optml import OptMLBlock
-from optml.gbt.formulation import BigMFormulation, add_formulation_to_block
-from optml.gbt.model import GradientBoostedTreeModel
+from omlt import OmltBlock
+from omlt.gbt.formulation import BigMFormulation, add_formulation_to_block
+from omlt.gbt.model import GradientBoostedTreeModel
 
 
 def test_formulation_with_continuous_variables():
@@ -76,7 +76,7 @@ def test_big_m_formulation_block():
     model = GradientBoostedTreeModel(onnx_model)
 
     m = pe.ConcreteModel()
-    m.mod = OptMLBlock()
+    m.mod = OmltBlock()
     formulation = BigMFormulation(model)
     m.mod.build_formulation(formulation)
 

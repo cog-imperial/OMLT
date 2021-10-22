@@ -1,8 +1,8 @@
-=====
-OptML
-=====
+===============================================
+OMLT: Optimization and Machine Learning Toolkit
+===============================================
 
-OptML is a Python package for representing machine learning models (such as neural networks) within the Pyomo optimization environment. The package provides various formulations for representing machine-learning models (such as full-space, reduced-space, and MILP), as well as an interface to import sequential Keras models.
+OMLT is a Python package for representing machine learning models (such as neural networks) within the Pyomo optimization environment. The package provides various formulations for representing machine-learning models (such as full-space, reduced-space, and MILP), as well as an interface to import sequential Keras models.
 
 
 Examples
@@ -12,17 +12,17 @@ Examples
 
    import tensorflow 
    import pyomo.environ as pyo
-   from optml import OptMLBlock, OffsetScaling
-   from optml.neuralnet import FullSpaceContinuousFormulation, ReducedSpaceContinuousFormulation
-   from optml.neuralnet import ReLUBigMFormulation
-   from optml.neuralnet import load_keras_sequential
+   from omlt import OmltBlock, OffsetScaling
+   from omlt.neuralnet import FullSpaceContinuousFormulation, ReducedSpaceContinuousFormulation
+   from omlt.neuralnet import ReLUBigMFormulation
+   from omlt.neuralnet import load_keras_sequential
 
    #load a Keras model
-   nn = tensorflow.keras.models.load_model('optml/tests/models/keras_linear_131_sigmoid',compile = False)
+   nn = tensorflow.keras.models.load_model('omlt/tests/models/keras_linear_131_sigmoid', compile=False)
 
-   #create a Pyomo model with an OptML block
+   #create a Pyomo model with an OMLT block
    model = pyo.ConcreteModel()
-   model.nn = OptMLBlock()
+   model.nn = OmltBlock()
 
    #the neural net contains one input and one output
    model.input = pyo.Var()
@@ -53,7 +53,7 @@ Examples
    #this requires a neural network with only linear and relu activations
    #formulation = ReLUBigMFormulation(net)
 
-   #build the formulation on the OptML block
+   #build the formulation on the OMLT block
    model.nn.build_formulation(formulation, input_vars=[model.input], output_vars=[model.output])
 
    #query inputs and outputs, as well as scaled inputs and outputs 
@@ -72,7 +72,7 @@ Examples
 Development
 ===========
 
-OptML uses `tox` to manage development tasks:
+OMLT uses `tox` to manage development tasks:
 
 * `tox -av` to list available tasks
 * `tox` to run tests
@@ -103,6 +103,10 @@ Contributors
    * - |tsaycal|_
      - Calvin Tsay
      - This work was funded by an Engineering & Physical Sciences Research Council Research Fellowship [GrantNumber EP/T001577/1], with additional support from an Imperial College Research Fellowship.
+     
+   * - |thebtron|_
+     - Alexander Thebelt
+     - This work was supported by BASF SE, Ludwigshafen am Rhein.
 
 
 .. _jalving: https://github.com/jalving
@@ -115,4 +119,8 @@ Contributors
    
 .. _tsaycal: https://github.com/tsaycal
 .. |tsaycal| image:: https://avatars.githubusercontent.com/u/50914878?s=120&v=4
+   :width: 80px
+   
+.. _thebtron: https://github.com/ThebTron
+.. |thebtron| image:: https://avatars.githubusercontent.com/u/31448377?s=120&v=4
    :width: 80px

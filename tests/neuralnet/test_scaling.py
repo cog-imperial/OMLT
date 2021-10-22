@@ -6,9 +6,9 @@ import pytest
 from pyomo.common.fileutils import this_file_dir
 from pyomo.environ import *
 
-from optml import OffsetScaling, OptMLBlock
-from optml.neuralnet.keras_reader import load_keras_sequential
-from optml.neuralnet.relu import ReLUBigMFormulation
+from omlt import OffsetScaling, OmltBlock
+from omlt.neuralnet.keras_reader import load_keras_sequential
+from omlt.neuralnet.relu import ReLUBigMFormulation
 
 
 def test_offset_scaling():
@@ -65,7 +65,7 @@ def test_scaling_NN_block():
     ]
     net = load_keras_sequential(NN, scaler, input_bounds)
     formulation = ReLUBigMFormulation(net)
-    model.nn = OptMLBlock()
+    model.nn = OmltBlock()
     model.nn.build_formulation(
         formulation, input_vars=[model.input], output_vars=[model.output]
     )
