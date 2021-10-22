@@ -103,6 +103,10 @@ Contributors
    * - |tsaycal|_
      - Calvin Tsay
      - This work was funded by an Engineering & Physical Sciences Research Council Research Fellowship [GrantNumber EP/T001577/1], with additional support from an Imperial College Research Fellowship.
+     
+   * - |thebtron|_
+     - Alexander Thebelt
+     - This work was supported by BASF SE, Ludwigshafen am Rhein.
 
 
 .. _jalving: https://github.com/jalving
@@ -115,4 +119,8 @@ Contributors
    
 .. _tsaycal: https://github.com/tsaycal
 .. |tsaycal| image:: https://avatars.githubusercontent.com/u/50914878?s=120&v=4
+   :width: 80px
+   
+.. _thebtron: https://github.com/ThebTron
+.. |thebtron| image:: https://avatars.githubusercontent.com/u/31448377?s=120&v=4
    :width: 80px
