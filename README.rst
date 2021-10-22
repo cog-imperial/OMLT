@@ -122,5 +122,5 @@ Contributors
    :width: 80px
    
 .. _thebtron: https://github.com/ThebTron
-.. |thebtron| image:: https://avatars.githubusercontent.com/u/31448377?v=4
+.. |thebtron| image:: https://avatars.githubusercontent.com/u/31448377?s=120&v=4
    :width: 80px
