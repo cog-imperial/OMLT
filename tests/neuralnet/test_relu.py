@@ -86,7 +86,7 @@ def test_two_node_complementarity():
     )
 
     m = pyo.ConcreteModel()
-    m.neural_net_block = OmltLBlock()
+    m.neural_net_block = OmltBlock()
     formulation = ReLUComplementarityFormulation(net, transform="mpec.simple_nonlinear")
     m.neural_net_block.build_formulation(formulation)
 
