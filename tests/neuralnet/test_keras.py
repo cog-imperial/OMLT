@@ -20,7 +20,7 @@ def _test_keras_linear_131(keras_fname, reduced_space=False):
     x, y, x_test = get_neural_network_data("131")
 
     nn = tensorflow.keras.models.load_model(keras_fname, compile=False)
-    net = load_keras_sequential(nn)
+    net = load_keras_sequential(nn,input_bounds = [(-1,1)])
 
     assert net.n_inputs == 1
     assert net.n_outputs == 1
@@ -49,7 +49,7 @@ def _test_keras_mip_relu_131(keras_fname):
     x, y, x_test = get_neural_network_data("131")
 
     nn = tensorflow.keras.models.load_model(keras_fname, compile=False)
-    net = load_keras_sequential(nn)
+    net = load_keras_sequential(nn,input_bounds = [(-1,1)])
 
     assert net.n_inputs == 1
     assert net.n_outputs == 1
@@ -178,6 +178,6 @@ def test_keras_linear_big():
     # _test_keras_linear_big('./models/big', reduced_space=True)
 
 
-if __name__ == "__main__":
-    test_keras_linear_131_full()
-    test_keras_linear_big()
+# if __name__ == "__main__":
+#     test_keras_linear_131_full()
+#     test_keras_linear_big()
