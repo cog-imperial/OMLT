@@ -32,9 +32,6 @@ jobs:
           # python -m pip install tensorflow keras
           python -m pip install --upgrade coverage[toml] virtualenv tox tox-gh-actions          
 
-      - name: "Run tox lint ${{ matrix.python-version }}"
-        run: "python -m tox -e lint"
-
       - name: "Run tox targets for ${{ matrix.python-version }}"
         run: "python -m tox"
 
