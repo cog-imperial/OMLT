@@ -1,3 +1,7 @@
+.. image:: https://github.com/cog-imperial/OMLT/workflows/CI/badge.svg?branch=main
+     :target: https://github.com/cog-imperial/OMLT/actions?workflow=CI
+     :alt: CI Status
+
 ===============================================
 OMLT: Optimization and Machine Learning Toolkit
 ===============================================

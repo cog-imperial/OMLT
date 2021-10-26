@@ -1,8 +1,13 @@
 class GradientBoostedTreeModel:
-    def __init__(self, onnx_model):
+    def __init__(self, onnx_model,
+                scaling_object=None,
+                input_bounds=None
+                ):
         self.__model = onnx_model
         self.__n_inputs = _model_num_inputs(onnx_model)
         self.__n_outputs = _model_num_outputs(onnx_model)
+        self.__scaling_object = scaling_object
+        self.__input_bounds = input_bounds
 
     @property
     def onnx_model(self):
@@ -19,6 +24,20 @@ class GradientBoostedTreeModel:
     @property
     def n_outputs(self):
         return self.__n_outputs
+
+    @property
+    def scaling_object(self):
+        """Return an instance of the scaling object that supports the ScalingInterface"""
+        return self.__scaling_object
+
+    @property
+    def input_bounds(self):
+        """Return a list of tuples containing lower and upper bounds of neural network inputs"""
+        return self.__input_bounds
+
+    @scaling_object.setter
+    def scaling_object(self, scaling_object):
+        self.__scaling_object = scaling_object
 
 
 def _model_num_inputs(model):

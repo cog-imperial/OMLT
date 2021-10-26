@@ -99,7 +99,7 @@ def build_relu_mip_formulation(block, network_structure, M=None):
             if M is None:
                 raise ValueError("could not propagate bounds and M is None")
             warn("setting relu big M (lb) to {}".format(M))
-            block._big_m_lb[i] = M
+            block._big_m_lb[i] = -M
 
         if ub is not None:
             block.z[i].setub(ub)
@@ -111,10 +111,16 @@ def build_relu_mip_formulation(block, network_structure, M=None):
                 raise ValueError("could not propagate bounds and M is None")
             warn("setting relu big M (ub) to {}".format(M))
             block._big_m_ub[i] = M
-        block._z_lower_bound[i] = block.z[i] >= block._big_m_lb[i] * (1.0 - block.q[i])
-        block._z_hat_bound[i] = (
-            block.z[i] >= block.zhat[i] - block._big_m_ub[i] * block.q[i]
-        )
+
+        
+        # block._z_lower_bound[i] = block.z[i] >= block._big_m_ub[i] * (1.0 - block.q[i])
+        # block._z_hat_bound[i] = (
+        #     block.z[i] >= block.zhat[i] - block._big_m_ub[i] * block.q[i]
+        # )
+
+        block._z_lower_bound[i] = block.z[i] >= 0 
+        block._z_hat_bound[i] = block.z[i] >= block.zhat[i]
+
         block._z_hat_positive[i] = (
             block.z[i] <= block.zhat[i] - block._big_m_lb[i] * block.q[i]
         )
