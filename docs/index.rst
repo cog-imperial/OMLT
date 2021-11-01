@@ -30,6 +30,7 @@ Contents
    :maxdepth: 2
 
    Overview <readme>
+   Example Notebooks <notebooks/index>
    License <license>
    Changelog <changelog>
    Module Reference <api/modules>
