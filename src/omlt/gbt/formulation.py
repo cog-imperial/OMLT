@@ -6,6 +6,9 @@ from omlt.gbt.model import GradientBoostedTreeModel
 
 
 class BigMFormulation(_PyomoFormulation):
+    def __init__(self, network_structure):
+        super().__init__(network_structure)
+
     def _build_formulation(self):
         """This method is called by the OmltBlock to build the corresponding
         mathematical formulation on the Pyomo block.
