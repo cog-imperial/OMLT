@@ -67,7 +67,7 @@ class NetworkParser:
         outputs = set()
         self._node_map = dict()
 
-        network = NetworkDefinition()
+        network = NetworkDefinition(scaling_object=scaling_object, input_bounds=input_bounds)
 
         network_input = None
         for input in self._graph.input:

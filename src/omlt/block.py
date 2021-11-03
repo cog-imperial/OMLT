@@ -1,4 +1,5 @@
 import warnings
+import weakref
 
 import pyomo.environ as pyo
 from pyomo.core.base.block import _BlockData, declare_custom_block
@@ -46,6 +47,8 @@ class _BaseInputOutputBlockData(_BlockData):
         super(_BaseInputOutputBlockData, self).__init__(component)
         self.__input_indexes = None
         self.__output_indexes = None
+        self.__inputs_list = None
+        self.__outputs_list = None
 
     def _setup_inputs_outputs(
         self, *, input_indexes, output_indexes, input_vars=None, output_vars=None
@@ -61,21 +64,31 @@ class _BaseInputOutputBlockData(_BlockData):
         if input_vars is None:
             self.inputs_set = pyo.Set(initialize=input_indexes)
             self.inputs = pyo.Var(self.inputs_set, initialize=0)
+            self.__inputs_list = weakref.ref(self.inputs)
         else:
-            raise NotImplementedError()
+            self.__inputs_list = weakref.ref(input_vars)
+            for index in self.__input_indexes:
+                if index not in input_vars:
+                    raise ValueError(f"Output index {index} not in IndexedVar {input_vars}")
 
         if output_vars is None:
             self.outputs_set = pyo.Set(initialize=output_indexes)
             self.outputs = pyo.Var(self.outputs_set, initialize=0)
+            self.__outputs_list = weakref.ref(self.outputs)
         else:
-            raise NotImplementedError()
+            self.__outputs_list = weakref.ref(output_vars)
+            for index in self.__output_indexes:
+                if index not in output_vars:
+                    raise ValueError(f"Output index {index} not in IndexedVar {input_vars}")
 
     def _setup_input_bounds(self, inputs_list, input_bounds=None):
         if input_bounds:
             # set bounds using provided input_bounds
-            for (i, var) in enumerate(inputs_list):
+            for i, index in enumerate(inputs_list):
+                var  = inputs_list[index]
+
                 if var.lb == None:  # set lower bound to input_bounds value
-                    inputs_list[i].setlb(input_bounds[i][0])
+                    var.setlb(input_bounds[i][0])
                 else:
                     # throw warning if var.lb is more loose than input_bounds value
                     if var.lb < input_bounds[i][0]:
@@ -84,8 +97,9 @@ class _BaseInputOutputBlockData(_BlockData):
                                 var, var.lb, input_bounds[i][0]
                             )
                         )
+
                 if var.ub == None:
-                    inputs_list[i].setub(input_bounds[i][1])
+                    var.setub(input_bounds[i][1])
                 else:
                     # throw warning if var.ub is more loose than input_bounds value
                     if var.ub > input_bounds[i][1]:
@@ -99,14 +113,11 @@ class _BaseInputOutputBlockData(_BlockData):
         self, *, scaling_object=None, input_bounds=None, use_scaling_expressions=False
     ):
         if scaling_object == None:
-            # if no scaling, set scaled lists to the original lists
-            # self.scaled_inputs = self.inputs
-            # self.scaled_outputs = self.outputs
-            # self._setup_input_bounds(self.inputs_list, input_bounds)
-            pass
+            self.__scaled_inputs_list = weakref.ref(self.inputs_list)
+            self.__scaled_outputs_list = weakref.ref(self.outputs_list)
+            self._setup_input_bounds(self.inputs_list, input_bounds)
 
         elif scaling_object and use_scaling_expressions:
-            raise NotImplementedError()
             # use pyomo Expressions for scaled and unscaled terms, variable bounds are not directly captured
             self.__scaled_inputs_list = scaling_object.get_scaled_input_expressions(
                 self.inputs_list
@@ -118,25 +129,23 @@ class _BaseInputOutputBlockData(_BlockData):
             self._setup_input_bounds(self.inputs_list, input_bounds)
 
         else:
-            raise NotImplementedError()
             # create pyomo variables for scaled and unscaled terms, input bounds are also scaled
-            self.scaled_inputs_set = pyo.Set(
-                initialize=range(len(self.__inputs_list)), ordered=True
-            )
+            self.scaled_inputs_set = pyo.Set(initialize=list(self.inputs_list))
             self.scaled_inputs = pyo.Var(self.scaled_inputs_set, initialize=0)
 
-            self.scaled_outputs_set = pyo.Set(
-                initialize=range(len(self.__outputs_list)), ordered=True
-            )
+            self.scaled_outputs_set = pyo.Set(initialize=list(self.outputs_list))
             self.scaled_outputs = pyo.Var(self.scaled_outputs_set, initialize=0)
 
             # set scaled variables lists
-            self.__scaled_inputs_list = list(self.scaled_inputs.values())
-            self.__scaled_outputs_list = list(self.scaled_outputs.values())
+            self.__scaled_inputs_list = weakref.ref(self.scaled_inputs)
+            self.__scaled_outputs_list = weakref.ref(self.scaled_outputs)
 
             # Create constraints connecting scaled and unscaled variables
             self.__scale_input_con = pyo.Constraint(self.scaled_inputs_set)
             self.__unscale_output_con = pyo.Constraint(self.scaled_outputs_set)
+
+            # ToDo: decide if scaling expression should be indexed with the same
+            # index as variables
             scaled_input_expressions = scaling_object.get_scaled_input_expressions(
                 self.inputs_list
             )
@@ -163,22 +172,23 @@ class _BaseInputOutputBlockData(_BlockData):
                 scaled_upper = scaling_object.get_scaled_input_expressions(input_upper)
                 scaled_input_bounds = list(zip(scaled_lower, scaled_upper))
                 self._setup_input_bounds(self.scaled_inputs_list, scaled_input_bounds)
+            raise NotImplementedError()
 
     @property
     def inputs_list(self):
-        return list(self.__inputs_list)
+        return self.__inputs_list()
 
     @property
     def outputs_list(self):
-        return list(self.__outputs_list)
+        return self.__outputs_list()
 
     @property
     def scaled_inputs_list(self):
-        return list(self.__scaled_inputs_list)
+        return self.__scaled_inputs_list()
 
     @property
     def scaled_outputs_list(self):
-        return list(self.__scaled_outputs_list)
+        return self.__scaled_outputs_list()
 
 
 @declare_custom_block(name="OmltBlock")
@@ -222,8 +232,8 @@ class OmltBlockData(_BaseInputOutputBlockData):
         """
         # call to the base class to define the inputs and the outputs
         super(OmltBlockData, self)._setup_inputs_outputs(
-            input_indexes=formulation.input_indexes,
-            output_indexes=formulation.output_indexes,
+            input_indexes=list(formulation.input_indexes),
+            output_indexes=list(formulation.output_indexes),
             input_vars=input_vars,
             output_vars=output_vars,
         )

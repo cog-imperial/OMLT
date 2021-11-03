@@ -2,7 +2,7 @@ import pyomo.environ as pyo
 
 from omlt.formulation import _PyomoFormulation
 from omlt.utils import pyomo_activations
-from omlt.neuralnet.layer import DenseLayer, InputLayer
+from omlt.neuralnet.layer import ConvLayer, DenseLayer, InputLayer
 
 
 class FullSpaceContinuousFormulation(_PyomoFormulation):
@@ -57,9 +57,11 @@ def build_full_space_formulation(block, network_structure, skip_activations=Fals
         if not isinstance(layer, InputLayer):
             b.zhat = pyo.Var(layer.output_indexes, initialize=0)
         else:
-            # TODO: set bounds on input variables in input layer
-            b.z.setlb(-1)
-            b.z.setub(1)
+            for index in layer.output_indexes:
+                input_var = block.inputs[index]
+                z_var = b.z[index]
+                z_var.setlb(input_var.lb)
+                z_var.setub(input_var.ub)
 
         b.constraints = pyo.ConstraintList()
         b.activations = pyo.ConstraintList()
@@ -83,6 +85,21 @@ def build_full_space_formulation(block, network_structure, skip_activations=Fals
                             input_layer_block.z[input_index]
                         )
 
+                    layer_block.__dense_expr.append((output_index, expr))
+                    layer_block.constraints.add(layer_block.zhat[output_index] == expr)
+        elif isinstance(layer, ConvLayer):
+            layer_block = block.layer[layer_no]
+            layer_block.__dense_expr = []
+            # there should be only one input block for conv layers
+            for input_layer in net.predecessors(layer):
+                input_layer_no = layer_to_index_map[id(input_layer)]
+                input_layer_block = block.layer[input_layer_no]
+                for out_d, out_r, out_c in layer.output_indexes:
+                    expr = 0.0
+                    for weight, input_index in layer.kernel_with_input_indexes(out_d, out_r, out_c):
+                        expr += weight * input_layer_block.z[input_index]
+
+                    output_index = (out_d, out_r, out_c)
                     layer_block.__dense_expr.append((output_index, expr))
                     layer_block.constraints.add(layer_block.zhat[output_index] == expr)
         else:
