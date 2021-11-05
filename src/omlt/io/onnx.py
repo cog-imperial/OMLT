@@ -11,7 +11,7 @@ from omlt.neuralnet.layer import (
 )
 
 
-_ACTIVATION_OP_TYPES = ["Relu", "Sigmoid", "LogSoftMax"]
+_ACTIVATION_OP_TYPES = ["Relu", "Sigmoid", "LogSoftmax"]
 
 
 def load_onnx_neural_network(onnx, scaling_object=None, input_bounds=None):

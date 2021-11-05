@@ -21,6 +21,8 @@ class Layer:
     def __init__(self, input_size, output_size, *, activation=None, input_index_transformer=None):
         assert isinstance(input_size, list)
         assert isinstance(output_size, list)
+        if activation is None:
+            activation = "linear"
         self.__input_size = input_size
         self.__output_size = output_size
         self.__activation = activation

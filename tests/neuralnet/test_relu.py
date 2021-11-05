@@ -1,15 +1,16 @@
 import pyomo.environ as pyo
+import numpy as np
 import pytest
 
 from omlt.block import OmltBlock
 from omlt.neuralnet.network_definition import NetworkDefinition
+from omlt.neuralnet.layer import DenseLayer, InputLayer
 from omlt.neuralnet.relu import ReLUBigMFormulation, ReLUComplementarityFormulation
 
 
-def test_two_node_bigm():
+@pytest.fixture
+def two_node_network():
     """
-    Test of the following model:
-
             1           1
     x0 -------- (1) --------- (3)
      |                   /
@@ -20,83 +21,65 @@ def test_two_node_bigm():
      |    -1         |     1
      ---------- (2) --------- (4)
     """
+    net = NetworkDefinition(input_bounds=[(-10.0, 10.0)])
 
-    n_inputs = 1
-    n_hidden = 2
-    n_outputs = 2
-    w = {1: {0: 1.0}, 2: {0: -1.0}, 3: {1: 1.0, 2: 5.0}, 4: {2: 1.0}}
-    b = {1: 0, 2: 0, 3: 0, 4: 0}
-    a = {1: "relu", 2: "relu"}
+    input_layer = InputLayer([1, 1])
+    net.add_node(input_layer)
 
-    net = NetworkDefinition(
-        n_inputs=n_inputs,
-        n_hidden=n_hidden,
-        n_outputs=n_outputs,
-        weights=w,
-        biases=b,
-        activations=a,
+    dense_layer_0 = DenseLayer(
+        input_layer.output_size,
+        [1, 2],
+        activation="relu",
+        weights=np.array([[1.0, -1.0]]),
+        biases=np.array([0.0, 0.0])
     )
+    net.add_node(dense_layer_0)
+    net.add_edge(input_layer, dense_layer_0)
 
+    dense_layer_1 = DenseLayer(
+        dense_layer_0.output_size,
+        [1, 2],
+        activation="linear",
+        weights=np.array([[1.0, 0.0], [5.0, 1.0]]),
+        biases=np.array([0.0, 0.0])
+    )
+    net.add_node(dense_layer_1)
+    net.add_edge(dense_layer_0, dense_layer_1)
+
+    return net
+
+
+def test_two_node_bigm(two_node_network):
     m = pyo.ConcreteModel()
     m.neural_net_block = OmltBlock()
-    formulation = ReLUBigMFormulation(net, M=1e6)
+    formulation = ReLUBigMFormulation(two_node_network)
     m.neural_net_block.build_formulation(formulation)
+    m.obj1 = pyo.Objective(expr=m.neural_net_block.outputs[0, 0])
 
-    m.neural_net_block.inputs[0].fix(-2)
-    m.obj1 = pyo.Objective(expr=0)
-    status = pyo.SolverFactory("cbc").solve(m, tee=False)
-    assert abs(pyo.value(m.neural_net_block.outputs[0]) - 10) < 1e-8
-    assert abs(pyo.value(m.neural_net_block.outputs[1]) - 2) < 1e-8
+    m.neural_net_block.inputs[0, 0].fix(-2)
+    _status = pyo.SolverFactory("cbc").solve(m, tee=False)
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 0]) - 10) < 1e-8
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - 2) < 1e-8
 
-    m.neural_net_block.inputs[0].fix(1)
-    status = pyo.SolverFactory("cbc").solve(m, tee=False)
-    assert abs(pyo.value(m.neural_net_block.outputs[0]) - 1) < 1e-8
-    assert abs(pyo.value(m.neural_net_block.outputs[1]) - 0) < 1e-8
+    m.neural_net_block.inputs[0, 0].fix(1)
+    _status = pyo.SolverFactory("cbc").solve(m, tee=False)
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 0]) - 1) < 1e-8
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - 0) < 1e-8
 
 
-def test_two_node_complementarity():
-    """
-    Test of the following model:
-
-            1           1
-    x0 -------- (1) --------- (3)
-     |                   /
-     |                  /
-     |                 / 5
-     |                /
-     |               |
-     |    -1         |     1
-     ---------- (2) --------- (4)
-    """
-
-    n_inputs = 1
-    n_hidden = 2
-    n_outputs = 2
-    w = {1: {0: 1.0}, 2: {0: -1.0}, 3: {1: 1.0, 2: 5.0}, 4: {2: 1.0}}
-    b = {1: 0, 2: 0, 3: 0, 4: 0}
-    a = {1: "relu", 2: "relu"}
-
-    net = NetworkDefinition(
-        n_inputs=n_inputs,
-        n_hidden=n_hidden,
-        n_outputs=n_outputs,
-        weights=w,
-        biases=b,
-        activations=a,
-    )
-
+def test_two_node_complementarity(two_node_network):
     m = pyo.ConcreteModel()
     m.neural_net_block = OmltBlock()
-    formulation = ReLUComplementarityFormulation(net, transform="mpec.simple_nonlinear")
+    formulation = ReLUComplementarityFormulation(two_node_network, transform="mpec.simple_nonlinear")
     m.neural_net_block.build_formulation(formulation)
 
-    m.neural_net_block.inputs[0].fix(-2)
+    m.neural_net_block.inputs[0, 0].fix(-2)
     m.obj1 = pyo.Objective(expr=0)
     status = pyo.SolverFactory("ipopt").solve(m, tee=False)
-    assert abs(pyo.value(m.neural_net_block.outputs[0]) - 10) < 1e-6
-    assert abs(pyo.value(m.neural_net_block.outputs[1]) - 2) < 1e-6
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 0]) - 10) < 1e-6
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - 2) < 1e-6
 
-    m.neural_net_block.inputs[0].fix(1)
+    m.neural_net_block.inputs[0, 0].fix(1)
     status = pyo.SolverFactory("ipopt").solve(m, tee=False)
-    assert abs(pyo.value(m.neural_net_block.outputs[0]) - 1) < 1e-6
-    assert abs(pyo.value(m.neural_net_block.outputs[1]) - 0) < 1e-6
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 0]) - 1) < 1e-6
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - 0) < 1e-6

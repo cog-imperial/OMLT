@@ -54,9 +54,8 @@ def build_full_space_formulation(block, network_structure, skip_activations=Fals
     def layer(b, layer_no):
         layer = layers[layer_no]
         b.z = pyo.Var(layer.output_indexes, initialize=0)
-        if not isinstance(layer, InputLayer):
-            b.zhat = pyo.Var(layer.output_indexes, initialize=0)
-        else:
+        b.zhat = pyo.Var(layer.output_indexes, initialize=0)
+        if isinstance(layer, InputLayer):
             for index in layer.output_indexes:
                 input_var = block.inputs[index]
                 z_var = b.z[index]
@@ -64,7 +63,6 @@ def build_full_space_formulation(block, network_structure, skip_activations=Fals
                 z_var.setub(input_var.ub)
 
         b.constraints = pyo.ConstraintList()
-        b.activations = pyo.ConstraintList()
         return b
 
     for layer_no, layer in enumerate(layers):
@@ -131,7 +129,12 @@ def build_full_space_formulation(block, network_structure, skip_activations=Fals
                             layer_block.z[output_index] == activation(layer_block.zhat[output_index])
                         )
 
-    # setup output variables and constraints
+    # setup input variables constraints
+    @block.Constraint(layers[0].output_indexes)
+    def input_assignment(b, *output_index):
+        return b.inputs[output_index] == b.layer[0].z[output_index]
+
+    # setup output variables constraints
     @block.Constraint(layers[-1].output_indexes)
     def output_assignment(b, *output_index):
         return b.outputs[output_index] == b.layer[len(layers) - 1].z[output_index]
