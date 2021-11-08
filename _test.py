@@ -8,16 +8,21 @@ from omlt.block import OmltBlock
 from omlt.neuralnet import ReLUBigMFormulation, FullSpaceContinuousFormulation
 
 
-mod_name = 'calvin_test_please_ignore.onnx'
+# mod_name = '../calvin-nn/calvin_test_please_ignore.onnx'
+mod_name = '../calvin-nn/calvin_cnn.onnx'
+# mod_name = '../calvin-nn/calvin_dense.onnx'
 # mod_name = 'tests/models/gemm.onnx'
 # mod_name = 'tests/models/keras_linear_131_relu.onnx'
 # mod_name = 'tests/models/keras_linear_131_sigmoid.onnx'
 # mod_name = '../calvin-nn/2d_input.onnx'
+# mod_name = 'calvin_dense.onnx'
 mod = onnx.load(mod_name)
 
 
-input_bounds = [(0, 1e-5) for _ in range(7*7)]
+# input_bounds = [(0, 1e-3) for _ in range(28*28)]
+input_bounds = [(0, 1e-5) for _ in range(28*28)]
 # input_bounds = [(0, 1e-3) for _ in range(7*7)]
+# input_bounds = [(-100, 100) for _ in range(100)]
 scaling = OffsetScaling(
     offset_inputs=[0 for _ in input_bounds],
     factor_inputs=[1 for _ in input_bounds],
@@ -50,14 +55,25 @@ if True:
     formulation = ReLUBigMFormulation(net)
     m.nn.build_formulation(formulation)
     m.nn.outputs.pprint()
-    m.o = pe.Objective(expr=-m.nn.outputs[0, 0])
+    # m.o = pe.Objective(expr=m.nn.layer[0].z[0])
+    # m.o = pe.Objective(expr=m.nn.outputs[0])
+    m.o = pe.Objective(expr=m.nn.outputs[0, 0])
+    # m.o = pe.Objective(expr=0)
+
+    if False:
+        # m.nn.layer[1].deactivate()
+        del m.nn.outputs
+        del m.nn.output_assignment
+        del m.nn.layer[2]
+        del m.nn.layer[3]
 
     if True:
-        s = pe.SolverFactory('gurobi_direct')
+        # s = pe.SolverFactory('gurobi_direct')
+        s = pe.SolverFactory('gurobi')
         res = s.solve(m, tee=True)
         print(res)
 
-    if True:
-        m.pprint()
+    if False:
+        m.nn.pprint()
 
     # use one of the output nodes as objective and maximize it

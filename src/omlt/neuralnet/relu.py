@@ -3,8 +3,9 @@ import pyomo.environ as pyo
 import pyomo.mpec as mpec
 from pyomo.contrib.fbbt.fbbt import compute_bounds_on_expr
 
-from ..formulation import _PyomoFormulation
-from .full_space import build_full_space_formulation
+from omlt.formulation import _PyomoFormulation
+from omlt.utils import pyomo_activations
+from omlt.neuralnet.full_space import build_full_space_formulation
 
 
 class ReLUBigMFormulation(_PyomoFormulation):
@@ -69,6 +70,20 @@ def build_relu_mip_formulation(block, network_structure, M=None):
             @layer_block.Constraint(layer.output_indexes)
             def _linear_activation(b, *output_index):
                 return b.z[output_index] == b.zhat[output_index]
+        elif layer.activation == "relu":
+            pass
+        elif layer.activation == "logsoftmax":
+            # TODO: how to handle this?
+            @layer_block.Constraint(layer.output_indexes)
+            def _linear_activation(b, *output_index):
+                return b.z[output_index] == b.zhat[output_index]
+        elif isinstance(layer.activation, str):
+            afunc = pyomo_activations[layer.activation]
+            @layer_block.Constraint(layer.output_indexes)
+            def _nonlinear_activation(b, *output_index):
+                return b.z[output_index] == afunc(b.zhat[output_index])
+        else:
+            raise ValueError(f'Unhandled activation {layer.activation}')
 
         for output_index, expr in layer_block.__dense_expr:
             lb, ub = compute_bounds_on_expr(expr)
@@ -85,10 +100,10 @@ def build_relu_mip_formulation(block, network_structure, M=None):
                 # Bunel, Rudy, et al. "Branch and bound for piecewise linear neural network verification."
                 # Journal of Machine Learning Research 21.2020 (2020).
                 layer_block._big_m_lb[output_index] = lb
-                layer_block.z[output_index].setlb(lb)
+                layer_block.z[output_index].setlb(0)
 
                 layer_block._big_m_ub[output_index] = ub
-                layer_block.z[output_index].setub(ub)
+                layer_block.z[output_index].setub(max(0, ub))
 
                 layer_block._z_lower_bound[output_index] = (
                     layer_block.z[output_index] >= 0
@@ -105,7 +120,6 @@ def build_relu_mip_formulation(block, network_structure, M=None):
                 layer_block._z_upper_bound_zhat[output_index] = (
                     layer_block.z[output_index] <= layer_block.zhat[output_index] - layer_block._big_m_lb[output_index] * (1.0 - layer_block.q[output_index])
                 )
-
 
 
 def build_relu_complementarity_formulation(
