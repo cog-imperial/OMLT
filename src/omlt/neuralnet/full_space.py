@@ -76,12 +76,16 @@ def build_full_space_formulation(block, network_structure, skip_activations=Fals
                 for output_index in layer.output_indexes:
                     # dense layers multiply only the last dimension of
                     # their inputs
-                    expr = layer.biases[output_index[-1]]
+                    expr = 0.0 
                     for local_index, input_index in layer.input_indexes_with_input_layer_indexes:
-                        expr += (
-                            layer.weights[local_index[-1], output_index[-1]] * 
-                            input_layer_block.z[input_index]
-                        )
+                        if len(local_index) == 1:
+                            assert output_index == (0,)
+                            w = layer.weights[local_index[-1]]
+                        else:
+                            w = layer.weights[local_index[-1], output_index[-1]]
+                        expr += input_layer_block.z[input_index] * w
+                    # move this at the end to avoid numpy/pyomo var bug
+                    expr += layer.biases[output_index[-1]]
 
                     layer_block.__dense_expr.append((output_index, expr))
                     layer_block.constraints.add(layer_block.zhat[output_index] == expr)
