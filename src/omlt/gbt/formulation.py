@@ -174,7 +174,7 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars):
         y = _branching_y(tree_id, branch_node_id)
 
         subtree_root = nodes_true_node_ids[node_mask][0]
-        return _sum_of_z_l(tree_id, subtree_root) <= 1 - -y
+        return _sum_of_z_l(tree_id, subtree_root) <= 1 - y
 
     @block.Constraint(categorical_vars.keys())
     def categorical(b, feature_id):
