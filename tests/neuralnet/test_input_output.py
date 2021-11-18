@@ -9,7 +9,10 @@ from omlt.scaling import OffsetScaling
 def test_input_output_auto_creation():
     m = pyo.ConcreteModel()
     m.b = _BaseInputOutputBlock()
-    m.b._setup_inputs_outputs(n_inputs=3, n_outputs=2)
+    m.b._setup_inputs_outputs(
+        input_indexes=range(3),
+        output_indexes=range(2)
+    )
     assert len(m.b.inputs) == 3
     assert len(m.b.outputs) == 2
     assert len(m.b.inputs_list) == 3
@@ -21,7 +24,10 @@ def test_input_output_auto_creation():
     assert m.b.outputs_list[1] is m.b.outputs[1]
 
     m.b2 = _BaseInputOutputBlock()
-    m.b2._setup_inputs_outputs(n_inputs=1, n_outputs=1)
+    m.b2._setup_inputs_outputs(
+        input_indexes=[0],
+        output_indexes=[0],
+    )
     assert len(m.b2.inputs) == 1
     assert len(m.b2.outputs) == 1
     assert len(m.b2.inputs_list) == 1
@@ -31,7 +37,10 @@ def test_input_output_auto_creation():
 
     m.b3 = _BaseInputOutputBlock()
     with pytest.raises(ValueError):
-        m.b3._setup_inputs_outputs(n_inputs=0, n_outputs=0)
+        m.b3._setup_inputs_outputs(
+            input_indexes=[],
+            output_indexes=[],
+        )
 
 
 def test_provided_inputs_outputs():
@@ -41,7 +50,11 @@ def test_provided_inputs_outputs():
 
     # test inputs provided, outputs auto
     m.b = _BaseInputOutputBlock()
-    m.b._setup_inputs_outputs(n_inputs=3, input_vars=[m.cin], n_outputs=2)
+    m.b._setup_inputs_outputs(
+        input_indexes=["A", "B", "C"],
+        input_vars=m.cin,
+        output_indexes=[0, 1],
+    )
     assert hasattr(m.b, "inputs") == False
     assert len(m.b.outputs) == 2
     assert len(m.b.inputs_list) == 3

@@ -4,6 +4,9 @@ import numpy as np
 
 from pyomo.common.fileutils import this_file_dir
 
+from omlt.neuralnet.network_definition import NetworkDefinition
+from omlt.neuralnet.layer import DenseLayer, InputLayer
+
 
 
 def get_neural_network_data(desc):
@@ -52,3 +55,44 @@ class _Datadir:
 def datadir():
     basedir = Path(this_file_dir()) / "models"
     return _Datadir(basedir)
+
+
+@pytest.fixture
+def two_node_network():
+    """
+            1           1
+    x0 -------- (1) --------- (3)
+     |                   /
+     |                  /
+     |                 / 5
+     |                /
+     |               |
+     |    -1         |     1
+     ---------- (2) --------- (4)
+    """
+    net = NetworkDefinition(input_bounds=[(-10.0, 10.0)])
+
+    input_layer = InputLayer([1])
+    net.add_layer(input_layer)
+
+    dense_layer_0 = DenseLayer(
+        input_layer.output_size,
+        [1, 2],
+        activation="relu",
+        weights=np.array([[1.0, -1.0]]),
+        biases=np.array([0.0, 0.0])
+    )
+    net.add_layer(dense_layer_0)
+    net.add_edge(input_layer, dense_layer_0)
+
+    dense_layer_1 = DenseLayer(
+        dense_layer_0.output_size,
+        [1, 2],
+        activation="linear",
+        weights=np.array([[1.0, 0.0], [5.0, 1.0]]),
+        biases=np.array([0.0, 0.0])
+    )
+    net.add_layer(dense_layer_1)
+    net.add_edge(dense_layer_0, dense_layer_1)
+
+    return net

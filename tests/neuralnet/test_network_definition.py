@@ -1,74 +1,128 @@
+import pyomo.environ as pyo
 import pytest
 
+from omlt.block import OmltBlock
+from omlt.neuralnet.formulation import NeuralNetworkFormulation
+from omlt.neuralnet.keras_reader import load_keras_sequential
 from omlt.neuralnet.network_definition import NetworkDefinition
 
 
-# ToDo: Add tests for teh scaling object
-def test_network_definition():
+def test_two_node_full_space(two_node_network):
+    m = pyo.ConcreteModel()
+    m.neural_net_block = OmltBlock()
+    formulation = NeuralNetworkFormulation(two_node_network)
+    m.neural_net_block.build_formulation(formulation)
+    # assert m.nvariables() == 12
+    # assert m.nconstraints() == 11
+
+    m.neural_net_block.inputs.pprint()
+    m.neural_net_block.inputs[0].fix(-2)
+    m.obj1 = pyo.Objective(expr=0)
+    status = pyo.SolverFactory("cbc").solve(m, tee=True)
+    pyo.assert_optimal_termination(status)
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 0]) - 3.856110320303267) < 1e-8
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - 0.9640275800758169) < 1e-8
+
+    m.neural_net_block.inputs[0].fix(1)
+    status = pyo.SolverFactory("cbc").solve(m, tee=False)
+    pyo.assert_optimal_termination(status)
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 0]) - -3.046376623823058) < 1e-8
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - -0.7615941559557649) < 1e-8
+
+
+@pytest.mark.skip("reduced space not updated")
+def test_two_node_reduced_space_1():
     """
     Test of the following model:
 
-           1           
-     (0) ------------ (2) ----\
-                \              \ 2
-                 \              \
-                  \ -2           (4)
-                   \            /
-                    \          / -3
-          -1         \        /
-     (1) ------------ (3) ---/
+            1           1
+    x0 -------- (1) --------- (3)
+     |                   /
+     |                  /
+     |                 / 5
+     |                /
+     |               |
+     |    -1         |     1
+     ---------- (2) --------- (4)
+
     """
 
-    n_inputs = 2
+    n_inputs = 1
     n_hidden = 2
-    n_outputs = 1
-    w = {2: {0: 1.0}, 3: {0: -2.0, 1: -1.0}, 4: {2: 2.0, 3: -3}}
-    b = {2: 1, 3: 2, 4: 3}
-    a = {2: "linear", 3: "linear", 4: "linear"}
+    n_outputs = 2
+    w = {1: {0: 1.0}, 2: {0: -1.0}, 3: {1: 1.0, 2: 5.0}, 4: {2: 1.0}}
+    b = {1: 1, 2: 2, 3: 3, 4: 4}
 
-    nd = NetworkDefinition(n_inputs, n_hidden, n_outputs, w, b, a)
-    assert nd.n_inputs == n_inputs
-    assert nd.n_hidden == n_hidden
-    assert nd.n_outputs == n_outputs
-    for j in w.keys():
-        for i in w[j].keys():
-            assert w[j][i] == nd.weights[j][i]
-        assert b[j] == nd.biases[j]
-        assert a[j] == nd.activations[j]
-
-    assert nd.scaling_object is None
-    assert nd.input_node_ids() == [0, 1]
-    assert nd.hidden_node_ids() == [2, 3]
-    assert nd.output_node_ids() == [4]
-
-    with pytest.warns(
-        UserWarning,
-        match="No input bounds were provided. This may lead to extrapolation outside of the training data",
-    ):
-        nd = NetworkDefinition(n_inputs, n_hidden, n_outputs, w, b, a)
-
-    input_bounds = [(0, 2), (-1, 1)]
-    nd = NetworkDefinition(
-        n_inputs, n_hidden, n_outputs, w, b, a, input_bounds=input_bounds
+    net = NetworkDefinition(
+        n_inputs=n_inputs,
+        n_hidden=n_hidden,
+        n_outputs=n_outputs,
+        weights=w,
+        biases=b,
+        activations={},
     )
-    assert nd.input_bounds == input_bounds
 
-    with pytest.raises(ValueError):
-        input_bounds = [
-            (0, 2),
-        ]
-        nd = NetworkDefinition(
-            n_inputs, n_hidden, n_outputs, w, b, a, input_bounds=input_bounds
-        )
+    m = pyo.ConcreteModel()
+    m.neural_net_block = OmltBlock()
+    m.neural_net_block.build_formulation(ReducedSpaceContinuousFormulation(net))
+    assert m.nvariables() == 3
+    assert m.nconstraints() == 2
 
-    with pytest.raises(ValueError):
-        input_bounds = [(0, 2), (3,)]
-        nd = NetworkDefinition(
-            n_inputs, n_hidden, n_outputs, w, b, a, input_bounds=input_bounds
-        )
+    m.neural_net_block.inputs[0].fix(-2)
+    m.obj1 = pyo.Objective(expr=0)
+    status = pyo.SolverFactory("ipopt").solve(m, tee=False)
 
-    # Todo: this should be able to throw an error
-    nd = NetworkDefinition(1, n_hidden, n_outputs, w, b, a)
+    assert abs(pyo.value(m.neural_net_block.outputs[0]) - 22) < 1e-8
+    assert abs(pyo.value(m.neural_net_block.outputs[1]) - 8) < 1e-8
 
-    with pytest.raises(ValueError):
-        nd = NetworkDefinition(n_inputs, 1, n_outputs, w, b, a)
+    m.neural_net_block.inputs[0].fix(1)
+    status = pyo.SolverFactory("ipopt").solve(m, tee=False)
+    assert abs(pyo.value(m.neural_net_block.outputs[0]) - 10) < 1e-8
+    assert abs(pyo.value(m.neural_net_block.outputs[1]) - 5) < 1e-8
+
+
+# todo: Build more tests with different activations and edge cases
+@pytest.mark.skip("reduced space not updated")
+def xtest_two_node_pass_variables():
+    """
+    Test of the following model:
+
+            1           1
+    x0 -------- (1) --------- (3)
+     |                   /
+     |                  /
+     |                 / 5
+     |                /
+     |               |
+     |    -1         |     1
+     ---------- (2) --------- (4)
+    """
+
+    n_inputs = 1
+    n_nodes = 3
+    n_outputs = 2
+    w = {1: {0: 1.0}, 2: {0: -1.0}, 3: {1: 1.0, 2: 5.0}, 4: {2: 1.0}}
+    b = {1: 0, 2: 0, 3: 0, 4: 0}
+
+    m = pyo.ConcreteModel()
+    outputs = pyo.Set(initialize=list(range(2)), ordered=True)
+    m.x = pyo.Var()
+    m.y = pyo.Var(outputs)
+    m.neural_net_block = NeuralNetBlock()
+    network_definition = ReducedSpaceNonlinear(pyo.tanh)
+    network_definition.set_weights(w, b, n_inputs, n_outputs, n_nodes)
+    m.neural_net_block.define_network(
+        network_definition=network_definition, input_vars=[m.x], output_vars=m.y
+    )
+
+    m.x.fix(-2)
+    m.obj1 = pyo.Objective(expr=0)
+    status = pyo.SolverFactory("ipopt").solve(m, tee=False)
+
+    assert abs(pyo.value(m.neural_net_block.y[3]) - 3.856110320303267) < 1e-8
+    assert abs(pyo.value(m.neural_net_block.y[4]) - 0.9640275800758169) < 1e-8
+
+    m.x.fix(1)
+    status = pyo.SolverFactory("ipopt").solve(m, tee=False)
+    assert abs(pyo.value(m.neural_net_block.y[3]) - -3.046376623823058) < 1e-8
+    assert abs(pyo.value(m.neural_net_block.y[4]) - -0.7615941559557649) < 1e-8

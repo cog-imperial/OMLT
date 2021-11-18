@@ -87,7 +87,7 @@ class NetworkParser:
             assert network_input is None
             network_input = InputLayer(size)
             self._node_map[input.name] = network_input
-            network.add_node(network_input)
+            network.add_layer(network_input)
 
         assert network_input is not None
 
@@ -142,7 +142,7 @@ class NetworkParser:
                     node, next_nodes
                 )
                 if new_layer is not None:
-                    network.add_node(new_layer)
+                    network.add_layer(new_layer)
                     for layer_input in new_layer_inputs:
                         network.add_edge(layer_input, new_layer)
             else:

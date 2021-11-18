@@ -66,20 +66,26 @@ class _BaseInputOutputBlockData(_BlockData):
             self.inputs = pyo.Var(self.inputs_set, initialize=0)
             self.__inputs_list = weakref.ref(self.inputs)
         else:
-            self.__inputs_list = weakref.ref(input_vars)
+            if isinstance(input_vars, list):
+                self.__inputs_list = input_vars
+            else:
+                self.__inputs_list = weakref.ref(input_vars)
             for index in self.__input_indexes:
                 if index not in input_vars:
-                    raise ValueError(f"Output index {index} not in IndexedVar {input_vars}")
+                    raise ValueError(f"Input index {index} not in IndexedVar {input_vars}")
 
         if output_vars is None:
             self.outputs_set = pyo.Set(initialize=output_indexes)
             self.outputs = pyo.Var(self.outputs_set, initialize=0)
             self.__outputs_list = weakref.ref(self.outputs)
         else:
-            self.__outputs_list = weakref.ref(output_vars)
+            if isinstance(output_vars, list):
+                self.__outputs_list = output_vars
+            else:
+                self.__outputs_list = weakref.ref(output_vars)
             for index in self.__output_indexes:
                 if index not in output_vars:
-                    raise ValueError(f"Output index {index} not in IndexedVar {input_vars}")
+                    raise ValueError(f"Output index {index} not in IndexedVar {output_vars}")
 
     def _setup_input_bounds(self, inputs_list, input_bounds=None):
         if input_bounds:
