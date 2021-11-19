@@ -1,4 +1,3 @@
-from numpy.lib.arraysetops import isin
 from onnx import numpy_helper
 import numpy as np
 
@@ -12,21 +11,6 @@ from omlt.neuralnet.layer import (
 
 
 _ACTIVATION_OP_TYPES = ["Relu", "Sigmoid", "LogSoftmax"]
-
-
-def load_onnx_neural_network(onnx, scaling_object=None, input_bounds=None):
-    """
-    Load a NetworkDefinition from an onnx object.
-
-    Parameters
-    ----------
-    onnx :
-        onnx model
-    scaling_object : instance of object supporting ScalingInterface
-    input_bounds : list of tuples
-    """
-    parser = NetworkParser()
-    return parser.parse_network(onnx.graph, scaling_object, input_bounds)
 
 
 class NetworkParser:
