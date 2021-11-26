@@ -66,13 +66,13 @@ class Layer:
 
     @property
     def input_indexes(self):
-        """Return an iterator over the input indexes"""
-        return itertools.product(*[range(v) for v in self.__input_size])
+        """Return a list of the input indexes"""
+        return list(itertools.product(*[range(v) for v in self.__input_size]))
 
     @property
     def output_indexes(self):
-        """Return an iterator over the output indexes"""
-        return itertools.product(*[range(v) for v in self.__output_size])
+        """Return a list of the output indexes"""
+        return list(itertools.product(*[range(v) for v in self.__output_size]))
 
     def eval(self, x):
         """
