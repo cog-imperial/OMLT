@@ -6,7 +6,7 @@ from omlt.neuralnet.layer import (
     ConvLayer,
     DenseLayer,
     InputLayer,
-    IndexTransformer,
+    IndexMapper,
 )
 
 
@@ -205,7 +205,7 @@ class NetworkParser:
             node_weights,
             node_biases,
             activation=activation,
-            input_index_transformer=None
+            input_index_mapper=None
         )
         self._node_map[node.name] = dense_layer
         self._node_map[node.output[0]] = dense_layer
@@ -253,7 +253,7 @@ class NetworkParser:
             weights,
             biases,
             activation=activation,
-            input_index_transformer=transformer
+            input_index_mapper=transformer
         )
         self._node_map[node.name] = dense_layer
         self._node_map[node.output[0]] = dense_layer
@@ -317,7 +317,7 @@ class NetworkParser:
             strides,
             weights,
             activation=activation,
-            input_index_transformer=transformer,
+            input_index_mapper=transformer,
         )
         self._node_map[node.name] = conv_layer
         self._node_map[node.output[0]] = conv_layer
@@ -332,7 +332,7 @@ class NetworkParser:
         input_layer = self._node_map[in_0]
         new_shape = self._constants[in_1]
         output_size = np.empty(input_layer.output_size).reshape(new_shape).shape
-        transformer = IndexTransformer(input_layer.output_size, list(output_size))
+        transformer = IndexMapper(input_layer.output_size, list(output_size))
         self._node_map[node.output[0]] = (transformer, input_layer)
         return next_nodes
 

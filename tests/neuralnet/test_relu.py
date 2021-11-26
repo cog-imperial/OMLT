@@ -1,6 +1,4 @@
 import pyomo.environ as pyo
-import numpy as np
-import pytest
 
 from omlt.block import OmltBlock
 from omlt.neuralnet import ComplementarityReLUActivation, NeuralNetworkFormulation
