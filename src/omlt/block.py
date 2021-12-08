@@ -235,9 +235,6 @@ class OmltBlockData(_BaseInputOutputBlockData):
         self.__scaling_object = None
 
     # TODO: input_vars needs to be a dict
-    input_vars = [m.x, m.v[2], m.y]
-    input_vars = {0:m.x, 1: m.v[2], 2:m.y}
-    input_vars[
     def build_formulation(self, formulation, input_vars=None, output_vars=None):
         """
         Call this method to construct the constraints (and possibly

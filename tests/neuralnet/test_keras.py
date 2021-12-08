@@ -4,7 +4,7 @@ import pyomo.environ as pyo
 import tensorflow
 
 from omlt.block import OmltBlock
-from omlt.neuralnet.keras_reader import load_keras_sequential
+from omlt.io.keras_reader import load_keras_sequential
 from omlt.neuralnet import NeuralNetworkFormulation
 from omlt.scaling import OffsetScaling
 
@@ -115,7 +115,7 @@ def _test_keras_linear_big(keras_fname, reduced_space=False):
         assert abs(pyo.value(m.neural_net_block.outputs[0]) - nn_outputs[d][0]) < 1e-5
 
 
-@pytest.mark.skip("keras reader not updated")
+#@pytest.mark.skip("keras reader not updated")
 def test_keras_linear_131_full(datadir):
     _test_keras_linear_131(datadir.file("keras_linear_131"))
     _test_keras_linear_131(datadir.file("keras_linear_131_sigmoid"))

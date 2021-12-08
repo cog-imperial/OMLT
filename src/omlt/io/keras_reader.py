@@ -1,4 +1,5 @@
 from omlt.neuralnet.network_definition import NetworkDefinition
+from omlt.neuralnet.layer import InputLayer, DenseLayer
 
 def load_keras_sequential(nn, scaling_object=None, input_bounds=None):
     """
