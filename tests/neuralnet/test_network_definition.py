@@ -3,7 +3,7 @@ import pytest
 
 from omlt.block import OmltBlock
 from omlt.neuralnet.formulation import NeuralNetworkFormulation
-from omlt.neuralnet.keras_reader import load_keras_sequential
+from omlt.io.keras_reader import load_keras_sequential
 from omlt.neuralnet.network_definition import NetworkDefinition
 
 

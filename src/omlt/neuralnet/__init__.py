@@ -1,4 +1,3 @@
-from omlt.neuralnet.keras_reader import load_keras_sequential
 from omlt.neuralnet.network_definition import NetworkDefinition
 from omlt.neuralnet.layer import Layer, InputLayer, DenseLayer, ConvLayer, IndexMapper
 from omlt.neuralnet.formulation import NeuralNetworkFormulation

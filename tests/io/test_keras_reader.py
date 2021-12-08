@@ -1,4 +1,4 @@
-import keras
+import tensorflow.keras as keras
 import pytest
 
 from omlt.io.keras_reader import load_keras_sequential

@@ -1,4 +1,4 @@
-import keras
+import tensorflow.keras as keras
 import pytest
 import pyomo.environ as pyo
 import tensorflow
