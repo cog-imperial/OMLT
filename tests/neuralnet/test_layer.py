@@ -3,7 +3,7 @@ import numpy as np
 from omlt.neuralnet.layer import (
     InputLayer,
     DenseLayer,
-    IndexTransformer,
+    IndexMapper,
 )
 
 
@@ -13,14 +13,14 @@ def test_input_layer():
     assert input_indexes == [(0, 0, 0), (0, 0, 1), (0, 0, 2), (0, 1, 0), (0, 1, 1), (0, 1, 2)]
 
 
-def test_dense_layer_with_input_index_transformer():
+def test_dense_layer_with_input_index_mapper():
     w = np.random.uniform(0.0, 1.0, (3, 2))
     b = np.random.uniform(0.0, 1.0, 2)
 
     # input has size [2, 3], but the previous node output is [3, 2]
-    # use transformer to map between the two
-    t = IndexTransformer([3, 2], [2, 3])
-    layer = DenseLayer([2, 3], [2, 2], w, b, input_index_transformer=t)
+    # use mapper to map between the two
+    t = IndexMapper([3, 2], [2, 3])
+    layer = DenseLayer([2, 3], [2, 2], w, b, input_index_mapper=t)
 
     index_iter = layer.input_indexes_with_input_layer_indexes
 

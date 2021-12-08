@@ -1,11 +1,10 @@
 import pyomo.environ as pyo
-import numpy as np
-import pytest
 
 from omlt.block import OmltBlock
 from omlt.neuralnet import ComplementarityReLUActivation, NeuralNetworkFormulation
 
 
+# TODO: Add tests for single dimensional outputs as well
 
 def test_two_node_bigm(two_node_network):
     m = pyo.ConcreteModel()

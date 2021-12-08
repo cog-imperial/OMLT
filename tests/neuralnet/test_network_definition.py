@@ -3,7 +3,7 @@ import pytest
 
 from omlt.block import OmltBlock
 from omlt.neuralnet.formulation import NeuralNetworkFormulation
-from omlt.neuralnet.keras_reader import load_keras_sequential
+from omlt.io.keras_reader import load_keras_sequential
 from omlt.neuralnet.network_definition import NetworkDefinition
 
 
@@ -12,22 +12,20 @@ def test_two_node_full_space(two_node_network):
     m.neural_net_block = OmltBlock()
     formulation = NeuralNetworkFormulation(two_node_network)
     m.neural_net_block.build_formulation(formulation)
-    # assert m.nvariables() == 12
-    # assert m.nconstraints() == 11
 
     m.neural_net_block.inputs.pprint()
     m.neural_net_block.inputs[0].fix(-2)
     m.obj1 = pyo.Objective(expr=0)
     status = pyo.SolverFactory("cbc").solve(m, tee=True)
     pyo.assert_optimal_termination(status)
-    assert abs(pyo.value(m.neural_net_block.outputs[0, 0]) - 3.856110320303267) < 1e-8
-    assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - 0.9640275800758169) < 1e-8
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 0]) - 10.0) < 1e-8
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - 2.0) < 1e-8
 
     m.neural_net_block.inputs[0].fix(1)
     status = pyo.SolverFactory("cbc").solve(m, tee=False)
     pyo.assert_optimal_termination(status)
-    assert abs(pyo.value(m.neural_net_block.outputs[0, 0]) - -3.046376623823058) < 1e-8
-    assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - -0.7615941559557649) < 1e-8
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 0]) - 1.0) < 1e-8
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - 0.0) < 1e-8
 
 
 @pytest.mark.skip("reduced space not updated")
