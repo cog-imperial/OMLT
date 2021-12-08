@@ -6,6 +6,7 @@ from pyomo.core.base.block import _BlockData, declare_custom_block
 
 from .utils import _extract_var_data
 
+# TODO: Update documentation
 """
 This module defines the base class for implementing a custom block
 within Pyomo based on input / output connections.
@@ -35,7 +36,8 @@ Example 1:
 
 """
 
-
+# TODO: Change inputs_lists to inputs_dict - good fix
+# I think we can support both list and dict
 @declare_custom_block(name="_BaseInputOutputBlock")
 class _BaseInputOutputBlockData(_BlockData):
     def __init__(self, component):
@@ -53,6 +55,34 @@ class _BaseInputOutputBlockData(_BlockData):
     def _setup_inputs_outputs(
         self, *, input_indexes, output_indexes, input_vars=None, output_vars=None
     ):
+        """
+        This function should be called by the derived class to setup the
+        list of inputs and outputs for the input / output block.
+        Parameters
+        ----------
+        n_inputs : int
+            The number of inputs to the block
+        n_outputs : int
+            The number of outputs from the block
+        input_vars : list or None
+            The list of var data objects that correspond to the inputs.
+            This list must match the order of inputs from 0 .. n_inputs-1.
+            Note that mixing Var, IndexedVar, and VarData objects is fully
+            supported, and any indexed variables will be expanded to form
+            the final list of input var data objects. Note that any IndexedVar
+            included should be defined over a sorted set.
+            If set to None, then an indexed variable "inputs" is created on the
+            automatically.
+        output_vars :  list or None
+            The list of var data objects that correspond to the outputs.
+            This list must match the order of inputs from 0 .. n_outputs-1.
+            Note that mixing Var, IndexedVar, and VarData objects is fully
+            supported, and any indexed variables will be expanded to form
+            the final list of input var data objects. Note that any IndexedVar
+            included should be defined over a sorted set.
+            If set to None, then an indexed variable "outputs" is created on the
+            automatically.
+        """
         self.__input_indexes = input_indexes
         self.__output_indexes = output_indexes
         if not input_indexes or not output_indexes:
@@ -66,6 +96,7 @@ class _BaseInputOutputBlockData(_BlockData):
             self.inputs = pyo.Var(self.inputs_set, initialize=0)
             self.__inputs_list = weakref.ref(self.inputs)
         else:
+            #TODO: We need to check that the input_vars indices are the same as __input_indexes
             if isinstance(input_vars, list):
                 self.__inputs_list = input_vars
             else:
@@ -204,6 +235,10 @@ class OmltBlockData(_BaseInputOutputBlockData):
         self.__formulation = None
         self.__scaling_object = None
 
+    # TODO: input_vars needs to be a dict
+    input_vars = [m.x, m.v[2], m.y]
+    input_vars = {0:m.x, 1: m.v[2], 2:m.y}
+    input_vars[
     def build_formulation(self, formulation, input_vars=None, output_vars=None):
         """
         Call this method to construct the constraints (and possibly
@@ -237,6 +272,9 @@ class OmltBlockData(_BaseInputOutputBlockData):
             block automatically.
         """
         # call to the base class to define the inputs and the outputs
+
+        # TODO: Do we want to validate formulation.input_indexes with input_vars here?
+        # maybe formulation.check_input_vars(input_vars) or something?
         super(OmltBlockData, self)._setup_inputs_outputs(
             input_indexes=list(formulation.input_indexes),
             output_indexes=list(formulation.output_indexes),

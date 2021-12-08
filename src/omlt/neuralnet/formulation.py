@@ -10,6 +10,8 @@ def _ignore_input_layer():
     pass
 
 
+# TODO: Doesn't this imply that there is a mapping from layer type to formulation
+# There are different formulations possible for the same layer
 _DEFAULT_LAYER_CONSTRAINTS = {
     InputLayer: _ignore_input_layer,
     DenseLayer: full_space_dense_layer,
@@ -86,6 +88,8 @@ def build_neural_network_formulation(block, network_structure, layer_constraints
     layers = list(net.layers)
 
     block.layers = pyo.Set(initialize=[id(layer) for layer in layers], ordered=True)
+
+    # TODO: This code should be decided by the layer formulation
     @block.Block(block.layers)
     def layer(b, layer_id):
         net_layer = net.layer(layer_id)
