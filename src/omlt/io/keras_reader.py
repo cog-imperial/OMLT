@@ -19,11 +19,12 @@ def load_keras_sequential(nn, scaling_object=None, input_bounds=None):
     """
     # Todo: Add support for DistributionLambda layers
     n_inputs = len(nn.layers[0].get_weights()[0])
+    print('n_inputs:', n_inputs)
 
     net = NetworkDefinition(input_bounds=input_bounds)
 
-    input_layer = InputLayer([n_inputs])
-    net.add_layer(input_layer)
+    prev_layer = InputLayer([n_inputs])
+    net.add_layer(prev_layer)
 
     for l in nn.layers:
         cfg = l.get_config()
@@ -36,10 +37,8 @@ def load_keras_sequential(nn, scaling_object=None, input_bounds=None):
                 weights=weights,
                 biases=biases)
         net.add_layer(dense_layer)
-    
-    all_layers = list(net.layers)[::-1]
-    for i in range(len(all_layers) - 1):
-        net.add_edge(all_layers[i], all_layers[i+1])
+        net.add_edge(prev_layer, dense_layer)
+        prev_layer = dense_layer
 
     return net
 
