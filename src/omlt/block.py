@@ -178,7 +178,6 @@ class _BaseInputOutputBlockData(_BlockData):
                 scaled_upper = scaling_object.get_scaled_input_expressions(input_upper)
                 scaled_input_bounds = list(zip(scaled_lower, scaled_upper))
                 self._setup_input_bounds(self.scaled_inputs_list, scaled_input_bounds)
-            raise NotImplementedError()
 
     @property
     def inputs_list(self):

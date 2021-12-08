@@ -15,10 +15,10 @@ class Layer:
         size of the layer output
     activation : str or None
         activation function name
-    input_index_transformer : IndexTransformer or None
-        transform indexes from this layer index to the input layer index size
+    input_index_mapper : IndexMapper or None
+        map indexes from this layer index to the input layer index size
     """
-    def __init__(self, input_size, output_size, *, activation=None, input_index_transformer=None):
+    def __init__(self, input_size, output_size, *, activation=None, input_index_mapper=None):
         assert isinstance(input_size, list)
         assert isinstance(output_size, list)
         if activation is None:
@@ -26,45 +26,65 @@ class Layer:
         self.__input_size = input_size
         self.__output_size = output_size
         self.__activation = activation
-        self.__input_index_transformer = input_index_transformer
+        self.__input_index_mapper = input_index_mapper
 
     @property
     def input_size(self):
+        """Return the size of the input tensor"""
         return self.__input_size
 
     @property
     def output_size(self):
+        """Return the size of the output tensor"""
         return self.__output_size
 
     @property
     def activation(self):
+        """Return the activation function"""
         return self.__activation
 
     @property
-    def input_index_transformer(self):
-        return self.__input_index_transformer
+    def input_index_mapper(self):
+        """Return the index mapper"""
+        return self.__input_index_mapper
 
     @property
     def input_indexes_with_input_layer_indexes(self):
-        if self.__input_index_transformer is None:
+        """
+        Return an iterator generating a tuple of local and input indexes.
+
+        Local indexes are indexes over the elements of the current layer.
+        Input indexes are indexes over the elements of the previous layer.
+        """
+        if self.__input_index_mapper is None:
             for index in self.input_indexes:
                 yield index, index
         else:
-            transformer = self.__input_index_transformer
+            mapper = self.__input_index_mapper
             for index in self.input_indexes:
-                yield index, transformer(index)
+                yield index, mapper(index)
 
     @property
     def input_indexes(self):
-        return itertools.product(*[range(v) for v in self.__input_size])
+        """Return a list of the input indexes"""
+        return list(itertools.product(*[range(v) for v in self.__input_size]))
 
     @property
     def output_indexes(self):
-        return itertools.product(*[range(v) for v in self.__output_size])
+        """Return a list of the output indexes"""
+        return list(itertools.product(*[range(v) for v in self.__output_size]))
 
     def eval(self, x):
-        if self.__input_index_transformer is not None:
-            x = np.reshape(x, self.__input_index_transformer.output_size)
+        """
+        Evaluate the layer at x.
+        
+        Parameters
+        ----------
+        x : array-like
+            the input tensor. Must have size `self.input_size`.
+        """
+        if self.__input_index_mapper is not None:
+            x = np.reshape(x, self.__input_index_mapper.output_size)
         assert x.shape == tuple(self.input_size)
         y = self._eval(x)
         return self._apply_activation(y)
@@ -89,6 +109,11 @@ class Layer:
 class InputLayer(Layer):
     """
     The first layer in any network.
+
+    Parameters
+    ----------
+    size : tuple
+        the size of the input.
     """
     def __init__(self, size):
         super().__init__(size, size)
@@ -102,10 +127,25 @@ class InputLayer(Layer):
 
 class DenseLayer(Layer):
     """
-    Dense layer.
+    Dense layer implementing `output = activation(dot(input, weights) + biases)`.
+
+    Parameters
+    ----------
+    input_size : tuple
+        the size of the input.
+    output_size : tuple
+        the size of the output.
+    weight : matrix-like
+        the weight matrix.
+    biases : array-like
+        the biases.
+    activation : str or None
+        activation function name
+    input_index_mapper : IndexMapper or None
+        map indexes from this layer index to the input layer index size
     """
-    def __init__(self, input_size, output_size, weights, biases, *, activation=None, input_index_transformer=None):
-        super().__init__(input_size, output_size, activation=activation, input_index_transformer=input_index_transformer)
+    def __init__(self, input_size, output_size, weights, biases, *, activation=None, input_index_mapper=None):
+        super().__init__(input_size, output_size, activation=activation, input_index_mapper=input_index_mapper)
         self.__weights = weights
         self.__biases = biases
 
@@ -127,27 +167,58 @@ class DenseLayer(Layer):
 
 
 class ConvLayer(Layer):
-    def __init__(self, input_size, output_size, strides, kernel, *, activation=None, input_index_transformer=None):
-        super().__init__(input_size, output_size, activation=activation, input_index_transformer=input_index_transformer)
+    """
+    Two-dimensional convolutional layer.
+
+    Parameters
+    ----------
+    input_size : tuple
+        the size of the input.
+    output_size : tuple
+        the size of the output.
+    strides : matrix-like
+        stride of the cross-correlation kernel.
+    kernel : matrix-like
+        the cross-correlation kernel.
+    activation : str or None
+        activation function name
+    input_index_mapper : IndexMapper or None
+        map indexes from this layer index to the input layer index size
+    """
+    def __init__(self, input_size, output_size, strides, kernel, *, activation=None, input_index_mapper=None):
+        super().__init__(input_size, output_size, activation=activation, input_index_mapper=input_index_mapper)
         self.__strides = strides
         self.__kernel = kernel
 
     def kernel_with_input_indexes(self, out_d, out_r, out_c):
+        """
+        Returns an iterator over the kernel value and input index 
+        for the output at index `(out_d, out_r, out_c)`.
+
+        Parameters
+        ----------
+        out_d : int
+            the output depth.
+        out_d : int
+            the output row.
+        out_c : int
+            the output column.
+        """
         [_, kernel_d, kernel_r, kernel_c] = self.__kernel.shape
         [rows_stride, cols_stride] = self.__strides
         start_in_d = 0
         start_in_r = out_r * rows_stride
         start_in_c = out_c * cols_stride
-        transform = lambda x: x
-        if self.input_index_transformer is not None:
-            transform = self.input_index_transformer
+        mapper = lambda x: x
+        if self.input_index_mapper is not None:
+            mapper = self.input_index_mapper
 
         for k_d in range(kernel_d):
             for k_r in range(kernel_r):
                 for k_c in range(kernel_c):
                     k_v = self.__kernel[out_d, k_d, k_r, k_c]
                     local_index = (start_in_d + k_d, start_in_r + k_r, start_in_c + k_c)
-                    yield k_v, transform(local_index)
+                    yield k_v, mapper(local_index)
 
     @property
     def strides(self):
@@ -174,16 +245,16 @@ class ConvLayer(Layer):
         return y
 
 
-class IndexTransformer:
+class IndexMapper:
     """
-    Transform indexes from one layer to the other.
+    Map indexes from one layer to the other.
 
     Parameters
     ----------
     input_size : tuple
         the input size
     output_size : tuple
-        the transformed input layer's output size
+        the mapped input layer's output size
     """
     def __init__(self, input_size, output_size):
         self.__input_size = input_size
@@ -202,4 +273,4 @@ class IndexTransformer:
         return np.unravel_index(flat_index, self.__input_size)
 
     def __str__(self):
-        return f"IndexTransformer(input_size={self.input_size}, output_size={self.output_size})"
+        return f"IndexMapper(input_size={self.input_size}, output_size={self.output_size})"
