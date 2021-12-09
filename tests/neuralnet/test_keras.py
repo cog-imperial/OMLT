@@ -10,20 +10,14 @@ from omlt.scaling import OffsetScaling
 
 from conftest import get_neural_network_data
 
+#TODO: work on names
+FullSpaceContinuousFormulation = NeuralNetworkFormulation
 
 def _test_keras_linear_131(keras_fname, reduced_space=False):
     x, y, x_test = get_neural_network_data("131")
 
     nn = tensorflow.keras.models.load_model(keras_fname, compile=False)
-    net = load_keras_sequential(nn,input_bounds = [(-1,1)])
-
-    assert net.n_inputs == 1
-    assert net.n_outputs == 1
-    assert net.n_hidden == 3
-    assert len(net.weights) == 4
-    assert len(net.biases) == 4
-    assert len(net.activations) == 4
-
+    net = load_keras_sequential(nn, input_bounds=[(-1,1)])
     m = pyo.ConcreteModel()
     m.neural_net_block = OmltBlock()
     if reduced_space:
@@ -46,13 +40,6 @@ def _test_keras_mip_relu_131(keras_fname):
     nn = tensorflow.keras.models.load_model(keras_fname, compile=False)
     net = load_keras_sequential(nn,input_bounds = [(-1,1)])
 
-    assert net.n_inputs == 1
-    assert net.n_outputs == 1
-    assert net.n_hidden == 3
-    assert len(net.weights) == 4
-    assert len(net.biases) == 4
-    assert len(net.activations) == 4
-
     m = pyo.ConcreteModel()
     m.neural_net_block = OmltBlock()
     formulation = ReLUBigMFormulation(net)
@@ -72,13 +59,6 @@ def _test_keras_complementarity_relu_131(keras_fname):
 
     nn = tensorflow.keras.models.load_model(keras_fname, compile=False)
     net = load_keras_sequential(nn)
-
-    assert net.n_inputs == 1
-    assert net.n_outputs == 1
-    assert net.n_hidden == 3
-    assert len(net.weights) == 4
-    assert len(net.biases) == 4
-    assert len(net.activations) == 4
 
     m = pyo.ConcreteModel()
     m.neural_net_block = OmltBlock()
@@ -115,17 +95,16 @@ def _test_keras_linear_big(keras_fname, reduced_space=False):
         assert abs(pyo.value(m.neural_net_block.outputs[0]) - nn_outputs[d][0]) < 1e-5
 
 
-#@pytest.mark.skip("keras reader not updated")
 def test_keras_linear_131_full(datadir):
     _test_keras_linear_131(datadir.file("keras_linear_131"))
     _test_keras_linear_131(datadir.file("keras_linear_131_sigmoid"))
     _test_keras_linear_131(datadir.file("keras_linear_131_sigmoid_output_activation"))
     _test_keras_linear_131(
-        datadir.file("keras_lienar_131_sigmoid_softplus_output_activation")
+        datadir.file("keras_linear_131_sigmoid_softplus_output_activation")
     )
 
 
-@pytest.mark.skip("keras reader not updated")
+@pytest.mark.skip("reduced space not completed")
 def test_keras_linear_131_reduced(datadir):
     _test_keras_linear_131(datadir.file("keras_linear_131"), reduced_space=True)
     _test_keras_linear_131(
@@ -141,8 +120,7 @@ def test_keras_linear_131_reduced(datadir):
         reduced_space=True,
     )
 
-
-@pytest.mark.skip("keras reader not updated")
+@pytest.mark.skip("relu is done a different way now")
 def test_keras_linear_131_relu(datadir):
     _test_keras_mip_relu_131(
         datadir.file("keras_linear_131_relu"),
@@ -151,9 +129,10 @@ def test_keras_linear_131_relu(datadir):
         datadir.file("keras_linear_131_relu"),
     )
 
-
-@pytest.mark.skip("keras reader not updated")
 def test_keras_linear_big(datadir):
     _test_keras_linear_big(datadir.file("big"), reduced_space=False)
     # too slow
     # _test_keras_linear_big('./models/big', reduced_space=True)
+
+#if __name__ ==' __main__':
+#    test_keras_linear_131_full()

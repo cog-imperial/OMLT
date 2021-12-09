@@ -52,7 +52,7 @@ class NetworkDefinition:
 
     @property
     def input_layers(self):
-        """Return an interator over the input layers"""
+        """Return an iterator over the input layers"""
         for layer_id, in_degree in self.__graph.in_degree():
             if in_degree == 0:
                 yield self.__layers_by_id[layer_id]

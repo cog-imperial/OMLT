@@ -4,7 +4,7 @@ from omlt.formulation import _PyomoFormulation
 from omlt.neuralnet.layer import ConvLayer, DenseLayer, InputLayer
 from omlt.neuralnet.layers.full_space import full_space_dense_layer, full_space_conv_layer
 from omlt.neuralnet.activations import linear_activation, bigm_relu_activation
-
+from omlt.neuralnet.activations.smooth import sigmoid_activation, softplus_activation
 
 def _ignore_input_layer():
     pass
@@ -21,6 +21,8 @@ _DEFAULT_LAYER_CONSTRAINTS = {
 _DEFAULT_ACTIVATION_CONSTRAINTS = {
     "linear": linear_activation,
     "relu": bigm_relu_activation,
+    "sigmoid": sigmoid_activation,
+    "softplus": softplus_activation
 }
 
 
