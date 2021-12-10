@@ -76,6 +76,8 @@ def build_relu_mip_formulation(block, network_structure, M=None):
     block._z_hat_bound = pyo.Constraint(block.relu_nodes)
     block._z_hat_positive = pyo.Constraint(block.relu_nodes)
     block._z_hat_negative = pyo.Constraint(block.relu_nodes)
+    block._z_hat_positive2 = pyo.Constraint(block.relu_nodes)
+    block._z_hat_negative2 = pyo.Constraint(block.relu_nodes)
     block._big_m_lb = pyo.Param(block.relu_nodes, default=None, mutable=True)
     block._big_m_ub = pyo.Param(block.relu_nodes, default=None, mutable=True)
     block._linear_activation = pyo.Constraint(block.linear_nodes)
@@ -125,6 +127,8 @@ def build_relu_mip_formulation(block, network_structure, M=None):
             block.z[i] <= block.zhat[i] - block._big_m_lb[i] * block.q[i]
         )
         block._z_hat_negative[i] = block.z[i] <= block._big_m_ub[i] * (1.0 - block.q[i])
+        block._z_hat_positive2[i] = block.zhat[i] >= block.q[i] * block._big_m_lb[i]
+        block._z_hat_negative2[i] = block.zhat[i] <= (1 - block.q[i]) * block._big_m_ub[i]
 
     # linear activations
     for i in block.linear_nodes:
