@@ -95,6 +95,9 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars):
     )
 
     branch_value_by_feature_id = dict()
+    import collections
+    branch_value_by_feature_id = collections.defaultdict(list)
+
     for f in feature_ids:
         nodes_feature_mask = nodes_feature_ids == f
         branch_values = nodes_values[nodes_feature_mask & nodes_branch_mask]
