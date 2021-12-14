@@ -102,7 +102,8 @@ def build_relu_mip_formulation(block, network_structure, M=None):
             block._big_m_lb[i] = -M
 
         if ub is not None:
-            block.z[i].setub(ub)
+            # the upper bound should always be at least 0
+            block.z[i].setub(max(ub, 0))
             # use upper bound on z as big-m
             block._big_m_ub[i] = ub
         else:
