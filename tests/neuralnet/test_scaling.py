@@ -37,8 +37,8 @@ def test_offset_scaling():
 
     test_x_scal = scaling.get_scaled_input_expressions(x)
     test_y_unscal = scaling.get_unscaled_output_expressions(y_scal)
-    np.testing.assert_almost_equal(list(test_x_scal.values()), list(x_scal.values()))
-    np.testing.assert_almost_equal(list(test_y_unscal.values()), list(y.values()))
+    np.testing.assert_almost_equal(list(test_x_scal.values()), list(x_scal.values()), decimal=3)
+    np.testing.assert_almost_equal(list(test_y_unscal.values()), list(y.values()), decimal=3)
 
 
 def test_scaling_NN_block():
@@ -82,4 +82,4 @@ def test_scaling_NN_block():
         y_s = NN.predict(x=[x_s])
         y = y_s * scale_y[1] + scale_y[0]
 
-        assert y - value(model.output) <= 1e-7
+        assert y - value(model.output) <= 1e-3
