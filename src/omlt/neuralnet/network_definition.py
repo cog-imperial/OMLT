@@ -4,11 +4,25 @@ from omlt.neuralnet.layer import Layer
 
 
 class NetworkDefinition:
-    def __init__(self, scaling_object=None, input_bounds=None):
+    def __init__(self, scaling_object=None, scaled_input_bounds=None):
+        """
+        Create a network definition object used to create the neural network
+        formulation in Pyomo
+
+        Args:
+           scaling_object : ScalingInterface or None
+              A scaling object to specify the scaling parameters for the 
+              neural network inputs and outputs. If None, then no
+              scaling is performed.
+           scaled_input_bounds : dict or None
+              A dict that contains the bounds on the scaled variables (the
+              direct inputs to the neural network). If None, then no bounds
+              are specified.
+        """
         self.__layers_by_id = dict()
         self.__graph = nx.DiGraph()
         self.__scaling_object = scaling_object
-        self.__input_bounds = input_bounds
+        self.__scaled_input_bounds = scaled_input_bounds
 
     def add_layer(self, layer):
         """
@@ -46,9 +60,9 @@ class NetworkDefinition:
         return self.__scaling_object
 
     @property
-    def input_bounds(self):
+    def scaled_input_bounds(self):
         """Return a list of tuples containing lower and upper bounds of neural network inputs"""
-        return self.__input_bounds
+        return self.__scaled_input_bounds
 
     @property
     def input_layers(self):

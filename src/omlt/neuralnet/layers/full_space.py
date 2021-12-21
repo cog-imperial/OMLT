@@ -2,7 +2,8 @@ import pyomo.environ as pyo
 import numpy as np
 from pyomo.contrib.fbbt.fbbt import compute_bounds_on_expr
 
-
+# TODO: Change asserts to exceptions with messages (or ensure they
+#       are trapped higher up the call stack)
 def full_space_dense_layer(net_block, net, layer_block, layer):
     """
     Add full-space formulation of the dense layer to the block

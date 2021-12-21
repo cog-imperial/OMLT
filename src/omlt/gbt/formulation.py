@@ -86,7 +86,7 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars):
     block.x = pe.Var(categorical_index(), domain=pe.Binary)
 
     block.z_l = pe.Var(
-        zip(nodes_tree_ids[nodes_leaf_mask], nodes_node_ids[nodes_leaf_mask]),
+        list(zip(nodes_tree_ids[nodes_leaf_mask], nodes_node_ids[nodes_leaf_mask])),
         bounds=(0, None),
         domain=pe.Reals,
     )

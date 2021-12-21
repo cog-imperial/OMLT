@@ -35,53 +35,25 @@ Example 1:
     pyo.assert_optimal_termination(status)
 
 """
-
-# TODO: Change inputs_lists to inputs_dict - good fix
-# I think we can support both list and dict
-@declare_custom_block(name="_BaseInputOutputBlock")
-class _BaseInputOutputBlockData(_BlockData):
+@declare_custom_block(name="OmltBlock")
+class OmltBlockData(_BlockData):
     def __init__(self, component):
-        """
-        Any block that inherits off of this must implement and call
-        this __init__ with the passed component. This is to support
-        interactions with Pyomo.
-        """
-        super(_BaseInputOutputBlockData, self).__init__(component)
+        super(OmltBlockData, self).__init__(component)
+        self.__formulation = None
+        self.__scaling_object = None
         self.__input_indexes = None
         self.__output_indexes = None
-        self.__inputs_list = None
-        self.__outputs_list = None
 
     def _setup_inputs_outputs(
-        self, *, input_indexes, output_indexes, input_vars=None, output_vars=None
-    ):
+        self, *, input_indexes, output_indexes):
+        # TODO: Update this documentation
         """
         This function should be called by the derived class to setup the
         list of inputs and outputs for the input / output block.
-        Parameters
-        ----------
-        n_inputs : int
-            The number of inputs to the block
-        n_outputs : int
-            The number of outputs from the block
-        input_vars : list or None
-            The list of var data objects that correspond to the inputs.
-            This list must match the order of inputs from 0 .. n_inputs-1.
-            Note that mixing Var, IndexedVar, and VarData objects is fully
-            supported, and any indexed variables will be expanded to form
-            the final list of input var data objects. Note that any IndexedVar
-            included should be defined over a sorted set.
-            If set to None, then an indexed variable "inputs" is created on the
-            automatically.
-        output_vars :  list or None
-            The list of var data objects that correspond to the outputs.
-            This list must match the order of inputs from 0 .. n_outputs-1.
-            Note that mixing Var, IndexedVar, and VarData objects is fully
-            supported, and any indexed variables will be expanded to form
-            the final list of input var data objects. Note that any IndexedVar
-            included should be defined over a sorted set.
-            If set to None, then an indexed variable "outputs" is created on the
-            automatically.
+
+        Args:
+           TODO
+
         """
         self.__input_indexes = input_indexes
         self.__output_indexes = output_indexes
@@ -91,151 +63,12 @@ class _BaseInputOutputBlockData(_BlockData):
                 "_BaseInputOutputBlock must have at least one input and at least one output."
             )
 
-        if input_vars is None:
-            self.inputs_set = pyo.Set(initialize=input_indexes)
-            self.inputs = pyo.Var(self.inputs_set, initialize=0)
-            self.__inputs_list = weakref.ref(self.inputs)
-        else:
-            #TODO: We need to check that the input_vars indices are the same as __input_indexes
-            if isinstance(input_vars, list):
-                self.__inputs_list = input_vars
-            else:
-                self.__inputs_list = weakref.ref(input_vars)
-            for index in self.__input_indexes:
-                if index not in input_vars:
-                    raise ValueError(f"Input index {index} not in IndexedVar {input_vars}")
-
-        if output_vars is None:
-            self.outputs_set = pyo.Set(initialize=output_indexes)
-            self.outputs = pyo.Var(self.outputs_set, initialize=0)
-            self.__outputs_list = weakref.ref(self.outputs)
-        else:
-            if isinstance(output_vars, list):
-                self.__outputs_list = output_vars
-            else:
-                self.__outputs_list = weakref.ref(output_vars)
-            for index in self.__output_indexes:
-                if index not in output_vars:
-                    raise ValueError(f"Output index {index} not in IndexedVar {output_vars}")
-
-    def _setup_input_bounds(self, inputs_list, input_bounds=None):
-        if input_bounds:
-            # set bounds using provided input_bounds
-            for i, index in enumerate(inputs_list):
-                var  = inputs_list[index]
-
-                if var.lb == None:  # set lower bound to input_bounds value
-                    var.setlb(input_bounds[i][0])
-                else:
-                    # throw warning if var.lb is more loose than input_bounds value
-                    if var.lb < input_bounds[i][0]:
-                        warnings.warning(
-                            "Variable {} lower bound {} is less tight then network definition bound {}".format(
-                                var, var.lb, input_bounds[i][0]
-                            )
-                        )
-
-                if var.ub == None:
-                    var.setub(input_bounds[i][1])
-                else:
-                    # throw warning if var.ub is more loose than input_bounds value
-                    if var.ub > input_bounds[i][1]:
-                        warnings.warning(
-                            "Variable {} upper bound {} is less tight then network definition bound {}".format(
-                                var, var.ub, input_bounds[i][1]
-                            )
-                        )
-
-    def _setup_scaled_inputs_outputs(
-        self, *, scaling_object=None, input_bounds=None, use_scaling_expressions=False
-    ):
-        if scaling_object == None:
-            self.__scaled_inputs_list = weakref.ref(self.inputs_list)
-            self.__scaled_outputs_list = weakref.ref(self.outputs_list)
-            self._setup_input_bounds(self.inputs_list, input_bounds)
-
-        elif scaling_object and use_scaling_expressions:
-            # use pyomo Expressions for scaled and unscaled terms, variable bounds are not directly captured
-            self.__scaled_inputs_list = scaling_object.get_scaled_input_expressions(
-                self.inputs_list
-            )
-            self.__scaled_outputs_list = scaling_object.get_scaled_output_expressions(
-                self.outputs_list
-            )
-            # Bounds only set on unscaled inputs
-            self._setup_input_bounds(self.inputs_list, input_bounds)
-
-        else:
-            # create pyomo variables for scaled and unscaled terms, input bounds are also scaled
-            self.scaled_inputs_set = pyo.Set(initialize=list(self.inputs_list))
-            self.scaled_inputs = pyo.Var(self.scaled_inputs_set, initialize=0)
-
-            self.scaled_outputs_set = pyo.Set(initialize=list(self.outputs_list))
-            self.scaled_outputs = pyo.Var(self.scaled_outputs_set, initialize=0)
-
-            # set scaled variables lists
-            self.__scaled_inputs_list = weakref.ref(self.scaled_inputs)
-            self.__scaled_outputs_list = weakref.ref(self.scaled_outputs)
-
-            # Create constraints connecting scaled and unscaled variables
-            self.__scale_input_con = pyo.Constraint(self.scaled_inputs_set)
-            self.__unscale_output_con = pyo.Constraint(self.scaled_outputs_set)
-
-            # ToDo: decide if scaling expression should be indexed with the same
-            # index as variables
-            scaled_input_expressions = scaling_object.get_scaled_input_expressions(
-                self.inputs_list
-            )
-            unscaled_output_expressions = (
-                scaling_object.get_unscaled_output_expressions(self.scaled_outputs_list)
-            )
-
-            # scaled input constraints
-            for i in range(len(self.scaled_inputs_set)):
-                self.__scale_input_con[i] = (
-                    self.scaled_inputs[i] == scaled_input_expressions[i]
-                )
-            # unscaled output constraints
-            for i in range(len(self.scaled_outputs_set)):
-                self.__unscale_output_con[i] = (
-                    self.outputs_list[i] == unscaled_output_expressions[i]
-                )
-
-            # scale input bounds
-            if input_bounds:
-                input_lower = [input_bounds[i][0] for i in range(len(input_bounds))]
-                input_upper = [input_bounds[i][1] for i in range(len(input_bounds))]
-                scaled_lower = scaling_object.get_scaled_input_expressions(input_lower)
-                scaled_upper = scaling_object.get_scaled_input_expressions(input_upper)
-                scaled_input_bounds = list(zip(scaled_lower, scaled_upper))
-                self._setup_input_bounds(self.scaled_inputs_list, scaled_input_bounds)
-
-    @property
-    def inputs_list(self):
-        return self.__inputs_list()
-
-    @property
-    def outputs_list(self):
-        return self.__outputs_list()
-
-    @property
-    def scaled_inputs_list(self):
-        return self.__scaled_inputs_list()
-
-    @property
-    def scaled_outputs_list(self):
-        return self.__scaled_outputs_list()
-
-
-@declare_custom_block(name="OmltBlock")
-class OmltBlockData(_BaseInputOutputBlockData):
-    def __init__(self, component):
-        super(OmltBlockData, self).__init__(component)
-        self.__formulation = None
-        self.__scaling_object = None
-
-    # TODO: input_vars needs to be a dict
-    def build_formulation(self, formulation, input_vars=None, output_vars=None):
+        self.inputs_set = pyo.Set(initialize=input_indexes)
+        self.inputs = pyo.Var(self.inputs_set, initialize=0)
+        self.outputs_set = pyo.Set(initialize=output_indexes)
+        self.outputs = pyo.Var(self.outputs_set, initialize=0)
+    
+    def build_formulation(self, formulation):
         """
         Call this method to construct the constraints (and possibly
         intermediate variables) necessary for the particular neural network
@@ -246,42 +79,12 @@ class OmltBlockData(_BaseInputOutputBlockData):
         ----------
         formulation : instance of PyomoFormulation
             see, for example, FullSpaceContinuousFormulation
-        input_vars : list or None
-            The list of var data objects that correspond to the inputs.
-            This list must match the order of inputs from 0 .. n_inputs-1.
-            Note that mixing Var, IndexedVar, and VarData objects is fully
-            supported, and any indexed variables will be expanded to form
-            the final list of input var data objects. Note that any IndexedVar
-            included should be defined over a sorted set.
-
-            If set to None, then an indexed variable "inputs" is created on the
-            block automatically.
-        output_vars :  list or None
-            The list of var data objects that correspond to the outputs.
-            This list must match the order of inputs from 0 .. n_outputs-1.
-            Note that mixing Var, IndexedVar, and VarData objects is fully
-            supported, and any indexed variables will be expanded to form
-            the final list of input var data objects. Note that any IndexedVar
-            included should be defined over a sorted set.
-
-            If set to None, then an indexed variable "outputs" is created on the
-            block automatically.
         """
-        # call to the base class to define the inputs and the outputs
-
         # TODO: Do we want to validate formulation.input_indexes with input_vars here?
         # maybe formulation.check_input_vars(input_vars) or something?
         super(OmltBlockData, self)._setup_inputs_outputs(
             input_indexes=list(formulation.input_indexes),
             output_indexes=list(formulation.output_indexes),
-            input_vars=input_vars,
-            output_vars=output_vars,
-        )
-
-        super(OmltBlockData, self)._setup_scaled_inputs_outputs(
-            scaling_object=formulation.scaling_object,
-            input_bounds=formulation.input_bounds,
-            use_scaling_expressions=False,
         )
 
         self.__formulation = formulation
@@ -298,13 +101,3 @@ class OmltBlockData(_BaseInputOutputBlockData):
         intermediate variables) necessary to represent the neural network in Pyomo
         """
         return self.__formulation
-
-    @property
-    def scaling_object(self):
-        """Return an instance of the scaling object that supports the ScalingInterface"""
-        return self.formulation.scaling_object
-
-    @property
-    def input_bounds(self):
-        """Return a list of tuples containing lower and upper bounds of neural network inputs"""
-        return self.formulation.input_bounds

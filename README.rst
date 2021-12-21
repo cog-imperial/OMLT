@@ -1,6 +1,13 @@
+.. image:: https://user-images.githubusercontent.com/282580/146039921-b3ea73af-7da3-47c1-bdfb-c40ad537a737.png
+     :target: https://github.com/cog-imperial/OMLT
+     :alt: OMLT
+     :align: center
+     :width: 200px
+
 .. image:: https://github.com/cog-imperial/OMLT/workflows/CI/badge.svg?branch=main
      :target: https://github.com/cog-imperial/OMLT/actions?workflow=CI
      :alt: CI Status
+
 
 ===============================================
 OMLT: Optimization and Machine Learning Toolkit
