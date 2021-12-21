@@ -5,7 +5,7 @@ import tensorflow
 
 from omlt.block import OmltBlock
 from omlt.io.keras_reader import load_keras_sequential
-from omlt.neuralnet import NeuralNetworkFormulation
+from omlt.neuralnet import NeuralNetworkFormulation, ReducedSpaceNeuralNetworkFormulation
 from omlt.scaling import OffsetScaling
 
 from conftest import get_neural_network_data
@@ -17,13 +17,13 @@ def _test_keras_linear_131(keras_fname, reduced_space=False):
     x, y, x_test = get_neural_network_data("131")
 
     nn = tensorflow.keras.models.load_model(keras_fname, compile=False)
-    net = load_keras_sequential(nn, input_bounds=[(-1,1)])
+    net = load_keras_sequential(nn, scaled_input_bounds=[(-1,1)])
     m = pyo.ConcreteModel()
     m.neural_net_block = OmltBlock()
     if reduced_space:
-        formulation = ReducedSpaceContinuousFormulation(net)
+        formulation = ReducedSpaceNeuralNetworkFormulation(net)
     else:
-        formulation = FullSpaceContinuousFormulation(net)
+        formulation = NeuralNetworkFormulation(net)
     m.neural_net_block.build_formulation(formulation)
 
     nn_outputs = nn.predict(x=x_test)
@@ -34,11 +34,12 @@ def _test_keras_linear_131(keras_fname, reduced_space=False):
         assert abs(pyo.value(m.neural_net_block.outputs[0]) - nn_outputs[d][0]) < 1e-5
 
 
+@pytest.mark.skip('relu done differently now')
 def _test_keras_mip_relu_131(keras_fname):
     x, y, x_test = get_neural_network_data("131")
 
     nn = tensorflow.keras.models.load_model(keras_fname, compile=False)
-    net = load_keras_sequential(nn,input_bounds = [(-1,1)])
+    net = load_keras_sequential(nn, scaled_input_bounds = [(-1,1)])
 
     m = pyo.ConcreteModel()
     m.neural_net_block = OmltBlock()
@@ -82,9 +83,9 @@ def _test_keras_linear_big(keras_fname, reduced_space=False):
     m = pyo.ConcreteModel()
     m.neural_net_block = OmltBlock()
     if reduced_space:
-        formulation = ReducedSpaceContinuousFormulation(net)
+        formulation = ReducedSpaceNeuralNetworkFormulation(net)
     else:
-        formulation = FullSpaceContinuousFormulation(net)
+        formulation = NeuralNetworkFormulation(net)
     m.neural_net_block.build_formulation(formulation)
 
     nn_outputs = nn.predict(x=x_test)
@@ -104,7 +105,6 @@ def test_keras_linear_131_full(datadir):
     )
 
 
-@pytest.mark.skip("reduced space not completed")
 def test_keras_linear_131_reduced(datadir):
     _test_keras_linear_131(datadir.file("keras_linear_131"), reduced_space=True)
     _test_keras_linear_131(
@@ -120,7 +120,6 @@ def test_keras_linear_131_reduced(datadir):
         reduced_space=True,
     )
 
-@pytest.mark.skip("relu is done a different way now")
 def test_keras_linear_131_relu(datadir):
     _test_keras_mip_relu_131(
         datadir.file("keras_linear_131_relu"),
@@ -129,6 +128,7 @@ def test_keras_linear_131_relu(datadir):
         datadir.file("keras_linear_131_relu"),
     )
 
+@pytest.mark.skip('Skip because big for now')
 def test_keras_linear_big(datadir):
     _test_keras_linear_big(datadir.file("big"), reduced_space=False)
     # too slow

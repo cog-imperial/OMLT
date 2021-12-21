@@ -68,19 +68,19 @@ class _PyomoFormulation(_PyomoFormulationInterface):
     #     :class:`pyoml.opt.network_definition.NetworkDefinition`"""
     #     return self.__network_definition
 
-    # @property
-    # def input_indexes(self):
-    #     """The indexes of the formulation inputs."""
-    #     network_inputs = list(self.__network_definition.input_nodes)
-    #     assert len(network_inputs) == 1, 'Unsupported multiple network input variables'
-    #     return network_inputs[0].input_indexes
+    @property
+    def input_indexes(self):
+        """The indexes of the formulation inputs."""
+        network_inputs = list(self.__network_definition.input_nodes)
+        assert len(network_inputs) == 1, 'Unsupported multiple network input variables'
+        return network_inputs[0].input_indexes
 
-    # @property
-    # def output_indexes(self):
-    #     """The indexes of the formulation output."""
-    #     network_outputs = list(self.__network_definition.output_nodes)
-    #     assert len(network_outputs) == 1, 'Unsupported multiple network output variables'
-    #     return network_outputs[0].output_indexes
+    @property
+    def output_indexes(self):
+        """The indexes of the formulation output."""
+        network_outputs = list(self.__network_definition.output_nodes)
+        assert len(network_outputs) == 1, 'Unsupported multiple network output variables'
+        return network_outputs[0].output_indexes
 
     # @property
     # def scaling_object(self):
@@ -97,11 +97,20 @@ def scaler_or_tuple(x):
         return x[0]
     return x
 
-def _setup_scaled_inputs_outputs(block, scaler, scaled_input_bounds=None):
+def _setup_scaled_inputs_outputs(block, scaler=None, scaled_input_bounds=None):
     block.scaled_inputs = pyo.Var(block.inputs_set, initialize=0, bounds=scaled_input_bounds)
     block.scaled_outputs = pyo.Var(block.outputs_set, initialize=0)
 
     if scaled_input_bounds is not None:
+        # set the bounds on the scaled variables
+        for k in block.scaled_inputs:
+            v = block.inputs[k]
+            v.setlb(scaled_input_bounds[k][0])
+            v.setub(scaled_input_bounds[k][1])
+
+    if scaled_input_bounds is not None and scaler is not None:
+        # propagate unscaled bounds to the inputs
+        # TODO: add tests to make sure this handles negative bounds correctly
         lbs = scaler.get_unscaled_input_expressions( \
                     {k:t[0] for k,t in scaled_input_bounds.items()})
         ubs = scaler.get_unscaled_input_expressions( \
@@ -111,6 +120,7 @@ def _setup_scaled_inputs_outputs(block, scaler, scaled_input_bounds=None):
             v.setlb(lbs[k])
             v.setub(ubs[k])
 
+    # create scaling expressions (just unscaled = scaled if no scaler provided)
     input_scaling_expressions = {k:block.inputs[k] for k in block.inputs}
     output_unscaling_expressions = {k:block.scaled_outputs[k] for k in block.outputs}
     if scaler is not None:

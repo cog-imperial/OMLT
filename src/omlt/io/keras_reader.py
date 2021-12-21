@@ -1,7 +1,7 @@
 from omlt.neuralnet.network_definition import NetworkDefinition
 from omlt.neuralnet.layer import InputLayer, DenseLayer
 
-def load_keras_sequential(nn, scaling_object=None, input_bounds=None):
+def load_keras_sequential(nn, scaling_object=None, scaled_input_bounds=None):
     """
     Load a keras neural network model (built with Sequential) into
     a pyoml network definition object. This network definition object
@@ -11,7 +11,7 @@ def load_keras_sequential(nn, scaling_object=None, input_bounds=None):
     nn : keras.model
         A keras model that was built with Sequential
     scaling_object : instance of object supporting ScalingInterface (see scaling.py)
-    input_bounds: list of tuples
+    scaled_input_bounds: list of tuples
     
     Returns
     -------
@@ -21,7 +21,7 @@ def load_keras_sequential(nn, scaling_object=None, input_bounds=None):
     n_inputs = len(nn.layers[0].get_weights()[0])
     print('n_inputs:', n_inputs)
 
-    net = NetworkDefinition(input_bounds=input_bounds)
+    net = NetworkDefinition(scaled_input_bounds=scaled_input_bounds)
 
     prev_layer = InputLayer([n_inputs])
     net.add_layer(prev_layer)
@@ -42,7 +42,7 @@ def load_keras_sequential(nn, scaling_object=None, input_bounds=None):
 
     return net
 
-# def load_keras_sequential(nn, scaling_object=None, input_bounds=None):
+# def load_keras_sequential(nn, scaling_object=None, scaled_input_bounds=None):
 #     """
 #     Load a keras neural network model (built with Sequential) into
 #     a pyoml network definition object. This network definition object
@@ -52,7 +52,7 @@ def load_keras_sequential(nn, scaling_object=None, input_bounds=None):
 #     nn : keras.model
 #         A keras model that was built with Sequential
 #     scaling_object : instance of object supporting ScalingInterface (see scaling.py)
-#     input_bounds: list of tuples
+#     scaled_input_bounds: list of tuples
 #     Returns
 #     -------
 #     NetworkDefinition
@@ -89,5 +89,5 @@ def load_keras_sequential(nn, scaling_object=None, input_bounds=None):
 #         biases=b,
 #         activations=a,
 #         scaling_object=scaling_object,
-#         input_bounds=input_bounds,
+#         scaled_input_bounds=scaled_input_bounds,
 #     )

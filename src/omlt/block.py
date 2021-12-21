@@ -82,7 +82,7 @@ class OmltBlockData(_BlockData):
         """
         # TODO: Do we want to validate formulation.input_indexes with input_vars here?
         # maybe formulation.check_input_vars(input_vars) or something?
-        super(OmltBlockData, self)._setup_inputs_outputs(
+        self._setup_inputs_outputs(
             input_indexes=list(formulation.input_indexes),
             output_indexes=list(formulation.output_indexes),
         )

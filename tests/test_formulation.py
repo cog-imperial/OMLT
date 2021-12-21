@@ -56,6 +56,7 @@ def test_scaled_inputs_outputs():
     status = SolverFactory('ipopt').solve(m)
     m.pprint()
 
+    # TODO: complete this test
 
     # m.b2 = OmltBlock()
     # m.b2._setup_inputs_outputs(
