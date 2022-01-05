@@ -5,7 +5,7 @@ import pyomo.environ as pe
 import pytest
 
 from omlt import OmltBlock
-from omlt.gbt.formulation import BigMFormulation, add_formulation_to_block
+from omlt.gbt.gbt_formulation import GBTBigMFormulation, add_formulation_to_block
 from omlt.gbt.model import GradientBoostedTreeModel
 
 
@@ -79,7 +79,7 @@ def test_big_m_formulation_block():
 
     m = pe.ConcreteModel()
     m.mod = OmltBlock()
-    formulation = BigMFormulation(model)
+    formulation = GBTBigMFormulation(model)
     m.mod.build_formulation(formulation)
 
     m.obj = pe.Objective(expr=0)

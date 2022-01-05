@@ -2,7 +2,6 @@
 import itertools
 import numpy as np
 
-
 class Layer:
     """
     Base layer class.
@@ -102,6 +101,8 @@ class Layer:
             return np.maximum(x, 0)
         elif self.__activation == "sigmoid":
             return 1.0 / (1.0 + np.exp(-x))
+        elif self.__activation == 'tanh':
+            return np.tanh(x)
         else:
             raise ValueError(f"Unknown activation function {self.__activation}")
 
@@ -162,6 +163,7 @@ class DenseLayer(Layer):
 
     def _eval(self, x):
         y = np.dot(x, self.__weights) + self.__biases
+        y = np.reshape(y, tuple(self.output_size))
         assert y.shape == tuple(self.output_size)
         return y
 

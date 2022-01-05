@@ -5,16 +5,28 @@ from omlt.formulation import _PyomoFormulation
 from omlt.gbt.model import GradientBoostedTreeModel
 
 
-class BigMFormulation(_PyomoFormulation):
+class GBTBigMFormulation(_PyomoFormulation):
+    def __init__(self, gbt_model):
+        super().__init__()
+        self.model_definition = gbt_model
+
+    @property
+    def input_indexes(self):
+        return self.model_definition.input_indexes
+
+    @property
+    def output_indexes(self):
+        return self.model_definition.output_indexes
+
     def _build_formulation(self):
         """This method is called by the OmltBlock to build the corresponding
         mathematical formulation on the Pyomo block.
         """
         add_formulation_to_block(
             block=self.block,
-            model_definition=self.network_definition,
-            input_vars=self.block.inputs_list,
-            output_vars=self.block.outputs_list,
+            model_definition=self.model_definition,
+            input_vars=self.block.inputs,
+            output_vars=self.block.outputs,
         )
 
 
@@ -65,7 +77,8 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars):
     categorical_vars = dict()
     continuous_vars = dict()
 
-    for var_idx, var in enumerate(input_vars):
+    for var_idx in input_vars:
+        var = input_vars[var_idx]
         # add one binary for each categorical variable
         if var.is_integer() or var.is_binary():
             categorical_vars[var_idx] = var

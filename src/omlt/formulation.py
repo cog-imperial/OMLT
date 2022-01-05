@@ -3,10 +3,11 @@ import weakref
 import pyomo.environ as pyo
 
 class _PyomoFormulationInterface(abc.ABC):
-    """Base class interface for a Pyomo formulation object. This class
+    """
+    Base class interface for a Pyomo formulation object. This class
     is largely internal, and developers of new formulations should derive from
-    :class:`pyoml.opt.neuralnet.PyomoFormulation`."""
-
+    _PyomoFormulation.
+    """
     def __init__(self):
         pass
 
@@ -17,28 +18,42 @@ class _PyomoFormulationInterface(abc.ABC):
     @property
     @abc.abstractmethod
     def block(self):
+        """ Return the block associated with this formulation.
+        """
         pass
 
     @property
     @abc.abstractmethod
     def input_indexes(self):
+        """ Return the indices corresponding to the inputs of the 
+        ML model. This is a list of entries (which may be tuples 
+        for higher dimensional inputs).
+        """
         pass
 
     @property
     @abc.abstractmethod
     def output_indexes(self):
+        """ Return the indices corresponding to the outputs of the 
+        ML model. This is a list of entries (which may be tuples 
+        for higher dimensional outputs).
+        """
         pass
 
     @abc.abstractmethod
     def _build_formulation(self):
+        """This method is called by the OmltBlock object to build the
+        corresponding mathematical formulation of the model.
+        """
         pass
 
 
 class _PyomoFormulation(_PyomoFormulationInterface):
     def __init__(self):
-        """This is a base class for different Pyomo formulations. To create a new
-        formulation, inherit from this class and implement the build_formulation method. See
-        :class:`pyoml.opt.neuralnet.NeuralNetworkFormulation` for an example."""
+        """
+        This is a base class for different Pyomo formulations. To create a new
+        formulation, inherit from this class and implement the abstract methods and properties.
+        """
         super(_PyomoFormulation, self).__init__()
         self.__block = None
 
@@ -50,47 +65,6 @@ class _PyomoFormulation(_PyomoFormulationInterface):
         """The underlying block containing the constraints / variables for this formulation."""
         return self.__block()
 
-    @abc.abstractmethod
-    def _build_formulation(self):
-        """This method is called by the OmltBlock object to build the
-        corresponding mathematical formulation of the model.
-        See :class:`pyoml.opt.neuralnet.NeuralNetworkFormulation` for
-        an example of an implementation.
-        """
-        pass
-
-    # @property
-    # def network_definition(self):
-    #     """The object providing a definition of the network structure. Network
-    #     definitions can be loaded from common training packages (e.g., see
-    #     :func:`optml.io.keras_reader.load_keras_sequential`.) For a description
-    #     of the network definition object, see
-    #     :class:`pyoml.opt.network_definition.NetworkDefinition`"""
-    #     return self.__network_definition
-
-    @property
-    def input_indexes(self):
-        """The indexes of the formulation inputs."""
-        network_inputs = list(self.__network_definition.input_nodes)
-        assert len(network_inputs) == 1, 'Unsupported multiple network input variables'
-        return network_inputs[0].input_indexes
-
-    @property
-    def output_indexes(self):
-        """The indexes of the formulation output."""
-        network_outputs = list(self.__network_definition.output_nodes)
-        assert len(network_outputs) == 1, 'Unsupported multiple network output variables'
-        return network_outputs[0].output_indexes
-
-    # @property
-    # def scaling_object(self):
-    #     """The scaling object used in the underlying network definition."""
-    #     return self.network_definition.scaling_object
-
-    # @property
-    # def input_bounds(self):
-    #     """Return a list of tuples containing lower and upper bounds of neural network inputs"""
-    #     return self.network_definition.input_bounds
 
 def scaler_or_tuple(x):
     if len(x) == 1:
@@ -110,7 +84,6 @@ def _setup_scaled_inputs_outputs(block, scaler=None, scaled_input_bounds=None):
 
     if scaled_input_bounds is not None and scaler is not None:
         # propagate unscaled bounds to the inputs
-        # TODO: add tests to make sure this handles negative bounds correctly
         lbs = scaler.get_unscaled_input_expressions( \
                     {k:t[0] for k,t in scaled_input_bounds.items()})
         ubs = scaler.get_unscaled_input_expressions( \

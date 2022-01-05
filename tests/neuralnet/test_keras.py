@@ -5,13 +5,11 @@ import tensorflow
 
 from omlt.block import OmltBlock
 from omlt.io.keras_reader import load_keras_sequential
-from omlt.neuralnet import NeuralNetworkFormulation, ReducedSpaceNeuralNetworkFormulation
+from omlt.neuralnet import (NeuralNetworkFormulation, ReducedSpaceNeuralNetworkFormulation)
+from omlt.neuralnet.activations import ComplementarityReLUActivation
 from omlt.scaling import OffsetScaling
 
 from conftest import get_neural_network_data
-
-#TODO: work on names
-FullSpaceContinuousFormulation = NeuralNetworkFormulation
 
 def _test_keras_linear_131(keras_fname, reduced_space=False):
     x, y, x_test = get_neural_network_data("131")
@@ -34,7 +32,6 @@ def _test_keras_linear_131(keras_fname, reduced_space=False):
         assert abs(pyo.value(m.neural_net_block.outputs[0]) - nn_outputs[d][0]) < 1e-5
 
 
-@pytest.mark.skip('relu done differently now')
 def _test_keras_mip_relu_131(keras_fname):
     x, y, x_test = get_neural_network_data("131")
 
@@ -43,7 +40,7 @@ def _test_keras_mip_relu_131(keras_fname):
 
     m = pyo.ConcreteModel()
     m.neural_net_block = OmltBlock()
-    formulation = ReLUBigMFormulation(net)
+    formulation = NeuralNetworkFormulation(net)
     m.neural_net_block.build_formulation(formulation)
     m.obj = pyo.Objective(expr=0)
 
@@ -63,7 +60,8 @@ def _test_keras_complementarity_relu_131(keras_fname):
 
     m = pyo.ConcreteModel()
     m.neural_net_block = OmltBlock()
-    formulation = ReLUComplementarityFormulation(net)
+    formulation = NeuralNetworkFormulation(net,activation_constraints={
+        "relu": ComplementarityReLUActivation()})
     m.neural_net_block.build_formulation(formulation)
 
     nn_outputs = nn.predict(x=x_test)
@@ -71,7 +69,7 @@ def _test_keras_complementarity_relu_131(keras_fname):
         m.neural_net_block.inputs[0].fix(x_test[d])
         status = pyo.SolverFactory("ipopt").solve(m, tee=False)
         pyo.assert_optimal_termination(status)
-        assert abs(pyo.value(m.neural_net_block.outputs[0]) - nn_outputs[d][0]) < 1e-5
+        assert abs(pyo.value(m.neural_net_block.outputs[0]) - nn_outputs[d][0]) < 1e-4
 
 
 def _test_keras_linear_big(keras_fname, reduced_space=False):
@@ -128,11 +126,10 @@ def test_keras_linear_131_relu(datadir):
         datadir.file("keras_linear_131_relu"),
     )
 
-@pytest.mark.skip('Skip because big for now')
 def test_keras_linear_big(datadir):
     _test_keras_linear_big(datadir.file("big"), reduced_space=False)
-    # too slow
-    # _test_keras_linear_big('./models/big', reduced_space=True)
 
-#if __name__ ==' __main__':
-#    test_keras_linear_131_full()
+@pytest.mark.skip('Skip - this test is too big for now')
+def test_keras_linear_big_reduced_space(datadir):
+    _test_keras_linear_big('./models/big', reduced_space=True)
+

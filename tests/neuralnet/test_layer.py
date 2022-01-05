@@ -1,3 +1,4 @@
+import pytest
 import numpy as np
 
 from omlt.neuralnet.layer import (
@@ -6,7 +7,6 @@ from omlt.neuralnet.layer import (
     IndexMapper,
 )
 
-
 def test_input_layer():
     layer = InputLayer([1, 2, 3])
     input_indexes = list(layer.input_indexes)
@@ -14,8 +14,8 @@ def test_input_layer():
 
 
 def test_dense_layer_with_input_index_mapper():
-    w = np.random.uniform(0.0, 1.0, (3, 2))
-    b = np.random.uniform(0.0, 1.0, 2)
+    w = np.ones((3, 2))
+    b = np.ones(2)
 
     # input has size [2, 3], but the previous node output is [3, 2]
     # use mapper to map between the two
@@ -30,3 +30,7 @@ def test_dense_layer_with_input_index_mapper():
     assert next(index_iter) == ((1, 0), (1, 1))
     assert next(index_iter) == ((1, 1), (2, 0))
     assert next(index_iter) == ((1, 2), (2, 1))
+
+@pytest.mark.skip('Need to add test for ConvLayer')
+def test_convolutional_layer():
+    assert False

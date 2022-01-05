@@ -7,16 +7,17 @@ from omlt.neuralnet.layers.full_space import (full_space_dense_layer, full_space
 from omlt.neuralnet.activations import (linear_activation_constraint,
                                         linear_activation_function,
                                         bigm_relu_activation_constraint)
+from omlt.neuralnet.activations import ACTIVATION_FUNCTION_MAP as _DEFAULT_ACTIVATION_FUNCTIONS
 from omlt.neuralnet.activations.smooth import (sigmoid_activation_constraint,
                                                softplus_activation_constraint,
+                                               tanh_activation_constraint,
                                                sigmoid_activation_function,
-                                               softplus_activation_function)
+                                               softplus_activation_function,
+                                               tanh_activation_function)
 
 def _ignore_input_layer():
     pass
 
-# TODO: Doesn't this imply that there is a mapping from layer type to formulation
-# There are different formulations possible for the same layer
 _DEFAULT_LAYER_CONSTRAINTS = {
     InputLayer: _ignore_input_layer,
     DenseLayer: full_space_dense_layer,
@@ -27,14 +28,8 @@ _DEFAULT_ACTIVATION_CONSTRAINTS = {
     "linear": linear_activation_constraint,
     "relu": bigm_relu_activation_constraint,
     "sigmoid": sigmoid_activation_constraint,
-    "softplus": softplus_activation_constraint
-}
-
-_DEFAULT_ACTIVATION_FUNCTIONS = {
-    "linear": linear_activation_function,
-#    "relu": bigm_relu_activation,
-    "sigmoid": sigmoid_activation_function,
-    "softplus": softplus_activation_function
+    "softplus": softplus_activation_constraint,
+    "tanh": tanh_activation_constraint
 }
 
 class NeuralNetworkFormulation(_PyomoFormulation):
@@ -81,17 +76,6 @@ class NeuralNetworkFormulation(_PyomoFormulation):
             activation_constraints=self._activation_constraints,
         )
 
-    # TODO: are these properties used anywhere?
-    # @property
-    # def layer_constraints(self):
-    #     return self._layer_constraints
-
-    # @property
-    # def activation_constraints(self):
-    #     return self._activation_constraints
-
-    # TODO: asserts to exceptions
-    # TODO: push these to the formulation (remove dependency in block.py)
     @property
     def input_indexes(self):
         """The indexes of the formulation inputs."""

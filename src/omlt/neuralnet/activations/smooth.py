@@ -1,4 +1,4 @@
-from pyomo.environ import exp, log
+from pyomo.environ import exp, log, tanh
 
 #
 #def softplus_activation
@@ -8,6 +8,9 @@ def softplus_activation_function(x):
 
 def sigmoid_activation_function(x):
     return 1 / (1 + exp(-x))
+
+def tanh_activation_function(x):
+    return tanh(x)
 
 def softplus_activation_constraint(net_block, net, layer_block, layer):
     """
@@ -39,6 +42,21 @@ def sigmoid_activation_constraint(net_block, net, layer_block, layer):
     """
     return smooth_monotonic_activation_constraint(net_block, net, layer_block, layer,
                                                   sigmoid_activation_function)
+
+def tanh_activation_constraint(net_block, net, layer_block, layer):
+    """
+    tanh activation constraint generator
+
+    Generates the constraints for the tanh activation function.
+
+    .. math::
+
+        \begin{align*}
+        z_i &= tanh(\hat z_i) && \forall i \in N
+        \end{align*}
+
+    """
+    return smooth_monotonic_activation_constraint(net_block, net, layer_block, layer, tanh_activation_function)
 
 def smooth_monotonic_activation_constraint(net_block, net, layer_block, layer, fcn):
     """

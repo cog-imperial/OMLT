@@ -1,15 +1,15 @@
 import pyomo.environ as pyo
 
 from omlt.block import OmltBlock
-from omlt.neuralnet import ComplementarityReLUActivation, NeuralNetworkFormulation
-
+from omlt.neuralnet import NeuralNetworkFormulation
+from omlt.neuralnet.activations import ComplementarityReLUActivation
 
 # TODO: Add tests for single dimensional outputs as well
 
-def test_two_node_bigm(two_node_network):
+def test_two_node_bigm(two_node_network_relu):
     m = pyo.ConcreteModel()
     m.neural_net_block = OmltBlock()
-    formulation = NeuralNetworkFormulation(two_node_network)
+    formulation = NeuralNetworkFormulation(two_node_network_relu)
     m.neural_net_block.build_formulation(formulation)
     m.obj1 = pyo.Objective(expr=m.neural_net_block.outputs[0, 0])
 
@@ -24,11 +24,11 @@ def test_two_node_bigm(two_node_network):
     assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - 0) < 1e-8
 
 
-def test_two_node_complementarity(two_node_network):
+def test_two_node_complementarity(two_node_network_relu):
     m = pyo.ConcreteModel()
     m.neural_net_block = OmltBlock()
     formulation = NeuralNetworkFormulation(
-        two_node_network,
+        two_node_network_relu,
         activation_constraints={
             "relu": ComplementarityReLUActivation()
         }
