@@ -1,7 +1,7 @@
 import numpy as np
 import pyomo.environ as pe
 
-from omlt.formulation import _PyomoFormulation
+from omlt.formulation import _PyomoFormulation, _setup_scaled_inputs_outputs
 from omlt.gbt.model import GradientBoostedTreeModel
 
 
@@ -12,21 +12,27 @@ class GBTBigMFormulation(_PyomoFormulation):
 
     @property
     def input_indexes(self):
-        return self.model_definition.input_indexes
+        # TODO: Francesco - is this correct? Does GBT support multi-dimensional inputs?
+        return list(range(self.model_definition.n_inputs))
 
     @property
     def output_indexes(self):
-        return self.model_definition.output_indexes
+        # TODO: Francesco - is this correct? Does GBT support multi-dimensional outputs?
+        return list(range(self.model_definition.n_outputs))
 
     def _build_formulation(self):
         """This method is called by the OmltBlock to build the corresponding
         mathematical formulation on the Pyomo block.
         """
+        _setup_scaled_inputs_outputs(self.block,
+                                     self.model_definition.scaling_object,
+                                     self.model_definition.scaled_input_bounds)
+
         add_formulation_to_block(
             block=self.block,
             model_definition=self.model_definition,
-            input_vars=self.block.inputs,
-            output_vars=self.block.outputs,
+            input_vars=self.block.scaled_inputs,
+            output_vars=self.block.scaled_outputs,
         )
 
 

@@ -9,7 +9,7 @@ from omlt.gbt.gbt_formulation import GBTBigMFormulation, add_formulation_to_bloc
 from omlt.gbt.model import GradientBoostedTreeModel
 
 
-@pytest.mark.skip("fixed on other branch")
+@pytest.mark.skip("Francesco and Alex need to check this test")
 def test_formulation_with_continuous_variables():
     model = onnx.load(Path(__file__).parent / "continuous_model.onnx")
 
@@ -21,13 +21,11 @@ def test_formulation_with_continuous_variables():
 
     m.z = pe.Var()
 
-    m.gbt = pe.Block()
-    add_formulation_to_block(
-        m.gbt, model, input_vars=[m.x[i] for i in range(4)], output_vars=[m.z]
-    )
+    m.gbt = OmltBlock()
+    m.gbt.build_formulation(GBTBigMFormulation(GradientBoostedTreeModel(model)))
 
-    assert len(list(m.gbt.component_data_objects(pe.Var))) == 202
-    assert len(list(m.gbt.component_data_objects(pe.Constraint))) == 423
+    assert len(list(m.gbt.component_data_objects(pe.Var))) == 202+10 # our auto-created variables
+    assert len(list(m.gbt.component_data_objects(pe.Constraint))) == 423 # TODO: fix?
 
     assert len(m.gbt.z_l) == 160
     assert len(m.gbt.y) == 42
