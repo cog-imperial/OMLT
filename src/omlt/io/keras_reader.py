@@ -19,9 +19,8 @@ def load_keras_sequential(nn, scaling_object=None, scaled_input_bounds=None):
     """
     # TODO: Add exceptions for unsupported layer types
     n_inputs = len(nn.layers[0].get_weights()[0])
-    print('n_inputs:', n_inputs)
 
-    net = NetworkDefinition(scaled_input_bounds=scaled_input_bounds)
+    net = NetworkDefinition(scaling_object=scaling_object, scaled_input_bounds=scaled_input_bounds)
 
     prev_layer = InputLayer([n_inputs])
     net.add_layer(prev_layer)
