@@ -55,14 +55,14 @@ class OffsetScaling(ScalingInterface):
 
         for k,v in self.__x_factor.items():
             if v <= 0:
-                raise ValueError(f"OffsetScaling only accepts positive values"
+                raise ValueError("OffsetScaling only accepts positive values"
                                  " for factor_inputs. Negative value found at"
-                                 " index {k}.")
+                                 " index {}.".format(k))
         for k,v in self.__y_factor.items():
             if v <= 0:
-                raise ValueError(f"OffsetScaling only accepts positive values"
-                                 " for factor_inputs. Negative value found at"
-                                 " index {k}.")
+                raise ValueError("OffsetScaling only accepts positive values"
+                                 " for factor_outputs. Negative value found at"
+                                 " index {}.".format(k))
 
     def get_scaled_input_expressions(self, input_vars):
         sorted_keys = sorted(input_vars.keys())
