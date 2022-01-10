@@ -2,6 +2,7 @@ import tensorflow.keras as keras
 import pytest
 import pyomo.environ as pyo
 import tensorflow
+import numpy as np
 
 from omlt.block import OmltBlock
 from omlt.io.keras_reader import load_keras_sequential
@@ -134,14 +135,10 @@ def test_keras_linear_big_reduced_space(datadir):
     _test_keras_linear_big('./models/big', reduced_space=True)
 
 
-def test_scaling_NN_block():
-    NN = keras.models.load_model(
-        os.path.join(this_file_dir(), "models/keras_linear_131_relu")
-    )
+def test_scaling_NN_block(datadir):
+    NN = keras.models.load_model(datadir.file('keras_linear_131_relu'))
 
-    model = ConcreteModel()
-    model.input = Var()
-    model.output = Var()
+    model = pyo.ConcreteModel()
 
     scale_x = (1, 0.5)
     scale_y = (-0.25, 0.125)
@@ -153,26 +150,22 @@ def test_scaling_NN_block():
         factor_outputs=[scale_y[1]],
     )
 
-    input_bounds = [
-        (0, 5),
-    ]
-    net = load_keras_sequential(NN, scaler, input_bounds)
-    formulation = ReLUBigMFormulation(net)
+    scaled_input_bounds = {0: (0, 5)}
+    net = load_keras_sequential(NN, scaling_object=scaler, scaled_input_bounds=scaled_input_bounds)
+    formulation = NeuralNetworkFormulation(net)
     model.nn = OmltBlock()
-    model.nn.build_formulation(
-        formulation, input_vars=[model.input], output_vars=[model.output]
-    )
+    model.nn.build_formulation(formulation)
 
     @model.Objective()
     def obj(mdl):
         return 1
 
     for x in np.random.normal(1, 0.5, 10):
-        model.input.fix(x)
-        result = SolverFactory("glpk").solve(model, tee=False)
+        model.nn.inputs[0].fix(x)
+        result = pyo.SolverFactory("glpk").solve(model, tee=False)
 
         x_s = (x - scale_x[0]) / scale_x[1]
         y_s = NN.predict(x=[x_s])
         y = y_s * scale_y[1] + scale_y[0]
 
-        assert y - value(model.output) <= 1e-3
+        assert y - pyo.value(model.nn.outputs[0]) <= 1e-3
