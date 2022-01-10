@@ -40,6 +40,7 @@ def test_formulation_with_continuous_variables():
     assert len(m.gbt.var_upper) == 42
 
 
+# TODO: did we remove categorical variables intentionally?
 # def test_formulation_with_categorical_variables():
 #     model = onnx.load(Path(__file__).parent / "categorical_model.onnx")
 
@@ -72,7 +73,6 @@ def test_formulation_with_continuous_variables():
 #     assert len(m.gbt.var_upper) == 31
 
 
-@pytest.mark.skip("fixed on other branch")
 def test_big_m_formulation_block():
     onnx_model = onnx.load(Path(__file__).parent / "continuous_model.onnx")
     model = GradientBoostedTreeModel(onnx_model)
@@ -83,3 +83,15 @@ def test_big_m_formulation_block():
     m.mod.build_formulation(formulation)
 
     m.obj = pe.Objective(expr=0)
+
+
+def test_big_m_formulation_block_with_dimension_subset():
+    onnx_model = onnx.load(Path(__file__).parent / "dimension_subset.onnx")
+    model = GradientBoostedTreeModel(onnx_model)
+
+    m = pe.ConcreteModel()
+    m.mod = OmltBlock()
+    formulation = GBTBigMFormulation(model)
+    # if it can build the formulation it means it is handling the lack
+    # of all dimension
+    m.mod.build_formulation(formulation)

@@ -1,8 +1,5 @@
 class GradientBoostedTreeModel:
-    def __init__(self, onnx_model,
-                scaling_object=None,
-                input_bounds=None
-                ):
+    def __init__(self, onnx_model, scaling_object=None, input_bounds=None):
         self.__model = onnx_model
         self.__n_inputs = _model_num_inputs(onnx_model)
         self.__n_outputs = _model_num_outputs(onnx_model)

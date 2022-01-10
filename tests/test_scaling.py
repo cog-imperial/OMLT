@@ -24,3 +24,4 @@ def test_offset_scaling():
     test_y_unscal = scaling.get_unscaled_output_expressions(y_scal)
     np.testing.assert_almost_equal(list(test_x_scal.values()), list(x_scal.values()))
     np.testing.assert_almost_equal(list(test_y_unscal.values()), list(y.values()))
+
