@@ -58,7 +58,7 @@ def datadir():
 
 
 @pytest.fixture
-def two_node_network():
+def two_node_network_relu():
     """
             1           1
     x0 -------- (1) --------- (3)
@@ -70,7 +70,7 @@ def two_node_network():
      |    -1         |     1
      ---------- (2) --------- (4)
     """
-    net = NetworkDefinition(input_bounds=[(-10.0, 10.0)])
+    net = NetworkDefinition(scaled_input_bounds=[(-10.0, 10.0)])
 
     input_layer = InputLayer([1])
     net.add_layer(input_layer)
@@ -96,3 +96,4 @@ def two_node_network():
     net.add_edge(dense_layer_0, dense_layer_1)
 
     return net
+

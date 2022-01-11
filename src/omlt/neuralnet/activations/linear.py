@@ -1,4 +1,7 @@
-def linear_activation(net_block, net, layer_block, layer):
+def linear_activation_function(zhat):
+    return zhat
+
+def linear_activation_constraint(net_block, net, layer_block, layer, add_constraint=True):
     """
     Linear activation constraint generator
 
@@ -17,3 +20,5 @@ def linear_activation(net_block, net, layer_block, layer):
         b.z[output_index].setlb(zhat_lb)
         b.z[output_index].setub(zhat_ub)
         return b.z[output_index] == b.zhat[output_index]
+
+
