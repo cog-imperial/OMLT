@@ -111,6 +111,10 @@ Contributors
      - Francesco Ceccon
      - This work was funded by an Engineering & Physical Sciences Research Council Research Fellowship [GrantNumber EP/P016871/1]
      
+   * - |carldlaird|_
+     - Carl D. Laird
+     - Initial work was funded by Sandia National Laboratories, Laboratory Directed Research and Development program. Current work supported by Carnegie Mellon University. 
+     
    * - |tsaycal|_
      - Calvin Tsay
      - This work was funded by an Engineering & Physical Sciences Research Council Research Fellowship [GrantNumber EP/T001577/1], with additional support from an Imperial College Research Fellowship.
@@ -126,6 +130,10 @@ Contributors
 
 .. _fracek: https://github.com/fracek
 .. |fracek| image:: https://avatars1.githubusercontent.com/u/282580?s=120&v=4
+   :width: 80px
+   
+.. _carldlaird: https://github.com/carldlaird
+.. |carldlaird| image:: https://avatars.githubusercontent.com/u/18519762?v=4
    :width: 80px
    
 .. _tsaycal: https://github.com/tsaycal
