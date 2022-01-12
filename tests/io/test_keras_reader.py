@@ -5,7 +5,7 @@ from omlt.io.keras_reader import load_keras_sequential
 
 
 def test_keras_reader(datadir):
-    nn = keras.models.load_model(datadir.file("keras_linear_131"))
+    nn = keras.models.load_model(datadir.file("keras_linear_131"), compile=False)
     net = load_keras_sequential(nn)
 
     layers = list(net.layers)
@@ -15,7 +15,7 @@ def test_keras_reader(datadir):
     assert layers[1].weights.shape == (1, 3)
     assert layers[2].weights.shape == (3, 1)
 
-    nn = keras.models.load_model(datadir.file("keras_linear_131_sigmoid"))
+    nn = keras.models.load_model(datadir.file("keras_linear_131_sigmoid"), compile=False)
     net = load_keras_sequential(nn)
     layers = list(net.layers)
     assert len(layers) == 3
@@ -25,8 +25,9 @@ def test_keras_reader(datadir):
     assert layers[2].weights.shape == (3, 1)
 
     nn = keras.models.load_model(
-        datadir.file("keras_linear_131_sigmoid_output_activation")
-    )
+        datadir.file("keras_linear_131_sigmoid_output_activation"), 
+        compile=False
+        )
     net = load_keras_sequential(nn)
     layers = list(net.layers)
     assert len(layers) == 3
@@ -35,7 +36,7 @@ def test_keras_reader(datadir):
     assert layers[1].weights.shape == (1, 3)
     assert layers[2].weights.shape == (3, 1)
 
-    nn = keras.models.load_model(datadir.file("big"))
+    nn = keras.models.load_model(datadir.file("big"), compile=False)
     net = load_keras_sequential(nn)
     layers = list(net.layers)
     assert len(layers) == 5
