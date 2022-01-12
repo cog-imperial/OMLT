@@ -13,13 +13,13 @@ class ScalingInterface(abc.ABC):
     def get_scaled_input_expressions(self, input_vars):
         """This method returns a list of expressions for the scaled inputs from
         the unscaled inputs"""
-        pass
+        pass # pragma: no cover
 
     @abc.abstractmethod
     def get_unscaled_output_expressions(self, scaled_output_vars):
         """This method returns a list of expressions for the unscaled outputs from
         the scaled outputs"""
-        pass
+        pass # pragma: no cover
 
 
 def convert_to_dict(x):
@@ -71,9 +71,9 @@ class OffsetScaling(ScalingInterface):
             raise ValueError('get_scaled_input_expressions called with input_vars'
                              ' that do not have the same indices as offset_inputs'
                              ' or factor_inputs.\n'
-                             'keys in input_vars: {}\n',
-                             'keys in offset_inputs: {}\n',
-                             'keys in offset_factor: {}'.format(
+                             'Keys in input_vars: {}.\n'
+                             'Keys in offset_inputs: {}.\n'
+                             'Keys in offset_factor: {}.'.format(
                                  sorted_keys, sorted(self.__x_offset),
                                  sorted(self.__x_factor)))
 
@@ -88,9 +88,9 @@ class OffsetScaling(ScalingInterface):
             raise ValueError('get_scaled_input_expressions called with input_vars'
                              ' that do not have the same indices as offset_inputs'
                              ' or factor_inputs.\n'
-                             'keys in input_vars: {}\n',
-                             'keys in offset_inputs: {}\n',
-                             'keys in offset_factor: {}'.format(
+                             'Keys in input_vars: {}\n'
+                             'Keys in offset_inputs: {}\n'
+                             'Keys in offset_factor: {}'.format(
                                  sorted_keys, sorted(self.__x_offset),
                                  sorted(self.__x_factor)))
 
@@ -105,9 +105,9 @@ class OffsetScaling(ScalingInterface):
             raise ValueError('get_scaled_output_expressions called with output_vars'
                              ' that do not have the same indices as offset_outputs'
                              ' or factor_outputs.\n'
-                             'keys in output_vars: {}\n',
-                             'keys in offset_outputs: {}\n',
-                             'keys in offset_factor: {}'.format(
+                             'Keys in output_vars: {}\n'
+                             'Keys in offset_outputs: {}\n'
+                             'Keys in offset_factor: {}'.format(
                                  sorted_keys, sorted(self.__y_offset),
                                  sorted(self.__y_factor)))
 
@@ -122,9 +122,9 @@ class OffsetScaling(ScalingInterface):
             raise ValueError('get_scaled_output_expressions called with output_vars'
                              ' that do not have the same indices as offset_outputs'
                              ' or factor_outputs.\n'
-                             'keys in output_vars: {}\n',
-                             'keys in offset_outputs: {}\n',
-                             'keys in offset_factor: {}'.format(
+                             'Keys in output_vars: {}\n'
+                             'Keys in offset_outputs: {}\n'
+                             'Keys in offset_factor: {}'.format(
                                  sorted_keys, sorted(self.__y_offset),
                                  sorted(self.__y_factor)))
 
