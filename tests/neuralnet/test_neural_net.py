@@ -51,14 +51,14 @@ def test_two_node_full_space():
     m.obj1 = pyo.Objective(expr=0)
     status = pyo.SolverFactory("ipopt").solve(m, tee=True)
     pyo.assert_optimal_termination(status)
-    assert abs(pyo.value(m.neural_net_block.outputs[0]) - 3.856110320303267) < 1e-8
-    assert abs(pyo.value(m.neural_net_block.outputs[1]) - 0.9640275800758169) < 1e-8
+    assert abs(pyo.value(m.neural_net_block.outputs[0]) - 3.856110320303267) < 1e-3
+    assert abs(pyo.value(m.neural_net_block.outputs[1]) - 0.9640275800758169) < 1e-3
 
     m.neural_net_block.inputs[0].fix(1)
     status = pyo.SolverFactory("ipopt").solve(m, tee=False)
     pyo.assert_optimal_termination(status)
-    assert abs(pyo.value(m.neural_net_block.outputs[0]) - -3.046376623823058) < 1e-8
-    assert abs(pyo.value(m.neural_net_block.outputs[1]) - -0.7615941559557649) < 1e-8
+    assert abs(pyo.value(m.neural_net_block.outputs[0]) - -3.046376623823058) < 1e-3
+    assert abs(pyo.value(m.neural_net_block.outputs[1]) - -0.7615941559557649) < 1e-3
 
 
 def test_two_node_reduced_space_1():
@@ -102,13 +102,13 @@ def test_two_node_reduced_space_1():
     m.obj1 = pyo.Objective(expr=0)
     status = pyo.SolverFactory("ipopt").solve(m, tee=False)
 
-    assert abs(pyo.value(m.neural_net_block.outputs[0]) - 22) < 1e-8
-    assert abs(pyo.value(m.neural_net_block.outputs[1]) - 8) < 1e-8
+    assert abs(pyo.value(m.neural_net_block.outputs[0]) - 22) < 1e-3
+    assert abs(pyo.value(m.neural_net_block.outputs[1]) - 8) < 1e-3
 
     m.neural_net_block.inputs[0].fix(1)
     status = pyo.SolverFactory("ipopt").solve(m, tee=False)
-    assert abs(pyo.value(m.neural_net_block.outputs[0]) - 10) < 1e-8
-    assert abs(pyo.value(m.neural_net_block.outputs[1]) - 5) < 1e-8
+    assert abs(pyo.value(m.neural_net_block.outputs[0]) - 10) < 1e-3
+    assert abs(pyo.value(m.neural_net_block.outputs[1]) - 5) < 1e-3
 
 
 # todo: Build more tests with different activations and edge cases
@@ -148,10 +148,10 @@ def xtest_two_node_pass_variables():
     m.obj1 = pyo.Objective(expr=0)
     status = pyo.SolverFactory("ipopt").solve(m, tee=False)
 
-    assert abs(pyo.value(m.neural_net_block.y[3]) - 3.856110320303267) < 1e-8
-    assert abs(pyo.value(m.neural_net_block.y[4]) - 0.9640275800758169) < 1e-8
+    assert abs(pyo.value(m.neural_net_block.y[3]) - 3.856110320303267) < 1e-3
+    assert abs(pyo.value(m.neural_net_block.y[4]) - 0.9640275800758169) < 1e-3
 
     m.x.fix(1)
     status = pyo.SolverFactory("ipopt").solve(m, tee=False)
-    assert abs(pyo.value(m.neural_net_block.y[3]) - -3.046376623823058) < 1e-8
-    assert abs(pyo.value(m.neural_net_block.y[4]) - -0.7615941559557649) < 1e-8
+    assert abs(pyo.value(m.neural_net_block.y[3]) - -3.046376623823058) < 1e-3
+    assert abs(pyo.value(m.neural_net_block.y[4]) - -0.7615941559557649) < 1e-3

@@ -6,6 +6,9 @@ from omlt.gbt.model import GradientBoostedTreeModel
 
 
 class BigMFormulation(_PyomoFormulation):
+    def __init__(self, network_structure):
+        super().__init__(network_structure)
+
     def _build_formulation(self):
         """This method is called by the OmltBlock to build the corresponding
         mathematical formulation on the Pyomo block.
@@ -92,6 +95,9 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars):
     )
 
     branch_value_by_feature_id = dict()
+    import collections
+    branch_value_by_feature_id = collections.defaultdict(list)
+
     for f in feature_ids:
         nodes_feature_mask = nodes_feature_ids == f
         branch_values = nodes_values[nodes_feature_mask & nodes_branch_mask]
@@ -161,7 +167,7 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars):
         node_mask = (nodes_tree_ids == tree_id) & (nodes_node_ids == branch_node_id)
         y = _branching_y(tree_id, branch_node_id)
 
-        subtree_root = nodes_false_node_ids[node_mask][0]
+        subtree_root = nodes_true_node_ids[node_mask][0]
         return _sum_of_z_l(tree_id, subtree_root) <= y
 
     @block.Constraint(nodes_tree_branch_ids)
@@ -170,8 +176,8 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars):
         node_mask = (nodes_tree_ids == tree_id) & (nodes_node_ids == branch_node_id)
         y = _branching_y(tree_id, branch_node_id)
 
-        subtree_root = nodes_true_node_ids[node_mask][0]
-        return _sum_of_z_l(tree_id, subtree_root) <= 1 - -y
+        subtree_root = nodes_false_node_ids[node_mask][0]
+        return _sum_of_z_l(tree_id, subtree_root) <= 1 - y
 
     @block.Constraint(categorical_vars.keys())
     def categorical(b, feature_id):
