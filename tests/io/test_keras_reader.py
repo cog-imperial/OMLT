@@ -4,61 +4,48 @@ import pytest
 from omlt.io.keras_reader import load_keras_sequential
 
 
-@pytest.mark.skip("keras reader not updated")
 def test_keras_reader(datadir):
-    nn = keras.models.load_model(datadir.file("keras_linear_131"))
+    nn = keras.models.load_model(datadir.file("keras_linear_131"), compile=False)
     net = load_keras_sequential(nn)
-    assert net.n_inputs == 1
-    assert net.n_outputs == 1
-    assert net.n_hidden == 3
-    assert len(net.weights) == 4
-    assert len(net.biases) == 4
-    assert len(net.activations) == 4
-    for k in net.activations:
-        assert net.activations[k] == "linear"  # or net.activations[k] is None
 
-    nn = keras.models.load_model(datadir.file("keras_linear_131_sigmoid"))
+    layers = list(net.layers)
+    assert len(layers) == 3
+    for layer in layers:
+        assert layer.activation == "linear"
+    assert layers[1].weights.shape == (1, 3)
+    assert layers[2].weights.shape == (3, 1)
+
+    nn = keras.models.load_model(datadir.file("keras_linear_131_sigmoid"), compile=False)
     net = load_keras_sequential(nn)
-    assert net.n_inputs == 1
-    assert net.n_outputs == 1
-    assert net.n_hidden == 3
-    assert len(net.weights) == 4
-    assert sorted(net.weights.keys()) == [1, 2, 3, 4]
-    assert len(net.biases) == 4
-    assert sorted(net.biases.keys()) == [1, 2, 3, 4]
-    assert len(net.activations) == 4
-    assert sorted(net.activations.keys()) == [1, 2, 3, 4]
-
-    for k in [1, 2, 3]:
-        assert net.activations[k] == "sigmoid"
-    assert net.activations[4] == "linear"  # or net.activations[4] is None
+    layers = list(net.layers)
+    assert len(layers) == 3
+    assert layers[1].activation == "sigmoid"
+    assert layers[2].activation == "linear"
+    assert layers[1].weights.shape == (1, 3)
+    assert layers[2].weights.shape == (3, 1)
 
     nn = keras.models.load_model(
-        datadir.file("keras_linear_131_sigmoid_output_activation")
-    )
+        datadir.file("keras_linear_131_sigmoid_output_activation"), 
+        compile=False
+        )
     net = load_keras_sequential(nn)
-    assert net.n_inputs == 1
-    assert net.n_outputs == 1
-    assert net.n_hidden == 3
-    assert len(net.weights) == 4
-    assert sorted(net.weights.keys()) == [1, 2, 3, 4]
-    assert len(net.biases) == 4
-    assert sorted(net.biases.keys()) == [1, 2, 3, 4]
-    assert len(net.activations) == 4
-    assert sorted(net.activations.keys()) == [1, 2, 3, 4]
+    layers = list(net.layers)
+    assert len(layers) == 3
+    assert layers[1].activation == "sigmoid"
+    assert layers[2].activation == "sigmoid"
+    assert layers[1].weights.shape == (1, 3)
+    assert layers[2].weights.shape == (3, 1)
 
-    for k in [1, 2, 3, 4]:
-        assert net.activations[k] == "sigmoid"
-
-    nn = keras.models.load_model(datadir.file("big"))
+    nn = keras.models.load_model(datadir.file("big"), compile=False)
     net = load_keras_sequential(nn)
-    assert net.n_inputs == 1
-    assert net.n_outputs == 1
-    assert net.n_hidden == 100 * 3
-    assert len(net.weights) == 100 * 3 + 1
-    assert len(net.biases) == 100 * 3 + 1
-    assert len(net.activations) == 100 * 3 + 1
-
-    for k in range(1, 100 * 3 + 1):
-        assert net.activations[k] == "sigmoid"
-    assert net.activations[100 * 3 + 1] == "softplus"
+    layers = list(net.layers)
+    assert len(layers) == 5
+    assert layers[1].activation == "sigmoid"
+    assert layers[2].activation == "sigmoid"
+    assert layers[3].activation == "sigmoid"
+    assert layers[4].activation == "softplus"
+    assert layers[1].weights.shape == (1, 100)
+    assert layers[2].weights.shape == (100,100)
+    assert layers[3].weights.shape == (100,100)
+    assert layers[4].weights.shape == (100,1)
+    

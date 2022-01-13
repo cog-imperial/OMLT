@@ -2,8 +2,7 @@ from numpy.core.fromnumeric import transpose
 import pyomo.environ as pyo
 import pyomo.mpec as mpec
 
-
-def bigm_relu_activation(net_block, net, layer_block, layer):
+def bigm_relu_activation_constraint(net_block, net, layer_block, layer):
     """
     Big-M ReLU activation formulation.
     """
