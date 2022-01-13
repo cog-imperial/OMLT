@@ -2,8 +2,8 @@ import pyomo.environ as pyo
 
 from omlt.formulation import _PyomoFormulation, _setup_scaled_inputs_outputs
 from omlt.neuralnet.layer import ConvLayer, DenseLayer, InputLayer
-from omlt.neuralnet.layers.full_space import (full_space_dense_layer, full_space_conv_layer,
-                                              reduced_space_dense_layer)
+from omlt.neuralnet.layers.full_space import (full_space_dense_layer, full_space_conv_layer)
+from omlt.neuralnet.layers.reduced_space import reduced_space_dense_layer
 from omlt.neuralnet.activations import (linear_activation_constraint,
                                         linear_activation_function,
                                         bigm_relu_activation_constraint)

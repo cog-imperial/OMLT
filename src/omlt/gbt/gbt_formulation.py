@@ -1,4 +1,5 @@
 import numpy as np
+import collections
 import pyomo.environ as pe
 
 from omlt.formulation import _PyomoFormulation, _setup_scaled_inputs_outputs
@@ -12,12 +13,10 @@ class GBTBigMFormulation(_PyomoFormulation):
 
     @property
     def input_indexes(self):
-        # TODO: Francesco - is this correct? Does GBT support multi-dimensional inputs?
         return list(range(self.model_definition.n_inputs))
 
     @property
     def output_indexes(self):
-        # TODO: Francesco - is this correct? Does GBT support multi-dimensional outputs?
         return list(range(self.model_definition.n_outputs))
 
     def _build_formulation(self):
@@ -111,7 +110,6 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars):
     )
 
     branch_value_by_feature_id = dict()
-    import collections
     branch_value_by_feature_id = collections.defaultdict(list)
 
     for f in feature_ids:

@@ -1,8 +1,5 @@
 from pyomo.environ import exp, log, tanh
 
-#
-#def softplus_activation
-
 def softplus_activation_function(x):
     return log(exp(x) + 1)
 
