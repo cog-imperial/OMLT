@@ -1,15 +1,12 @@
-"""
-    Dummy conftest.py for omlt.
-
-    If you don't know what this is for, just leave it empty.
-    Read more about conftest.py under:
-    - https://docs.pytest.org/en/stable/fixture.html
-    - https://docs.pytest.org/en/stable/writing_plugins.html
-"""
-
-# import pytest
-
+import pytest
+from pathlib import Path
 import numpy as np
+
+from pyomo.common.fileutils import this_file_dir
+
+from omlt.neuralnet.network_definition import NetworkDefinition
+from omlt.neuralnet.layer import DenseLayer, InputLayer
+
 
 
 def get_neural_network_data(desc):
@@ -40,3 +37,63 @@ def get_neural_network_data(desc):
         return x, y, x_test
 
     return None
+
+
+class _Datadir:
+    """
+    Give access to files in the `models` directory.
+    """
+
+    def __init__(self, basedir):
+        self._basedir = basedir
+
+    def file(self, filename):
+        return str(self._basedir / filename)
+
+
+@pytest.fixture
+def datadir():
+    basedir = Path(this_file_dir()) / "models"
+    return _Datadir(basedir)
+
+
+@pytest.fixture
+def two_node_network_relu():
+    """
+            1           1
+    x0 -------- (1) --------- (3)
+     |                   /
+     |                  /
+     |                 / 5
+     |                /
+     |               |
+     |    -1         |     1
+     ---------- (2) --------- (4)
+    """
+    net = NetworkDefinition(scaled_input_bounds={0: (-10.0, 10.0)})
+
+    input_layer = InputLayer([1])
+    net.add_layer(input_layer)
+
+    dense_layer_0 = DenseLayer(
+        input_layer.output_size,
+        [1, 2],
+        activation="relu",
+        weights=np.array([[1.0, -1.0]]),
+        biases=np.array([0.0, 0.0])
+    )
+    net.add_layer(dense_layer_0)
+    net.add_edge(input_layer, dense_layer_0)
+
+    dense_layer_1 = DenseLayer(
+        dense_layer_0.output_size,
+        [1, 2],
+        activation="linear",
+        weights=np.array([[1.0, 0.0], [5.0, 1.0]]),
+        biases=np.array([0.0, 0.0])
+    )
+    net.add_layer(dense_layer_1)
+    net.add_edge(dense_layer_0, dense_layer_1)
+
+    return net
+

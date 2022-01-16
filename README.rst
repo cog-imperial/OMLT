@@ -25,63 +25,64 @@ Examples
 
 .. code-block:: Python
 
-   import tensorflow 
-   import pyomo.environ as pyo
-   from omlt import OmltBlock, OffsetScaling
-   from omlt.neuralnet import FullSpaceContinuousFormulation, ReducedSpaceContinuousFormulation
-   from omlt.neuralnet import ReLUBigMFormulation
-   from omlt.neuralnet import load_keras_sequential
+     import tensorflow
+     import pyomo.environ as pyo
+     from omlt import OmltBlock, OffsetScaling
+     from omlt.neuralnet import NeuralNetworkFormulation, NetworkDefinition
+     from omlt.io import load_keras_sequential
 
-   #load a Keras model
-   nn = tensorflow.keras.models.load_model('omlt/tests/models/keras_linear_131_sigmoid', compile=False)
+     #load a Keras model
+     nn = tensorflow.keras.models.load_model('tests/models/keras_linear_131_sigmoid', compile=False)
 
-   #create a Pyomo model with an OMLT block
-   model = pyo.ConcreteModel()
-   model.nn = OmltBlock()
+     #create a Pyomo model with an OMLT block
+     model = pyo.ConcreteModel()
+     model.nn = OmltBlock()
 
-   #the neural net contains one input and one output
-   model.input = pyo.Var()
-   model.output = pyo.Var()
+     #the neural net contains one input and one output
+     model.input = pyo.Var()
+     model.output = pyo.Var()
 
-   #apply simple offset scaling for the input and output
-   scale_x = (1, 0.5)       #(mean,stdev) of the input
-   scale_y = (-0.25, 0.125) #(mean,stdev) of the output
-   scaler = OffsetScaling(offset_inputs=[scale_x[0]],
-                       factor_inputs=[scale_x[1]],
-                       offset_outputs=[scale_y[0]],
-                       factor_outputs=[scale_y[1]])
+     #apply simple offset scaling for the input and output
+     scale_x = (1, 0.5)       #(mean,stdev) of the input
+     scale_y = (-0.25, 0.125) #(mean,stdev) of the output
+     scaler = OffsetScaling(offset_inputs=[scale_x[0]],
+                         factor_inputs=[scale_x[1]],
+                         offset_outputs=[scale_y[0]],
+                         factor_outputs=[scale_y[1]])
 
-   #provide bounds on the input variable (e.g. from training)
-   input_bounds = [(0,5),]
+     #provide bounds on the input variable (e.g. from training)
+     scaled_input_bounds = {0:(0,5)}
 
-   #load the keras model into a network definition
-   net = load_keras_sequential(nn,scaler,input_bounds)
+     #load the keras model into a network definition
+     net = load_keras_sequential(nn,scaler,scaled_input_bounds)
 
-   #multiple neural network formulations are possible
-   #hides the intermediate variables from the optimizer
-   formulation = ReducedSpaceContinuousFormulation(net)
+     #multiple formulations of a neural network are possible
+     #this uses the default NeuralNetworkFormulation object
+     formulation = NeuralNetworkFormulation(net)
 
-   #encodes intermediate neural network variables
-   #formulation = FullSpaceContinuousFormulation(net)
+     #build the formulation on the OMLT block
+     model.nn.build_formulation(formulation)
 
-   #encodes intermediate relu activations using binary variables
-   #this requires a neural network with only linear and relu activations
-   #formulation = ReLUBigMFormulation(net)
+     #query inputs and outputs, as well as scaled inputs and outputs
+     model.nn.inputs
+     model.nn.outputs
+     model.nn.scaled_inputs
+     model.nn.scaled_outputs
 
-   #build the formulation on the OMLT block
-   model.nn.build_formulation(formulation, input_vars=[model.input], output_vars=[model.output])
+     #connect pyomo model input and output to the neural network
+     @model.Constraint()
+     def connect_input(mdl):
+         return mdl.input == mdl.nn.inputs[0]
 
-   #query inputs and outputs, as well as scaled inputs and outputs 
-   model.nn.inputs_list
-   model.nn.outputs_list 
-   model.nn.scaled_inputs_list 
-   model.nn.scaled_outputs_list
+     @model.Constraint()
+     def connect_output(mdl):
+         return mdl.output == mdl.nn.outputs[0]
 
-   #solve an inverse problem to find that input that most closely matches the output value of 0.5
-   model.obj = pyo.Objective(expr=(model.output - 0.5)**2)
-   status = pyo.SolverFactory('ipopt').solve(model, tee=False)
-   print(pyo.value(model.input))
-   print(pyo.value(model.output))
+     #solve an inverse problem to find that input that most closely matches the output value of 0.5
+     model.obj = pyo.Objective(expr=(model.output - 0.5)**2)
+     status = pyo.SolverFactory('ipopt').solve(model, tee=False)
+     print(pyo.value(model.input))
+     print(pyo.value(model.output))
 
 
 Development

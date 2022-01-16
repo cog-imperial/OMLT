@@ -1,23 +1,37 @@
 import numpy as np
+import collections
 import pyomo.environ as pe
 
-from omlt.formulation import _PyomoFormulation
+from omlt.formulation import _PyomoFormulation, _setup_scaled_inputs_outputs
 from omlt.gbt.model import GradientBoostedTreeModel
 
 
-class BigMFormulation(_PyomoFormulation):
-    def __init__(self, network_structure):
-        super().__init__(network_structure)
+class GBTBigMFormulation(_PyomoFormulation):
+    def __init__(self, gbt_model):
+        super().__init__()
+        self.model_definition = gbt_model
+
+    @property
+    def input_indexes(self):
+        return list(range(self.model_definition.n_inputs))
+
+    @property
+    def output_indexes(self):
+        return list(range(self.model_definition.n_outputs))
 
     def _build_formulation(self):
         """This method is called by the OmltBlock to build the corresponding
         mathematical formulation on the Pyomo block.
         """
+        _setup_scaled_inputs_outputs(self.block,
+                                     self.model_definition.scaling_object,
+                                     self.model_definition.scaled_input_bounds)
+
         add_formulation_to_block(
             block=self.block,
-            model_definition=self.network_definition,
-            input_vars=self.block.inputs_list,
-            output_vars=self.block.outputs_list,
+            model_definition=self.model_definition,
+            input_vars=self.block.scaled_inputs,
+            output_vars=self.block.scaled_outputs,
         )
 
 
@@ -68,7 +82,8 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars):
     categorical_vars = dict()
     continuous_vars = dict()
 
-    for var_idx, var in enumerate(input_vars):
+    for var_idx in input_vars:
+        var = input_vars[var_idx]
         # add one binary for each categorical variable
         if var.is_integer() or var.is_binary():
             categorical_vars[var_idx] = var
@@ -95,7 +110,6 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars):
     )
 
     branch_value_by_feature_id = dict()
-    import collections
     branch_value_by_feature_id = collections.defaultdict(list)
 
     for f in feature_ids:

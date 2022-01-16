@@ -1,74 +1,66 @@
+import pyomo.environ as pyo
+import numpy as np
 import pytest
 
+from omlt.block import OmltBlock
+from omlt.neuralnet.nn_formulation import NeuralNetworkFormulation
+from omlt.io.keras_reader import load_keras_sequential
 from omlt.neuralnet.network_definition import NetworkDefinition
+from omlt.neuralnet.layer import DenseLayer, InputLayer
 
-
-# ToDo: Add tests for teh scaling object
-def test_network_definition():
+# TODO: Build more tests with different activations and edge cases
+def test_two_node_full_space():
     """
-    Test of the following model:
-
-           1           
-     (0) ------------ (2) ----\
-                \              \ 2
-                 \              \
-                  \ -2           (4)
-                   \            /
-                    \          / -3
-          -1         \        /
-     (1) ------------ (3) ---/
+            1           1
+    x0 -------- (1) --------- (3)
+     |                   /
+     |                  /
+     |                 / 5
+     |                /
+     |               |
+     |    -1         |     1
+     ---------- (2) --------- (4)
     """
+    net = NetworkDefinition(scaled_input_bounds=[(-10.0, 10.0)])
 
-    n_inputs = 2
-    n_hidden = 2
-    n_outputs = 1
-    w = {2: {0: 1.0}, 3: {0: -2.0, 1: -1.0}, 4: {2: 2.0, 3: -3}}
-    b = {2: 1, 3: 2, 4: 3}
-    a = {2: "linear", 3: "linear", 4: "linear"}
+    input_layer = InputLayer([1])
+    net.add_layer(input_layer)
 
-    nd = NetworkDefinition(n_inputs, n_hidden, n_outputs, w, b, a)
-    assert nd.n_inputs == n_inputs
-    assert nd.n_hidden == n_hidden
-    assert nd.n_outputs == n_outputs
-    for j in w.keys():
-        for i in w[j].keys():
-            assert w[j][i] == nd.weights[j][i]
-        assert b[j] == nd.biases[j]
-        assert a[j] == nd.activations[j]
-
-    assert nd.scaling_object is None
-    assert nd.input_node_ids() == [0, 1]
-    assert nd.hidden_node_ids() == [2, 3]
-    assert nd.output_node_ids() == [4]
-
-    with pytest.warns(
-        UserWarning,
-        match="No input bounds were provided. This may lead to extrapolation outside of the training data",
-    ):
-        nd = NetworkDefinition(n_inputs, n_hidden, n_outputs, w, b, a)
-
-    input_bounds = [(0, 2), (-1, 1)]
-    nd = NetworkDefinition(
-        n_inputs, n_hidden, n_outputs, w, b, a, input_bounds=input_bounds
+    dense_layer_0 = DenseLayer(
+        input_layer.output_size,
+        [1, 2],
+        activation="relu",
+        weights=np.array([[1.0, -1.0]]),
+        biases=np.array([0.0, 0.0])
     )
-    assert nd.input_bounds == input_bounds
+    net.add_layer(dense_layer_0)
+    net.add_edge(input_layer, dense_layer_0)
 
-    with pytest.raises(ValueError):
-        input_bounds = [
-            (0, 2),
-        ]
-        nd = NetworkDefinition(
-            n_inputs, n_hidden, n_outputs, w, b, a, input_bounds=input_bounds
-        )
+    dense_layer_1 = DenseLayer(
+        dense_layer_0.output_size,
+        [1, 2],
+        activation="linear",
+        weights=np.array([[1.0, 0.0], [5.0, 1.0]]),
+        biases=np.array([0.0, 0.0])
+    )
+    net.add_layer(dense_layer_1)
+    net.add_edge(dense_layer_0, dense_layer_1)
 
-    with pytest.raises(ValueError):
-        input_bounds = [(0, 2), (3,)]
-        nd = NetworkDefinition(
-            n_inputs, n_hidden, n_outputs, w, b, a, input_bounds=input_bounds
-        )
+    # verify that we are seeing the correct values
+    m = pyo.ConcreteModel()
+    m.neural_net_block = OmltBlock()
+    formulation = NeuralNetworkFormulation(net)
+    m.neural_net_block.build_formulation(formulation)
 
-    # Todo: this should be able to throw an error
-    nd = NetworkDefinition(1, n_hidden, n_outputs, w, b, a)
+    m.neural_net_block.inputs[0].fix(-2)
+    m.obj1 = pyo.Objective(expr=0)
+    status = pyo.SolverFactory("cbc").solve(m, tee=True)
+    pyo.assert_optimal_termination(status)
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 0]) - 10.0) < 1e-8
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - 2.0) < 1e-8
 
-    with pytest.raises(ValueError):
-        nd = NetworkDefinition(n_inputs, 1, n_outputs, w, b, a)
+    m.neural_net_block.inputs[0].fix(1)
+    status = pyo.SolverFactory("cbc").solve(m, tee=False)
+    pyo.assert_optimal_termination(status)
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 0]) - 1.0) < 1e-8
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - 0.0) < 1e-8

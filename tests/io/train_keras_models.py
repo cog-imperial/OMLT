@@ -1,5 +1,6 @@
 import tensorflow as tf
 import tf2onnx
+import numpy as np
 from pyomo.common.fileutils import this_file_dir
 from tensorflow.keras import datasets, layers, models
 
