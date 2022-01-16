@@ -64,6 +64,12 @@ class NeuralNetworkFormulation(_PyomoFormulation):
         self._layer_constraints = {**_DEFAULT_LAYER_CONSTRAINTS, **layer_constraints}
         self._activation_constraints = {**_DEFAULT_ACTIVATION_CONSTRAINTS, **activation_constraints}
 
+        # TODO: Change these to exceptions.
+        network_inputs = list(self.__network_definition.input_nodes)
+        assert len(network_inputs) == 1, 'Multiple input layers are not currently supported.'
+        network_outputs = list(self.__network_definition.output_nodes)
+        assert len(network_outputs) == 1, 'Multiple output layers are not currently supported.'
+
     def _build_formulation(self):
         _setup_scaled_inputs_outputs(self.block,
                                      self.__scaling_object,
@@ -80,14 +86,14 @@ class NeuralNetworkFormulation(_PyomoFormulation):
     def input_indexes(self):
         """The indexes of the formulation inputs."""
         network_inputs = list(self.__network_definition.input_nodes)
-        assert len(network_inputs) == 1, 'Unsupported multiple network input variables'
+        assert len(network_inputs) == 1, 'Multiple input layers are not currently supported.'
         return network_inputs[0].input_indexes
 
     @property
     def output_indexes(self):
         """The indexes of the formulation output."""
         network_outputs = list(self.__network_definition.output_nodes)
-        assert len(network_outputs) == 1, 'Unsupported multiple network output variables'
+        assert len(network_outputs) == 1, 'Multiple output layers are not currently supported.'
         return network_outputs[0].output_indexes
 
 

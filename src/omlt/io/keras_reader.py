@@ -4,14 +4,19 @@ from omlt.neuralnet.layer import InputLayer, DenseLayer
 def load_keras_sequential(nn, scaling_object=None, scaled_input_bounds=None):
     """
     Load a keras neural network model (built with Sequential) into
-    a pyoml network definition object. This network definition object
+    an OMLT network definition object. This network definition object
     can be used in different formulations.
     Parameters
     ----------
     nn : keras.model
         A keras model that was built with Sequential
-    scaling_object : instance of object supporting ScalingInterface (see scaling.py)
-    scaled_input_bounds: list of tuples
+    scaling_object : instance of ScalingInterface or None
+        Provide an instance of a scaling object to use to scale iputs --> scaled_inputs
+        and scaled_outputs --> outputs. If None, no scaling is performed. See scaling.py.
+    scaled_input_bounds : dict or None
+        A dict that contains the bounds on the scaled variables (the
+        direct inputs to the neural network). If None, then no bounds
+        are specified.
     
     Returns
     -------

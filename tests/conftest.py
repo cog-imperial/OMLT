@@ -70,7 +70,7 @@ def two_node_network_relu():
      |    -1         |     1
      ---------- (2) --------- (4)
     """
-    net = NetworkDefinition(scaled_input_bounds=[(-10.0, 10.0)])
+    net = NetworkDefinition(scaled_input_bounds={0: (-10.0, 10.0)})
 
     input_layer = InputLayer([1])
     net.add_layer(input_layer)

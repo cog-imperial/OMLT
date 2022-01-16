@@ -1,7 +1,6 @@
 import tensorflow.keras as keras
 import pytest
 import pyomo.environ as pyo
-import tensorflow
 import numpy as np
 
 from omlt.block import OmltBlock
@@ -15,7 +14,7 @@ from conftest import get_neural_network_data
 def _test_keras_linear_131(keras_fname, reduced_space=False):
     x, y, x_test = get_neural_network_data("131")
 
-    nn = tensorflow.keras.models.load_model(keras_fname, compile=False)
+    nn = keras.models.load_model(keras_fname, compile=False)
     net = load_keras_sequential(nn, scaled_input_bounds=[(-1,1)])
     m = pyo.ConcreteModel()
     m.neural_net_block = OmltBlock()
@@ -36,7 +35,7 @@ def _test_keras_linear_131(keras_fname, reduced_space=False):
 def _test_keras_mip_relu_131(keras_fname):
     x, y, x_test = get_neural_network_data("131")
 
-    nn = tensorflow.keras.models.load_model(keras_fname, compile=False)
+    nn = keras.models.load_model(keras_fname, compile=False)
     net = load_keras_sequential(nn, scaled_input_bounds = [(-1,1)])
 
     m = pyo.ConcreteModel()
@@ -56,7 +55,7 @@ def _test_keras_mip_relu_131(keras_fname):
 def _test_keras_complementarity_relu_131(keras_fname):
     x, y, x_test = get_neural_network_data("131")
 
-    nn = tensorflow.keras.models.load_model(keras_fname, compile=False)
+    nn = keras.models.load_model(keras_fname, compile=False)
     net = load_keras_sequential(nn)
 
     m = pyo.ConcreteModel()
