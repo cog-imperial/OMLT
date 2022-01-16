@@ -1,5 +1,4 @@
 import warnings
-import weakref
 
 import pyomo.environ as pyo
 from pyomo.core.base.block import _BlockData, declare_custom_block
@@ -52,7 +51,7 @@ class OmltBlockData(_BlockData):
         if not input_indexes or not output_indexes:
             # TODO: implement this check higher up in the class hierarchy to provide more contextual error msg
             raise ValueError(
-                "_BaseInputOutputBlock must have at least one input and at least one output."
+                "OmltBlock must have at least one input and at least one output."
             )
 
         self.inputs_set = pyo.Set(initialize=input_indexes)
@@ -69,8 +68,8 @@ class OmltBlockData(_BlockData):
 
         Parameters
         ----------
-        formulation : instance of PyomoFormulation
-            see, for example, FullSpaceContinuousFormulation
+        formulation : instance of _PyomoFormulation
+            see, for example, NeuralNetworkFormulation
         """
         self._setup_inputs_outputs(
             input_indexes=list(formulation.input_indexes),

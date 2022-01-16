@@ -61,7 +61,7 @@ class NetworkDefinition:
 
     @property
     def scaled_input_bounds(self):
-        """Return a list of tuples containing lower and upper bounds of neural network inputs"""
+        """Return a dict of tuples containing lower and upper bounds of neural network inputs"""
         return self.__scaled_input_bounds
 
     @property

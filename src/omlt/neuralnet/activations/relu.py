@@ -1,4 +1,3 @@
-from numpy.core.fromnumeric import transpose
 import pyomo.environ as pyo
 import pyomo.mpec as mpec
 
