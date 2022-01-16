@@ -7,6 +7,9 @@
 .. image:: https://github.com/cog-imperial/OMLT/workflows/CI/badge.svg?branch=main
      :target: https://github.com/cog-imperial/OMLT/actions?workflow=CI
      :alt: CI Status
+     
+.. image:: https://codecov.io/gh/cog-imperial/OMLT/branch/main/graph/badge.svg?token=9U7WLDINJJ
+     :target: https://codecov.io/gh/cog-imperial/OMLT
 
 
 ===============================================
