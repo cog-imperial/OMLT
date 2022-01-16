@@ -78,6 +78,8 @@ extensions = [
     "sphinx.ext.ifconfig",
     "sphinx.ext.mathjax",
     "sphinx.ext.napoleon",
+    "nbsphinx",
+    "sphinx_copybutton"
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -94,8 +96,7 @@ master_doc = "index"
 
 # General information about the project.
 project = "omlt"
-# TODO: how should we assign copyright in the docs? COG + Sandia?
-copyright = "2021, Francesco Ceccon"
+copyright = "2021, Carnegie Mellon University, Imperial College London, Sandia National Laboratories"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -148,14 +149,20 @@ pygments_style = "sphinx"
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = "alabaster"
+html_theme = "furo"
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 html_theme_options = {
-    "sidebar_width": "300px",
-    "page_width": "1200px"
+    "light_css_variables": {
+        "color-brand-primary": "#003E74",
+        "color-brand-content": "#002147",
+    },
+    "dark_css_variables": {
+        "color-brand-primary": "#0091D4",
+        "color-brand-content": "#D4EFFC",
+    },
 }
 
 # Add any paths that contain custom themes here, relative to this directory.
@@ -175,7 +182,7 @@ else:
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-# html_logo = ""
+html_logo = "_static/omlt_logo.png"
 
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
@@ -246,7 +253,7 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-    ("index", "user_guide.tex", "OMLT Documentation", "Francesco Ceccon", "manual")
+    ("index", "user_guide.tex", "OMLT Documentation", "The OMLT Developers", "manual")
 ]
 
 # The name of an image file (relative to this directory) to place at the top of

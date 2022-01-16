@@ -13,15 +13,20 @@ class ScalingInterface(abc.ABC):
     def get_scaled_input_expressions(self, input_vars):
         """This method returns a list of expressions for the scaled inputs from
         the unscaled inputs"""
-        pass
+        pass # pragma: no cover
 
     @abc.abstractmethod
     def get_unscaled_output_expressions(self, scaled_output_vars):
         """This method returns a list of expressions for the unscaled outputs from
         the scaled outputs"""
-        pass
+        pass # pragma: no cover
 
 
+def convert_to_dict(x):
+    if type(x) is dict:
+        return dict(x)
+    return {i:v for i,v in enumerate(x)}
+    
 class OffsetScaling(ScalingInterface):
     def __init__(self, offset_inputs, factor_inputs, offset_outputs, factor_outputs):
         """
@@ -43,44 +48,86 @@ class OffsetScaling(ScalingInterface):
             Array of the scaling factors (division) for each output from the network
         """
         super(OffsetScaling, self).__init__()
-        self.__x_offset = offset_inputs
-        self.__x_factor = factor_inputs
-        self.__y_offset = offset_outputs
-        self.__y_factor = factor_outputs
+        self.__x_offset = convert_to_dict(offset_inputs)
+        self.__x_factor = convert_to_dict(factor_inputs)
+        self.__y_offset = convert_to_dict(offset_outputs)
+        self.__y_factor =convert_to_dict(factor_outputs)
+
+        for k,v in self.__x_factor.items():
+            if v <= 0:
+                raise ValueError("OffsetScaling only accepts positive values"
+                                 " for factor_inputs. Negative value found at"
+                                 " index {}.".format(k))
+        for k,v in self.__y_factor.items():
+            if v <= 0:
+                raise ValueError("OffsetScaling only accepts positive values"
+                                 " for factor_outputs. Negative value found at"
+                                 " index {}.".format(k))
 
     def get_scaled_input_expressions(self, input_vars):
+        sorted_keys = sorted(input_vars.keys())
+        if sorted(self.__x_offset) != sorted_keys or \
+           sorted(self.__x_factor) != sorted_keys:
+            raise ValueError('get_scaled_input_expressions called with input_vars'
+                             ' that do not have the same indices as offset_inputs'
+                             ' or factor_inputs.\n'
+                             'Keys in input_vars: {}.\n'
+                             'Keys in offset_inputs: {}.\n'
+                             'Keys in offset_factor: {}.'.format(
+                                 sorted_keys, sorted(self.__x_offset),
+                                 sorted(self.__x_factor)))
+
         x = input_vars
-        if isinstance(x, dict):
-            ret = {}
-            for i, j in enumerate(x.keys()):
-                ret[j] = (x[j] - self.__x_offset[i]) / self.__x_factor[i]
-            return ret
-        else:
-            return [
-                (x[i] - self.__x_offset[i]) / self.__x_factor[i] for i in range(len(x))
-            ]
+        return {k: (x[k] - self.__x_offset[k]) / self.__x_factor[k] \
+                for k in x.keys()}
+
+    def get_unscaled_input_expressions(self, scaled_input_vars):
+        sorted_keys = sorted(scaled_input_vars.keys())
+        if sorted(self.__x_offset) != sorted_keys or \
+           sorted(self.__x_factor) != sorted_keys:
+            raise ValueError('get_scaled_input_expressions called with input_vars'
+                             ' that do not have the same indices as offset_inputs'
+                             ' or factor_inputs.\n'
+                             'Keys in input_vars: {}\n'
+                             'Keys in offset_inputs: {}\n'
+                             'Keys in offset_factor: {}'.format(
+                                 sorted_keys, sorted(self.__x_offset),
+                                 sorted(self.__x_factor)))
+
+        scaled_x = scaled_input_vars
+        return {k: scaled_x[k] * self.__x_factor[k] + self.__x_offset[k] \
+                for k in scaled_x.keys()}
 
     def get_scaled_output_expressions(self, output_vars):
+        sorted_keys = sorted(output_vars.keys())
+        if sorted(self.__y_offset) != sorted_keys or \
+           sorted(self.__y_factor) != sorted_keys:
+            raise ValueError('get_scaled_output_expressions called with output_vars'
+                             ' that do not have the same indices as offset_outputs'
+                             ' or factor_outputs.\n'
+                             'Keys in output_vars: {}\n'
+                             'Keys in offset_outputs: {}\n'
+                             'Keys in offset_factor: {}'.format(
+                                 sorted_keys, sorted(self.__y_offset),
+                                 sorted(self.__y_factor)))
+
         y = output_vars
-        if isinstance(y, dict):
-            ret = {}
-            for i, j in enumerate(y.keys()):
-                ret[j] = (y[j] - self.__y_offset[i]) / self.__y_factor[i]
-            return ret
-        else:
-            return [
-                (y[i] - self.__y_offset[i]) / self.__y_factor[i] for i in range(len(y))
-            ]
+        return {k: (y[k] - self.__y_offset[k]) / self.__y_factor[k] \
+                for k in y.keys()}
 
     def get_unscaled_output_expressions(self, scaled_output_vars):
+        sorted_keys = sorted(scaled_output_vars.keys())
+        if sorted(self.__y_offset) != sorted_keys or \
+           sorted(self.__y_factor) != sorted_keys:
+            raise ValueError('get_scaled_output_expressions called with output_vars'
+                             ' that do not have the same indices as offset_outputs'
+                             ' or factor_outputs.\n'
+                             'Keys in output_vars: {}\n'
+                             'Keys in offset_outputs: {}\n'
+                             'Keys in offset_factor: {}'.format(
+                                 sorted_keys, sorted(self.__y_offset),
+                                 sorted(self.__y_factor)))
+
         scaled_y = scaled_output_vars
-        if isinstance(scaled_y, dict):
-            ret = {}
-            for i, j in enumerate(scaled_y.keys()):
-                ret[j] = scaled_y[j] * self.__y_factor[i] + self.__y_offset[i]
-            return ret
-        else:
-            return [
-                scaled_y[i] * self.__y_factor[i] + self.__y_offset[i]
-                for i in range(len(scaled_y))
-            ]
+        return {k: scaled_y[k] * self.__y_factor[k] + self.__y_offset[k] \
+                for k in scaled_y.keys()}
