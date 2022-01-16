@@ -16,10 +16,6 @@
 OMLT: Optimization and Machine Learning Toolkit
 ===============================================
 
-.. image:: https://github.com/cog-imperial/OMLT/workflows/CI/badge.svg?branch=main
-     :target: https://github.com/cog-imperial/OMLT/actions?workflow=CI
-     :alt: CI Status
-
 OMLT is a Python package for representing machine learning models (such as neural networks) within the Pyomo optimization environment. The package provides various formulations for representing machine-learning models (such as full-space, reduced-space, and MILP), as well as an interface to import sequential Keras models.
 
 
