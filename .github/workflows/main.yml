@@ -39,9 +39,6 @@ jobs:
       - name: "Run tox targets for ${{ matrix.python-version }}"
         run: "tox"
 
-      - name: "Run tox notebooks targets for ${{ matrix.python-version }}"
-        run: "tox -e notebooks docs/**/*.ipynb"
-
       - name: "Convert coverage"
         run: "python -m coverage xml"
         
@@ -49,3 +46,6 @@ jobs:
         uses: "codecov/codecov-action@v2"
         with:
           fail_ci_if_error: true
+
+      - name: "Run tox notebooks targets for ${{ matrix.python-version }}"
+        run: "tox -e notebooks docs/**/*.ipynb"
