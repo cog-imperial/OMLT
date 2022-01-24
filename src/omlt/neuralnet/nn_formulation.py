@@ -1,4 +1,5 @@
 import pyomo.environ as pyo
+import numpy as np
 
 from omlt.formulation import _PyomoFormulation, _setup_scaled_inputs_outputs
 from omlt.neuralnet.layer import ConvLayer, DenseLayer, InputLayer
