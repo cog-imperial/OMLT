@@ -131,7 +131,9 @@ def _build_neural_network_formulation(block, network_structure, split_func):
 
 
 def _default_split_func(w, n):
-    return np.array_split(np.argsort(w), n)
+    sorted_indexes = np.argsort(w)
+    n = min(n, len(sorted_indexes))
+    return np.array_split(sorted_indexes, n)
 
 
 def _partition_based_dense_relu_layer(net_block, net, layer_block, layer, split_func):
@@ -175,7 +177,7 @@ def _partition_based_dense_relu_layer(net_block, net, layer_block, layer, split_
                 else:
                     input_index = local_index
 
-                w = layer.weights[split_local_index, output_index[-1]]
+                w = weights[local_index[-1]]
                 expr += prev_layer_block.z[input_index] * w
 
             lb, ub = compute_bounds_on_expr(expr)
@@ -185,8 +187,8 @@ def _partition_based_dense_relu_layer(net_block, net, layer_block, layer, split_
             z2.setlb(min(0, lb))
             z2.setub(max(0, ub))
 
-            b.eq_16_lb.add(expr - z2 <= b.sig * lb)
-            b.eq_16_ub.add(expr - z2 >= b.sig * ub)
+            b.eq_16_lb.add(expr - z2 >= b.sig * lb)
+            b.eq_16_ub.add(expr - z2 <= b.sig * ub)
             b.eq_17_lb.add(z2 >= (1 - b.sig) * lb)
             b.eq_17_ub.add(z2 <= (1 - b.sig) * ub)
 
@@ -196,26 +198,28 @@ def _partition_based_dense_relu_layer(net_block, net, layer_block, layer, split_
             w = layer.weights[local_index[-1], output_index[-1]]
             expr += prev_layer_block.z[input_index] * w
         # move this at the end to avoid numpy/pyomo var bug
-        expr += layer.biases[output_index[-1]]
+        expr += bias
 
         lb, ub = compute_bounds_on_expr(expr)
         assert lb is not None and ub is not None
 
-        layer_block.zhat[output_index].setlb(0)
-        layer_block.zhat[output_index].setub(max(0, ub))
+        layer_block.z[output_index].setlb(0)
+        layer_block.z[output_index].setub(max(0, ub))
 
         eq_13_expr = 0.0
         for split_index in range(num_splits):
-            for local_index in splits[split_index]:
+            for split_local_index in splits[split_index]:
+                _, local_index = input_layer_indexes[split_local_index]
                 if mapper:
                     input_index = mapper(local_index)
                 else:
                     input_index = local_index
 
-                w = layer.weights[local_index, output_index[-1]]
+                w = weights[local_index[-1]]
                 eq_13_expr += prev_layer_block.z[input_index] * w
             eq_13_expr -= b.z2[split_index]
         eq_13_expr += bias * b.sig
+
         b.eq_13 = pyo.Constraint(expr=eq_13_expr <= 0)
         b.eq_14 = pyo.Constraint(expr=sum(b.z2[s] for s in range(num_splits)) + bias * (1 - b.sig) >= 0)
-        b.eq_15 = pyo.Constraint(expr=layer_block.zhat[output_index] == sum(b.z2[s] for s in range(num_splits)) + bias * (1 - b.sig))
+        b.eq_15 = pyo.Constraint(expr=layer_block.z[output_index] == sum(b.z2[s] for s in range(num_splits)) + bias * (1 - b.sig))
