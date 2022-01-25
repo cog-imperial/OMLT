@@ -2,7 +2,9 @@ import pytest
 import numpy as np
 import pyomo.environ as pyo
 from omlt import OmltBlock
-from omlt.neuralnet import ReducedSpaceNeuralNetworkFormulation, NeuralNetworkFormulation, NetworkDefinition
+from omlt.neuralnet import (ReducedSpaceNNFormulation, ReducedSpaceSmoothNNFormulation, \
+                            FullSpaceNNFormulation, FullSpaceSmoothNNFormulation,
+                            NetworkDefinition)
 from omlt.neuralnet.layer import InputLayer, DenseLayer
 
 def two_node_network(activation, input_value):
@@ -48,32 +50,39 @@ def two_node_network(activation, input_value):
 
     return net, y
 
-def _test_two_node_reduced_space(activation):
+def test_FullSpaceNNFormulation():
     m = pyo.ConcreteModel()
     m.neural_net_block = OmltBlock()
-    net, y = two_node_network(activation, -2.0)
-    m.neural_net_block.build_formulation(ReducedSpaceNeuralNetworkFormulation(net))
-    assert m.nvariables() == 6
-    assert m.nconstraints() == 5
+    net, y = two_node_network('sigmoid', -2.0)
+    m.neural_net_block.build_formulation(FullSpaceNNFormulation(net))
+    assert m.nvariables() == 15
+    assert m.nconstraints() == 14
 
     m.neural_net_block.inputs[0].fix(-2)
     m.obj1 = pyo.Objective(expr=0)
-    status = pyo.SolverFactory("ipopt").solve(m, tee=False)
-
+    status = pyo.SolverFactory("ipopt").solve(m, tee=True)
     assert abs(pyo.value(m.neural_net_block.outputs[0,0]) - y[0,0]) < 1e-6
     assert abs(pyo.value(m.neural_net_block.outputs[0,1]) - y[0,1]) < 1e-6
 
-    net, y = two_node_network(activation, 1.0)
-    m.neural_net_block.inputs[0].fix(1)
-    status = pyo.SolverFactory("ipopt").solve(m, tee=False)
+def test_FullSpaceSmoothNNFormulation():
+    m = pyo.ConcreteModel()
+    m.neural_net_block = OmltBlock()
+    net, y = two_node_network('sigmoid', -2.0)
+    m.neural_net_block.build_formulation(FullSpaceSmoothNNFormulation(net))
+    assert m.nvariables() == 15
+    assert m.nconstraints() == 14
+
+    m.neural_net_block.inputs[0].fix(-2)
+    m.obj1 = pyo.Objective(expr=0)
+    status = pyo.SolverFactory("ipopt").solve(m, tee=True)
     assert abs(pyo.value(m.neural_net_block.outputs[0,0]) - y[0,0]) < 1e-6
     assert abs(pyo.value(m.neural_net_block.outputs[0,1]) - y[0,1]) < 1e-6
 
-def _test_two_node_full_space_smooth(activation):
+def _test_two_node_FullSpaceNNFormulation_smooth(activation):
     m = pyo.ConcreteModel()
     m.neural_net_block = OmltBlock()
     net, y = two_node_network(activation, -2.0)
-    m.neural_net_block.build_formulation(NeuralNetworkFormulation(net))
+    m.neural_net_block.build_formulation(FullSpaceNNFormulation(net))
     assert m.nvariables() == 15
     assert m.nconstraints() == 14
 
@@ -90,11 +99,11 @@ def _test_two_node_full_space_smooth(activation):
     assert abs(pyo.value(m.neural_net_block.outputs[0,0]) - y[0,0]) < 1e-6
     assert abs(pyo.value(m.neural_net_block.outputs[0,1]) - y[0,1]) < 1e-6
 
-def test_two_node_full_space_relu():
+def _test_two_node_FullSpaceNNFormulation_relu():
     m = pyo.ConcreteModel()
     m.neural_net_block = OmltBlock()
     net, y = two_node_network('relu', -2.0)
-    m.neural_net_block.build_formulation(NeuralNetworkFormulation(net))
+    m.neural_net_block.build_formulation(FullSpaceNNFormulation(net))
     assert m.nvariables() == 19
     assert m.nconstraints() == 26
 
@@ -111,13 +120,102 @@ def test_two_node_full_space_relu():
     assert abs(pyo.value(m.neural_net_block.outputs[0,0]) - y[0,0]) < 1e-6
     assert abs(pyo.value(m.neural_net_block.outputs[0,1]) - y[0,1]) < 1e-6
 
-def test_two_node_reduced_space():
-    _test_two_node_reduced_space('linear')
-    _test_two_node_reduced_space('sigmoid')
-    _test_two_node_reduced_space('tanh')
+def _test_two_node_FullSpaceSmoothNNFormulation(activation):
+    m = pyo.ConcreteModel()
+    m.neural_net_block = OmltBlock()
+    net, y = two_node_network(activation, -2.0)
+    m.neural_net_block.build_formulation(FullSpaceSmoothNNFormulation(net))
+    assert m.nvariables() == 15
+    assert m.nconstraints() == 14
 
-def test_two_node_full_space():
-    _test_two_node_full_space_smooth('linear')
-    _test_two_node_full_space_smooth('sigmoid')
-    _test_two_node_full_space_smooth('tanh')
+    m.neural_net_block.inputs[0].fix(-2)
+    m.obj1 = pyo.Objective(expr=0)
+    status = pyo.SolverFactory("ipopt").solve(m, tee=False)
 
+    assert abs(pyo.value(m.neural_net_block.outputs[0,0]) - y[0,0]) < 1e-6
+    assert abs(pyo.value(m.neural_net_block.outputs[0,1]) - y[0,1]) < 1e-6
+
+    net, y = two_node_network(activation, 1.0)
+    m.neural_net_block.inputs[0].fix(1)
+    status = pyo.SolverFactory("ipopt").solve(m, tee=False)
+    assert abs(pyo.value(m.neural_net_block.outputs[0,0]) - y[0,0]) < 1e-6
+    assert abs(pyo.value(m.neural_net_block.outputs[0,1]) - y[0,1]) < 1e-6
+
+def _test_two_node_ReducedSpaceNNFormulation(activation):
+    m = pyo.ConcreteModel()
+    m.neural_net_block = OmltBlock()
+    net, y = two_node_network(activation, -2.0)
+    m.neural_net_block.build_formulation(ReducedSpaceNNFormulation(net))
+    assert m.nvariables() == 6
+    assert m.nconstraints() == 5
+
+    m.neural_net_block.inputs[0].fix(-2)
+    m.obj1 = pyo.Objective(expr=0)
+    status = pyo.SolverFactory("ipopt").solve(m, tee=False)
+
+    assert abs(pyo.value(m.neural_net_block.outputs[0,0]) - y[0,0]) < 1e-6
+    assert abs(pyo.value(m.neural_net_block.outputs[0,1]) - y[0,1]) < 1e-6
+
+    net, y = two_node_network(activation, 1.0)
+    m.neural_net_block.inputs[0].fix(1)
+    status = pyo.SolverFactory("ipopt").solve(m, tee=False)
+    assert abs(pyo.value(m.neural_net_block.outputs[0,0]) - y[0,0]) < 1e-6
+    assert abs(pyo.value(m.neural_net_block.outputs[0,1]) - y[0,1]) < 1e-6
+
+def _test_two_node_ReducedSpaceSmoothNNFormulation(activation):
+    m = pyo.ConcreteModel()
+    m.neural_net_block = OmltBlock()
+    net, y = two_node_network(activation, -2.0)
+    m.neural_net_block.build_formulation(ReducedSpaceSmoothNNFormulation(net))
+    assert m.nvariables() == 6
+    assert m.nconstraints() == 5
+
+    m.neural_net_block.inputs[0].fix(-2)
+    m.obj1 = pyo.Objective(expr=0)
+    status = pyo.SolverFactory("ipopt").solve(m, tee=False)
+
+    assert abs(pyo.value(m.neural_net_block.outputs[0,0]) - y[0,0]) < 1e-6
+    assert abs(pyo.value(m.neural_net_block.outputs[0,1]) - y[0,1]) < 1e-6
+
+    net, y = two_node_network(activation, 1.0)
+    m.neural_net_block.inputs[0].fix(1)
+    status = pyo.SolverFactory("ipopt").solve(m, tee=False)
+    assert abs(pyo.value(m.neural_net_block.outputs[0,0]) - y[0,0]) < 1e-6
+    assert abs(pyo.value(m.neural_net_block.outputs[0,1]) - y[0,1]) < 1e-6
+
+def test_two_node_ReducedSpaceNNFormulation():
+    _test_two_node_ReducedSpaceNNFormulation('linear')
+    _test_two_node_ReducedSpaceNNFormulation('sigmoid')
+    _test_two_node_ReducedSpaceNNFormulation('tanh')
+
+def test_two_node_ReducedSpaceSmoothNNFormulation():
+    _test_two_node_ReducedSpaceSmoothNNFormulation('linear')
+    _test_two_node_ReducedSpaceSmoothNNFormulation('sigmoid')
+    _test_two_node_ReducedSpaceSmoothNNFormulation('tanh')
+
+def test_two_node_ReducedSpaceSmoothNNFormulation_invalid_activation():
+    with pytest.raises(ValueError) as excinfo:
+        _test_two_node_ReducedSpaceSmoothNNFormulation('relu')
+    expected_msg = 'Activation relu is not supported by this formulation.'
+    assert str(excinfo.value) == expected_msg
+
+def test_two_node_FullSpaceNNFormulation():
+    _test_two_node_FullSpaceNNFormulation_smooth('linear')
+    _test_two_node_FullSpaceNNFormulation_smooth('sigmoid')
+    _test_two_node_FullSpaceNNFormulation_smooth('tanh')
+    _test_two_node_FullSpaceNNFormulation_relu()
+
+def test_two_node_FullSpaceSmoothNNFormulation():
+    _test_two_node_FullSpaceSmoothNNFormulation('linear')
+    _test_two_node_FullSpaceSmoothNNFormulation('sigmoid')
+    _test_two_node_FullSpaceSmoothNNFormulation('tanh')
+
+def test_two_node_FullSpaceSmoothNNFormulation_invalid_activation():
+    with pytest.raises(ValueError) as excinfo:
+        _test_two_node_FullSpaceSmoothNNFormulation('relu')
+    expected_msg = 'Activation relu is not supported by this formulation.'
+    assert str(excinfo.value) == expected_msg
+
+@pytest.mark.skip(reason="Need to add checks on layer types")
+def test_invalid_layer_type():
+    assert False

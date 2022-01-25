@@ -6,7 +6,7 @@ from .relu import bigm_relu_activation_constraint, ComplementarityReLUActivation
 
 ACTIVATION_FUNCTION_MAP = {
     "linear": linear_activation_function,
-#    "relu": bigm_relu_activation,
+#    "relu": relu_max_activation
     "sigmoid": sigmoid_activation_function,
     "softplus": softplus_activation_function,
     "tanh": tanh_activation_function
