@@ -40,7 +40,9 @@ jobs:
         run: "tox"
 
       - name: "Run tox notebooks targets for ${{ matrix.python-version }}"
-        run: "tox -e notebooks docs/**/*.ipynb"
+        run: |
+          shopt -s globstar
+          tox -e notebooks docs/**/*.ipynb
 
       - name: "Convert coverage"
         run: "python -m coverage xml"
