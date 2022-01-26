@@ -7,14 +7,14 @@ from omlt.neuralnet.layers.reduced_space import reduced_space_dense_layer
 from omlt.neuralnet.activations import (linear_activation_constraint,
                                         linear_activation_function,
                                         bigm_relu_activation_constraint,
-                                        ComplementarityReLUActivation)
+                                        ComplementarityReLUActivation,
+                                        sigmoid_activation_constraint,
+                                        softplus_activation_constraint,
+                                        tanh_activation_constraint,
+                                        sigmoid_activation_function,
+                                        softplus_activation_function,
+                                        tanh_activation_function)
 from omlt.neuralnet.activations import ACTIVATION_FUNCTION_MAP as _DEFAULT_ACTIVATION_FUNCTIONS
-from omlt.neuralnet.activations.smooth import (sigmoid_activation_constraint,
-                                               softplus_activation_constraint,
-                                               tanh_activation_constraint,
-                                               sigmoid_activation_function,
-                                               softplus_activation_function,
-                                               tanh_activation_function)
 
 def _ignore_input_layer():
     pass
@@ -249,10 +249,8 @@ class ReducedSpaceNNFormulation(_PyomoFormulation):
     ----------
     network_structure : NetworkDefinition
         the neural network definition
-    layer_constraints : dict-like or None
-        overrides the constraints generated for the specified layer types
-    activation_constraints : dict-like or None
-        overrides the constraints generated for the specified activation functions
+    activation_functions : dict-like or None
+        overrides the actual functions used for particular activations
     """
     def __init__(self, network_structure, activation_functions=None):
         super().__init__()

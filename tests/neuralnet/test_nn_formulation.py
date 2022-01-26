@@ -50,34 +50,6 @@ def two_node_network(activation, input_value):
 
     return net, y
 
-def test_FullSpaceNNFormulation():
-    m = pyo.ConcreteModel()
-    m.neural_net_block = OmltBlock()
-    net, y = two_node_network('sigmoid', -2.0)
-    m.neural_net_block.build_formulation(FullSpaceNNFormulation(net))
-    assert m.nvariables() == 15
-    assert m.nconstraints() == 14
-
-    m.neural_net_block.inputs[0].fix(-2)
-    m.obj1 = pyo.Objective(expr=0)
-    status = pyo.SolverFactory("ipopt").solve(m, tee=True)
-    assert abs(pyo.value(m.neural_net_block.outputs[0,0]) - y[0,0]) < 1e-6
-    assert abs(pyo.value(m.neural_net_block.outputs[0,1]) - y[0,1]) < 1e-6
-
-def test_FullSpaceSmoothNNFormulation():
-    m = pyo.ConcreteModel()
-    m.neural_net_block = OmltBlock()
-    net, y = two_node_network('sigmoid', -2.0)
-    m.neural_net_block.build_formulation(FullSpaceSmoothNNFormulation(net))
-    assert m.nvariables() == 15
-    assert m.nconstraints() == 14
-
-    m.neural_net_block.inputs[0].fix(-2)
-    m.obj1 = pyo.Objective(expr=0)
-    status = pyo.SolverFactory("ipopt").solve(m, tee=True)
-    assert abs(pyo.value(m.neural_net_block.outputs[0,0]) - y[0,0]) < 1e-6
-    assert abs(pyo.value(m.neural_net_block.outputs[0,1]) - y[0,1]) < 1e-6
-
 def _test_two_node_FullSpaceNNFormulation_smooth(activation):
     m = pyo.ConcreteModel()
     m.neural_net_block = OmltBlock()
