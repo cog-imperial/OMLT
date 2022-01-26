@@ -79,29 +79,11 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars):
     tree_ids = set(nodes_tree_ids)
     feature_ids = set(nodes_feature_ids)
 
-    categorical_vars = dict()
     continuous_vars = dict()
 
     for var_idx in input_vars:
         var = input_vars[var_idx]
-        # add one binary for each categorical variable
-        if var.is_integer() or var.is_binary():
-            categorical_vars[var_idx] = var
-        else:
-            continuous_vars[var_idx] = var
-
-    def categorical_split_values(var_idx):
-        var = categorical_vars[var_idx]
-        assert var.lb == int(var.lb)
-        assert var.ub == int(var.ub)
-        for v in range(int(var.lb), int(var.ub) + 1):
-            yield var_idx, v
-
-    def categorical_index():
-        for var_idx, _ in categorical_vars.items():
-            yield from categorical_split_values(var_idx)
-
-    block.x = pe.Var(categorical_index(), domain=pe.Binary)
+        continuous_vars[var_idx] = var
 
     block.z_l = pe.Var(
         list(zip(nodes_tree_ids[nodes_leaf_mask], nodes_node_ids[nodes_leaf_mask])),
@@ -153,10 +135,8 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars):
             branch_value_by_feature_id[feature_id] == branch_value
         )
         assert len(branch_y_idx) == 1
-        if feature_id not in categorical_vars:
-            return block.y[feature_id, branch_y_idx[0]]
+        return block.y[feature_id, branch_y_idx[0]]
 
-        return sum(block.x[feature_id, v] for v in categorical_split_values(feature_id))
 
     def _sum_of_z_l(tree_id, start_node_id):
         tree_mask = nodes_tree_ids == tree_id
@@ -192,15 +172,6 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars):
 
         subtree_root = nodes_false_node_ids[node_mask][0]
         return _sum_of_z_l(tree_id, subtree_root) <= 1 - y
-
-    @block.Constraint(categorical_vars.keys())
-    def categorical(b, feature_id):
-        """Equation 2e, Misic."""
-        var = categorical_vars[feature_id]
-        assert var.lb == int(var.lb)
-        assert var.ub == int(var.ub)
-        values = range(int(var.lb), int(var.ub) + 1)
-        return sum(b.x[feature_id, v] for v in values) == 1
 
     @block.Constraint(y_index)
     def order_y(b, feature_id, branch_y_idx):
