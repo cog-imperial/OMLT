@@ -1,4 +1,6 @@
+from omlt.io.onnx import load_onnx_neural_network, load_onnx_neural_network_with_bounds
 import pyomo.environ as pyo
+import onnx
 
 from omlt.block import OmltBlock
 from omlt.neuralnet import PartitionBasedNeuralNetworkFormulation
