@@ -37,16 +37,17 @@ def full_space_dense_layer(net_block, net, layer_block, layer):
 
         return layer_block.zhat[output_index] == expr
 
-
 def full_space_conv_layer(net_block, net, layer_block, layer):
     input_layers = list(net.predecessors(layer))
     assert len(input_layers) == 1
     input_layer = input_layers[0]
     input_layer_block = net_block.layer[id(input_layer)]
 
-    for out_d, out_r, out_c in layer.output_indexes:
-        output_index = (out_d, out_r, out_c)
-
+    #for out_d, out_r, out_c in layer.output_indexes:
+    #   output_index = (out_d, out_r, out_c)
+    @layer_block.Constraint(layer.output_indexes)
+    def convolutional_layer(b,*output_index):
+        out_d, out_r, out_c = output_index
         expr = 0.0
         for weight, input_index in layer.kernel_with_input_indexes(out_d, out_r, out_c):
             expr += weight * input_layer_block.z[input_index]
@@ -54,5 +55,5 @@ def full_space_conv_layer(net_block, net, layer_block, layer):
         lb, ub = compute_bounds_on_expr(expr)
         layer_block.zhat[output_index].setlb(lb)
         layer_block.zhat[output_index].setub(ub)
-
-        layer_block.constraints.add(layer_block.zhat[output_index] == expr)
+        #layer_block.constraints.add(layer_block.zhat[output_index] == expr)
+        return layer_block.zhat[output_index] == expr
