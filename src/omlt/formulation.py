@@ -73,7 +73,9 @@ def scalar_or_tuple(x):
 
 def _setup_scaled_inputs_outputs(block, scaler=None, scaled_input_bounds=None):
     if scaled_input_bounds is not None:
-        bounds_rule = lambda m, *k : scaled_input_bounds.__getitem__(scalar_or_tuple(k))
+        def bounds_rule(m, *k):
+            return scaled_input_bounds.__getitem__(scalar_or_tuple(k))
+        #bounds_rule = lambda m, *k : scaled_input_bounds.__getitem__(scalar_or_tuple(k))
         block.scaled_inputs = pyo.Var(block.inputs_set, initialize=0,
                                       bounds=bounds_rule)
     else:
@@ -81,12 +83,12 @@ def _setup_scaled_inputs_outputs(block, scaler=None, scaled_input_bounds=None):
         
     block.scaled_outputs = pyo.Var(block.outputs_set, initialize=0)
 
-    if scaled_input_bounds is not None:
-        # set the bounds on the scaled variables
+    if scaled_input_bounds is not None and scaler is None:
+        # set the bounds on the inputs to be the same as the scaled inputs
         for k in block.scaled_inputs:
             v = block.inputs[k]
-            v.setlb(scaled_input_bounds[k][0])
-            v.setub(scaled_input_bounds[k][1])
+            v.setlb(pyo.value(block.scaled_inputs[k].lb))
+            v.setub(pyo.value(block.scaled_inputs[k].ub))
 
     if scaled_input_bounds is not None and scaler is not None:
         # propagate unscaled bounds to the inputs

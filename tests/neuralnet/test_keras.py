@@ -161,7 +161,7 @@ def test_scaling_NN_block(datadir):
 
     for x in np.random.normal(1, 0.5, 10):
         model.nn.inputs[0].fix(x)
-        result = pyo.SolverFactory("glpk").solve(model, tee=False)
+        result = pyo.SolverFactory("cbc").solve(model, tee=False)
 
         x_s = (x - scale_x[0]) / scale_x[1]
         y_s = NN.predict(x=[x_s])
