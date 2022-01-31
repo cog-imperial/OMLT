@@ -5,7 +5,7 @@ import numpy as np
 
 from omlt.block import OmltBlock
 from omlt.io.keras_reader import load_keras_sequential
-from omlt.neuralnet import (NeuralNetworkFormulation, ReducedSpaceNeuralNetworkFormulation)
+from omlt.neuralnet import (FullSpaceNNFormulation, ReducedSpaceNNFormulation)
 from omlt.neuralnet.activations import ComplementarityReLUActivation
 from omlt.scaling import OffsetScaling
 
@@ -19,9 +19,9 @@ def _test_keras_linear_131(keras_fname, reduced_space=False):
     m = pyo.ConcreteModel()
     m.neural_net_block = OmltBlock()
     if reduced_space:
-        formulation = ReducedSpaceNeuralNetworkFormulation(net)
+        formulation = ReducedSpaceNNFormulation(net)
     else:
-        formulation = NeuralNetworkFormulation(net)
+        formulation = FullSpaceNNFormulation(net)
     m.neural_net_block.build_formulation(formulation)
 
     nn_outputs = nn.predict(x=x_test)
@@ -40,7 +40,7 @@ def _test_keras_mip_relu_131(keras_fname):
 
     m = pyo.ConcreteModel()
     m.neural_net_block = OmltBlock()
-    formulation = NeuralNetworkFormulation(net)
+    formulation = FullSpaceNNFormulation(net)
     m.neural_net_block.build_formulation(formulation)
     m.obj = pyo.Objective(expr=0)
 
@@ -60,7 +60,7 @@ def _test_keras_complementarity_relu_131(keras_fname):
 
     m = pyo.ConcreteModel()
     m.neural_net_block = OmltBlock()
-    formulation = NeuralNetworkFormulation(net,activation_constraints={
+    formulation = FullSpaceNNFormulation(net,activation_constraints={
         "relu": ComplementarityReLUActivation()})
     m.neural_net_block.build_formulation(formulation)
 
@@ -81,9 +81,9 @@ def _test_keras_linear_big(keras_fname, reduced_space=False):
     m = pyo.ConcreteModel()
     m.neural_net_block = OmltBlock()
     if reduced_space:
-        formulation = ReducedSpaceNeuralNetworkFormulation(net)
+        formulation = ReducedSpaceNNFormulation(net)
     else:
-        formulation = NeuralNetworkFormulation(net)
+        formulation = FullSpaceNNFormulation(net)
     m.neural_net_block.build_formulation(formulation)
 
     nn_outputs = nn.predict(x=x_test)
@@ -151,7 +151,7 @@ def test_scaling_NN_block(datadir):
 
     scaled_input_bounds = {0: (0, 5)}
     net = load_keras_sequential(NN, scaling_object=scaler, scaled_input_bounds=scaled_input_bounds)
-    formulation = NeuralNetworkFormulation(net)
+    formulation = FullSpaceNNFormulation(net)
     model.nn = OmltBlock()
     model.nn.build_formulation(formulation)
 
@@ -161,7 +161,7 @@ def test_scaling_NN_block(datadir):
 
     for x in np.random.normal(1, 0.5, 10):
         model.nn.inputs[0].fix(x)
-        result = pyo.SolverFactory("glpk").solve(model, tee=False)
+        result = pyo.SolverFactory("cbc").solve(model, tee=False)
 
         x_s = (x - scale_x[0]) / scale_x[1]
         y_s = NN.predict(x=[x_s])

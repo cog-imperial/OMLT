@@ -3,7 +3,7 @@ import numpy as np
 import pytest
 
 from omlt.block import OmltBlock
-from omlt.neuralnet.nn_formulation import NeuralNetworkFormulation
+from omlt.neuralnet.nn_formulation import FullSpaceNNFormulation
 from omlt.io.keras_reader import load_keras_sequential
 from omlt.neuralnet.network_definition import NetworkDefinition
 from omlt.neuralnet.layer import DenseLayer, InputLayer
@@ -49,7 +49,7 @@ def test_two_node_full_space():
     # verify that we are seeing the correct values
     m = pyo.ConcreteModel()
     m.neural_net_block = OmltBlock()
-    formulation = NeuralNetworkFormulation(net)
+    formulation = FullSpaceNNFormulation(net)
     m.neural_net_block.build_formulation(formulation)
 
     m.neural_net_block.inputs[0].fix(-2)

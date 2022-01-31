@@ -6,14 +6,15 @@ from omlt.neuralnet.layers.full_space import (full_space_dense_layer, full_space
 from omlt.neuralnet.layers.reduced_space import reduced_space_dense_layer
 from omlt.neuralnet.activations import (linear_activation_constraint,
                                         linear_activation_function,
-                                        bigm_relu_activation_constraint)
+                                        bigm_relu_activation_constraint,
+                                        ComplementarityReLUActivation,
+                                        sigmoid_activation_constraint,
+                                        softplus_activation_constraint,
+                                        tanh_activation_constraint,
+                                        sigmoid_activation_function,
+                                        softplus_activation_function,
+                                        tanh_activation_function)
 from omlt.neuralnet.activations import ACTIVATION_FUNCTION_MAP as _DEFAULT_ACTIVATION_FUNCTIONS
-from omlt.neuralnet.activations.smooth import (sigmoid_activation_constraint,
-                                               softplus_activation_constraint,
-                                               tanh_activation_constraint,
-                                               sigmoid_activation_function,
-                                               softplus_activation_function,
-                                               tanh_activation_function)
 
 def _ignore_input_layer():
     pass
@@ -32,7 +33,7 @@ _DEFAULT_ACTIVATION_CONSTRAINTS = {
     "tanh": tanh_activation_constraint
 }
 
-class NeuralNetworkFormulation(_PyomoFormulation):
+class FullSpaceNNFormulation(_PyomoFormulation):
     """
     This class is the entry-point to build neural network formulations.
 
@@ -55,14 +56,13 @@ class NeuralNetworkFormulation(_PyomoFormulation):
         self.__network_definition = network_structure
         self.__scaling_object = network_structure.scaling_object
         self.__scaled_input_bounds = network_structure.scaled_input_bounds
-        
-        if layer_constraints is None:
-            layer_constraints = dict()
-        if activation_constraints is None:
-            activation_constraints = dict()
 
-        self._layer_constraints = {**_DEFAULT_LAYER_CONSTRAINTS, **layer_constraints}
-        self._activation_constraints = {**_DEFAULT_ACTIVATION_CONSTRAINTS, **activation_constraints}
+        self._layer_constraints = dict(self._supported_default_layer_constraints())
+        self._activation_constraints = dict(self._supported_default_activation_constraints())
+        if layer_constraints is not None:
+            self._layer_constraints.update(layer_constraints)
+        if activation_constraints is not None:
+            self._activation_constraints.update(activation_constraints)
 
         # TODO: Change these to exceptions.
         network_inputs = list(self.__network_definition.input_nodes)
@@ -70,6 +70,12 @@ class NeuralNetworkFormulation(_PyomoFormulation):
         network_outputs = list(self.__network_definition.output_nodes)
         assert len(network_outputs) == 1, 'Multiple output layers are not currently supported.'
 
+    def _supported_default_layer_constraints(self):
+        return _DEFAULT_LAYER_CONSTRAINTS
+
+    def _supported_default_activation_constraints(self):
+        return _DEFAULT_ACTIVATION_CONSTRAINTS
+    
     def _build_formulation(self):
         _setup_scaled_inputs_outputs(self.block,
                                      self.__scaling_object,
@@ -139,11 +145,16 @@ def _build_neural_network_formulation(block, network_structure, layer_constraint
             continue
         layer_id = id(layer)
         layer_block = block.layer[layer_id]
-        constraint_func = layer_constraints[type(layer)]
-        activation_func = activation_constraints[layer.activation]
+        layer_constraints_func = layer_constraints.get(type(layer), None)
+        activation_constraints_func = activation_constraints.get(layer.activation, None)
 
-        constraint_func(block, net, layer_block, layer)
-        activation_func(block, net, layer_block, layer)
+        if layer_constraints_func is None:
+            raise ValueError('Layer type {} is not supported by this formulation.'.format(type(layer)))
+        if activation_constraints_func is None:
+            raise ValueError('Activation {} is not supported by this formulation.'.format(layer.activation))
+        
+        layer_constraints_func(block, net, layer_block, layer)
+        activation_constraints_func(block, net, layer_block, layer)
 
     # setup input variables constraints
     # currently only support a single input layer
@@ -166,8 +177,70 @@ def _build_neural_network_formulation(block, network_structure, layer_constraint
         return b.scaled_outputs[output_index] == b.layer[id(output_layer)].z[output_index]
 
 
+class FullSpaceSmoothNNFormulation(FullSpaceNNFormulation):
+    def __init__(self, network_structure):
+        """
+        This class is used for building "full-space" formulations of 
+        neural network models composed of smooth activations (e.g., tanh,
+        sigmoid, etc.)
 
-class ReducedSpaceNeuralNetworkFormulation(_PyomoFormulation):
+        Parameters
+        ----------
+        network_structure : NetworkDefinition
+           the neural network definition
+        """
+        super().__init__(network_structure)
+
+    def _supported_default_activation_constraints(self):
+        return {
+            "linear": linear_activation_constraint,
+            "sigmoid": sigmoid_activation_constraint,
+            "softplus": softplus_activation_constraint,
+            "tanh": tanh_activation_constraint
+        }
+
+class ReluBigMFormulation(FullSpaceNNFormulation):
+    def __init__(self, network_structure):
+        """
+        This class is used for building "full-space" formulations of 
+        neural network models composed of relu activations using a
+        big-M formulation
+
+        Parameters
+        ----------
+        network_structure : NetworkDefinition
+           the neural network definition
+        """
+        super().__init__(network_structure)
+
+    def _supported_default_activation_constraints(self):
+        return {
+            "linear": linear_activation_constraint,
+            "relu": bigm_relu_activation_constraint
+        }
+
+class ReluComplementarityFormulation(FullSpaceNNFormulation):
+    def __init__(self, network_structure):
+        """
+        This class is used for building "full-space" formulations of 
+        neural network models composed of relu activations using
+        a complementarity formulation (smooth represenation)
+
+        Parameters
+        ----------
+        network_structure : NetworkDefinition
+           the neural network definition
+        """
+        super().__init__(network_structure)
+
+    def _supported_default_activation_constraints(self):
+        return {
+            "linear": linear_activation_constraint,
+            "relu": ComplementarityReLUActivation()
+        }
+
+
+class ReducedSpaceNNFormulation(_PyomoFormulation):
     """
     This class is used to build reduced-space formulations
     of neural networks.
@@ -176,21 +249,26 @@ class ReducedSpaceNeuralNetworkFormulation(_PyomoFormulation):
     ----------
     network_structure : NetworkDefinition
         the neural network definition
-    layer_constraints : dict-like or None
-        overrides the constraints generated for the specified layer types
-    activation_constraints : dict-like or None
-        overrides the constraints generated for the specified activation functions
+    activation_functions : dict-like or None
+        overrides the actual functions used for particular activations
     """
-    def __init__(self, network_structure): #, layer_constraints=None, activation_constraints=None):
+    def __init__(self, network_structure, activation_functions=None):
         super().__init__()
 
         self.__network_definition = network_structure
         self.__scaling_object = network_structure.scaling_object
         self.__scaled_input_bounds = network_structure.scaled_input_bounds
-        
-        #self._layer_constraints = {**_DEFAULT_LAYER_CONSTRAINTS, **layer_constraints}
-        self._activation_functions = {**_DEFAULT_ACTIVATION_FUNCTIONS} #, **activation_constraints}
 
+        
+        # TODO: look into increasing support for other layers / activations
+        #self._layer_constraints = {**_DEFAULT_LAYER_CONSTRAINTS, **layer_constraints}
+        self._activation_functions = dict(self._supported_default_activation_functions())
+        if activation_functions is not None:
+            self._activation_functions.update(activation_functions)
+
+    def _supported_default_activation_functions(self):
+        return dict(_DEFAULT_ACTIVATION_FUNCTIONS)
+    
     def _build_formulation(self):
         _setup_scaled_inputs_outputs(self.block,
                                      self.__scaling_object,
@@ -226,11 +304,14 @@ class ReducedSpaceNeuralNetworkFormulation(_PyomoFormulation):
                 # skip the InputLayer
                 continue
 
+            # TODO: Add error checking on layer type
             # build the linear expressions and the activation function
             layer_id = id(layer)
             layer_block = block.layer[layer_id]
             layer_func = reduced_space_dense_layer #layer_constraints[type(layer)]
-            activation_func = self._activation_functions[layer.activation]
+            activation_func = self._activation_functions.get(layer.activation, None)
+            if activation_func is None:
+                raise ValueError('Activation {} is not supported by this formulation.'.format(layer.activation))
 
             layer_func(block, net, layer_block, layer, activation_func)
 
@@ -268,3 +349,25 @@ class ReducedSpaceNeuralNetworkFormulation(_PyomoFormulation):
         network_outputs = list(self.__network_definition.output_nodes)
         assert len(network_outputs) == 1, 'Unsupported multiple network output variables'
         return network_outputs[0].output_indexes
+
+class ReducedSpaceSmoothNNFormulation(ReducedSpaceNNFormulation):
+    """
+    This class is used to build reduced-space formulations
+    of neural networks with smooth activation functions.
+
+    Parameters
+    ----------
+    network_structure : NetworkDefinition
+        the neural network definition
+    """
+    def __init__(self, network_structure):
+        super().__init__(network_structure)
+
+    def _supported_default_activation_functions(self):
+        return {
+            "linear": linear_activation_function,
+            "sigmoid": sigmoid_activation_function,
+            "softplus": softplus_activation_function,
+            "tanh": tanh_activation_function
+            }
+

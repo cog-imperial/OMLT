@@ -66,21 +66,29 @@ class _PyomoFormulation(_PyomoFormulationInterface):
         return self.__block()
 
 
-def scaler_or_tuple(x):
+def scalar_or_tuple(x):
     if len(x) == 1:
         return x[0]
     return x
 
 def _setup_scaled_inputs_outputs(block, scaler=None, scaled_input_bounds=None):
-    block.scaled_inputs = pyo.Var(block.inputs_set, initialize=0, bounds=scaled_input_bounds)
+    if scaled_input_bounds is not None:
+        def bounds_rule(m, *k):
+            return scaled_input_bounds.__getitem__(scalar_or_tuple(k))
+        #bounds_rule = lambda m, *k : scaled_input_bounds.__getitem__(scalar_or_tuple(k))
+        block.scaled_inputs = pyo.Var(block.inputs_set, initialize=0,
+                                      bounds=bounds_rule)
+    else:
+        block.scaled_inputs = pyo.Var(block.inputs_set, initialize=0)
+        
     block.scaled_outputs = pyo.Var(block.outputs_set, initialize=0)
 
-    if scaled_input_bounds is not None:
-        # set the bounds on the scaled variables
+    if scaled_input_bounds is not None and scaler is None:
+        # set the bounds on the inputs to be the same as the scaled inputs
         for k in block.scaled_inputs:
             v = block.inputs[k]
-            v.setlb(scaled_input_bounds[k][0])
-            v.setub(scaled_input_bounds[k][1])
+            v.setlb(pyo.value(block.scaled_inputs[k].lb))
+            v.setub(pyo.value(block.scaled_inputs[k].ub))
 
     if scaled_input_bounds is not None and scaler is not None:
         # propagate unscaled bounds to the inputs
@@ -104,8 +112,8 @@ def _setup_scaled_inputs_outputs(block, scaler=None, scaled_input_bounds=None):
 
     @block.Constraint(block.scaled_inputs.index_set())
     def _scale_input_constraint(b, *args):
-        return block.scaled_inputs[args] == input_scaling_expressions[scaler_or_tuple(args)]
+        return block.scaled_inputs[args] == input_scaling_expressions[scalar_or_tuple(args)]
 
     @block.Constraint(block.outputs.index_set())
     def _scale_output_constraint(b, *args):
-        return block.outputs[args] == output_unscaling_expressions[scaler_or_tuple(args)]
+        return block.outputs[args] == output_unscaling_expressions[scalar_or_tuple(args)]

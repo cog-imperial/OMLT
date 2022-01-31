@@ -1,5 +1,6 @@
 from omlt.neuralnet.network_definition import NetworkDefinition
 from omlt.neuralnet.layer import InputLayer, DenseLayer
+import tensorflow.keras as keras
 
 def load_keras_sequential(nn, scaling_object=None, scaled_input_bounds=None):
     """
@@ -32,6 +33,10 @@ def load_keras_sequential(nn, scaling_object=None, scaled_input_bounds=None):
 
     for l in nn.layers:
         cfg = l.get_config()
+        if not isinstance(l, keras.layers.Dense):
+            raise ValueError('Layer type {} encountered. The function load_keras_sequential '
+                             'only supports dense layers at this time. Consider using '
+                             'ONNX and the ONNX parser'.format(type(l)))
         weights, biases = l.get_weights()
         n_layer_inputs, n_layer_nodes = weights.shape
 

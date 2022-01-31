@@ -6,7 +6,7 @@ import pytest
 from pyomo.environ import *
 
 from omlt import OffsetScaling, OmltBlock
-from omlt.neuralnet import NeuralNetworkFormulation
+from omlt.neuralnet import FullSpaceNNFormulation
 
 
 def test_onnx_relu(datadir):
@@ -26,7 +26,7 @@ def test_onnx_relu(datadir):
 
     scaled_input_bounds = {0: (-4, 5) }
     net = load_onnx_neural_network(neural_net, scaler, input_bounds=scaled_input_bounds)
-    formulation = NeuralNetworkFormulation(net)
+    formulation = FullSpaceNNFormulation(net)
     model.nn = OmltBlock()
     model.nn.build_formulation(formulation)
     
@@ -65,7 +65,7 @@ def test_onnx_linear(datadir):
 
     scaled_input_bounds = {0: (-4, 5) }
     net = load_onnx_neural_network(neural_net, scaler, input_bounds=scaled_input_bounds)
-    formulation = NeuralNetworkFormulation(net)
+    formulation = FullSpaceNNFormulation(net)
     model.nn = OmltBlock()
     model.nn.build_formulation(formulation)
     
@@ -104,7 +104,7 @@ def test_onnx_sigmoid(datadir):
 
     scaled_input_bounds = {0: (-4, 5) }
     net = load_onnx_neural_network(neural_net, scaler, input_bounds=scaled_input_bounds)
-    formulation = NeuralNetworkFormulation(net)
+    formulation = FullSpaceNNFormulation(net)
     model.nn = OmltBlock()
     model.nn.build_formulation(formulation)
     
