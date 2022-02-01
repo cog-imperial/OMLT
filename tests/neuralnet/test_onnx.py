@@ -1,4 +1,5 @@
-from omlt.io.onnx import load_onnx_neural_network
+import tempfile
+from omlt.io.onnx import load_onnx_neural_network, load_onnx_neural_network_with_bounds, write_onnx_model_with_bounds
 import onnx
 import onnxruntime as ort
 import numpy as np
@@ -125,3 +126,16 @@ def test_onnx_sigmoid(datadir):
         y = y_s * scale_y[1] + scale_y[0]
 
         assert value(model.nn.outputs[0]) == pytest.approx(y)
+
+
+def test_onnx_bounds_loader_writer(datadir):
+    onnx_model = onnx.load(datadir.file('keras_conv_7x7_relu.onnx'))
+    scaled_input_bounds = dict()
+    for i in range(7):
+        for j in range(7):
+            scaled_input_bounds[0, i, j] = (0.0, 1.0)
+    with tempfile.NamedTemporaryFile(suffix='.onnx') as f:
+        write_onnx_model_with_bounds(f.name, onnx_model, scaled_input_bounds)
+        net = load_onnx_neural_network_with_bounds(f.name)
+    for key, value in net.scaled_input_bounds.items():
+        assert scaled_input_bounds[key] == value

@@ -266,16 +266,24 @@ class NetworkParser:
         (optional) activation function.
         """
         assert node.op_type == "Conv"
-        assert len(node.input) == 3
-        [in_0, in_1, in_2] = list(node.input)
+        assert len(node.input) in [2, 3]
+        if len(node.input) == 2:
+            [in_0, in_1] = list(node.input)
+            in_2 = None
+        else:
+            [in_0, in_1, in_2] = list(node.input)
         input_layer, transformer = self._node_input_and_transformer(in_0)
         input_output_size = input_layer.output_size
         if transformer is not None:
             input_output_size = transformer.output_size
         weights = self._initializers[in_1]
-        biases = self._initializers[in_2]
-
         [out_channels, in_channels, *kernel_shape] = weights.shape
+
+        if in_2 is None:
+            biases = np.zeros(out_channels)
+        else:
+            biases = self._initializers[in_2]
+
         attr = _collect_attributes(node)
 
         strides = attr['strides']
@@ -287,7 +295,8 @@ class NetworkParser:
         assert attr['kernel_shape'] == kernel_shape
         assert attr['dilations'] == [1, 1]
         assert attr['group'] == 1
-        assert not np.any(attr['pads'])  # pads all zero
+        if 'pads' in attr:
+            assert not np.any(attr['pads'])  # pads all zero
         assert len(kernel_shape) == len(strides)
         assert len(input_output_size) == len(kernel_shape) + 1
 

@@ -230,6 +230,10 @@ class ConvLayer(Layer):
     def kernel_shape(self):
         return self.__kernel.shape[2:]
 
+    @property
+    def kernel(self):
+        return self.__kernel
+
     def __str__(self):
         return f"ConvLayer(input_size={self.input_size}, output_size={self.output_size}, strides={self.strides}, kernel_shape={self.kernel_shape})"
 
