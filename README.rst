@@ -57,7 +57,7 @@ Examples
 
      #multiple formulations of a neural network are possible
      #this uses the default NeuralNetworkFormulation object
-     formulation = NeuralNetworkFormulation(net)
+     formulation = FullSpaceNNFormulation(net)
 
      #build the formulation on the OMLT block
      model.nn.build_formulation(formulation)
