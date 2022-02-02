@@ -16,7 +16,7 @@
 OMLT: Optimization and Machine Learning Toolkit
 ===============================================
 
-OMLT is a Python package for representing machine learning models (such as neural networks) within the Pyomo optimization environment. The package provides various formulations for representing machine-learning models (such as full-space, reduced-space, and MILP), as well as an interface to import sequential Keras models.
+OMLT is a Python package for representing machine learning models (neural networks and gradient-boosted trees) within the Pyomo optimization environment. The package provides various optimization formulations for machine learning models (such as full-space, reduced-space, and MILP) as well as an interface to import sequential Keras and general ONNX models.
 
 
 Examples
@@ -27,7 +27,7 @@ Examples
      import tensorflow
      import pyomo.environ as pyo
      from omlt import OmltBlock, OffsetScaling
-     from omlt.neuralnet import NeuralNetworkFormulation, NetworkDefinition
+     from omlt.neuralnet import FullSpaceNNFormulation, NetworkDefinition
      from omlt.io import load_keras_sequential
 
      #load a Keras model
@@ -57,7 +57,7 @@ Examples
 
      #multiple formulations of a neural network are possible
      #this uses the default NeuralNetworkFormulation object
-     formulation = NeuralNetworkFormulation(net)
+     formulation = FullSpaceNNFormulation(net)
 
      #build the formulation on the OMLT block
      model.nn.build_formulation(formulation)
