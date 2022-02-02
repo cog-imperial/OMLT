@@ -27,7 +27,7 @@ Examples
      import tensorflow
      import pyomo.environ as pyo
      from omlt import OmltBlock, OffsetScaling
-     from omlt.neuralnet import NeuralNetworkFormulation, NetworkDefinition
+     from omlt.neuralnet import FullSpaceNNFormulation, NetworkDefinition
      from omlt.io import load_keras_sequential
 
      #load a Keras model
