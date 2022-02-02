@@ -9,6 +9,9 @@ Government retains certain rights in this software.
 Copyright (c) 2021, C⚙G - Imperial College London
 All rights reserved.
 
+Copyright (c) 2021, Carnegie Mellon University (Author: Carl Laird)
+All rights reserved.
+
 Revised BSD License
 -------------------
 
