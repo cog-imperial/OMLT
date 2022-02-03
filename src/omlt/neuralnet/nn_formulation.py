@@ -395,6 +395,7 @@ class ReluPartitionFormulation(_PyomoFormulation):
         self.__network_definition = network_structure
         self.__scaling_object = network_structure.scaling_object
         self.__scaled_input_bounds = network_structure.scaled_input_bounds
+        self.__unscaled_input_bounds = network_structure.unscaled_input_bounds
 
         if split_func is None:
             split_func = lambda w: default_partition_split_func(w, 2)
@@ -404,7 +405,8 @@ class ReluPartitionFormulation(_PyomoFormulation):
     def _build_formulation(self):
         _setup_scaled_inputs_outputs(self.block,
                                      self.__scaling_object,
-                                     self.__scaled_input_bounds)
+                                     self.__scaled_input_bounds,
+                                     self.__unscaled_input_bounds)
         block = self.block
         net = self.__network_definition
         layers = list(net.layers)
