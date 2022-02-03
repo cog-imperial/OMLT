@@ -1,0 +1,22 @@
+tf2onnx1.9.3:â
+€
+conv2d_input
+2keras_conv_7x7_relu/conv2d/Conv2D/ReadVariableOp:0#keras_conv_7x7_relu/conv2d/Conv2D:0!keras_conv_7x7_relu/conv2d/Conv2D"Conv*
+	dilations@@†*
+strides@@†*
+kernel_shape@@†*
+group†
+T
+#keras_conv_7x7_relu/conv2d/Conv2D:0conv2dkeras_conv_7x7_relu/conv2d/Relu"Relutf2onnx*PB2keras_conv_7x7_relu/conv2d/Conv2D/ReadVariableOp:0J‰sÅ?òIÉ?Ã∆p?ú t?R"converted from keras_conv_7x7_reluZ,
+conv2d_input
+
+unk__6
+
+
+b&
+conv2d
+
+unk__7
+
+
+B	

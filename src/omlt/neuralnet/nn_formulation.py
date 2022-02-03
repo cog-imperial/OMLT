@@ -1,9 +1,11 @@
 import pyomo.environ as pyo
+import numpy as np
 
 from omlt.formulation import _PyomoFormulation, _setup_scaled_inputs_outputs
 from omlt.neuralnet.layer import ConvLayer, DenseLayer, InputLayer
 from omlt.neuralnet.layers.full_space import (full_space_dense_layer, full_space_conv_layer)
 from omlt.neuralnet.layers.reduced_space import reduced_space_dense_layer
+from omlt.neuralnet.layers.partition_based import partition_based_dense_relu_layer, default_partition_split_func
 from omlt.neuralnet.activations import (linear_activation_constraint,
                                         linear_activation_function,
                                         bigm_relu_activation_constraint,
@@ -375,3 +377,104 @@ class ReducedSpaceSmoothNNFormulation(ReducedSpaceNNFormulation):
             "tanh": tanh_activation_function
             }
 
+class ReluPartitionFormulation(_PyomoFormulation):
+    """
+    This class is used to build partition-based formulations
+    of neural networks.
+
+    Parameters
+    ----------
+    network_structure : NetworkDefinition
+        the neural network definition
+    split_func : callable
+        the function used to compute the splits
+    """
+    def __init__(self, network_structure, split_func=None):
+        super().__init__()
+
+        self.__network_definition = network_structure
+        self.__scaling_object = network_structure.scaling_object
+        self.__scaled_input_bounds = network_structure.scaled_input_bounds
+
+        if split_func is None:
+            split_func = lambda w: default_partition_split_func(w, 2)
+
+        self.__split_func = split_func
+
+    def _build_formulation(self):
+        _setup_scaled_inputs_outputs(self.block,
+                                     self.__scaling_object,
+                                     self.__scaled_input_bounds)
+        block = self.block
+        net = self.__network_definition
+        layers = list(net.layers)
+        split_func = self.__split_func
+
+        block.layers = pyo.Set(initialize=[id(layer) for layer in layers], ordered=True)
+
+        # create the z and z_hat variables for each of the layers
+        @block.Block(block.layers)
+        def layer(b, layer_id):
+            net_layer = net.layer(layer_id)
+            b.z = pyo.Var(net_layer.output_indexes, initialize=0)
+            if isinstance(net_layer, InputLayer):
+                for index in net_layer.output_indexes:
+                    input_var = block.scaled_inputs[index]
+                    z_var = b.z[index]
+                    z_var.setlb(input_var.lb)
+                    z_var.setub(input_var.ub)
+            else:
+                # add zhat only to non input layers
+                b.zhat = pyo.Var(net_layer.output_indexes, initialize=0)
+
+            return b
+
+        for layer in layers:
+            if isinstance(layer, InputLayer):
+                continue
+            layer_id = id(layer)
+            layer_block = block.layer[layer_id]
+            if isinstance(layer, DenseLayer):
+                if layer.activation == "relu":
+                    partition_based_dense_relu_layer(block, net, layer_block, layer, split_func)
+                elif layer.activation == "linear":
+                    full_space_dense_layer(block, net, layer_block, layer)
+                    linear_activation_constraint(block, net, layer_block, layer)
+                else:
+                    raise ValueError("ReluPartitionFormulation supports Dense layers with relu or linear activation")
+            else:
+                raise ValueError("ReluPartitionFormulation supports only Dense layers")
+
+        # setup input variables constraints
+        # currently only support a single input layer
+        input_layers = list(net.input_layers)
+        assert len(input_layers) == 1
+        input_layer = input_layers[0]
+
+        @block.Constraint(input_layer.output_indexes)
+        def input_assignment(b, *output_index):
+            return b.scaled_inputs[output_index] == b.layer[id(input_layer)].z[output_index]
+
+        # setup output variables constraints
+        # currently only support a single output layer
+        output_layers = list(net.output_layers)
+        assert len(output_layers) == 1
+        output_layer = output_layers[0]
+
+        @block.Constraint(output_layer.output_indexes)
+        def output_assignment(b, *output_index):
+            return b.scaled_outputs[output_index] == b.layer[id(output_layer)].z[output_index]
+
+    @property
+    def input_indexes(self):
+        """The indexes of the formulation inputs."""
+        network_inputs = list(self.__network_definition.input_nodes)
+        assert len(network_inputs) == 1, 'Unsupported multiple network input variables'
+        return network_inputs[0].input_indexes
+
+    @property
+    def output_indexes(self):
+        """The indexes of the formulation output."""
+        network_outputs = list(self.__network_definition.output_nodes)
+        assert len(network_outputs) == 1, 'Unsupported multiple network output variables'
+        return network_outputs[0].output_indexes

@@ -96,7 +96,7 @@ master_doc = "index"
 
 # General information about the project.
 project = "omlt"
-copyright = "2021, Carnegie Mellon University, Imperial College London, Sandia National Laboratories"
+copyright = "2022, Carnegie Mellon University, Imperial College London, Sandia National Laboratories"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
