@@ -17,7 +17,12 @@ def load_keras_sequential(nn, scaling_object=None, scaled_input_bounds=None, uns
     scaled_input_bounds : dict or None
         A dict that contains the bounds on the scaled variables (the
         direct inputs to the neural network). If None, then no bounds
-        are specified.
+        are specified or they are generated using unscaled bounds.
+    unscaled_input_bounds : dict or None
+        A dict that contains the bounds on the unscaled variables (the
+        direct inputs to the neural network). If specified the scaled_input_bounds
+        dictionary will be generated using the provided scaling object.
+        If None, then no bounds are specified.
     
     Returns
     -------

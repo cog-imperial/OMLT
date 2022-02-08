@@ -17,11 +17,12 @@ class NetworkDefinition:
            scaled_input_bounds : dict or None
               A dict that contains the bounds on the scaled variables (the
               direct inputs to the neural network). If None, then no bounds
-              are specified.
+              are specified or they are generated using unscaled bounds.
            unscaled_input_bounds: dict or None
               A dict that contains the bounds on the scaled variables (the
-              direct inputs to the neural network). If None, then no bounds
-              are specified.
+              direct inputs to the neural network). If supplied the scaled_input_bounds
+              parameter will be generated using the scaling object.
+              If None, then no bounds are specified.
         """
         self.__layers_by_id = dict()
         self.__graph = nx.DiGraph()
