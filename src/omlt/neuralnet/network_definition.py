@@ -26,8 +26,24 @@ class NetworkDefinition:
         self.__layers_by_id = dict()
         self.__graph = nx.DiGraph()
         self.__scaling_object = scaling_object
-        self.__scaled_input_bounds = scaled_input_bounds
+
+        # Process input bounds to insure scaled input bounds exist for formulations
+        if scaled_input_bounds is None:
+
+            if unscaled_input_bounds is not None and scaling_object is not None:
+                lbs = scaling_object.get_scaled_input_expressions( \
+                    {k: t[0] for k, t in unscaled_input_bounds.items()})
+                ubs = scaling_object.get_scaled_input_expressions( \
+                    {k: t[1] for k, t in unscaled_input_bounds.items()})
+
+                scaled_input_bounds = {k: (lbs[k], ubs[k]) for k in unscaled_input_bounds.keys()}
+
+            # If unscaled input bounds provided and no scaler provided, scaled input bounds = unscaled input bounds
+            elif unscaled_input_bounds is not None and scaling_object is None:
+                scaled_input_bounds = unscaled_input_bounds
+
         self.__unscaled_input_bounds = unscaled_input_bounds
+        self.__scaled_input_bounds = scaled_input_bounds
 
     def add_layer(self, layer):
         """
@@ -124,3 +140,4 @@ class NetworkDefinition:
 
     def __str__(self):
         return f"NetworkDefinition(num_layers={len(self.__layers_by_id)})"
+

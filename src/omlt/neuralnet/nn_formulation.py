@@ -58,7 +58,6 @@ class FullSpaceNNFormulation(_PyomoFormulation):
         self.__network_definition = network_structure
         self.__scaling_object = network_structure.scaling_object
         self.__scaled_input_bounds = network_structure.scaled_input_bounds
-        self.__unscaled_input_bounds = network_structure.unscaled_input_bounds
 
         self._layer_constraints = dict(self._supported_default_layer_constraints())
         self._activation_constraints = dict(self._supported_default_activation_constraints())
@@ -82,8 +81,7 @@ class FullSpaceNNFormulation(_PyomoFormulation):
     def _build_formulation(self):
         _setup_scaled_inputs_outputs(self.block,
                                      self.__scaling_object,
-                                     self.__scaled_input_bounds,
-                                     self.__unscaled_input_bounds)
+                                     self.__scaled_input_bounds)
         
         _build_neural_network_formulation(
             block=self.block,
@@ -262,7 +260,6 @@ class ReducedSpaceNNFormulation(_PyomoFormulation):
         self.__network_definition = network_structure
         self.__scaling_object = network_structure.scaling_object
         self.__scaled_input_bounds = network_structure.scaled_input_bounds
-        self.__unscaled_input_bounds = network_structure.unscaled_input_bounds
 
         
         # TODO: look into increasing support for other layers / activations
@@ -277,8 +274,7 @@ class ReducedSpaceNNFormulation(_PyomoFormulation):
     def _build_formulation(self):
         _setup_scaled_inputs_outputs(self.block,
                                      self.__scaling_object,
-                                     self.__scaled_input_bounds,
-                                     self.__unscaled_input_bounds)
+                                     self.__scaled_input_bounds)
         
         net = self.__network_definition
         layers = list(net.layers)
@@ -395,7 +391,6 @@ class ReluPartitionFormulation(_PyomoFormulation):
         self.__network_definition = network_structure
         self.__scaling_object = network_structure.scaling_object
         self.__scaled_input_bounds = network_structure.scaled_input_bounds
-        self.__unscaled_input_bounds = network_structure.unscaled_input_bounds
 
         if split_func is None:
             split_func = lambda w: default_partition_split_func(w, 2)
@@ -405,8 +400,7 @@ class ReluPartitionFormulation(_PyomoFormulation):
     def _build_formulation(self):
         _setup_scaled_inputs_outputs(self.block,
                                      self.__scaling_object,
-                                     self.__scaled_input_bounds,
-                                     self.__unscaled_input_bounds)
+                                     self.__scaled_input_bounds)
         block = self.block
         net = self.__network_definition
         layers = list(net.layers)

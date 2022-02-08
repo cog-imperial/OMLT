@@ -71,22 +71,7 @@ def scalar_or_tuple(x):
         return x[0]
     return x
 
-def _setup_scaled_inputs_outputs(block, scaler=None, scaled_input_bounds=None, unscaled_input_bounds=None):
-
-    # Create scaled input bounds from unscaled input bounds and scaler if scaled input bounds not supplied
-    if scaled_input_bounds is None:
-
-        if unscaled_input_bounds is not None and scaler is not None:
-            lbs = scaler.get_scaled_input_expressions( \
-                {k: t[0] for k, t in unscaled_input_bounds.items()})
-            ubs = scaler.get_scaled_input_expressions( \
-                {k: t[1] for k, t in unscaled_input_bounds.items()})
-
-            scaled_input_bounds = {k: (lbs[k], ubs[k]) for k in unscaled_input_bounds.keys()}
-
-        # If unscaled input bounds provided and no scaler provided, scaled input bounds = unscaled input bounds
-        elif unscaled_input_bounds is not None and scaler is None:
-            scaled_input_bounds = unscaled_input_bounds
+def _setup_scaled_inputs_outputs(block, scaler=None, scaled_input_bounds=None):
 
     if scaled_input_bounds is not None:
         def bounds_rule(m, *k):
