@@ -18,6 +18,19 @@ OMLT: Optimization and Machine Learning Toolkit
 
 OMLT is a Python package for representing machine learning models (neural networks and gradient-boosted trees) within the Pyomo optimization environment. The package provides various optimization formulations for machine learning models (such as full-space, reduced-space, and MILP) as well as an interface to import sequential Keras and general ONNX models.
 
+Please reference the `preprint <https://arxiv.org/abs/2202.02414>`_ of this software package as:
+
+::
+
+     @misc{ceccon2022omlt,
+          title={OMLT: Optimization & Machine Learning Toolkit},
+          author={Ceccon, F. and Jalving, J. and Haddad, J. and Thebelt, A. and Tsay, C. and Laird, C. D. and Misener, R.},
+          year={2022},
+          eprint={2202.02414},
+          archivePrefix={arXiv},
+          primaryClass={stat.ML}
+     }
+
 
 Examples
 ========
