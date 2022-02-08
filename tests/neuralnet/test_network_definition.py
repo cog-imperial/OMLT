@@ -66,6 +66,13 @@ def test_two_node_full_space():
     assert abs(pyo.value(m.neural_net_block.outputs[0, 0]) - 1.0) < 1e-8
     assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - 0.0) < 1e-8
 
+def test_input_bounds_no_scaler():
+    scaled_input_bounds = {(0, 0): (0, 5), (0, 1): (-2, 2), (0, 2): (0, 1)}
+    unscaled_input_bounds = scaled_input_bounds
+
+    net = NetworkDefinition(unscaled_input_bounds=unscaled_input_bounds)
+    assert (net.scaled_input_bounds == scaled_input_bounds)
+
 def test_input_bound_scaling_1D():
 
     xoffset = {i: float(i) for i in range(3)}
