@@ -33,8 +33,8 @@ def get_sklearn_scaling_params(sklearn_scaler):
         offset = sklearn_scaler.center_
 
     else:
-        raise(ValueError("Scaling object provided is not currently supported. "
-                         "Supported objects include StandardScaler, MinMaxScaler, and MaxAbsScaler"))
+        raise(ValueError("Scaling object provided is not currently supported. Only linear scalers are supported."
+                         "Supported scalers include StandardScaler, MinMaxScaler, MaxAbsScaler, and RobustScaler"))
 
     return offset, factor
 
