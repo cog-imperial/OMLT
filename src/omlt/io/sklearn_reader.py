@@ -1,20 +1,11 @@
 from skl2onnx.common.data_types import FloatTensorType
 from skl2onnx import convert_sklearn
 from sklearn.preprocessing import MinMaxScaler, MaxAbsScaler, StandardScaler, RobustScaler
-from omlt.scaling import OffsetScaling
-
-import onnx
-import sklearn
-from sklearn.linear_model import LogisticRegression
-import numpy
-import onnxruntime as rt
-from sklearn.neural_network import MLPRegressor
-from sklearn.datasets import make_regression
-from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import RobustScaler
+from omlt.scaling import OffsetScaling
 from omlt.io.onnx_reader import load_onnx_neural_network
 
-def get_sklearn_scaling_params(sklearn_scaler):
+def parse_sklearn_scaler(sklearn_scaler):
 
     if isinstance(sklearn_scaler, StandardScaler):
         offset = sklearn_scaler.mean_
@@ -38,10 +29,12 @@ def get_sklearn_scaling_params(sklearn_scaler):
 
     return offset, factor
 
-def parse_sklearn_scaler(sklearn_input_scaler, sklearn_output_scaler):
+def convert_sklearn_scalers(sklearn_input_scaler, sklearn_output_scaler):
 
-    offset_inputs, factor_inputs = get_sklearn_scaling_params(sklearn_input_scaler)
-    offset_outputs, factor_ouputs = get_sklearn_scaling_params(sklearn_output_scaler)
+    #Todo: support only scaling input or output?
+
+    offset_inputs, factor_inputs = parse_sklearn_scaler(sklearn_input_scaler)
+    offset_outputs, factor_ouputs = parse_sklearn_scaler(sklearn_output_scaler)
 
     return OffsetScaling(offset_inputs=offset_inputs, factor_inputs=factor_inputs,
                          offset_outputs=offset_outputs, factor_outputs=factor_ouputs)
