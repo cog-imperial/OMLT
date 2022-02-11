@@ -19,7 +19,7 @@ Example 1:
 
     m = pyo.ConcreteModel()
     m.neural_net_block = OmltBlock()
-    m.neural_net_block.build_formulation(NeuralNetworkFormulation(net))
+    m.neural_net_block.build_formulation(FullSpaceNNFormulation(net))
 
     m.obj = pyo.Objective(expr=(m.neural_net_block.outputs[2]-4.0)**2)
     status = pyo.SolverFactory('ipopt').solve(m, tee=True)
@@ -69,7 +69,7 @@ class OmltBlockData(_BlockData):
         Parameters
         ----------
         formulation : instance of _PyomoFormulation
-            see, for example, NeuralNetworkFormulation
+            see, for example, FullSpaceNNFormulation
         """
         self._setup_inputs_outputs(
             input_indexes=list(formulation.input_indexes),

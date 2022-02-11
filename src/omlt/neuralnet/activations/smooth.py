@@ -10,7 +10,7 @@ def tanh_activation_function(x):
     return tanh(x)
 
 def softplus_activation_constraint(net_block, net, layer_block, layer):
-    """
+    r"""
     Softplus activation constraint generator
 
     Generates the constraints for the softplus activation function.
@@ -25,7 +25,7 @@ def softplus_activation_constraint(net_block, net, layer_block, layer):
     return smooth_monotonic_activation_constraint(net_block, net, layer_block, layer, softplus_activation_function)
 
 def sigmoid_activation_constraint(net_block, net, layer_block, layer):
-    """
+    r"""
     Sigmoid activation constraint generator
 
     Generates the constraints for the sigmoid activation function.
@@ -41,7 +41,7 @@ def sigmoid_activation_constraint(net_block, net, layer_block, layer):
                                                   sigmoid_activation_function)
 
 def tanh_activation_constraint(net_block, net, layer_block, layer):
-    """
+    r"""
     tanh activation constraint generator
 
     Generates the constraints for the tanh activation function.
@@ -56,7 +56,7 @@ def tanh_activation_constraint(net_block, net, layer_block, layer):
     return smooth_monotonic_activation_constraint(net_block, net, layer_block, layer, tanh_activation_function)
 
 def smooth_monotonic_activation_constraint(net_block, net, layer_block, layer, fcn):
-    """
+    r"""
     Activation constraint generator for a smooth monotonic function
 
     Generates the constraints for the activation function fcn if it

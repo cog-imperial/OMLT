@@ -1,6 +1,6 @@
 
 def reduced_space_dense_layer(net_block, net, layer_block, layer, activation):
-    """
+    r"""
     Add reduced-space formulation of the dense layer to the block
 
     .. math::

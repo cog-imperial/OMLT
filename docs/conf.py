@@ -36,29 +36,29 @@ try:  # for Sphinx >= 1.7
 except ImportError:
     from sphinx import apidoc
 
-output_dir = os.path.join(__location__, "api")
-module_dir = os.path.join(__location__, "../src/omlt")
-try:
-    shutil.rmtree(output_dir)
-except FileNotFoundError:
-    pass
+# output_dir = os.path.join(__location__, "api")
+# module_dir = os.path.join(__location__, "../src/omlt")
+# try:
+#     shutil.rmtree(output_dir)
+# except FileNotFoundError:
+#     pass
 
-try:
-    import sphinx
+# try:
+#     import sphinx
 
-    cmd_line_template = (
-        "sphinx-apidoc --implicit-namespaces -f -o {outputdir} {moduledir}"
-    )
-    cmd_line = cmd_line_template.format(outputdir=output_dir, moduledir=module_dir)
+#     cmd_line_template = (
+#         "sphinx-apidoc --implicit-namespaces -f -o {outputdir} {moduledir}"
+#     )
+#     cmd_line = cmd_line_template.format(outputdir=output_dir, moduledir=module_dir)
 
-    args = cmd_line.split(" ")
-    if tuple(sphinx.__version__.split(".")) >= ("1", "7"):
-        # This is a rudimentary parse_version to avoid external dependencies
-        args = args[1:]
+#     args = cmd_line.split(" ")
+#     if tuple(sphinx.__version__.split(".")) >= ("1", "7"):
+#         # This is a rudimentary parse_version to avoid external dependencies
+#         args = args[1:]
 
-    apidoc.main(args)
-except Exception as e:
-    print("Running `sphinx-apidoc` failed!\n{}".format(e))
+#     apidoc.main(args)
+# except Exception as e:
+#     print("Running `sphinx-apidoc` failed!\n{}".format(e))
 
 # -- General configuration ---------------------------------------------------
 
@@ -77,9 +77,7 @@ extensions = [
     "sphinx.ext.doctest",
     "sphinx.ext.ifconfig",
     "sphinx.ext.mathjax",
-    "sphinx.ext.napoleon",
-    "nbsphinx",
-    "sphinx_copybutton"
+    "sphinx.ext.napoleon"
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -119,7 +117,7 @@ release = ""  # Is set by calling `setup.py docs`
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", ".venv"]
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", ".venv", "notebooks"]
 
 # The reST default role (used for this markup: `text`) to use for all documents.
 # default_role = None

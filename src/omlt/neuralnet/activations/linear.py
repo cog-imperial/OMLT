@@ -2,7 +2,7 @@ def linear_activation_function(zhat):
     return zhat
 
 def linear_activation_constraint(net_block, net, layer_block, layer, add_constraint=True):
-    """
+    r"""
     Linear activation constraint generator
 
     Generates the constraints for the linear activation function.
