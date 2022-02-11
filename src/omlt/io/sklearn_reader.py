@@ -12,8 +12,7 @@ from sklearn.neural_network import MLPRegressor
 from sklearn.datasets import make_regression
 from sklearn.model_selection import train_test_split
 
-
-from onnx_reader import load_onnx_neural_network
+from omlt.io.onnx_reader import load_onnx_neural_network
 
 def get_sklearn_scaling_params(sklearn_scaler):
 

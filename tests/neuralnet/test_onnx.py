@@ -1,5 +1,5 @@
 import tempfile
-from omlt.io.onnx import load_onnx_neural_network, load_onnx_neural_network_with_bounds, write_onnx_model_with_bounds
+from omlt.io.onnx_reader import load_onnx_neural_network, load_onnx_neural_network_with_bounds, write_onnx_model_with_bounds
 import onnx
 import onnxruntime as ort
 import numpy as np
