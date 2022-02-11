@@ -9,7 +9,7 @@ def parse_sklearn_scaler(sklearn_scaler):
 
     if isinstance(sklearn_scaler, StandardScaler):
         offset = sklearn_scaler.mean_
-        factor = sklearn_scaler.var_
+        factor = sklearn_scaler.scale_
 
     elif isinstance(sklearn_scaler, MaxAbsScaler):
         factor = sklearn_scaler.scale_
@@ -38,7 +38,6 @@ def convert_sklearn_scalers(sklearn_input_scaler, sklearn_output_scaler):
 
     return OffsetScaling(offset_inputs=offset_inputs, factor_inputs=factor_inputs,
                          offset_outputs=offset_outputs, factor_outputs=factor_ouputs)
-
 
 def load_sklearn_MLP(model, scaling_object=None, input_bounds=None, initial_types=None):
 
