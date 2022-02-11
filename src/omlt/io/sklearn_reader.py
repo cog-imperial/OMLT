@@ -1,6 +1,6 @@
 from skl2onnx.common.data_types import FloatTensorType
 from skl2onnx import convert_sklearn
-from sklearn.preprocessing import MinMaxScaler, MaxAbsScaler, StandardScaler
+from sklearn.preprocessing import MinMaxScaler, MaxAbsScaler, StandardScaler, RobustScaler
 from omlt.scaling import OffsetScaling
 
 import onnx
@@ -11,7 +11,7 @@ import onnxruntime as rt
 from sklearn.neural_network import MLPRegressor
 from sklearn.datasets import make_regression
 from sklearn.model_selection import train_test_split
-
+from sklearn.preprocessing import RobustScaler
 from omlt.io.onnx_reader import load_onnx_neural_network
 
 def get_sklearn_scaling_params(sklearn_scaler):
@@ -27,6 +27,10 @@ def get_sklearn_scaling_params(sklearn_scaler):
     elif isinstance(sklearn_scaler, MinMaxScaler):
         factor = sklearn_scaler.data_max_ - sklearn_scaler.data_min_
         offset = sklearn_scaler.data_min_
+
+    elif isinstance(sklearn_scaler, RobustScaler):
+        factor = sklearn_scaler.scale_
+        offset = sklearn_scaler.center_
 
     else:
         raise(ValueError("Scaling object provided is not currently supported. "
