@@ -1,7 +1,7 @@
 Quick-Start
 ============
 
-The quick-start uses the same model shown on the OMLT README, but it provides a little more detail. The example 
+The quick-start uses the same model shown on the OMLT `README <https://github.com/cog-imperial/OMLT/blob/main/README.rst>`_, but it provides a little more detail. The example 
 imports a neural network trained in TensorFlow, formulates a Pyomo model, and seeks the neural network input that produces 
 the desired output. 
 
