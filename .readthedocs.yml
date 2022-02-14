@@ -8,16 +8,14 @@ version: 2
 sphinx:
   configuration: docs/conf.py
 
-# Build documentation with MkDocs
-#mkdocs:
-#  configuration: mkdocs.yml
-
-# Optionally build your docs in additional formats such as PDF
-# formats:
-#   - pdf
-
+conda:
+    file: docs/environment.yml
 python:
-  version: 3.8
-  install:
-    - method: pip
-      path: .
+    version: 3.8
+    setup_py_install: true
+
+# python:
+#   version: 3.8
+#   install:
+#     - method: pip
+#       path: .
