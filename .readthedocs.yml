@@ -2,14 +2,15 @@
 # See https://docs.readthedocs.io/en/stable/config-file/v2.html for details
 
 # Required
-version: 2
+# version: 2
 
-# Build documentation in the docs/ directory with Sphinx
-sphinx:
-  configuration: docs/conf.py
+# # Build documentation in the docs/ directory with Sphinx
+# sphinx:
+#   configuration: docs/conf.py
 
 conda:
     file: docs/environment.yml
+    
 python:
     version: 3.8
     setup_py_install: true
