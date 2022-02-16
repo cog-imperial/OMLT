@@ -10,7 +10,7 @@ from omlt.neuralnet.layer import (
 )
 
 
-_ACTIVATION_OP_TYPES = ["Relu", "Sigmoid", "LogSoftmax"]
+_ACTIVATION_OP_TYPES = ["Relu", "Sigmoid", "LogSoftmax", "Tanh"]
 
 
 class NetworkParser:
@@ -181,6 +181,11 @@ class NetworkParser:
             node_biases = self._initializers[in_1]
 
         assert len(node_weights.shape) == 2
+
+        # Converted sklearn models have biases with swapped shape
+        if node_weights.shape[1] != node_biases.shape[0]:
+            node_biases = node_biases.transpose()
+
         assert node_weights.shape[1] == node_biases.shape[0]
         assert len(node.output) == 1
 
@@ -339,11 +344,20 @@ class NetworkParser:
         assert len(node.input) == 2
         [in_0, in_1] = list(node.input)
         input_layer = self._node_map[in_0]
-        new_shape = self._constants[in_1]
+
+        if in_1 in self._constants:
+            new_shape = self._constants[in_1]
+        else:
+            new_shape = self._initializers[in_1]
+
         output_size = np.empty(input_layer.output_size).reshape(new_shape).shape
         transformer = IndexMapper(input_layer.output_size, list(output_size))
         self._node_map[node.output[0]] = (transformer, input_layer)
         return next_nodes
+
+    def _consume_cast_nodes(self, node, next_nodes):
+        """Parse Cast node."""
+        assert node.op_type == "Cast"
 
     def _node_input_and_transformer(self, node_name):
         maybe_layer = self._node_map[node_name]
