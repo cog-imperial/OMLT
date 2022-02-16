@@ -4,7 +4,7 @@ We use the following notation to describe layer and activation functions:
 .. math::
 
     \begin{align*}
-    N &:= \text{Number of nodes}\\
+    N &:= \text{Set of nodes (i.e. neurons in the neural network)}\\
     M_i &:= \text{Number of inputs to node $i$}\\
     \hat z_i &:= \text{pre-activation value on node $i$}\\
     z_i &:= \text{post-activation value on node $i$}\\
