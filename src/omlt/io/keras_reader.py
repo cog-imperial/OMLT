@@ -7,6 +7,7 @@ def load_keras_sequential(nn, scaling_object=None, scaled_input_bounds=None):
     Load a keras neural network model (built with Sequential) into
     an OMLT network definition object. This network definition object
     can be used in different formulations.
+    
     Parameters
     ----------
     nn : keras.model

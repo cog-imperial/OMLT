@@ -1,30 +1,33 @@
-import warnings
+"""
+The omlt.block module contains the implementation of the OmltBlock class. This
+class is used in combination with a formulation object to construct the
+necessary constraints and variables to represent ML models.
 
+Example:
+    .. code-block:: python
+
+        import tensorflow.keras as keras
+        from omlt import OmltBlock
+        from omlt.neuralnet import FullSpaceNNFormulation
+        from omlt.io import load_keras_sequential
+
+        nn = keras.models.load_model(keras_fname)
+        net = load_keras_sequential(nn)
+
+        m = pyo.ConcreteModel()
+        m.neural_net_block = OmltBlock()
+        m.neural_net_block.build_formulation(FullSpaceNNFormulation(net))
+
+        m.obj = pyo.Objective(expr=(m.neural_net_block.outputs[2]-4.0)**2)
+        status = pyo.SolverFactory('ipopt').solve(m, tee=True)
+        pyo.assert_optimal_termination(status)
+"""
+
+import warnings
 import pyomo.environ as pyo
 from pyomo.core.base.block import _BlockData, declare_custom_block
 
-"""
-This module also contains the implementation of the OmltBlock class. This
-class is used in combination with a formulation object to construct the
-necessary constraints and variables representing the ML models.
 
-Example 1:
-    import tensorflow.keras as keras
-    from omlt import OmltBlock
-    from omlt.neuralnet import NeuralNetworkFormulation
-    from omlt.io import load_keras_sequential
-
-    nn = keras.models.load_model(keras_fname)
-    net = load_keras_sequential(nn)
-
-    m = pyo.ConcreteModel()
-    m.neural_net_block = OmltBlock()
-    m.neural_net_block.build_formulation(FullSpaceNNFormulation(net))
-
-    m.obj = pyo.Objective(expr=(m.neural_net_block.outputs[2]-4.0)**2)
-    status = pyo.SolverFactory('ipopt').solve(m, tee=True)
-    pyo.assert_optimal_termination(status)
-"""
 @declare_custom_block(name="OmltBlock")
 class OmltBlockData(_BlockData):
     def __init__(self, component):

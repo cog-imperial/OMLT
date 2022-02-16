@@ -1,12 +1,10 @@
+"""
+The omlt.scaling module describes the interface for providing different scaling 
+expressions to the Pyomo model for the inputs and outputs of an ML model. An implementation of a common scaling approach is 
+included with `OffsetScaling`.
+"""
+
 import abc
-
-"""
-This module describes the interface for providing different scaling 
-expressions to the Pyomo model for the inputs and outputs of the
-neural network. An implementation of a common scaling approach is 
-included below.
-"""
-
 
 class ScalingInterface(abc.ABC):
     @abc.abstractmethod
@@ -26,27 +24,32 @@ def convert_to_dict(x):
     if type(x) is dict:
         return dict(x)
     return {i:v for i,v in enumerate(x)}
-    
+
+
 class OffsetScaling(ScalingInterface):
+    r"""
+    This scaling object represents the following scaling equations for inputs (x)
+    and outputs (y)
+
+    .. math::
+        \begin{align*}
+        x_i^{scaled} = \frac{(x_i-x_i^{offset})}{x_i^{factor}} \\
+        y_i^{scaled} = \frac{(y_i-y_i^{offset})}{y_i^{factor}}
+        \end{align*}
+
+    Parameters
+    ----------
+    offset_inputs : array-like
+        Array of the values of the offsets for each input to the network
+    factor_inputs : array-like
+        Array of the scaling factors (division) for each input to the network
+    offset_outputs : array-like
+        Array of the values of the offsets for each output from the network
+    factor_outputs : array-like
+        Array of the scaling factors (division) for each output from the network
+    """
     def __init__(self, offset_inputs, factor_inputs, offset_outputs, factor_outputs):
-        """
-        This scaling object represents the following scaling equations for inputs (x)
-        and outputs (y)
 
-        scaled_x_i = (x_i-offset_inputs_i)/factor_inputs_i
-        scaled_y_i = (y_i-offset_outputs_i)/factor_outputs_i
-
-        Parameters
-        ----------
-        offset_inputs : array-like
-            Array of the values of the offsets for each input to the network
-        factor_inputs : array-like
-            Array of the scaling factors (division) for each input to the network
-        offset_outputs : array-like
-            Array of the values of the offsets for each output from the network
-        factor_outputs : array-like
-            Array of the scaling factors (division) for each output from the network
-        """
         super(OffsetScaling, self).__init__()
         self.__x_offset = convert_to_dict(offset_inputs)
         self.__x_factor = convert_to_dict(factor_inputs)
@@ -65,6 +68,9 @@ class OffsetScaling(ScalingInterface):
                                  " index {}.".format(k))
 
     def get_scaled_input_expressions(self, input_vars):
+        """
+            Get the scaled input expressions of the input variables.
+        """
         sorted_keys = sorted(input_vars.keys())
         if sorted(self.__x_offset) != sorted_keys or \
            sorted(self.__x_factor) != sorted_keys:
@@ -82,6 +88,9 @@ class OffsetScaling(ScalingInterface):
                 for k in x.keys()}
 
     def get_unscaled_input_expressions(self, scaled_input_vars):
+        """
+            Get the unscaled input expressions of the scaled input variables.
+        """
         sorted_keys = sorted(scaled_input_vars.keys())
         if sorted(self.__x_offset) != sorted_keys or \
            sorted(self.__x_factor) != sorted_keys:
@@ -99,6 +108,9 @@ class OffsetScaling(ScalingInterface):
                 for k in scaled_x.keys()}
 
     def get_scaled_output_expressions(self, output_vars):
+        """
+            Get the scaled output expressions of the output variables.
+        """
         sorted_keys = sorted(output_vars.keys())
         if sorted(self.__y_offset) != sorted_keys or \
            sorted(self.__y_factor) != sorted_keys:
@@ -116,6 +128,9 @@ class OffsetScaling(ScalingInterface):
                 for k in y.keys()}
 
     def get_unscaled_output_expressions(self, scaled_output_vars):
+        """
+            Get the unscaled output expressions of the scaled output variables.
+        """
         sorted_keys = sorted(scaled_output_vars.keys())
         if sorted(self.__y_offset) != sorted_keys or \
            sorted(self.__y_factor) != sorted_keys:

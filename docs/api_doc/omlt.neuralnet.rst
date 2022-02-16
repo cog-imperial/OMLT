@@ -7,5 +7,4 @@ Neural Networks
    omlt.neuralnet.layer
    omlt.neuralnet.network_definition
    omlt.neuralnet.nn_formulation
-   omlt.neuralnet.layers
-   omlt.neuralnet.activations 
+   omlt.neuralnet.layers_activations

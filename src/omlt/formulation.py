@@ -49,11 +49,12 @@ class _PyomoFormulationInterface(abc.ABC):
 
 
 class _PyomoFormulation(_PyomoFormulationInterface):
+    """
+    This is a base class for different Pyomo formulations. To create a new
+    formulation, inherit from this class and implement the abstract methods and properties.
+    """
     def __init__(self):
-        """
-        This is a base class for different Pyomo formulations. To create a new
-        formulation, inherit from this class and implement the abstract methods and properties.
-        """
+
         super(_PyomoFormulation, self).__init__()
         self.__block = None
 
