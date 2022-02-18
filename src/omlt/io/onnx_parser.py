@@ -182,9 +182,8 @@ class NetworkParser:
 
         assert len(node_weights.shape) == 2
 
-        # Converted sklearn models have biases with swapped shape
-        if node_weights.shape[1] != node_biases.shape[0]:
-            node_biases = node_biases.transpose()
+        # Flatten biases array as some APIs (scikit) store biases as (1, n) instead of (n,)
+        node_biases = node_biases.flatten()
 
         assert node_weights.shape[1] == node_biases.shape[0]
         assert len(node.output) == 1
