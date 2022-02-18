@@ -1,11 +1,9 @@
-from skl2onnx.common.data_types import FloatTensorType, Int64TensorType
+from skl2onnx.common.data_types import FloatTensorType
 from skl2onnx import convert_sklearn
-from sklearn.preprocessing import MinMaxScaler, MaxAbsScaler, StandardScaler, RobustScaler
+from sklearn.preprocessing import MinMaxScaler, MaxAbsScaler, StandardScaler
 from sklearn.preprocessing import RobustScaler
 from omlt.scaling import OffsetScaling
 from omlt.io.onnx_reader import load_onnx_neural_network
-import onnxruntime as rt
-import numpy as np
 import onnx
 
 def parse_sklearn_scaler(sklearn_scaler):
@@ -50,13 +48,7 @@ def load_sklearn_MLP(model, scaling_object=None, input_bounds=None, initial_type
 
     onx = convert_sklearn(model, initial_types=initial_types, target_opset=12)
 
-    x = np.array([[1.0] * 8])
-    print(x)
-    x = x.astype(np.float32)
-    print(x.shape)
-    print(model.predict(x))
-
-    # REMOVE INITIAL CAST LAYER
+    # Remove initial cast layer created by sklearn2onnx
     graph = onx.graph
     node1 = graph.node[0]
     graph.node.remove(node1)
@@ -67,18 +59,9 @@ def load_sklearn_MLP(model, scaling_object=None, input_bounds=None, initial_type
         outputs=['mul_result']
     )
     graph.node.insert(0, new_node)
-    node2 = graph.node[1]
 
+    # Replace old MatMul node with new node with correct input name
+    node2 = graph.node[1]
     graph.node.remove(node2)
 
-    # onx_model = onx.SerializeToString()
-    with open("test.onnx", "wb") as f:
-        f.write(onx.SerializeToString())
-
-    sess = rt.InferenceSession("test.onnx")
-    input_name = sess.get_inputs()[0].name
-    label_name = sess.get_outputs()[0].name
-    outputs = sess.run([label_name], {input_name: x})[0][0]
-
-    print(outputs-model.predict(x))
     return load_onnx_neural_network(onx, scaling_object, input_bounds)
