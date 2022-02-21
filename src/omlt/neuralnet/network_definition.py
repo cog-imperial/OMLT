@@ -141,4 +141,3 @@ class NetworkDefinition:
 
     def __str__(self):
         return f"NetworkDefinition(num_layers={len(self.__layers_by_id)})"
-
