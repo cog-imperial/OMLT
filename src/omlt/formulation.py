@@ -72,7 +72,6 @@ def scalar_or_tuple(x):
     return x
 
 def _setup_scaled_inputs_outputs(block, scaler=None, scaled_input_bounds=None):
-
     if scaled_input_bounds is not None:
         def bounds_rule(m, *k):
             return scaled_input_bounds.__getitem__(scalar_or_tuple(k))
