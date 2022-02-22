@@ -1,11 +1,14 @@
-import omlt.scaling as scaling
 from omlt.scaling import OffsetScaling
 from omlt.block import OmltBlock
 from omlt.io.sklearn_reader import convert_sklearn_scalers
+from omlt.io.sklearn_reader import load_sklearn_MLP
+from omlt.neuralnet import FullSpaceNNFormulation
 from sklearn.preprocessing import MinMaxScaler, MaxAbsScaler, StandardScaler, RobustScaler
-import numpy as np
 from scipy.stats import iqr
-import pyomo.environ as pyo
+from pyomo.environ import *
+import numpy as np
+import json
+import pickle
 
 def test_sklearn_scaler_conversion():
     X = np.array(
@@ -125,3 +128,37 @@ def test_sklearn_offset_equivalence():
 
         np.testing.assert_almost_equal(list(x_s_omlt.values()), list(x_s_sklearn))
         np.testing.assert_almost_equal(list(y_s_omlt.values()), list(y_s_sklearn))
+
+def test_sklearn_model(datadir):
+    nn_names = ["sklearn_identity_131", "sklearn_logistic_131", "sklearn_tanh_131"]
+
+    # Test each nn
+    for nn_name in nn_names:
+        nn = pickle.load(open(datadir.file(nn_name+".pkl"), 'rb'))
+
+        with open(datadir.file(nn_name+"_bounds"), 'r') as f:
+            bounds = json.load(f)
+
+            # Convert to omlt format
+            xbounds = {int(i): tuple(bounds[i]) for i in bounds}
+
+        net = load_sklearn_MLP(nn, input_bounds=xbounds)
+        formulation = FullSpaceNNFormulation(net)
+
+        model = ConcreteModel()
+        model.nn = OmltBlock()
+        model.nn.build_formulation(formulation)
+
+        @model.Objective()
+        def obj(mdl):
+            return 1
+
+        x = [(xbounds[i][0]+xbounds[i][1])/2.0 for i in range(2)]
+        for i in range(len(x)):
+            model.nn.inputs[i].fix(x[i])
+
+        result = SolverFactory("ipopt").solve(model, tee=False)
+        yomlt = [value(model.nn.outputs[0]), value(model.nn.outputs[1])]
+
+        ysklearn = nn.predict([x])[0]
+        np.testing.assert_almost_equal(list(yomlt), list(ysklearn))
