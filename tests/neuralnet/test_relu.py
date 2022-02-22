@@ -2,7 +2,7 @@ import pyomo.environ as pyo
 import numpy as np
 
 from omlt.block import OmltBlock
-from omlt.io.onnx import load_onnx_neural_network_with_bounds
+from omlt.io.onnx_reader import load_onnx_neural_network_with_bounds
 from omlt.neuralnet import FullSpaceNNFormulation, ReluBigMFormulation, ReluComplementarityFormulation, ReluPartitionFormulation
 from omlt.neuralnet.activations import ComplementarityReLUActivation
 

@@ -2,7 +2,7 @@ import pytest
 import onnx
 import numpy as np
 
-from omlt.io.onnx import load_onnx_neural_network
+from omlt.io.onnx_reader import load_onnx_neural_network
 
 
 def test_linear_131(datadir):
