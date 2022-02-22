@@ -354,10 +354,6 @@ class NetworkParser:
         self._node_map[node.output[0]] = (transformer, input_layer)
         return next_nodes
 
-    def _consume_cast_nodes(self, node, next_nodes):
-        """Parse Cast node."""
-        assert node.op_type == "Cast"
-
     def _node_input_and_transformer(self, node_name):
         maybe_layer = self._node_map[node_name]
         if isinstance(maybe_layer, tuple):
