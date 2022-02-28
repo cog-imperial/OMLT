@@ -1,12 +1,12 @@
 
 def reduced_space_dense_layer(net_block, net, layer_block, layer, activation):
-    """
+    r"""
     Add reduced-space formulation of the dense layer to the block
 
     .. math::
 
         \begin{align*}
-        \hat z_i &= \sum_{j{=}1}^N w_{ij} z_j + b_i  &&\forall i \in N
+        \hat z_i &= \sum_{j{=}1}^{M_i} w_{ij} z_j + b_i  && \forall i \in N
         \end{align*}
 
     """

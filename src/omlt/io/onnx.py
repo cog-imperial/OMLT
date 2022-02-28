@@ -31,6 +31,18 @@ def write_onnx_model_with_bounds(filename, onnx_model=None, input_bounds=None):
 
 
 def load_onnx_neural_network_with_bounds(filename):
+    """
+    Load a NetworkDefinition with input bounds from an onnx object.
+
+    Parameters
+    ----------
+    filename : str
+        the path where the ONNX model and input bounds file are written
+
+    Returns
+    -------
+    NetworkDefinition
+    """
     onnx_model = onnx.load(filename)
     input_bounds_filename = Path(f"{filename}.bounds.json")
     input_bounds = None
@@ -50,6 +62,10 @@ def load_onnx_neural_network(onnx, scaling_object=None, input_bounds=None):
         onnx model
     scaling_object : instance of object supporting ScalingInterface
     input_bounds : list of tuples
+
+    Returns
+    -------
+    NetworkDefinition
     """
     parser = NetworkParser()
     return parser.parse_network(onnx.graph, scaling_object, input_bounds)

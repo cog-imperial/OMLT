@@ -5,13 +5,13 @@ from pyomo.contrib.fbbt.fbbt import compute_bounds_on_expr
 # TODO: Change asserts to exceptions with messages (or ensure they
 # TODO:      are trapped higher up the call stack)
 def full_space_dense_layer(net_block, net, layer_block, layer):
-    """
+    r"""
     Add full-space formulation of the dense layer to the block
 
     .. math::
 
         \begin{align*}
-        \hat z_i &= \sum_{j{=}1}^N w_{ij} z_j + b_i  &&\forall i \in N
+        \hat z_i &= \sum_{j{=}1}^{M_i} w_{ij} z_j + b_i  && \forall i \in N
         \end{align*}
 
     """
