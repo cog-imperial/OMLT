@@ -2,7 +2,7 @@ from omlt.neuralnet.network_definition import NetworkDefinition
 from omlt.neuralnet.layer import InputLayer, DenseLayer
 import tensorflow.keras as keras
 
-def load_keras_sequential(nn, scaling_object=None, scaled_input_bounds=None):
+def load_keras_sequential(nn, scaling_object=None, scaled_input_bounds=None, unscaled_input_bounds=None):
     """
     Load a keras neural network model (built with Sequential) into
     an OMLT network definition object. This network definition object
@@ -18,7 +18,12 @@ def load_keras_sequential(nn, scaling_object=None, scaled_input_bounds=None):
     scaled_input_bounds : dict or None
         A dict that contains the bounds on the scaled variables (the
         direct inputs to the neural network). If None, then no bounds
-        are specified.
+        are specified or they are generated using unscaled bounds.
+    unscaled_input_bounds : dict or None
+        A dict that contains the bounds on the unscaled variables (the
+        direct inputs to the neural network). If specified the scaled_input_bounds
+        dictionary will be generated using the provided scaling object.
+        If None, then no bounds are specified.
     
     Returns
     -------
@@ -27,7 +32,8 @@ def load_keras_sequential(nn, scaling_object=None, scaled_input_bounds=None):
     # TODO: Add exceptions for unsupported layer types
     n_inputs = len(nn.layers[0].get_weights()[0])
 
-    net = NetworkDefinition(scaling_object=scaling_object, scaled_input_bounds=scaled_input_bounds)
+    net = NetworkDefinition(scaling_object=scaling_object, scaled_input_bounds=scaled_input_bounds,
+                            unscaled_input_bounds=unscaled_input_bounds)
 
     prev_layer = InputLayer([n_inputs])
     net.add_layer(prev_layer)

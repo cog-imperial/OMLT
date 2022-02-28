@@ -7,6 +7,7 @@ from omlt.neuralnet.nn_formulation import FullSpaceNNFormulation
 from omlt.io.keras_reader import load_keras_sequential
 from omlt.neuralnet.network_definition import NetworkDefinition
 from omlt.neuralnet.layer import DenseLayer, InputLayer
+from omlt.scaling import OffsetScaling
 
 # TODO: Build more tests with different activations and edge cases
 def test_two_node_full_space():
@@ -64,3 +65,58 @@ def test_two_node_full_space():
     pyo.assert_optimal_termination(status)
     assert abs(pyo.value(m.neural_net_block.outputs[0, 0]) - 1.0) < 1e-8
     assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - 0.0) < 1e-8
+
+def test_input_bounds_no_scaler():
+    scaled_input_bounds = {(0, 0): (0, 5), (0, 1): (-2, 2), (0, 2): (0, 1)}
+    unscaled_input_bounds = scaled_input_bounds
+
+    net = NetworkDefinition(unscaled_input_bounds=unscaled_input_bounds)
+    assert (net.scaled_input_bounds == scaled_input_bounds)
+
+def test_input_bound_scaling_1D():
+
+    xoffset = {i: float(i) for i in range(3)}
+    xfactor = {i: 0.5 * (i + 1) for i in range(3)}
+    yoffset = {i: -0.25 * i for i in range(2)}
+    yfactor = {i: 0.125 * (i + 1) for i in range(2)}
+
+    scaler = OffsetScaling(
+        offset_inputs=xoffset,
+        factor_inputs=xfactor,
+        offset_outputs=yoffset,
+        factor_outputs=yfactor
+    )
+
+    scaled_input_bounds = {0: (0, 5), 1: (-2, 2), 2: (0, 1)}
+    unscaled_input_bounds = {}
+
+    for k in scaled_input_bounds.keys():
+        lb, ub = scaled_input_bounds[k]
+        unscaled_input_bounds[k] = ((lb * xfactor[k]) + xoffset[k], (ub * xfactor[k]) + xoffset[k])
+
+    net = NetworkDefinition(scaler, scaled_input_bounds=None, unscaled_input_bounds=unscaled_input_bounds)
+    assert(net.scaled_input_bounds == scaled_input_bounds)
+
+def test_input_bound_scaling_multiD():
+    # Multidimensional test
+    xoffset = {(0, i): float(i) for i in range(3)}
+    xfactor = {(0, i): 0.5 * (i + 1) for i in range(3)}
+    yoffset = {(1, i): -0.25 * i for i in range(2)}
+    yfactor = {(1, i): 0.125 * (i + 1) for i in range(2)}
+
+    scaler = OffsetScaling(
+        offset_inputs=xoffset,
+        factor_inputs=xfactor,
+        offset_outputs=yoffset,
+        factor_outputs=yfactor
+    )
+
+    scaled_input_bounds = {(0, 0): (0, 5), (0, 1): (-2, 2), (0, 2): (0, 1)}
+    unscaled_input_bounds = {}
+
+    for k in scaled_input_bounds.keys():
+        lb, ub = scaled_input_bounds[k]
+        unscaled_input_bounds[k] = ((lb * xfactor[k]) + xoffset[k], (ub * xfactor[k]) + xoffset[k])
+
+    net = NetworkDefinition(scaler, scaled_input_bounds=None, unscaled_input_bounds=unscaled_input_bounds)
+    assert (net.scaled_input_bounds == scaled_input_bounds)

@@ -4,7 +4,7 @@ from omlt.neuralnet.layer import Layer
 
 
 class NetworkDefinition:
-    def __init__(self, scaling_object=None, scaled_input_bounds=None):
+    def __init__(self, scaling_object=None, scaled_input_bounds=None, unscaled_input_bounds=None):
         """
         Create a network definition object used to create the neural network
         formulation in Pyomo
@@ -17,11 +17,33 @@ class NetworkDefinition:
            scaled_input_bounds : dict or None
               A dict that contains the bounds on the scaled variables (the
               direct inputs to the neural network). If None, then no bounds
-              are specified.
+              are specified or they are generated using unscaled bounds.
+           unscaled_input_bounds: dict or None
+              A dict that contains the bounds on the scaled variables (the
+              direct inputs to the neural network). If supplied the scaled_input_bounds
+              parameter will be generated using the scaling object.
+              If None, then no bounds are specified.
         """
         self.__layers_by_id = dict()
         self.__graph = nx.DiGraph()
         self.__scaling_object = scaling_object
+
+        # Process input bounds to insure scaled input bounds exist for formulations
+        if scaled_input_bounds is None:
+
+            if unscaled_input_bounds is not None and scaling_object is not None:
+                lbs = scaling_object.get_scaled_input_expressions( \
+                    {k: t[0] for k, t in unscaled_input_bounds.items()})
+                ubs = scaling_object.get_scaled_input_expressions( \
+                    {k: t[1] for k, t in unscaled_input_bounds.items()})
+
+                scaled_input_bounds = {k: (lbs[k], ubs[k]) for k in unscaled_input_bounds.keys()}
+
+            # If unscaled input bounds provided and no scaler provided, scaled input bounds = unscaled input bounds
+            elif unscaled_input_bounds is not None and scaling_object is None:
+                scaled_input_bounds = unscaled_input_bounds
+
+        self.__unscaled_input_bounds = unscaled_input_bounds
         self.__scaled_input_bounds = scaled_input_bounds
 
     def add_layer(self, layer):
@@ -63,6 +85,11 @@ class NetworkDefinition:
     def scaled_input_bounds(self):
         """Return a dict of tuples containing lower and upper bounds of neural network inputs"""
         return self.__scaled_input_bounds
+
+    @property
+    def unscaled_input_bounds(self):
+        """Return a dict of tuples containing lower and upper bounds of unscaled neural network inputs"""
+        return self.__unscaled_input_bounds
 
     @property
     def input_layers(self):
