@@ -1,12 +1,42 @@
 from pyomo.environ import exp, log, tanh
 
 def softplus_activation_function(x):
+    r"""
+    Applies the softplus function.
+
+    .. math::
+
+        \begin{align*}
+        y &= log(exp(\hat x) + 1)
+        \end{align*}
+
+    """
     return log(exp(x) + 1)
 
 def sigmoid_activation_function(x):
+    r"""
+    Applies the sigmoid function.
+
+    .. math::
+
+        \begin{align*}
+        y &= \frac{1}{1 + exp(-\hat x)} 
+        \end{align*}
+
+    """
     return 1 / (1 + exp(-x))
 
 def tanh_activation_function(x):
+    r"""
+    Applies the tanh function.
+
+    .. math::
+
+        \begin{align*}
+        y &= tanh(x)
+        \end{align*}
+
+    """
     return tanh(x)
 
 def softplus_activation_constraint(net_block, net, layer_block, layer):

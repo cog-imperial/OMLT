@@ -4,12 +4,44 @@ from pyomo.contrib.fbbt.fbbt import compute_bounds_on_expr
 
 
 def default_partition_split_func(w, n):
+    r"""
+    Default function for partitioning weights in :math:`w` into :math:`n` partitions.
+
+    Weights in :math:`w` are sorted and partitioned evenly.
+
+    """
     sorted_indexes = np.argsort(w)
     n = min(n, len(sorted_indexes))
     return np.array_split(sorted_indexes, n)
 
 
 def partition_based_dense_relu_layer(net_block, net, layer_block, layer, split_func):
+    """
+    Partition-based ReLU activation formulation.
+
+    Generates the constraints for the ReLU activation function.
+
+    .. math::
+
+        \begin{align*}
+        z_i &= \text{max}(0, \hat{z_i}) && \forall i \in N
+        \end{align*}
+
+    The partition-based formulation for the i-th node is given by:
+
+    .. math::
+
+        \begin{align*}
+        &\sum_{n} \big( \sum_{j \in \mathbb{S}_n} w_{ij} x_j - p_n \big) + \sigma b \leq 0 \\
+        &\sum_{n} p_n + (1-\sigma) b \geq 0 \\
+        &z_i = \sum_{n} p_n + (1-\sigma)b \\
+        &\sigma l_n \leq \sum_{j \in \mathbb{S}_n}w_{ij}x_j - p_n \leq \sigma u_n \\
+        &(1-\sigma) l_n \leq p_n \leq (1-\sigma) u_n \\
+        &\sigma \in \{0, 1\}
+        \end{align*}
+
+    where :math:`l_n` and :math:`u_n` are, respectively, lower and upper bounds the n-th partition.
+    """    
     # not an input layer, process the expressions
     prev_layers = list(net.predecessors(layer))
     assert len(prev_layers) == 1

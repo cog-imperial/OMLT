@@ -38,6 +38,14 @@ def full_space_dense_layer(net_block, net, layer_block, layer):
         return layer_block.zhat[output_index] == expr
 
 def full_space_conv_layer(net_block, net, layer_block, layer):
+    r"""
+    Add full-space formulation of the 2-D convolutional layer to the block
+
+    A 2-D convolutional layer applies cross-correlation kernels to a 2-D input. 
+    Specifically, the input is convolved by sliding the kernels along the input vertically and horizontally.
+    At each location, the preactivation is computed as the dot product of the kernel weights and the input plus a bias term.
+
+    """
     input_layers = list(net.predecessors(layer))
     assert len(input_layers) == 1
     input_layer = input_layers[0]
