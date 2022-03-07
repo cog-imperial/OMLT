@@ -35,8 +35,11 @@ Please reference the `preprint <https://arxiv.org/abs/2202.02414>`_ of this soft
           primaryClass={stat.ML}
      }
 
+Documentation
+==============
+The latest OMLT doucmentation can be found at the `readthedocs page <https://omlt.readthedocs.io/en/latest/index.html#>`_. Additionally, much of the current functionality is demonstrated using Jupyter notebooks available in the  `notebooks folder <https://github.com/cog-imperial/OMLT/tree/main/docs/notebooks>`_.
 
-Examples
+Example
 ========
 
 .. code-block:: Python
