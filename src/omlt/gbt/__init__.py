@@ -12,9 +12,9 @@ We use the following notation to describe the gradient-boosted trees formulation
         in tree $t$}\\
     \text{Right}_{t,s} &:= \text{Set of leaf variables right of split $s$
         in tree $t$}\\
-    y_{i(s),j(s)} &:= \text{Binary variable indicating if split $s$ is active
-        (i.e. $i(s)$ and $j(s)$ are feature and index of split $s$,
-        respectively)}\\
+    y_{i(s),j(s)} &:= \text{Binary variable indicating if split $s$ is active}\\
+    i(s) &:= \text{feature of split $s$}\\
+    j(s) &:= \text{index of split $s$}\\
     V_t &:= \text{Set of splits in tree $t$}\\
     n &:= \text{Index set of input features}\\
     m_i &= \text{Index set of splits for feature $i$}\\

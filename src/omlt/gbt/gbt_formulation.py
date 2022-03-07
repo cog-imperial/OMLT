@@ -56,8 +56,29 @@ class GBTBigMFormulation(_PyomoFormulation):
 
 
 def add_formulation_to_block(block, model_definition, input_vars, output_vars):
-    """
+    r"""
     Adds the gradient-boosted trees formulation to the given Pyomo block.
+
+    .. math::
+        \begin{align*}
+        \hat{\mu} &= \sum\limits_{t \in T} \sum\limits_{l \in {L_t}}
+            F_{t,l} z_{t,l}, && \\
+        \sum\limits_{l \in L_t} z_{t,l} &= 1, && \forall t \in T, \\
+        \sum\limits_{l \in \text{Left}_{t,s}} z_{t,l} &\leq y_{i(s),j(s)},
+            && \forall t \in T, \forall s \in V_t, \\
+        \sum\limits_{l \in \text{Right}_{t,s}} z_{t,l} &\leq 1 - y_{i(s),j(s)},
+            && \forall t \in T, \forall s \in V_t, \\
+        y_{i,j} &\leq y_{i,j+1},
+            && \forall i \in \left [ n \right ], \forall j \in \left [ m_i - 1 \right ], \\
+        x_{i} &\geq v_{i,0} +
+            \sum\limits_{j=1}^{m_i} \left (v_{i,j} -
+            v_{i,j-1} \right ) \left ( 1 - y_{i,j} \right ),
+            && \forall i \in \left [ n \right ], \\
+        x_{i} &\leq v_{i,m_i+1} +
+            \sum\limits_{j=1}^{m_i} \left (v_{i,j} - v_{i,j+1} \right ) y_{i,j},
+            && \forall i \in \left [ n \right ]. \\
+        \end{align*}
+
 
     References
     ----------
@@ -219,7 +240,7 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars):
         .. math::
             \begin{align*}
             \sum\limits_{l \in \text{Right}_{t,s}} z_{t,l} &\leq 1 - y_{i(s),j(s)},
-            && \forall t \in T, \forall s \in V_t,
+            && \forall t \in T, \forall s \in V_t
             \end{align*}
         """
         node_mask = (nodes_tree_ids == tree_id) & (nodes_node_ids == branch_node_id)
