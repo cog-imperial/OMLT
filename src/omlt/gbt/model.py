@@ -33,10 +33,6 @@ class GradientBoostedTreeModel:
         return self.__n_inputs
 
     @property
-    def n_hidden(self):
-        return 0
-
-    @property
     def n_outputs(self):
         """Returns the number of output variables"""
         return self.__n_outputs
