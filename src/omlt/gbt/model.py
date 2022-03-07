@@ -25,6 +25,7 @@ class GradientBoostedTreeModel:
 
     @property
     def onnx_model(self):
+        """Returns underlying onnx model of the tree model being used"""
         return self.__model
 
     @property
