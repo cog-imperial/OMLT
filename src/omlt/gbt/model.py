@@ -10,11 +10,11 @@ class GradientBoostedTreeModel:
               lightgbm.
            scaling_object : ScalingInterface or None
               A scaling object to specify the scaling parameters for the
-              neural network inputs and outputs. If None, then no
+              tree ensemble inputs and outputs. If None, then no
               scaling is performed.
            scaled_input_bounds : dict or None
               A dict that contains the bounds on the scaled variables (the
-              direct inputs to the neural network). If None, then no bounds
+              direct inputs to the tree ensemble). If None, then no bounds
               are specified or they are generated using unscaled bounds.
         """
         self.__model = onnx_model
@@ -48,7 +48,7 @@ class GradientBoostedTreeModel:
 
     @property
     def scaled_input_bounds(self):
-        """Return a list of tuples containing lower and upper bounds of neural network inputs"""
+        """Return a list of tuples containing lower and upper bounds of tree ensemble inputs"""
         return self.__scaled_input_bounds
 
     @scaling_object.setter
