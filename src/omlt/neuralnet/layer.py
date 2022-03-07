@@ -273,12 +273,12 @@ class IndexMapper:
 
     @property
     def input_size(self):
-         """Return the size of the input tensor"""
+        """Return the size of the input tensor"""
         return self.__input_size
 
     @property
     def output_size(self):
-         """Return the size of the output tensor"""
+        """Return the size of the output tensor"""
         return self.__output_size
 
     def __call__(self, index):
