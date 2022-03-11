@@ -7,7 +7,7 @@
 .. image:: https://github.com/cog-imperial/OMLT/workflows/CI/badge.svg?branch=main
      :target: https://github.com/cog-imperial/OMLT/actions?workflow=CI
      :alt: CI Status
-     
+
 .. image:: https://codecov.io/gh/cog-imperial/OMLT/branch/main/graph/badge.svg?token=9U7WLDINJJ
      :target: https://codecov.io/gh/cog-imperial/OMLT
 
@@ -37,7 +37,7 @@ Please reference the `preprint <https://arxiv.org/abs/2202.02414>`_ of this soft
 
 Documentation
 ==============
-The latest OMLT doucmentation can be found at the `readthedocs page <https://omlt.readthedocs.io/en/latest/index.html#>`_. Additionally, much of the current functionality is demonstrated using Jupyter notebooks available in the  `notebooks folder <https://github.com/cog-imperial/OMLT/tree/main/docs/notebooks>`_.
+The latest OMLT documentation can be found at the `readthedocs page <https://omlt.readthedocs.io/en/latest/index.html#>`_. Additionally, much of the current functionality is demonstrated using Jupyter notebooks available in the  `notebooks folder <https://github.com/cog-imperial/OMLT/tree/main/docs/notebooks>`_.
 
 Example
 ========
@@ -128,21 +128,21 @@ Contributors
      - Acknowledgements
 
    * - |jalving|_
-     - Jordan Jalving 
+     - Jordan Jalving
      - This work was funded by Sandia National Laboratories, Laboratory Directed Research and Development program
 
    * - |fracek|_
      - Francesco Ceccon
      - This work was funded by an Engineering & Physical Sciences Research Council Research Fellowship [GrantNumber EP/P016871/1]
-     
+
    * - |carldlaird|_
      - Carl D. Laird
-     - Initial work was funded by Sandia National Laboratories, Laboratory Directed Research and Development program. Current work supported by Carnegie Mellon University. 
-     
+     - Initial work was funded by Sandia National Laboratories, Laboratory Directed Research and Development program. Current work supported by Carnegie Mellon University.
+
    * - |tsaycal|_
      - Calvin Tsay
      - This work was funded by an Engineering & Physical Sciences Research Council Research Fellowship [GrantNumber EP/T001577/1], with additional support from an Imperial College Research Fellowship.
-     
+
    * - |thebtron|_
      - Alexander Thebelt
      - This work was supported by BASF SE, Ludwigshafen am Rhein.
@@ -155,15 +155,15 @@ Contributors
 .. _fracek: https://github.com/fracek
 .. |fracek| image:: https://avatars1.githubusercontent.com/u/282580?s=120&v=4
    :width: 80px
-   
+
 .. _carldlaird: https://github.com/carldlaird
 .. |carldlaird| image:: https://avatars.githubusercontent.com/u/18519762?v=4
    :width: 80px
-   
+
 .. _tsaycal: https://github.com/tsaycal
 .. |tsaycal| image:: https://avatars.githubusercontent.com/u/50914878?s=120&v=4
    :width: 80px
-   
+
 .. _thebtron: https://github.com/ThebTron
 .. |thebtron| image:: https://avatars.githubusercontent.com/u/31448377?s=120&v=4
    :width: 80px

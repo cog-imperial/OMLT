@@ -2,7 +2,7 @@ import pyomo.environ as pyo
 import pyomo.mpec as mpec
 
 def bigm_relu_activation_constraint(net_block, net, layer_block, layer):
-    """
+    r"""
     Big-M ReLU activation formulation.
 
     Generates the constraints for the ReLU activation function.
@@ -63,7 +63,7 @@ def bigm_relu_activation_constraint(net_block, net, layer_block, layer):
 
 
 class ComplementarityReLUActivation:
-    """
+    r"""
     Complementarity-based ReLU activation forumlation.
 
     Generates the constraints for the ReLU activation function.
@@ -79,7 +79,7 @@ class ComplementarityReLUActivation:
     .. math::
 
         \begin{align*}
-        0 &\leq z_i \perp (z-\hat{z_i}) \geq 0 
+        0 &\leq z_i \perp (z-\hat{z_i}) \geq 0
         \end{align*}
 
     """

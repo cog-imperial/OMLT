@@ -16,7 +16,7 @@ def default_partition_split_func(w, n):
 
 
 def partition_based_dense_relu_layer(net_block, net, layer_block, layer, split_func):
-    """
+    r"""
     Partition-based ReLU activation formulation.
 
     Generates the constraints for the ReLU activation function.
@@ -41,7 +41,7 @@ def partition_based_dense_relu_layer(net_block, net, layer_block, layer, split_f
         \end{align*}
 
     where :math:`l_n` and :math:`u_n` are, respectively, lower and upper bounds the n-th partition.
-    """    
+    """
     # not an input layer, process the expressions
     prev_layers = list(net.predecessors(layer))
     assert len(prev_layers) == 1
