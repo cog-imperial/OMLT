@@ -152,10 +152,12 @@ class DenseLayer(Layer):
 
     @property
     def weights(self):
+        """Return the matrix of node weights"""
         return self.__weights
 
     @property
     def biases(self):
+        """Return the vector of node biases"""
         return self.__biases
 
     def __str__(self):
@@ -224,14 +226,17 @@ class ConvLayer(Layer):
 
     @property
     def strides(self):
+        """Return the stride of the convolutional layer"""
         return self.__strides
 
     @property
     def kernel_shape(self):
+        """Return the shape of the cross-correlation kernel"""
         return self.__kernel.shape[2:]
 
     @property
     def kernel(self):
+        """Return the cross-correlation kernel"""
         return self.__kernel
 
     def __str__(self):
@@ -268,10 +273,12 @@ class IndexMapper:
 
     @property
     def input_size(self):
+        """Return the size of the input tensor"""
         return self.__input_size
 
     @property
     def output_size(self):
+        """Return the size of the output tensor"""
         return self.__output_size
 
     def __call__(self, index):

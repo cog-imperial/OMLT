@@ -2,8 +2,29 @@ import pyomo.environ as pyo
 import pyomo.mpec as mpec
 
 def bigm_relu_activation_constraint(net_block, net, layer_block, layer):
-    """
+    r"""
     Big-M ReLU activation formulation.
+
+    Generates the constraints for the ReLU activation function.
+
+    .. math::
+
+        \begin{align*}
+        z_i &= \text{max}(0, \hat{z_i}) && \forall i \in N
+        \end{align*}
+
+    The Big-M formulation for the i-th node is given by:
+
+    .. math::
+
+        \begin{align*}
+        z_i &\geq \hat{z_i} \\
+        z_i &\leq \hat{z_i} - l(1-\sigma) \\
+        z_i &\leq u(\sigma) \\
+        \sigma &\in \{0, 1\}
+        \end{align*}
+
+    where :math:`l` and :math:`u` are, respectively, lower and upper bounds of :math:`\hat{z_i}`.
     """
     layer_block.q = pyo.Var(layer.output_indexes, within=pyo.Binary)
 
@@ -42,8 +63,25 @@ def bigm_relu_activation_constraint(net_block, net, layer_block, layer):
 
 
 class ComplementarityReLUActivation:
-    """
+    r"""
     Complementarity-based ReLU activation forumlation.
+
+    Generates the constraints for the ReLU activation function.
+
+    .. math::
+
+        \begin{align*}
+        z_i &= \text{max}(0, \hat{z_i}) && \forall i \in N
+        \end{align*}
+
+    The complementarity-based formulation for the i-th node is given by:
+
+    .. math::
+
+        \begin{align*}
+        0 &\leq z_i \perp (z-\hat{z_i}) \geq 0
+        \end{align*}
+
     """
     def __init__(self, transform = None):
         if transform is None:
