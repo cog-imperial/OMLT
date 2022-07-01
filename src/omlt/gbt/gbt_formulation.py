@@ -108,6 +108,10 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars):
     root_node = graph.node[0]
     attr = _node_attributes(root_node)
 
+    # base_values don't apply to lgbm models
+    base_value = np.array(attr["base_values"].floats)[0] \
+        if "base_values" in attr else 0.0
+
     nodes_feature_ids = np.array(attr["nodes_featureids"].ints)
     nodes_values = np.array(attr["nodes_values"].floats)
     nodes_modes = np.array(attr["nodes_modes"].strings)
@@ -318,7 +322,7 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars):
             for tree_id, node_id, weight in zip(
                 target_tree_ids, target_node_ids, target_weights
             )
-        )
+        ) + base_value
 
 
 def _node_attributes(node):
