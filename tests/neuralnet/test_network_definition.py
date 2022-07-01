@@ -4,7 +4,6 @@ import pytest
 
 from omlt.block import OmltBlock
 from omlt.neuralnet.nn_formulation import FullSpaceNNFormulation
-from omlt.io.keras_reader import load_keras_sequential
 from omlt.neuralnet.network_definition import NetworkDefinition
 from omlt.neuralnet.layer import DenseLayer, InputLayer
 from omlt.scaling import OffsetScaling

@@ -12,7 +12,7 @@ Input Bounds
 Keras Reader
 ----------------------------
 
-.. automodule:: omlt.io.keras_reader
+.. automodule:: omlt.io.keras
    :members:
    :undoc-members:
    :show-inheritance:
