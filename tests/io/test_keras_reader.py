@@ -1,7 +1,7 @@
 import tensorflow.keras as keras
 import pytest
 
-from omlt.io.keras_reader import load_keras_sequential
+from omlt.io.keras.keras_reader import load_keras_sequential
 
 
 def test_keras_reader(datadir):
