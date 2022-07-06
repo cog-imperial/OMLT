@@ -1,3 +1,13 @@
+"""
+OMLT
+====
+
+OMLT is a Python package for representing machine learning models (neural networks and gradient-boosted trees) within the Pyomo optimization environment.
+The package provides various optimization formulations for machine learning models
+(such as full-space, reduced-space, and MILP) as well as an interface to import
+sequential Keras and general ONNX models.
+
+"""
 import sys
 
 if sys.version_info[:2] >= (3, 8):

@@ -17,10 +17,7 @@ def load_input_bounds(input_bounds_filename):
     with open(input_bounds_filename, "r") as f:
         raw_input_bounds = json.load(f)
 
-    return dict(
-        _parse_raw_input_bounds(d)
-        for d in raw_input_bounds
-    )
+    return dict(_parse_raw_input_bounds(d) for d in raw_input_bounds)
 
 
 def _prepare_input_bounds(input_bounds):

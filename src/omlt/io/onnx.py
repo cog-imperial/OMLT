@@ -1,15 +1,15 @@
+import json
 from pathlib import Path
 
-import json
 import onnx
 
+from omlt.io.input_bounds import load_input_bounds, write_input_bounds
 from omlt.io.onnx_parser import NetworkParser
-from omlt.io.input_bounds import write_input_bounds, load_input_bounds
 
 
 def write_onnx_model_with_bounds(filename, onnx_model=None, input_bounds=None):
     """
-    Write the ONNX model to the given file. 
+    Write the ONNX model to the given file.
 
     If `input_bounds` is not None, write it alongside the ONNX model.
 

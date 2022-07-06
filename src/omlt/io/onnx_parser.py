@@ -1,14 +1,8 @@
-from onnx import numpy_helper
 import numpy as np
+from onnx import numpy_helper
 
+from omlt.neuralnet.layer import ConvLayer, DenseLayer, IndexMapper, InputLayer
 from omlt.neuralnet.network_definition import NetworkDefinition
-from omlt.neuralnet.layer import (
-    ConvLayer,
-    DenseLayer,
-    InputLayer,
-    IndexMapper,
-)
-
 
 _ACTIVATION_OP_TYPES = ["Relu", "Sigmoid", "LogSoftmax"]
 
@@ -19,6 +13,7 @@ class NetworkParser:
     ----------
     * https://github.com/onnx/onnx/blob/master/docs/Operators.md
     """
+
     def __init__(self):
         self._reset_state()
 
@@ -51,7 +46,9 @@ class NetworkParser:
         outputs = set()
         self._node_map = dict()
 
-        network = NetworkDefinition(scaling_object=scaling_object, scaled_input_bounds=input_bounds)
+        network = NetworkDefinition(
+            scaling_object=scaling_object, scaled_input_bounds=input_bounds
+        )
 
         network_input = None
         for input in self._graph.input:
@@ -122,9 +119,7 @@ class NetworkParser:
 
             # no need to process inputs or outputs
             if type_ == "node":
-                new_layer, new_layer_inputs = self._visit_node(
-                    node, next_nodes
-                )
+                new_layer, new_layer_inputs = self._visit_node(node, next_nodes)
                 if new_layer is not None:
                     network.add_layer(new_layer)
                     for layer_input in new_layer_inputs:
@@ -137,11 +132,17 @@ class NetworkParser:
 
     def _visit_node(self, node, next_nodes):
         if node.op_type == "MatMul":
-            next_nodes, new_layer, new_layer_inputs = self._consume_dense_nodes(node, next_nodes)
+            next_nodes, new_layer, new_layer_inputs = self._consume_dense_nodes(
+                node, next_nodes
+            )
         elif node.op_type == "Gemm":
-            next_nodes, new_layer, new_layer_inputs = self._consume_gemm_dense_nodes(node, next_nodes)
+            next_nodes, new_layer, new_layer_inputs = self._consume_gemm_dense_nodes(
+                node, next_nodes
+            )
         elif node.op_type == "Conv":
-            next_nodes, new_layer, new_layer_inputs = self._consume_conv_nodes(node, next_nodes)
+            next_nodes, new_layer, new_layer_inputs = self._consume_conv_nodes(
+                node, next_nodes
+            )
         elif node.op_type == "Reshape":
             next_nodes = self._consume_reshape_nodes(node, next_nodes)
             new_layer = new_layer_inputs = None
@@ -205,7 +206,7 @@ class NetworkParser:
             node_weights,
             node_biases,
             activation=activation,
-            input_index_mapper=None
+            input_index_mapper=None,
         )
         self._node_map[node.name] = dense_layer
         self._node_map[node.output[0]] = dense_layer
@@ -249,11 +250,11 @@ class NetworkParser:
 
         dense_layer = DenseLayer(
             input_output_size,
-            output_size, 
+            output_size,
             weights,
             biases,
             activation=activation,
-            input_index_mapper=transformer
+            input_index_mapper=transformer,
         )
         self._node_map[node.name] = dense_layer
         self._node_map[node.output[0]] = dense_layer
@@ -286,17 +287,17 @@ class NetworkParser:
 
         attr = _collect_attributes(node)
 
-        strides = attr['strides']
+        strides = attr["strides"]
 
         # check only kernel shape and stride are set
         # everything else is not supported
         assert biases.shape == (out_channels,)
         assert in_channels == input_output_size[0]
-        assert attr['kernel_shape'] == kernel_shape
-        assert attr['dilations'] == [1, 1]
-        assert attr['group'] == 1
-        if 'pads' in attr:
-            assert not np.any(attr['pads'])  # pads all zero
+        assert attr["kernel_shape"] == kernel_shape
+        assert attr["dilations"] == [1, 1]
+        assert attr["group"] == 1
+        if "pads" in attr:
+            assert not np.any(attr["pads"])  # pads all zero
         assert len(kernel_shape) == len(strides)
         assert len(input_output_size) == len(kernel_shape) + 1
 
@@ -304,7 +305,7 @@ class NetworkParser:
         padding = 0
         output_size = [out_channels]
         for w, k, s in zip(input_output_size[1:], kernel_shape, strides):
-            new_w = int((w - k + 2*padding) / s) + 1
+            new_w = int((w - k + 2 * padding) / s) + 1
             output_size.append(new_w)
 
         activation = "linear"
@@ -364,14 +365,14 @@ def _collect_attributes(node):
         elif attr.type == 4:  # TENSOR
             r[attr.name] = numpy_helper.to_array(attr.t)
             pass
-        elif attr.type == 7: # INTS
+        elif attr.type == 7:  # INTS
             r[attr.name] = list(attr.ints)
         else:
-            raise RuntimeError(f'unhandled attribute type {attr.type}')
+            raise RuntimeError(f"unhandled attribute type {attr.type}")
     return r
 
 
 def _parse_constant_value(node):
     attr = _collect_attributes(node)
-    value = attr['value']
+    value = attr["value"]
     return value

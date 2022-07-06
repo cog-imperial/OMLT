@@ -4,14 +4,16 @@ from omlt.neuralnet.layer import Layer
 
 
 class NetworkDefinition:
-    def __init__(self, scaling_object=None, scaled_input_bounds=None, unscaled_input_bounds=None):
+    def __init__(
+        self, scaling_object=None, scaled_input_bounds=None, unscaled_input_bounds=None
+    ):
         """
         Create a network definition object used to create the neural network
         formulation in Pyomo
 
         Args:
            scaling_object : ScalingInterface or None
-              A scaling object to specify the scaling parameters for the 
+              A scaling object to specify the scaling parameters for the
               neural network inputs and outputs. If None, then no
               scaling is performed.
            scaled_input_bounds : dict or None
@@ -32,12 +34,16 @@ class NetworkDefinition:
         if scaled_input_bounds is None:
 
             if unscaled_input_bounds is not None and scaling_object is not None:
-                lbs = scaling_object.get_scaled_input_expressions( \
-                    {k: t[0] for k, t in unscaled_input_bounds.items()})
-                ubs = scaling_object.get_scaled_input_expressions( \
-                    {k: t[1] for k, t in unscaled_input_bounds.items()})
+                lbs = scaling_object.get_scaled_input_expressions(
+                    {k: t[0] for k, t in unscaled_input_bounds.items()}
+                )
+                ubs = scaling_object.get_scaled_input_expressions(
+                    {k: t[1] for k, t in unscaled_input_bounds.items()}
+                )
 
-                scaled_input_bounds = {k: (lbs[k], ubs[k]) for k in unscaled_input_bounds.keys()}
+                scaled_input_bounds = {
+                    k: (lbs[k], ubs[k]) for k in unscaled_input_bounds.keys()
+                }
 
             # If unscaled input bounds provided and no scaler provided, scaled input bounds = unscaled input bounds
             elif unscaled_input_bounds is not None and scaling_object is None:

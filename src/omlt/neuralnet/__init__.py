@@ -13,7 +13,12 @@ We use the following notation to describe layer and activation functions:
     \end{align*}
 """
 from omlt.neuralnet.network_definition import NetworkDefinition
-from omlt.neuralnet.nn_formulation import (FullSpaceNNFormulation, ReducedSpaceNNFormulation,
-                                           FullSpaceSmoothNNFormulation, ReducedSpaceSmoothNNFormulation,
-                                           ReluBigMFormulation, ReluComplementarityFormulation,
-                                           ReluPartitionFormulation)
+from omlt.neuralnet.nn_formulation import (
+    FullSpaceNNFormulation,
+    FullSpaceSmoothNNFormulation,
+    ReducedSpaceNNFormulation,
+    ReducedSpaceSmoothNNFormulation,
+    ReluBigMFormulation,
+    ReluComplementarityFormulation,
+    ReluPartitionFormulation,
+)

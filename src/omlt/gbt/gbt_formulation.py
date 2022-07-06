@@ -1,5 +1,6 @@
-import numpy as np
 import collections
+
+import numpy as np
 import pyomo.environ as pe
 
 from omlt.formulation import _PyomoFormulation, _setup_scaled_inputs_outputs
@@ -25,6 +26,7 @@ class GBTBigMFormulation(_PyomoFormulation):
     tree_ensemble_structure : GradientBoostedTreeModel
         the tree ensemble definition
     """
+
     def __init__(self, gbt_model):
         super().__init__()
         self.model_definition = gbt_model
@@ -43,9 +45,11 @@ class GBTBigMFormulation(_PyomoFormulation):
         """This method is called by the OmltBlock to build the corresponding
         mathematical formulation on the Pyomo block.
         """
-        _setup_scaled_inputs_outputs(self.block,
-                                     self.model_definition.scaling_object,
-                                     self.model_definition.scaled_input_bounds)
+        _setup_scaled_inputs_outputs(
+            self.block,
+            self.model_definition.scaling_object,
+            self.model_definition.scaled_input_bounds,
+        )
 
         add_formulation_to_block(
             block=self.block,
@@ -196,7 +200,6 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars):
         )
         assert len(branch_y_idx) == 1
         return block.y[feature_id, branch_y_idx[0]]
-
 
     def _sum_of_z_l(tree_id, start_node_id):
         tree_mask = nodes_tree_ids == tree_id

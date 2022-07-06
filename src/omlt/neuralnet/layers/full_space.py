@@ -1,6 +1,7 @@
-import pyomo.environ as pyo
 import numpy as np
+import pyomo.environ as pyo
 from pyomo.contrib.fbbt.fbbt import compute_bounds_on_expr
+
 
 # TODO: Change asserts to exceptions with messages (or ensure they
 # TODO:      are trapped higher up the call stack)
@@ -24,7 +25,7 @@ def full_space_dense_layer(net_block, net, layer_block, layer):
     def dense_layer(b, *output_index):
         # dense layers multiply only the last dimension of
         # their inputs
-        expr = 0.0 
+        expr = 0.0
         for local_index, input_index in layer.input_indexes_with_input_layer_indexes:
             w = layer.weights[local_index[-1], output_index[-1]]
             expr += input_layer_block.z[input_index] * w
@@ -37,11 +38,12 @@ def full_space_dense_layer(net_block, net, layer_block, layer):
 
         return layer_block.zhat[output_index] == expr
 
+
 def full_space_conv_layer(net_block, net, layer_block, layer):
     r"""
     Add full-space formulation of the 2-D convolutional layer to the block
 
-    A 2-D convolutional layer applies cross-correlation kernels to a 2-D input. 
+    A 2-D convolutional layer applies cross-correlation kernels to a 2-D input.
     Specifically, the input is convolved by sliding the kernels along the input vertically and horizontally.
     At each location, the preactivation is computed as the dot product of the kernel weights and the input plus a bias term.
 
@@ -51,10 +53,10 @@ def full_space_conv_layer(net_block, net, layer_block, layer):
     input_layer = input_layers[0]
     input_layer_block = net_block.layer[id(input_layer)]
 
-    #for out_d, out_r, out_c in layer.output_indexes:
+    # for out_d, out_r, out_c in layer.output_indexes:
     #   output_index = (out_d, out_r, out_c)
     @layer_block.Constraint(layer.output_indexes)
-    def convolutional_layer(b,*output_index):
+    def convolutional_layer(b, *output_index):
         out_d, out_r, out_c = output_index
         expr = 0.0
         for weight, input_index in layer.kernel_with_input_indexes(out_d, out_r, out_c):
@@ -63,5 +65,5 @@ def full_space_conv_layer(net_block, net, layer_block, layer):
         lb, ub = compute_bounds_on_expr(expr)
         layer_block.zhat[output_index].setlb(lb)
         layer_block.zhat[output_index].setub(ub)
-        #layer_block.constraints.add(layer_block.zhat[output_index] == expr)
+        # layer_block.constraints.add(layer_block.zhat[output_index] == expr)
         return layer_block.zhat[output_index] == expr

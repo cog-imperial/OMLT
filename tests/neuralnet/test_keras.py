@@ -1,21 +1,21 @@
-import tensorflow.keras as keras
-import pytest
-import pyomo.environ as pyo
 import numpy as np
+import pyomo.environ as pyo
+import pytest
+import tensorflow.keras as keras
+from conftest import get_neural_network_data
 
 from omlt.block import OmltBlock
 from omlt.io.keras_reader import load_keras_sequential
-from omlt.neuralnet import (FullSpaceNNFormulation, ReducedSpaceNNFormulation)
+from omlt.neuralnet import FullSpaceNNFormulation, ReducedSpaceNNFormulation
 from omlt.neuralnet.activations import ComplementarityReLUActivation
 from omlt.scaling import OffsetScaling
 
-from conftest import get_neural_network_data
 
 def _test_keras_linear_131(keras_fname, reduced_space=False):
     x, y, x_test = get_neural_network_data("131")
 
     nn = keras.models.load_model(keras_fname, compile=False)
-    net = load_keras_sequential(nn, scaled_input_bounds=[(-1,1)])
+    net = load_keras_sequential(nn, scaled_input_bounds=[(-1, 1)])
     m = pyo.ConcreteModel()
     m.neural_net_block = OmltBlock()
     if reduced_space:
@@ -36,7 +36,7 @@ def _test_keras_mip_relu_131(keras_fname):
     x, y, x_test = get_neural_network_data("131")
 
     nn = keras.models.load_model(keras_fname, compile=False)
-    net = load_keras_sequential(nn, scaled_input_bounds = [(-1,1)])
+    net = load_keras_sequential(nn, scaled_input_bounds=[(-1, 1)])
 
     m = pyo.ConcreteModel()
     m.neural_net_block = OmltBlock()
@@ -60,8 +60,9 @@ def _test_keras_complementarity_relu_131(keras_fname):
 
     m = pyo.ConcreteModel()
     m.neural_net_block = OmltBlock()
-    formulation = FullSpaceNNFormulation(net,activation_constraints={
-        "relu": ComplementarityReLUActivation()})
+    formulation = FullSpaceNNFormulation(
+        net, activation_constraints={"relu": ComplementarityReLUActivation()}
+    )
     m.neural_net_block.build_formulation(formulation)
 
     nn_outputs = nn.predict(x=x_test)
@@ -118,6 +119,7 @@ def test_keras_linear_131_reduced(datadir):
         reduced_space=True,
     )
 
+
 def test_keras_linear_131_relu(datadir):
     _test_keras_mip_relu_131(
         datadir.file("keras_linear_131_relu"),
@@ -126,16 +128,18 @@ def test_keras_linear_131_relu(datadir):
         datadir.file("keras_linear_131_relu"),
     )
 
+
 def test_keras_linear_big(datadir):
     _test_keras_linear_big(datadir.file("big"), reduced_space=False)
 
-@pytest.mark.skip('Skip - this test is too big for now')
+
+@pytest.mark.skip("Skip - this test is too big for now")
 def test_keras_linear_big_reduced_space(datadir):
-    _test_keras_linear_big('./models/big', reduced_space=True)
+    _test_keras_linear_big("./models/big", reduced_space=True)
 
 
 def test_scaling_NN_block(datadir):
-    NN = keras.models.load_model(datadir.file('keras_linear_131_relu'))
+    NN = keras.models.load_model(datadir.file("keras_linear_131_relu"))
 
     model = pyo.ConcreteModel()
 
@@ -150,7 +154,9 @@ def test_scaling_NN_block(datadir):
     )
 
     scaled_input_bounds = {0: (0, 5)}
-    net = load_keras_sequential(NN, scaling_object=scaler, scaled_input_bounds=scaled_input_bounds)
+    net = load_keras_sequential(
+        NN, scaling_object=scaler, scaled_input_bounds=scaled_input_bounds
+    )
     formulation = FullSpaceNNFormulation(net)
     model.nn = OmltBlock()
     model.nn.build_formulation(formulation)

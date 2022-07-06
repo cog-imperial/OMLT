@@ -1,25 +1,37 @@
-import pyomo.environ as pyo
 import numpy as np
+import pyomo.environ as pyo
 
 from omlt.formulation import _PyomoFormulation, _setup_scaled_inputs_outputs
+from omlt.neuralnet.activations import (
+    ACTIVATION_FUNCTION_MAP as _DEFAULT_ACTIVATION_FUNCTIONS,
+)
+from omlt.neuralnet.activations import (
+    ComplementarityReLUActivation,
+    bigm_relu_activation_constraint,
+    linear_activation_constraint,
+    linear_activation_function,
+    sigmoid_activation_constraint,
+    sigmoid_activation_function,
+    softplus_activation_constraint,
+    softplus_activation_function,
+    tanh_activation_constraint,
+    tanh_activation_function,
+)
 from omlt.neuralnet.layer import ConvLayer, DenseLayer, InputLayer
-from omlt.neuralnet.layers.full_space import (full_space_dense_layer, full_space_conv_layer)
+from omlt.neuralnet.layers.full_space import (
+    full_space_conv_layer,
+    full_space_dense_layer,
+)
+from omlt.neuralnet.layers.partition_based import (
+    default_partition_split_func,
+    partition_based_dense_relu_layer,
+)
 from omlt.neuralnet.layers.reduced_space import reduced_space_dense_layer
-from omlt.neuralnet.layers.partition_based import partition_based_dense_relu_layer, default_partition_split_func
-from omlt.neuralnet.activations import (linear_activation_constraint,
-                                        linear_activation_function,
-                                        bigm_relu_activation_constraint,
-                                        ComplementarityReLUActivation,
-                                        sigmoid_activation_constraint,
-                                        softplus_activation_constraint,
-                                        tanh_activation_constraint,
-                                        sigmoid_activation_function,
-                                        softplus_activation_function,
-                                        tanh_activation_function)
-from omlt.neuralnet.activations import ACTIVATION_FUNCTION_MAP as _DEFAULT_ACTIVATION_FUNCTIONS
+
 
 def _ignore_input_layer():
     pass
+
 
 _DEFAULT_LAYER_CONSTRAINTS = {
     InputLayer: _ignore_input_layer,
@@ -32,8 +44,9 @@ _DEFAULT_ACTIVATION_CONSTRAINTS = {
     "relu": bigm_relu_activation_constraint,
     "sigmoid": sigmoid_activation_constraint,
     "softplus": softplus_activation_constraint,
-    "tanh": tanh_activation_constraint
+    "tanh": tanh_activation_constraint,
 }
+
 
 class FullSpaceNNFormulation(_PyomoFormulation):
     """
@@ -52,7 +65,10 @@ class FullSpaceNNFormulation(_PyomoFormulation):
     activation_constraints : dict-like or None
         overrides the constraints generated for the specified activation functions
     """
-    def __init__(self, network_structure, layer_constraints=None, activation_constraints=None):
+
+    def __init__(
+        self, network_structure, layer_constraints=None, activation_constraints=None
+    ):
         super().__init__()
 
         self.__network_definition = network_structure
@@ -60,7 +76,9 @@ class FullSpaceNNFormulation(_PyomoFormulation):
         self.__scaled_input_bounds = network_structure.scaled_input_bounds
 
         self._layer_constraints = dict(self._supported_default_layer_constraints())
-        self._activation_constraints = dict(self._supported_default_activation_constraints())
+        self._activation_constraints = dict(
+            self._supported_default_activation_constraints()
+        )
         if layer_constraints is not None:
             self._layer_constraints.update(layer_constraints)
         if activation_constraints is not None:
@@ -68,21 +86,25 @@ class FullSpaceNNFormulation(_PyomoFormulation):
 
         # TODO: Change these to exceptions.
         network_inputs = list(self.__network_definition.input_nodes)
-        assert len(network_inputs) == 1, 'Multiple input layers are not currently supported.'
+        assert (
+            len(network_inputs) == 1
+        ), "Multiple input layers are not currently supported."
         network_outputs = list(self.__network_definition.output_nodes)
-        assert len(network_outputs) == 1, 'Multiple output layers are not currently supported.'
+        assert (
+            len(network_outputs) == 1
+        ), "Multiple output layers are not currently supported."
 
     def _supported_default_layer_constraints(self):
         return _DEFAULT_LAYER_CONSTRAINTS
 
     def _supported_default_activation_constraints(self):
         return _DEFAULT_ACTIVATION_CONSTRAINTS
-    
+
     def _build_formulation(self):
-        _setup_scaled_inputs_outputs(self.block,
-                                     self.__scaling_object,
-                                     self.__scaled_input_bounds)
-        
+        _setup_scaled_inputs_outputs(
+            self.block, self.__scaling_object, self.__scaled_input_bounds
+        )
+
         _build_neural_network_formulation(
             block=self.block,
             network_structure=self.__network_definition,
@@ -94,18 +116,24 @@ class FullSpaceNNFormulation(_PyomoFormulation):
     def input_indexes(self):
         """The indexes of the formulation inputs."""
         network_inputs = list(self.__network_definition.input_nodes)
-        assert len(network_inputs) == 1, 'Multiple input layers are not currently supported.'
+        assert (
+            len(network_inputs) == 1
+        ), "Multiple input layers are not currently supported."
         return network_inputs[0].input_indexes
 
     @property
     def output_indexes(self):
         """The indexes of the formulation output."""
         network_outputs = list(self.__network_definition.output_nodes)
-        assert len(network_outputs) == 1, 'Multiple output layers are not currently supported.'
+        assert (
+            len(network_outputs) == 1
+        ), "Multiple output layers are not currently supported."
         return network_outputs[0].output_indexes
 
 
-def _build_neural_network_formulation(block, network_structure, layer_constraints, activation_constraints):
+def _build_neural_network_formulation(
+    block, network_structure, layer_constraints, activation_constraints
+):
     """
     Adds the neural network formulation to the given Pyomo block.
 
@@ -151,10 +179,18 @@ def _build_neural_network_formulation(block, network_structure, layer_constraint
         activation_constraints_func = activation_constraints.get(layer.activation, None)
 
         if layer_constraints_func is None:
-            raise ValueError('Layer type {} is not supported by this formulation.'.format(type(layer)))
+            raise ValueError(
+                "Layer type {} is not supported by this formulation.".format(
+                    type(layer)
+                )
+            )
         if activation_constraints_func is None:
-            raise ValueError('Activation {} is not supported by this formulation.'.format(layer.activation))
-        
+            raise ValueError(
+                "Activation {} is not supported by this formulation.".format(
+                    layer.activation
+                )
+            )
+
         layer_constraints_func(block, net, layer_block, layer)
         activation_constraints_func(block, net, layer_block, layer)
 
@@ -176,13 +212,15 @@ def _build_neural_network_formulation(block, network_structure, layer_constraint
 
     @block.Constraint(output_layer.output_indexes)
     def output_assignment(b, *output_index):
-        return b.scaled_outputs[output_index] == b.layer[id(output_layer)].z[output_index]
+        return (
+            b.scaled_outputs[output_index] == b.layer[id(output_layer)].z[output_index]
+        )
 
 
 class FullSpaceSmoothNNFormulation(FullSpaceNNFormulation):
     def __init__(self, network_structure):
         """
-        This class is used for building "full-space" formulations of 
+        This class is used for building "full-space" formulations of
         neural network models composed of smooth activations (e.g., tanh,
         sigmoid, etc.)
 
@@ -198,13 +236,14 @@ class FullSpaceSmoothNNFormulation(FullSpaceNNFormulation):
             "linear": linear_activation_constraint,
             "sigmoid": sigmoid_activation_constraint,
             "softplus": softplus_activation_constraint,
-            "tanh": tanh_activation_constraint
+            "tanh": tanh_activation_constraint,
         }
+
 
 class ReluBigMFormulation(FullSpaceNNFormulation):
     def __init__(self, network_structure):
         """
-        This class is used for building "full-space" formulations of 
+        This class is used for building "full-space" formulations of
         neural network models composed of relu activations using a
         big-M formulation
 
@@ -218,13 +257,14 @@ class ReluBigMFormulation(FullSpaceNNFormulation):
     def _supported_default_activation_constraints(self):
         return {
             "linear": linear_activation_constraint,
-            "relu": bigm_relu_activation_constraint
+            "relu": bigm_relu_activation_constraint,
         }
+
 
 class ReluComplementarityFormulation(FullSpaceNNFormulation):
     def __init__(self, network_structure):
         """
-        This class is used for building "full-space" formulations of 
+        This class is used for building "full-space" formulations of
         neural network models composed of relu activations using
         a complementarity formulation (smooth represenation)
 
@@ -238,7 +278,7 @@ class ReluComplementarityFormulation(FullSpaceNNFormulation):
     def _supported_default_activation_constraints(self):
         return {
             "linear": linear_activation_constraint,
-            "relu": ComplementarityReLUActivation()
+            "relu": ComplementarityReLUActivation(),
         }
 
 
@@ -254,6 +294,7 @@ class ReducedSpaceNNFormulation(_PyomoFormulation):
     activation_functions : dict-like or None
         overrides the actual functions used for particular activations
     """
+
     def __init__(self, network_structure, activation_functions=None):
         super().__init__()
 
@@ -261,21 +302,22 @@ class ReducedSpaceNNFormulation(_PyomoFormulation):
         self.__scaling_object = network_structure.scaling_object
         self.__scaled_input_bounds = network_structure.scaled_input_bounds
 
-        
         # TODO: look into increasing support for other layers / activations
-        #self._layer_constraints = {**_DEFAULT_LAYER_CONSTRAINTS, **layer_constraints}
-        self._activation_functions = dict(self._supported_default_activation_functions())
+        # self._layer_constraints = {**_DEFAULT_LAYER_CONSTRAINTS, **layer_constraints}
+        self._activation_functions = dict(
+            self._supported_default_activation_functions()
+        )
         if activation_functions is not None:
             self._activation_functions.update(activation_functions)
 
     def _supported_default_activation_functions(self):
         return dict(_DEFAULT_ACTIVATION_FUNCTIONS)
-    
+
     def _build_formulation(self):
-        _setup_scaled_inputs_outputs(self.block,
-                                     self.__scaling_object,
-                                     self.__scaled_input_bounds)
-        
+        _setup_scaled_inputs_outputs(
+            self.block, self.__scaling_object, self.__scaled_input_bounds
+        )
+
         net = self.__network_definition
         layers = list(net.layers)
         block = self.block
@@ -287,8 +329,10 @@ class ReducedSpaceNNFormulation(_PyomoFormulation):
         # currently only support a single input layer
         input_layers = list(net.input_layers)
         if len(input_layers) != 1:
-            raise ValueError('build_formulation called with a network that has more than'
-                             ' one input layer. Only single input layers are supported.')        
+            raise ValueError(
+                "build_formulation called with a network that has more than"
+                " one input layer. Only single input layers are supported."
+            )
         input_layer = input_layers[0]
         input_layer_id = id(input_layer)
         input_layer_block = block.layer[input_layer_id]
@@ -310,10 +354,14 @@ class ReducedSpaceNNFormulation(_PyomoFormulation):
             # build the linear expressions and the activation function
             layer_id = id(layer)
             layer_block = block.layer[layer_id]
-            layer_func = reduced_space_dense_layer #layer_constraints[type(layer)]
+            layer_func = reduced_space_dense_layer  # layer_constraints[type(layer)]
             activation_func = self._activation_functions.get(layer.activation, None)
             if activation_func is None:
-                raise ValueError('Activation {} is not supported by this formulation.'.format(layer.activation))
+                raise ValueError(
+                    "Activation {} is not supported by this formulation.".format(
+                        layer.activation
+                    )
+                )
 
             layer_func(block, net, layer_block, layer, activation_func)
 
@@ -321,14 +369,19 @@ class ReducedSpaceNNFormulation(_PyomoFormulation):
         # currently only support a single output layer
         output_layers = list(net.output_layers)
         if len(output_layers) != 1:
-            raise ValueError('build_formulation called with a network that has more than'
-                             ' one output layer. Only single output layers are supported.')
+            raise ValueError(
+                "build_formulation called with a network that has more than"
+                " one output layer. Only single output layers are supported."
+            )
         output_layer = output_layers[0]
 
         @block.Constraint(output_layer.output_indexes)
         def output_assignment(b, *output_index):
             pb = b.parent_block()
-            return b.scaled_outputs[output_index] == b.layer[id(output_layer)].z[output_index]
+            return (
+                b.scaled_outputs[output_index]
+                == b.layer[id(output_layer)].z[output_index]
+            )
 
     # @property
     # def layer_constraints(self):
@@ -342,15 +395,18 @@ class ReducedSpaceNNFormulation(_PyomoFormulation):
     def input_indexes(self):
         """The indexes of the formulation inputs."""
         network_inputs = list(self.__network_definition.input_nodes)
-        assert len(network_inputs) == 1, 'Unsupported multiple network input variables'
+        assert len(network_inputs) == 1, "Unsupported multiple network input variables"
         return network_inputs[0].input_indexes
 
     @property
     def output_indexes(self):
         """The indexes of the formulation output."""
         network_outputs = list(self.__network_definition.output_nodes)
-        assert len(network_outputs) == 1, 'Unsupported multiple network output variables'
+        assert (
+            len(network_outputs) == 1
+        ), "Unsupported multiple network output variables"
         return network_outputs[0].output_indexes
+
 
 class ReducedSpaceSmoothNNFormulation(ReducedSpaceNNFormulation):
     """
@@ -362,6 +418,7 @@ class ReducedSpaceSmoothNNFormulation(ReducedSpaceNNFormulation):
     network_structure : NetworkDefinition
         the neural network definition
     """
+
     def __init__(self, network_structure):
         super().__init__(network_structure)
 
@@ -370,8 +427,9 @@ class ReducedSpaceSmoothNNFormulation(ReducedSpaceNNFormulation):
             "linear": linear_activation_function,
             "sigmoid": sigmoid_activation_function,
             "softplus": softplus_activation_function,
-            "tanh": tanh_activation_function
-            }
+            "tanh": tanh_activation_function,
+        }
+
 
 class ReluPartitionFormulation(_PyomoFormulation):
     """
@@ -385,6 +443,7 @@ class ReluPartitionFormulation(_PyomoFormulation):
     split_func : callable
         the function used to compute the splits
     """
+
     def __init__(self, network_structure, split_func=None):
         super().__init__()
 
@@ -398,9 +457,9 @@ class ReluPartitionFormulation(_PyomoFormulation):
         self.__split_func = split_func
 
     def _build_formulation(self):
-        _setup_scaled_inputs_outputs(self.block,
-                                     self.__scaling_object,
-                                     self.__scaled_input_bounds)
+        _setup_scaled_inputs_outputs(
+            self.block, self.__scaling_object, self.__scaled_input_bounds
+        )
         block = self.block
         net = self.__network_definition
         layers = list(net.layers)
@@ -432,12 +491,16 @@ class ReluPartitionFormulation(_PyomoFormulation):
             layer_block = block.layer[layer_id]
             if isinstance(layer, DenseLayer):
                 if layer.activation == "relu":
-                    partition_based_dense_relu_layer(block, net, layer_block, layer, split_func)
+                    partition_based_dense_relu_layer(
+                        block, net, layer_block, layer, split_func
+                    )
                 elif layer.activation == "linear":
                     full_space_dense_layer(block, net, layer_block, layer)
                     linear_activation_constraint(block, net, layer_block, layer)
                 else:
-                    raise ValueError("ReluPartitionFormulation supports Dense layers with relu or linear activation")
+                    raise ValueError(
+                        "ReluPartitionFormulation supports Dense layers with relu or linear activation"
+                    )
             else:
                 raise ValueError("ReluPartitionFormulation supports only Dense layers")
 
@@ -449,7 +512,10 @@ class ReluPartitionFormulation(_PyomoFormulation):
 
         @block.Constraint(input_layer.output_indexes)
         def input_assignment(b, *output_index):
-            return b.scaled_inputs[output_index] == b.layer[id(input_layer)].z[output_index]
+            return (
+                b.scaled_inputs[output_index]
+                == b.layer[id(input_layer)].z[output_index]
+            )
 
         # setup output variables constraints
         # currently only support a single output layer
@@ -459,18 +525,23 @@ class ReluPartitionFormulation(_PyomoFormulation):
 
         @block.Constraint(output_layer.output_indexes)
         def output_assignment(b, *output_index):
-            return b.scaled_outputs[output_index] == b.layer[id(output_layer)].z[output_index]
+            return (
+                b.scaled_outputs[output_index]
+                == b.layer[id(output_layer)].z[output_index]
+            )
 
     @property
     def input_indexes(self):
         """The indexes of the formulation inputs."""
         network_inputs = list(self.__network_definition.input_nodes)
-        assert len(network_inputs) == 1, 'Unsupported multiple network input variables'
+        assert len(network_inputs) == 1, "Unsupported multiple network input variables"
         return network_inputs[0].input_indexes
 
     @property
     def output_indexes(self):
         """The indexes of the formulation output."""
         network_outputs = list(self.__network_definition.output_nodes)
-        assert len(network_outputs) == 1, 'Unsupported multiple network output variables'
+        assert (
+            len(network_outputs) == 1
+        ), "Unsupported multiple network output variables"
         return network_outputs[0].output_indexes
