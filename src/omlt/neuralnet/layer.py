@@ -1,11 +1,13 @@
 """Neural network layer classes."""
 import itertools
+
 import numpy as np
+
 
 class Layer:
     """
     Base layer class.
-    
+
     Parameters
     ----------
     input_size : tuple
@@ -17,7 +19,10 @@ class Layer:
     input_index_mapper : IndexMapper or None
         map indexes from this layer index to the input layer index size
     """
-    def __init__(self, input_size, output_size, *, activation=None, input_index_mapper=None):
+
+    def __init__(
+        self, input_size, output_size, *, activation=None, input_index_mapper=None
+    ):
         assert isinstance(input_size, list)
         assert isinstance(output_size, list)
         if activation is None:
@@ -76,7 +81,7 @@ class Layer:
     def eval(self, x):
         """
         Evaluate the layer at x.
-        
+
         Parameters
         ----------
         x : array-like
@@ -101,7 +106,7 @@ class Layer:
             return np.maximum(x, 0)
         elif self.__activation == "sigmoid":
             return 1.0 / (1.0 + np.exp(-x))
-        elif self.__activation == 'tanh':
+        elif self.__activation == "tanh":
             return np.tanh(x)
         else:
             raise ValueError(f"Unknown activation function {self.__activation}")
@@ -116,11 +121,14 @@ class InputLayer(Layer):
     size : tuple
         the size of the input.
     """
+
     def __init__(self, size):
         super().__init__(size, size)
 
     def __str__(self):
-        return f"InputLayer(input_size={self.input_size}, output_size={self.output_size})"
+        return (
+            f"InputLayer(input_size={self.input_size}, output_size={self.output_size})"
+        )
 
     def _eval(self, x):
         return x
@@ -145,8 +153,23 @@ class DenseLayer(Layer):
     input_index_mapper : IndexMapper or None
         map indexes from this layer index to the input layer index size
     """
-    def __init__(self, input_size, output_size, weights, biases, *, activation=None, input_index_mapper=None):
-        super().__init__(input_size, output_size, activation=activation, input_index_mapper=input_index_mapper)
+
+    def __init__(
+        self,
+        input_size,
+        output_size,
+        weights,
+        biases,
+        *,
+        activation=None,
+        input_index_mapper=None,
+    ):
+        super().__init__(
+            input_size,
+            output_size,
+            activation=activation,
+            input_index_mapper=input_index_mapper,
+        )
         self.__weights = weights
         self.__biases = biases
 
@@ -161,7 +184,9 @@ class DenseLayer(Layer):
         return self.__biases
 
     def __str__(self):
-        return f"DenseLayer(input_size={self.input_size}, output_size={self.output_size})"
+        return (
+            f"DenseLayer(input_size={self.input_size}, output_size={self.output_size})"
+        )
 
     def _eval(self, x):
         y = np.dot(x, self.__weights) + self.__biases
@@ -189,14 +214,29 @@ class ConvLayer(Layer):
     input_index_mapper : IndexMapper or None
         map indexes from this layer index to the input layer index size
     """
-    def __init__(self, input_size, output_size, strides, kernel, *, activation=None, input_index_mapper=None):
-        super().__init__(input_size, output_size, activation=activation, input_index_mapper=input_index_mapper)
+
+    def __init__(
+        self,
+        input_size,
+        output_size,
+        strides,
+        kernel,
+        *,
+        activation=None,
+        input_index_mapper=None,
+    ):
+        super().__init__(
+            input_size,
+            output_size,
+            activation=activation,
+            input_index_mapper=input_index_mapper,
+        )
         self.__strides = strides
         self.__kernel = kernel
 
     def kernel_with_input_indexes(self, out_d, out_r, out_c):
         """
-        Returns an iterator over the kernel value and input index 
+        Returns an iterator over the kernel value and input index
         for the output at index `(out_d, out_r, out_c)`.
 
         Parameters
@@ -250,7 +290,9 @@ class ConvLayer(Layer):
             for out_r in range(rows):
                 for out_c in range(cols):
                     acc = 0.0
-                    for (k, index) in self.kernel_with_input_indexes(out_d, out_r, out_c):
+                    for (k, index) in self.kernel_with_input_indexes(
+                        out_d, out_r, out_c
+                    ):
                         acc += k * x[index]
                     y[out_d, out_r, out_c] = acc
         return y
@@ -267,6 +309,7 @@ class IndexMapper:
     output_size : tuple
         the mapped input layer's output size
     """
+
     def __init__(self, input_size, output_size):
         self.__input_size = input_size
         self.__output_size = output_size
@@ -286,4 +329,6 @@ class IndexMapper:
         return np.unravel_index(flat_index, self.__input_size)
 
     def __str__(self):
-        return f"IndexMapper(input_size={self.input_size}, output_size={self.output_size})"
+        return (
+            f"IndexMapper(input_size={self.input_size}, output_size={self.output_size})"
+        )

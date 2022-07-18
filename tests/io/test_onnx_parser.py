@@ -1,6 +1,6 @@
-import pytest
-import onnx
 import numpy as np
+import onnx
+import pytest
 
 from omlt.io.onnx import load_onnx_neural_network
 

@@ -24,6 +24,7 @@ Example:
 """
 
 import warnings
+
 import pyomo.environ as pyo
 from pyomo.core.base.block import _BlockData, declare_custom_block
 
@@ -61,7 +62,7 @@ class OmltBlockData(_BlockData):
         self.inputs = pyo.Var(self.inputs_set, initialize=0)
         self.outputs_set = pyo.Set(initialize=output_indexes)
         self.outputs = pyo.Var(self.outputs_set, initialize=0)
-    
+
     def build_formulation(self, formulation):
         """
         Call this method to construct the constraints (and possibly

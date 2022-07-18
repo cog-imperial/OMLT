@@ -1,16 +1,20 @@
-import pytest
 import numpy as np
+import pytest
 
-from omlt.neuralnet.layer import (
-    InputLayer,
-    DenseLayer,
-    IndexMapper,
-)
+from omlt.neuralnet.layer import DenseLayer, IndexMapper, InputLayer
+
 
 def test_input_layer():
     layer = InputLayer([1, 2, 3])
     input_indexes = list(layer.input_indexes)
-    assert input_indexes == [(0, 0, 0), (0, 0, 1), (0, 0, 2), (0, 1, 0), (0, 1, 1), (0, 1, 2)]
+    assert input_indexes == [
+        (0, 0, 0),
+        (0, 0, 1),
+        (0, 0, 2),
+        (0, 1, 0),
+        (0, 1, 1),
+        (0, 1, 2),
+    ]
 
 
 def test_dense_layer_with_input_index_mapper():
@@ -31,6 +35,7 @@ def test_dense_layer_with_input_index_mapper():
     assert next(index_iter) == ((1, 1), (2, 0))
     assert next(index_iter) == ((1, 2), (2, 1))
 
-@pytest.mark.skip('Need to add test for ConvLayer')
+
+@pytest.mark.skip("Need to add test for ConvLayer")
 def test_convolutional_layer():
-    assert False
+    raise AssertionError("Convoluational layer test not yet implemented")

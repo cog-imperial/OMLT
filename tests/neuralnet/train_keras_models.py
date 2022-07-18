@@ -1,11 +1,13 @@
-import tensorflow.keras as keras
-from omlt.io import write_onnx_model_with_bounds
 import pytest
+import tensorflow.keras as keras
+
 # from conftest import get_neural_network_data
-from keras.layers import Dense, Conv2D
+from keras.layers import Conv2D, Dense
 from keras.models import Model, Sequential
 from pyomo.common.fileutils import this_file_dir
 from tensorflow.keras.optimizers import Adamax
+
+from omlt.io import write_onnx_model_with_bounds
 
 
 def train_models():
@@ -322,8 +324,9 @@ def train_conv():
         )
     )
     nn.compile(optimizer=Adamax(learning_rate=0.01), loss="mae")
-    import tf2onnx
     import tempfile
+
+    import tf2onnx
 
     onnx_model, _ = tf2onnx.convert.from_keras(nn)
 
@@ -331,7 +334,7 @@ def train_conv():
     for i in range(7):
         for j in range(7):
             input_bounds[0, i, j] = (0.0, 1.0)
-    with tempfile.NamedTemporaryFile(suffix='.onnx', delete=False) as f:
+    with tempfile.NamedTemporaryFile(suffix=".onnx", delete=False) as f:
         write_onnx_model_with_bounds(f.name, onnx_model, input_bounds)
         print(f"Wrote ONNX model with bounds at {f.name}")
 

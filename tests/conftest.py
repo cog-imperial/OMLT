@@ -1,12 +1,11 @@
-import pytest
 from pathlib import Path
-import numpy as np
 
+import numpy as np
+import pytest
 from pyomo.common.fileutils import this_file_dir
 
-from omlt.neuralnet.network_definition import NetworkDefinition
 from omlt.neuralnet.layer import DenseLayer, InputLayer
-
+from omlt.neuralnet.network_definition import NetworkDefinition
 
 
 def get_neural_network_data(desc):
@@ -80,7 +79,7 @@ def two_node_network_relu():
         [1, 2],
         activation="relu",
         weights=np.array([[1.0, -1.0]]),
-        biases=np.array([0.0, 0.0])
+        biases=np.array([0.0, 0.0]),
     )
     net.add_layer(dense_layer_0)
     net.add_edge(input_layer, dense_layer_0)
@@ -90,10 +89,9 @@ def two_node_network_relu():
         [1, 2],
         activation="linear",
         weights=np.array([[1.0, 0.0], [5.0, 1.0]]),
-        biases=np.array([0.0, 0.0])
+        biases=np.array([0.0, 0.0]),
     )
     net.add_layer(dense_layer_1)
     net.add_edge(dense_layer_0, dense_layer_1)
 
     return net
-

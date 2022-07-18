@@ -24,8 +24,10 @@ def test_formulation_with_continuous_variables():
     m.gbt = OmltBlock()
     m.gbt.build_formulation(GBTBigMFormulation(GradientBoostedTreeModel(model)))
 
-    assert len(list(m.gbt.component_data_objects(pe.Var))) == 202+10 # our auto-created variables
-    assert len(list(m.gbt.component_data_objects(pe.Constraint))) == 423 # TODO: fix?
+    assert (
+        len(list(m.gbt.component_data_objects(pe.Var))) == 202 + 10
+    )  # our auto-created variables
+    assert len(list(m.gbt.component_data_objects(pe.Constraint))) == 423  # TODO: fix?
 
     assert len(m.gbt.z_l) == 160
     assert len(m.gbt.y) == 42

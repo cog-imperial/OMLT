@@ -1,5 +1,5 @@
-import pyomo.environ as pyo
 import numpy as np
+import pyomo.environ as pyo
 from pyomo.contrib.fbbt.fbbt import compute_bounds_on_expr
 
 
@@ -126,5 +126,10 @@ def partition_based_dense_relu_layer(net_block, net, layer_block, layer, split_f
         eq_13_expr += bias * b.sig
 
         b.eq_13 = pyo.Constraint(expr=eq_13_expr <= 0)
-        b.eq_14 = pyo.Constraint(expr=sum(b.z2[s] for s in range(num_splits)) + bias * (1 - b.sig) >= 0)
-        b.eq_15 = pyo.Constraint(expr=layer_block.z[output_index] == sum(b.z2[s] for s in range(num_splits)) + bias * (1 - b.sig))
+        b.eq_14 = pyo.Constraint(
+            expr=sum(b.z2[s] for s in range(num_splits)) + bias * (1 - b.sig) >= 0
+        )
+        b.eq_15 = pyo.Constraint(
+            expr=layer_block.z[output_index]
+            == sum(b.z2[s] for s in range(num_splits)) + bias * (1 - b.sig)
+        )

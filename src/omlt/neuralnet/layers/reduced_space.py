@@ -1,4 +1,3 @@
-
 def reduced_space_dense_layer(net_block, net, layer_block, layer, activation):
     r"""
     Add reduced-space formulation of the dense layer to the block
@@ -20,7 +19,7 @@ def reduced_space_dense_layer(net_block, net, layer_block, layer, activation):
     def zhat(b, *output_index):
         # dense layers multiply only the last dimension of
         # their inputs
-        expr = 0.0 
+        expr = 0.0
         for local_index, input_index in layer.input_indexes_with_input_layer_indexes:
             w = layer.weights[local_index[-1], output_index[-1]]
             expr += prev_layer_block.z[input_index] * w
@@ -28,7 +27,7 @@ def reduced_space_dense_layer(net_block, net, layer_block, layer, activation):
         expr += layer.biases[output_index[-1]]
 
         return expr
-        
+
     @layer_block.Expression(layer.output_indexes)
     def z(b, *output_index):
         return activation(b.zhat[output_index])

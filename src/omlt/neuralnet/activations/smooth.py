@@ -1,5 +1,6 @@
 from pyomo.environ import exp, log, tanh
 
+
 def softplus_activation_function(x):
     r"""
     Applies the softplus function.
@@ -13,6 +14,7 @@ def softplus_activation_function(x):
     """
     return log(exp(x) + 1)
 
+
 def sigmoid_activation_function(x):
     r"""
     Applies the sigmoid function.
@@ -20,11 +22,12 @@ def sigmoid_activation_function(x):
     .. math::
 
         \begin{align*}
-        y &= \frac{1}{1 + exp(-\hat x)} 
+        y &= \frac{1}{1 + exp(-\hat x)}
         \end{align*}
 
     """
     return 1 / (1 + exp(-x))
+
 
 def tanh_activation_function(x):
     r"""
@@ -39,6 +42,7 @@ def tanh_activation_function(x):
     """
     return tanh(x)
 
+
 def softplus_activation_constraint(net_block, net, layer_block, layer):
     r"""
     Softplus activation constraint generator
@@ -52,7 +56,10 @@ def softplus_activation_constraint(net_block, net, layer_block, layer):
         \end{align*}
 
     """
-    return smooth_monotonic_activation_constraint(net_block, net, layer_block, layer, softplus_activation_function)
+    return smooth_monotonic_activation_constraint(
+        net_block, net, layer_block, layer, softplus_activation_function
+    )
+
 
 def sigmoid_activation_constraint(net_block, net, layer_block, layer):
     r"""
@@ -67,8 +74,10 @@ def sigmoid_activation_constraint(net_block, net, layer_block, layer):
         \end{align*}
 
     """
-    return smooth_monotonic_activation_constraint(net_block, net, layer_block, layer,
-                                                  sigmoid_activation_function)
+    return smooth_monotonic_activation_constraint(
+        net_block, net, layer_block, layer, sigmoid_activation_function
+    )
+
 
 def tanh_activation_constraint(net_block, net, layer_block, layer):
     r"""
@@ -83,7 +92,10 @@ def tanh_activation_constraint(net_block, net, layer_block, layer):
         \end{align*}
 
     """
-    return smooth_monotonic_activation_constraint(net_block, net, layer_block, layer, tanh_activation_function)
+    return smooth_monotonic_activation_constraint(
+        net_block, net, layer_block, layer, tanh_activation_function
+    )
+
 
 def smooth_monotonic_activation_constraint(net_block, net, layer_block, layer, fcn):
     r"""
@@ -99,6 +111,7 @@ def smooth_monotonic_activation_constraint(net_block, net, layer_block, layer, f
         \end{align*}
 
     """
+
     @layer_block.Constraint(layer.output_indexes)
     def _smooth_monotonic_activation_constraint(b, *output_index):
         zhat_lb, zhat_ub = b.zhat[output_index].bounds

@@ -1,6 +1,7 @@
 import pyomo.environ as pyo
 import pyomo.mpec as mpec
 
+
 def bigm_relu_activation_constraint(net_block, net, layer_block, layer):
     r"""
     Big-M ReLU activation formulation.
@@ -45,20 +46,21 @@ def bigm_relu_activation_constraint(net_block, net, layer_block, layer):
         layer_block._big_m_ub[output_index] = ub
         layer_block.z[output_index].setub(max(0, ub))
 
-        layer_block._z_lower_bound[output_index] = (
-            layer_block.z[output_index] >= 0
-        )
+        layer_block._z_lower_bound[output_index] = layer_block.z[output_index] >= 0
 
         layer_block._z_lower_bound_zhat[output_index] = (
             layer_block.z[output_index] >= layer_block.zhat[output_index]
         )
 
         layer_block._z_upper_bound[output_index] = (
-            layer_block.z[output_index] <= layer_block._big_m_ub[output_index] * layer_block.q[output_index]
+            layer_block.z[output_index]
+            <= layer_block._big_m_ub[output_index] * layer_block.q[output_index]
         )
 
-        layer_block._z_upper_bound_zhat[output_index] = (
-            layer_block.z[output_index] <= layer_block.zhat[output_index] - layer_block._big_m_lb[output_index] * (1.0 - layer_block.q[output_index])
+        layer_block._z_upper_bound_zhat[output_index] = layer_block.z[
+            output_index
+        ] <= layer_block.zhat[output_index] - layer_block._big_m_lb[output_index] * (
+            1.0 - layer_block.q[output_index]
         )
 
 
@@ -83,15 +85,15 @@ class ComplementarityReLUActivation:
         \end{align*}
 
     """
-    def __init__(self, transform = None):
+
+    def __init__(self, transform=None):
         if transform is None:
             transform = "mpec.simple_nonlinear"
         self.transform = transform
 
     def __call__(self, net_block, net, layer_block, layer):
         layer_block._complementarity = mpec.Complementarity(
-            layer.output_indexes,
-            rule=_relu_complementarity
+            layer.output_indexes, rule=_relu_complementarity
         )
         xfrm = pyo.TransformationFactory(self.transform)
         xfrm.apply_to(layer_block)
@@ -99,6 +101,5 @@ class ComplementarityReLUActivation:
 
 def _relu_complementarity(b, *output_index):
     return mpec.complements(
-        b.z[output_index] - b.zhat[output_index] >= 0,
-        b.z[output_index] >= 0
+        b.z[output_index] - b.zhat[output_index] >= 0, b.z[output_index] >= 0
     )
