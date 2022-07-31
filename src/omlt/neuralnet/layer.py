@@ -242,8 +242,8 @@ class TwoDimensionalLayer(Layer):
         out_c : int
             the output column.
         """
-        kernel_d = self.kernel_depth()
-        [kernel_r, kernel_c] = self.kernel_shape()
+        kernel_d = self.kernel_depth
+        [kernel_r, kernel_c] = self.kernel_shape
         [rows_stride, cols_stride] = self.__strides
         start_in_d = 0
         start_in_r = out_r * rows_stride
@@ -374,9 +374,10 @@ class ConvLayer(TwoDimensionalLayer):
         #             local_index = (start_in_d + k_d, start_in_r + k_r, start_in_c + k_c)
         #             yield k_v, mapper(local_index)
 
-        (k_d, k_r, k_c), input_index = self._kernel_index_with_input_indexes(out_d, out_r, out_c)
-        k_v = self.__kernel[out_d, k_d, k_r, k_c]
-        yield k_v, input_index
+        kernel_index_with_input_indexes = self._kernel_index_with_input_indexes(out_d, out_r, out_c)
+        for (k_d, k_r, k_c), input_index in self._kernel_index_with_input_indexes(out_d, out_r, out_c):
+            k_v = self.__kernel[out_d, k_d, k_r, k_c]
+            yield k_v, input_index
 
 
     @property
