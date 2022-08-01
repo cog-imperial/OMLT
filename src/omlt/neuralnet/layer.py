@@ -296,20 +296,21 @@ class PoolingLayer(TwoDimensionalLayer):
     """
     _POOL_FUNCTIONS = {"max": max}
 
-    def __init__(self, input_size, output_size, strides, pool_func_name, kernel_shape, *, activation=None, input_index_mapper=None):
+    def __init__(self, input_size, output_size, strides, pool_func_name, kernel_shape, kernel_depth, *, activation=None, input_index_mapper=None):
         super().__init__(input_size, output_size, strides, activation=activation, input_index_mapper=input_index_mapper)
         self._pool_func_name = pool_func_name
         self._kernel_shape = kernel_shape
+        self._kernel_depth = kernel_depth
 
     @property
     def kernel_shape(self):
         """Return the shape of the kernel"""
-        return self._kernel_shape[1:]
+        return self._kernel_shape
 
     @property
     def kernel_depth(self):
         """Return the depth of the kernel"""
-        return self._kernel_shape[0]
+        return self._kernel_depth
 
     def __str__(self):
         return f"PoolingLayer(input_size={self.input_size}, output_size={self.output_size}, strides={self.strides}, kernel_shape={self.kernel_shape}), pool_func_name={self._pool_func_name}"
@@ -330,7 +331,7 @@ class ConvLayer(TwoDimensionalLayer):
     input_size : tuple
         the size of the input.
     output_size : tuple
-        the size of the output.
+        the size of the output..
     strides : matrix-like
         stride of the cross-correlation kernel.
     kernel : matrix-like

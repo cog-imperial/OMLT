@@ -358,11 +358,19 @@ class NetworkParser:
         assert len(node.input) == 1
         input_layer, transformer = self._node_input_and_transformer(node.input[0])
         input_output_size = _get_input_output_size(input_layer, transformer)
+
+        # currently only support 2D image with channels.
+        # ignore batches
+        assert len(input_output_size) in [3, 4]
+        if len(input_output_size) == 4:
+            input_output_size = input_output_size[1:]
+
         in_channels = input_output_size[0]
 
         attr = _collect_attributes(node)
-        strides = attr["strides"]
-        kernel_shape = attr["kernel_shape"]
+        kernel_depth = attr["kernel_shape"][0]
+        kernel_shape = attr["kernel_shape"][1:]
+        strides = attr["strides"] if "strides" in attr else [1] * len(kernel_shape)
 
         # check only kernel shape, stride, storage order are set
         # everything else is not supported
@@ -378,7 +386,7 @@ class NetworkParser:
 
         output_size = [in_channels]
         for i in range(1, len(input_output_size)):
-            output_size.append(output_shape_wrapper((input_output_size[i] - kernel_shape[i]) / strides[i] + 1))
+            output_size.append(output_shape_wrapper((input_output_size[i] - kernel_shape[i - 1]) / strides[i - 1] + 1))
 
         activation = "linear"
         if len(next_nodes) == 1:
@@ -394,15 +402,13 @@ class NetworkParser:
             output_size,
             strides,
             pool_func_name,
-            kernel_shape,
+            tuple(kernel_shape),
+            kernel_depth,
             activation=activation,
             input_index_mapper=transformer
         )
         self._node_map[node.name] = pooling_layer
         self._node_map[node.output[0]] = pooling_layer
-
-        # currently only support 2D image with channels
-        assert len(input_output_size) == 3
 
         return next_nodes, pooling_layer, [input_layer]
 
