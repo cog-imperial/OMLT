@@ -255,8 +255,15 @@ class TwoDimensionalLayer(Layer):
         for k_d in range(kernel_d):
             for k_r in range(kernel_r):
                 for k_c in range(kernel_c):
-                    local_index = (start_in_d + k_d, start_in_r + k_r, start_in_c + k_c)
-                    yield (k_d, k_r, k_c), mapper(local_index)
+                    input_index = mapper((start_in_d + k_d, start_in_r + k_r, start_in_c + k_c))
+                    assert len(input_index) == len(self.input_size)
+                    # don't yield an out-of-bounds input index;
+                    # can happen if ceil mode is enabled for pooling layers
+                    # as this could require using a partial kernel
+                    # even though we loop over ALL kernel indexes.
+                    if not all(input_index[i] < self.input_size[i] for i in range(len(input_index))):
+                        continue
+                    yield (k_d, k_r, k_c), input_index
 
     def _eval(self, x):
         y = np.empty(shape=self.output_size)
@@ -359,23 +366,6 @@ class ConvLayer(TwoDimensionalLayer):
         out_c : int
             the output column.
         """
-        # [_, kernel_d, kernel_r, kernel_c] = self.__kernel.shape
-        # [rows_stride, cols_stride] = self.__strides
-        # start_in_d = 0
-        # start_in_r = out_r * rows_stride
-        # start_in_c = out_c * cols_stride
-        # mapper = lambda x: x
-        # if self.input_index_mapper is not None:
-        #     mapper = self.input_index_mapper
-
-        # for k_d in range(kernel_d):
-        #     for k_r in range(kernel_r):
-        #         for k_c in range(kernel_c):
-        #             k_v = self.__kernel[out_d, k_d, k_r, k_c]
-        #             local_index = (start_in_d + k_d, start_in_r + k_r, start_in_c + k_c)
-        #             yield k_v, mapper(local_index)
-
-        kernel_index_with_input_indexes = self._kernel_index_with_input_indexes(out_d, out_r, out_c)
         for (k_d, k_r, k_c), input_index in self._kernel_index_with_input_indexes(out_d, out_r, out_c):
             k_v = self.__kernel[out_d, k_d, k_r, k_c]
             yield k_v, input_index
@@ -398,19 +388,6 @@ class ConvLayer(TwoDimensionalLayer):
 
     def __str__(self):
         return f"ConvLayer(input_size={self.input_size}, output_size={self.output_size}, strides={self.strides}, kernel_shape={self.kernel_shape})"
-
-    # def _eval(self, x):
-    #     y = np.empty(shape=self.output_size)
-    #     assert len(self.output_size) == 3
-    #     [depth, rows, cols] = self.output_size
-    #     for out_d in range(depth):
-    #         for out_r in range(rows):
-    #             for out_c in range(cols):
-    #                 acc = 0.0
-    #                 for (k, index) in self.kernel_with_input_indexes(out_d, out_r, out_c):
-    #                     acc += k * x[index]
-    #                 y[out_d, out_r, out_c] = acc
-    #     return y
 
     def _eval_at_index(self, x, out_d, out_r, out_c):
         acc = 0.0
