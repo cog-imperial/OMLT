@@ -353,17 +353,20 @@ class NetworkParser:
         assert node.op_type in _POOLING_OP_TYPES
         pool_func_name = "max"
 
-        assert len(node.output) in [1, 2]
+        # ONNX network should not contain indices output from MaxPool - not supported by OMLT
+        assert len(node.output) == 1
 
         assert len(node.input) == 1
         input_layer, transformer = self._node_input_and_transformer(node.input[0])
         input_output_size = _get_input_output_size(input_layer, transformer)
 
         # currently only support 2D image with channels.
-        # ignore batches
-        assert len(input_output_size) in [3, 4]
         if len(input_output_size) == 4:
+            # this means there is an extra dimension for number of batches
+            # batches not supported, so only accept if they're not there or there is only 1 batch
+            assert input_output_size[0] == 1
             input_output_size = input_output_size[1:]
+        assert len(input_output_size) == 3
 
         in_channels = input_output_size[0]
 
