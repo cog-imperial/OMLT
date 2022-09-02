@@ -228,7 +228,7 @@ class TwoDimensionalLayer(Layer):
         """Return the depth of the kernel"""
         raise NotImplementedError()
 
-    def _kernel_index_with_input_indexes(self, out_d, out_r, out_c):
+    def kernel_index_with_input_indexes(self, out_d, out_r, out_c):
         """
         Returns an iterator over the index within the kernel and input index 
         for the output at index `(out_d, out_r, out_c)`.
@@ -323,7 +323,7 @@ class PoolingLayer(TwoDimensionalLayer):
         return f"PoolingLayer(input_size={self.input_size}, output_size={self.output_size}, strides={self.strides}, kernel_shape={self.kernel_shape}), pool_func_name={self._pool_func_name}"
 
     def _eval_at_index(self, x, out_d, out_r, out_c):
-        vals = [x[index] for (_, index) in self._kernel_index_with_input_indexes(out_d, out_r, out_c)]
+        vals = [x[index] for (_, index) in self.kernel_index_with_input_indexes(out_d, out_r, out_c)]
         assert self._pool_func_name in PoolingLayer._POOL_FUNCTIONS
         pool_func = PoolingLayer._POOL_FUNCTIONS[self._pool_func_name]
         return pool_func(vals)
@@ -366,7 +366,7 @@ class ConvLayer(TwoDimensionalLayer):
         out_c : int
             the output column.
         """
-        for (k_d, k_r, k_c), input_index in self._kernel_index_with_input_indexes(out_d, out_r, out_c):
+        for (k_d, k_r, k_c), input_index in self.kernel_index_with_input_indexes(out_d, out_r, out_c):
             k_v = self.__kernel[out_d, k_d, k_r, k_c]
             yield k_v, input_index
 
@@ -424,6 +424,11 @@ class IndexMapper:
     def __call__(self, index):
         flat_index = np.ravel_multi_index(index, self.__output_size)
         return np.unravel_index(flat_index, self.__input_size)
+
+    def inverse(self, index):
+        """Perform the inverse mapping, i.e. map output indexes to input indexes"""
+        flat_index = np.ravel_multi_index(index, self.input_size)
+        return np.unravel_index(flat_index, self.output_size)
 
     def __str__(self):
         return (
