@@ -90,9 +90,8 @@ class Layer:
         x : array-like
             the input tensor. Must have size `self.input_size`.
         """
-        if self.__input_index_mapper is not None:
-            x = np.reshape(x, self.__input_index_mapper.output_size)
-        assert x.shape == tuple(self.input_size)
+        x_reshaped = np.reshape(x, self.__input_index_mapper.output_size) if self.__input_index_mapper is not None else x[:]
+        assert x_reshaped.shape == tuple(self.input_size)
         y = self._eval(x)
         return self._apply_activation(y)
 
@@ -268,7 +267,7 @@ class TwoDimensionalLayer(Layer):
                     # even though we loop over ALL kernel indexes.
                     if not all(input_index[i] < self.input_size[i] for i in range(len(input_index))):
                         continue
-                    yield (k_d, k_r, k_c), input_index
+                    yield (k_d, k_r, k_c), mapper(input_index)
 
     def _eval(self, x):
         y = np.empty(shape=self.output_size)

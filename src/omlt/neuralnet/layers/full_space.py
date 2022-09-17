@@ -94,14 +94,10 @@ def full_space_maxpool_layer(net_block, net, layer_block, layer):
     for output_index in layer.output_indexes:
         out_d, out_r, out_c = output_index
 
-        input_index_mapper = layer.input_index_mapper
-        if input_index_mapper is None:
-            input_index_mapper = IndexMapper(layer.input_size, layer.input_size)
-
         # cannot compute an expr for the max,
         # as pyomo expressions cannot contain functions whose output depends on a comparison (except piecewise linear functions)
         # so compute lb and ub directly
-        bounds = (input_layer_block.z[input_index_mapper(input_index)].bounds for _, input_index in layer.kernel_index_with_input_indexes(out_d, out_r, out_c))
+        bounds = (input_layer_block.z[input_index].bounds for _, input_index in layer.kernel_index_with_input_indexes(out_d, out_r, out_c))
         lbs, ubs = zip(*bounds)
         layer_block.zhat[output_index].setlb(max(lbs))
         layer_block.zhat[output_index].setub(max(ubs))
@@ -110,14 +106,12 @@ def full_space_maxpool_layer(net_block, net, layer_block, layer):
 
         l = 1
         for _, input_index in layer.kernel_index_with_input_indexes(out_d, out_r, out_c):
-            input_layer_index = input_index_mapper(input_index)
-
             layer_block._z_upper_bound_maxpool[output_index, l] = (
-                layer_block.zhat[output_index] <= input_layer_block.z[input_layer_index] 
+                layer_block.zhat[output_index] <= input_layer_block.z[input_index] 
                                                 + sum(layer_block.q_maxpool[output_index, k] * n_plus[l - 1, k - 1] for k in layer_block.flat_input_indexes_maxpool)
             )
             layer_block._z_lower_bound_maxpool[output_index, l] = (
-                layer_block.zhat[output_index] >= input_layer_block.z[input_layer_index]
+                layer_block.zhat[output_index] >= input_layer_block.z[input_index]
             )
 
             l += 1
