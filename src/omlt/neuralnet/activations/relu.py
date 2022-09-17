@@ -27,40 +27,40 @@ def bigm_relu_activation_constraint(net_block, net, layer_block, layer):
 
     where :math:`l` and :math:`u` are, respectively, lower and upper bounds of :math:`\hat{z_i}`.
     """
-    layer_block.q = pyo.Var(layer.output_indexes, within=pyo.Binary)
+    layer_block.q_relu = pyo.Var(layer.output_indexes, within=pyo.Binary)
 
-    layer_block._z_lower_bound = pyo.Constraint(layer.output_indexes)
-    layer_block._z_lower_bound_zhat = pyo.Constraint(layer.output_indexes)
-    layer_block._z_upper_bound = pyo.Constraint(layer.output_indexes)
-    layer_block._z_upper_bound_zhat = pyo.Constraint(layer.output_indexes)
+    layer_block._z_lower_bound_relu = pyo.Constraint(layer.output_indexes)
+    layer_block._z_lower_bound_zhat_relu = pyo.Constraint(layer.output_indexes)
+    layer_block._z_upper_bound_relu = pyo.Constraint(layer.output_indexes)
+    layer_block._z_upper_bound_zhat_relu = pyo.Constraint(layer.output_indexes)
 
     # set dummy parameters here to avoid warning message from Pyomo
-    layer_block._big_m_lb = pyo.Param(layer.output_indexes, default=-1e6, mutable=True)
-    layer_block._big_m_ub = pyo.Param(layer.output_indexes, default=1e6, mutable=True)
+    layer_block._big_m_lb_relu = pyo.Param(layer.output_indexes, default=-1e6, mutable=True)
+    layer_block._big_m_ub_relu = pyo.Param(layer.output_indexes, default=1e6, mutable=True)
 
     for output_index in layer.output_indexes:
         lb, ub = layer_block.zhat[output_index].bounds
-        layer_block._big_m_lb[output_index] = lb
+        layer_block._big_m_lb_relu[output_index] = lb
         layer_block.z[output_index].setlb(0)
 
-        layer_block._big_m_ub[output_index] = ub
+        layer_block._big_m_ub_relu[output_index] = ub
         layer_block.z[output_index].setub(max(0, ub))
 
-        layer_block._z_lower_bound[output_index] = layer_block.z[output_index] >= 0
+        layer_block._z_lower_bound_relu[output_index] = layer_block.z[output_index] >= 0
 
-        layer_block._z_lower_bound_zhat[output_index] = (
+        layer_block._z_lower_bound_zhat_relu[output_index] = (
             layer_block.z[output_index] >= layer_block.zhat[output_index]
         )
 
-        layer_block._z_upper_bound[output_index] = (
+        layer_block._z_upper_bound_relu[output_index] = (
             layer_block.z[output_index]
-            <= layer_block._big_m_ub[output_index] * layer_block.q[output_index]
+            <= layer_block._big_m_ub_relu[output_index] * layer_block.q_relu[output_index]
         )
 
-        layer_block._z_upper_bound_zhat[output_index] = layer_block.z[
+        layer_block._z_upper_bound_zhat_relu[output_index] = layer_block.z[
             output_index
-        ] <= layer_block.zhat[output_index] - layer_block._big_m_lb[output_index] * (
-            1.0 - layer_block.q[output_index]
+        ] <= layer_block.zhat[output_index] - layer_block._big_m_lb_relu[output_index] * (
+            1.0 - layer_block.q_relu[output_index]
         )
 
 

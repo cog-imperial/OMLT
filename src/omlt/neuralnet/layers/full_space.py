@@ -3,7 +3,7 @@ import pyomo.environ as pyo
 from pyomo.contrib.fbbt.fbbt import compute_bounds_on_expr
 
 from omlt.neuralnet.activations import NON_INCREASING_ACTIVATIONS
-from omlt.neuralnet.layer import ConvLayer, PoolingLayer
+from omlt.neuralnet.layer import ConvLayer, IndexMapper, PoolingLayer
 
 # TODO: Change asserts to exceptions with messages (or ensure they
 # TODO:      are trapped higher up the call stack)
@@ -49,7 +49,7 @@ def full_space_conv_layer(net_block, net, layer_block, layer):
     """ 
     # If activation is an increasing function,
     #  move it onto successor max pooling layer (if it exists) for tighter max pooling formulation
-    if layer.activation not in NON_INCREASING_ACTIVATIONS:
+    if layer.activation not in NON_INCREASING_ACTIVATIONS and layer.activation != "linear":
         succ_layers = list(net.successors(layer))
         if len(succ_layers) == 1:
             succ_layer = succ_layers[0]
@@ -83,35 +83,40 @@ def full_space_maxpool_layer(net_block, net, layer_block, layer):
 
     num_kernel_elements = np.product(layer.kernel_shape)
     assert num_kernel_elements >= 1
-    layer_block.flat_input_indexes = pyo.RangeSet(1, num_kernel_elements)
-    layer_block.q = pyo.Var(layer.output_indexes, layer_block.flat_input_indexes, within=pyo.Binary)
-    layer_block._z_upper_bound = pyo.Constraint(layer_block.output_indexes, layer_block.flat_input_indexes)
-    layer_block._z_lower_bound = pyo.Constraint(layer_block.output_indexes, layer_block.flat_input_indexes)
-    n_plus = np.full((num_kernel_elements, num_kernel_elements), 1000)
+    layer_block.flat_input_indexes_maxpool = pyo.RangeSet(1, num_kernel_elements)
+    layer_block.q_maxpool = pyo.Var(layer.output_indexes, layer_block.flat_input_indexes_maxpool, within=pyo.Binary)
+    layer_block._q_sum_maxpool = pyo.Constraint(layer.output_indexes)
+    layer_block._z_upper_bound_maxpool = pyo.Constraint(layer.output_indexes, layer_block.flat_input_indexes_maxpool)
+    layer_block._z_lower_bound_maxpool = pyo.Constraint(layer.output_indexes, layer_block.flat_input_indexes_maxpool)
+    n_plus = np.full((num_kernel_elements, num_kernel_elements), 1000000)
     np.fill_diagonal(n_plus, 0)
 
     for output_index in layer.output_indexes:
         out_d, out_r, out_c = output_index
 
+        input_index_mapper = layer.input_index_mapper
+        if input_index_mapper is None:
+            input_index_mapper = IndexMapper(layer.input_size, layer.input_size)
+
         # cannot compute an expr for the max,
         # as pyomo expressions cannot contain functions whose output depends on a comparison (except piecewise linear functions)
         # so compute lb and ub directly
-        bounds = (input_layer_block.z[input_index].bounds for _, input_index in layer.kernel_index_with_input_indexes(out_d, out_r, out_c))
+        bounds = (input_layer_block.z[input_index_mapper(input_index)].bounds for _, input_index in layer.kernel_index_with_input_indexes(out_d, out_r, out_c))
         lbs, ubs = zip(*bounds)
         layer_block.zhat[output_index].setlb(max(lbs))
         layer_block.zhat[output_index].setub(max(ubs))
 
+        layer_block._q_sum_maxpool[output_index] = (1 == sum(layer_block.q_maxpool[output_index, q_index] for q_index in layer_block.flat_input_indexes_maxpool))
+
         l = 1
         for _, input_index in layer.kernel_index_with_input_indexes(out_d, out_r, out_c):
-            input_index_mapper = layer.input_index_mapper
-            if input_index_mapper is None:
-                input_index_mapper = lambda x: x
-            input_layer_index = input_index_mapper.inverse(input_index)
+            input_layer_index = input_index_mapper(input_index)
 
-            layer_block._z_upper_bound[output_index, l] = (
-                layer_block.zhat[output_index] <= input_layer_block.z[input_layer_index] + sum(layer_block.q[output_index, k] * n_plus[l - 1, k - 1] for k in layer_block.flat_input_indexes)
+            layer_block._z_upper_bound_maxpool[output_index, l] = (
+                layer_block.zhat[output_index] <= input_layer_block.z[input_layer_index] 
+                                                + sum(layer_block.q_maxpool[output_index, k] * n_plus[l - 1, k - 1] for k in layer_block.flat_input_indexes_maxpool)
             )
-            layer_block._z_lower_bound[output_index, l] = (
+            layer_block._z_lower_bound_maxpool[output_index, l] = (
                 layer_block.zhat[output_index] >= input_layer_block.z[input_layer_index]
             )
 

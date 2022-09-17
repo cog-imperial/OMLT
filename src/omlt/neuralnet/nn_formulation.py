@@ -177,23 +177,23 @@ def _build_neural_network_formulation(
             continue
         layer_id = id(layer)
         layer_block = block.layer[layer_id]
-        layer_constraints_func = layer_constraints.get(type(layer), None)
-        activation_constraints_func = activation_constraints.get(layer.activation, None)
 
+        layer_constraints_func = layer_constraints.get(type(layer), None)
         if layer_constraints_func is None:
             raise ValueError(
                 "Layer type {} is not supported by this formulation.".format(
                     type(layer)
                 )
             )
+        layer_constraints_func(block, net, layer_block, layer)
+
+        activation_constraints_func = activation_constraints.get(layer.activation, None)
         if activation_constraints_func is None:
             raise ValueError(
                 "Activation {} is not supported by this formulation.".format(
                     layer.activation
                 )
             )
-
-        layer_constraints_func(block, net, layer_block, layer)
         activation_constraints_func(block, net, layer_block, layer)
 
     # setup input variables constraints

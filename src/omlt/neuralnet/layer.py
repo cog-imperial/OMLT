@@ -23,11 +23,9 @@ class Layer:
     ):
         assert isinstance(input_size, list)
         assert isinstance(output_size, list)
-        if activation is None:
-            activation = "linear"
         self.__input_size = input_size
         self.__output_size = output_size
-        self.__activation = activation
+        self.activation = activation
         self.__input_index_mapper = input_index_mapper
 
     @property
@@ -44,6 +42,13 @@ class Layer:
     def activation(self):
         """Return the activation function"""
         return self.__activation
+
+    @activation.setter
+    def activation(self, new_activation):
+        """Change the activation function"""
+        if new_activation is None:
+            new_activation = "linear"
+        self.__activation = new_activation
 
     @property
     def input_index_mapper(self):
@@ -255,7 +260,7 @@ class TwoDimensionalLayer(Layer):
         for k_d in range(kernel_d):
             for k_r in range(kernel_r):
                 for k_c in range(kernel_c):
-                    input_index = mapper((start_in_d + k_d, start_in_r + k_r, start_in_c + k_c))
+                    input_index = (start_in_d + k_d, start_in_r + k_r, start_in_c + k_c)
                     assert len(input_index) == len(self.input_size)
                     # don't yield an out-of-bounds input index;
                     # can happen if ceil mode is enabled for pooling layers
@@ -424,11 +429,6 @@ class IndexMapper:
     def __call__(self, index):
         flat_index = np.ravel_multi_index(index, self.__output_size)
         return np.unravel_index(flat_index, self.__input_size)
-
-    def inverse(self, index):
-        """Perform the inverse mapping, i.e. map output indexes to input indexes"""
-        flat_index = np.ravel_multi_index(index, self.input_size)
-        return np.unravel_index(flat_index, self.output_size)
 
     def __str__(self):
         return (
