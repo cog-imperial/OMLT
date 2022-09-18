@@ -81,15 +81,12 @@ def full_space_maxpool_layer(net_block, net, layer_block, layer):
     assert isinstance(input_layer, ConvLayer)
     assert input_layer.activation == "linear" # TODO - add support for non-increasing activation functions on preceding convolutional layer
 
-    num_kernel_elements = np.product(layer.kernel_shape)
-    assert num_kernel_elements >= 1
-    layer_block.flat_input_indexes_maxpool = pyo.RangeSet(1, num_kernel_elements)
-    layer_block.q_maxpool = pyo.Var(layer.output_indexes, layer_block.flat_input_indexes_maxpool, within=pyo.Binary)
+    assert np.product(layer.kernel_shape) >= 1
+    layer_block._kernel_indexes = pyo.Set(initialize=(kernel_index for kernel_index, _ in layer.kernel_index_with_input_indexes(0, 0, 0)))
+    layer_block.q_maxpool = pyo.Var(layer.output_indexes, layer_block._kernel_indexes, within=pyo.Binary)
     layer_block._q_sum_maxpool = pyo.Constraint(layer.output_indexes)
-    layer_block._z_upper_bound_maxpool = pyo.Constraint(layer.output_indexes, layer_block.flat_input_indexes_maxpool)
-    layer_block._z_lower_bound_maxpool = pyo.Constraint(layer.output_indexes, layer_block.flat_input_indexes_maxpool)
-    n_plus = np.full((num_kernel_elements, num_kernel_elements), 1000000)
-    np.fill_diagonal(n_plus, 0)
+    layer_block._z_upper_bound_maxpool = pyo.Constraint(layer.output_indexes, layer_block._kernel_indexes)
+    layer_block._z_lower_bound_maxpool = pyo.Constraint(layer.output_indexes, layer_block._kernel_indexes)
 
     for output_index in layer.output_indexes:
         out_d, out_r, out_c = output_index
@@ -102,19 +99,24 @@ def full_space_maxpool_layer(net_block, net, layer_block, layer):
         layer_block.zhat[output_index].setlb(max(lbs))
         layer_block.zhat[output_index].setub(max(ubs))
 
-        layer_block._q_sum_maxpool[output_index] = (1 == sum(layer_block.q_maxpool[output_index, q_index] for q_index in layer_block.flat_input_indexes_maxpool))
+        layer_block._q_sum_maxpool[output_index] = (1 == sum(layer_block.q_maxpool[output_index, q_index] for q_index in layer_block._kernel_indexes))
 
-        l = 1
-        for _, input_index in layer.kernel_index_with_input_indexes(out_d, out_r, out_c):
+        for l, input_index in layer.kernel_index_with_input_indexes(out_d, out_r, out_c):
             layer_block._z_upper_bound_maxpool[output_index, l] = (
                 layer_block.zhat[output_index] <= input_layer_block.z[input_index] 
-                                                + sum(layer_block.q_maxpool[output_index, k] * n_plus[l - 1, k - 1] for k in layer_block.flat_input_indexes_maxpool)
+                                                + sum(layer_block.q_maxpool[output_index, k] * _calculate_n_plus(output_index, l, k, layer, input_layer_block) 
+                                                        for k in layer_block._kernel_indexes)
             )
             layer_block._z_lower_bound_maxpool[output_index, l] = (
                 layer_block.zhat[output_index] >= input_layer_block.z[input_index]
             )
 
-            l += 1
+def _calculate_n_plus(out_index, l, k, layer, input_layer_block):
+    if l == k:
+        return 0
+    x_l_index, x_k_index = layer.get_input_index(out_index, l), layer.get_input_index(out_index, k)
+    return max(x_k_bound - x_l_bound for x_k_bound in input_layer_block.z[x_k_index].bounds for x_l_bound in input_layer_block.z[x_l_index].bounds)
+    
 
 def _input_layer_and_block(net_block, net, layer):
     input_layers = list(net.predecessors(layer))

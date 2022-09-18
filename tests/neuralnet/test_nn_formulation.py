@@ -264,13 +264,13 @@ def test_maxpool_FullSpaceNNFormulation():
     m.neural_net_block = OmltBlock()
 
     inputs = np.array([[[ 0, -2, -1, -1,  0, -2],
-       [-2,  1, -2,  1, -1, -2],
-       [-2,  0,  1, -2, -2,  0],
-       [-1,  0,  0, -1,  1,  0],
-       [-1, -2,  1, -1,  1, -1],
+       [-2,  1, 10,  1, -1, -2],
+       [-2,  -9,  1, -2, -5,  0],
+       [-1,  5,  5, -1,  1,  0],
+       [4, -2,  10, -1,  1, -1],
        [-1,  1, -1,  0,  1, -1],
-       [-2,  0,  0, -2,  0, -1],
-       [ 0,  0, -1, -1, -1,  1]]])
+       [-10,  0,  0, -2, 7, -1],
+       [ 0,  0, -1, -1, -1,  -1]]])
 
     net, y = _maxpool_conv_network(inputs)
     m.neural_net_block.build_formulation(FullSpaceNNFormulation(net))

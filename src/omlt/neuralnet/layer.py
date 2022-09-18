@@ -269,6 +269,16 @@ class TwoDimensionalLayer(Layer):
                         continue
                     yield (k_d, k_r, k_c), mapper(input_index)
 
+    def get_input_index(self, out_index, kernel_index):
+        """
+        Returns the input index corresponding to the output at `out_index`
+        and the kernel index `kernel_index`.
+        """
+        out_d, out_r, out_c = out_index
+        for candidate_kernel_index, input_index in self.kernel_index_with_input_indexes(out_d, out_r, out_c):
+            if kernel_index == candidate_kernel_index:
+                return input_index
+    
     def _eval(self, x):
         y = np.empty(shape=self.output_size)
         assert len(self.output_size) == 3
