@@ -1,8 +1,15 @@
-import numpy as np
 import math
+
+import numpy as np
 from onnx import numpy_helper
 
-from omlt.neuralnet.layer import ConvLayer, DenseLayer, PoolingLayer, IndexMapper, InputLayer
+from omlt.neuralnet.layer import (
+    ConvLayer,
+    DenseLayer,
+    IndexMapper,
+    InputLayer,
+    PoolingLayer,
+)
 from omlt.neuralnet.network_definition import NetworkDefinition
 
 _ACTIVATION_OP_TYPES = ["Relu", "Sigmoid", "LogSoftmax"]
@@ -15,6 +22,7 @@ class NetworkParser:
     ----------
     * https://github.com/onnx/onnx/blob/master/docs/Operators.md
     """
+
     def __init__(self):
         self._reset_state()
 
@@ -389,7 +397,11 @@ class NetworkParser:
 
         output_size = [in_channels]
         for i in range(1, len(input_output_size)):
-            output_size.append(output_shape_wrapper((input_output_size[i] - kernel_shape[i - 1]) / strides[i - 1] + 1))
+            output_size.append(
+                output_shape_wrapper(
+                    (input_output_size[i] - kernel_shape[i - 1]) / strides[i - 1] + 1
+                )
+            )
 
         activation = "linear"
         if len(next_nodes) == 1:
@@ -408,7 +420,7 @@ class NetworkParser:
             tuple(kernel_shape),
             kernel_depth,
             activation=activation,
-            input_index_mapper=transformer
+            input_index_mapper=transformer,
         )
         self._node_map[node.name] = pooling_layer
         self._node_map[node.output[0]] = pooling_layer
@@ -445,6 +457,7 @@ def _parse_constant_value(node):
     attr = _collect_attributes(node)
     value = attr["value"]
     return value
+
 
 def _get_input_output_size(input_layer, transformer):
     if transformer is not None:

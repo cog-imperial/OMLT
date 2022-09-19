@@ -1,6 +1,8 @@
 """Neural network layer classes."""
 import itertools
+
 import numpy as np
+
 
 class Layer:
     """
@@ -90,7 +92,11 @@ class Layer:
         x : array-like
             the input tensor. Must have size `self.input_size`.
         """
-        x_reshaped = np.reshape(x, self.__input_index_mapper.output_size) if self.__input_index_mapper is not None else x[:]
+        x_reshaped = (
+            np.reshape(x, self.__input_index_mapper.output_size)
+            if self.__input_index_mapper is not None
+            else x[:]
+        )
         assert x_reshaped.shape == tuple(self.input_size)
         y = self._eval(x)
         return self._apply_activation(y)
@@ -123,6 +129,7 @@ class InputLayer(Layer):
     size : tuple
         the size of the input.
     """
+
     def __init__(self, size):
         super().__init__(size, size)
 
@@ -213,8 +220,22 @@ class TwoDimensionalLayer(Layer):
     input_index_mapper : IndexMapper or None
         map indexes from this layer index to the input layer index size
     """
-    def __init__(self, input_size, output_size, strides, *, activation=None, input_index_mapper=None):
-        super().__init__(input_size, output_size, activation=activation, input_index_mapper=input_index_mapper)
+
+    def __init__(
+        self,
+        input_size,
+        output_size,
+        strides,
+        *,
+        activation=None,
+        input_index_mapper=None,
+    ):
+        super().__init__(
+            input_size,
+            output_size,
+            activation=activation,
+            input_index_mapper=input_index_mapper,
+        )
         self.__strides = strides
 
     @property
@@ -234,7 +255,7 @@ class TwoDimensionalLayer(Layer):
 
     def kernel_index_with_input_indexes(self, out_d, out_r, out_c):
         """
-        Returns an iterator over the index within the kernel and input index 
+        Returns an iterator over the index within the kernel and input index
         for the output at index `(out_d, out_r, out_c)`.
 
         Parameters
@@ -265,7 +286,10 @@ class TwoDimensionalLayer(Layer):
                     # can happen if ceil mode is enabled for pooling layers
                     # as this could require using a partial kernel
                     # even though we loop over ALL kernel indexes.
-                    if not all(input_index[i] < self.input_size[i] for i in range(len(input_index))):
+                    if not all(
+                        input_index[i] < self.input_size[i]
+                        for i in range(len(input_index))
+                    ):
                         continue
                     yield (k_d, k_r, k_c), mapper(input_index)
 
@@ -275,10 +299,12 @@ class TwoDimensionalLayer(Layer):
         and the kernel index `kernel_index`.
         """
         out_d, out_r, out_c = out_index
-        for candidate_kernel_index, input_index in self.kernel_index_with_input_indexes(out_d, out_r, out_c):
+        for candidate_kernel_index, input_index in self.kernel_index_with_input_indexes(
+            out_d, out_r, out_c
+        ):
             if kernel_index == candidate_kernel_index:
                 return input_index
-    
+
     def _eval(self, x):
         y = np.empty(shape=self.output_size)
         assert len(self.output_size) == 3
@@ -291,12 +317,12 @@ class TwoDimensionalLayer(Layer):
 
     def _eval_at_index(self, x, out_d, out_r, out_c):
         raise NotImplementedError()
-    
+
 
 class PoolingLayer(TwoDimensionalLayer):
     """
     Two-dimensional pooling layer.
-    
+
     Parameters
     ----------
     input_size : tuple
@@ -315,10 +341,28 @@ class PoolingLayer(TwoDimensionalLayer):
     input_index_mapper : IndexMapper or None
         map indexes from this layer index to the input layer index size
     """
+
     _POOL_FUNCTIONS = {"max": max}
 
-    def __init__(self, input_size, output_size, strides, pool_func_name, kernel_shape, kernel_depth, *, activation=None, input_index_mapper=None):
-        super().__init__(input_size, output_size, strides, activation=activation, input_index_mapper=input_index_mapper)
+    def __init__(
+        self,
+        input_size,
+        output_size,
+        strides,
+        pool_func_name,
+        kernel_shape,
+        kernel_depth,
+        *,
+        activation=None,
+        input_index_mapper=None,
+    ):
+        super().__init__(
+            input_size,
+            output_size,
+            strides,
+            activation=activation,
+            input_index_mapper=input_index_mapper,
+        )
         self._pool_func_name = pool_func_name
         self._kernel_shape = kernel_shape
         self._kernel_depth = kernel_depth
@@ -337,7 +381,10 @@ class PoolingLayer(TwoDimensionalLayer):
         return f"PoolingLayer(input_size={self.input_size}, output_size={self.output_size}, strides={self.strides}, kernel_shape={self.kernel_shape}), pool_func_name={self._pool_func_name}"
 
     def _eval_at_index(self, x, out_d, out_r, out_c):
-        vals = [x[index] for (_, index) in self.kernel_index_with_input_indexes(out_d, out_r, out_c)]
+        vals = [
+            x[index]
+            for (_, index) in self.kernel_index_with_input_indexes(out_d, out_r, out_c)
+        ]
         assert self._pool_func_name in PoolingLayer._POOL_FUNCTIONS
         pool_func = PoolingLayer._POOL_FUNCTIONS[self._pool_func_name]
         return pool_func(vals)
@@ -362,13 +409,29 @@ class ConvLayer(TwoDimensionalLayer):
     input_index_mapper : IndexMapper or None
         map indexes from this layer index to the input layer index size
     """
-    def __init__(self, input_size, output_size, strides, kernel, *, activation=None, input_index_mapper=None):
-        super().__init__(input_size, output_size, strides, activation=activation, input_index_mapper=input_index_mapper)
+
+    def __init__(
+        self,
+        input_size,
+        output_size,
+        strides,
+        kernel,
+        *,
+        activation=None,
+        input_index_mapper=None,
+    ):
+        super().__init__(
+            input_size,
+            output_size,
+            strides,
+            activation=activation,
+            input_index_mapper=input_index_mapper,
+        )
         self.__kernel = kernel
 
     def kernel_with_input_indexes(self, out_d, out_r, out_c):
         """
-        Returns an iterator over the kernel value and input index 
+        Returns an iterator over the kernel value and input index
         for the output at index `(out_d, out_r, out_c)`.
 
         Parameters
@@ -380,10 +443,11 @@ class ConvLayer(TwoDimensionalLayer):
         out_c : int
             the output column.
         """
-        for (k_d, k_r, k_c), input_index in self.kernel_index_with_input_indexes(out_d, out_r, out_c):
+        for (k_d, k_r, k_c), input_index in self.kernel_index_with_input_indexes(
+            out_d, out_r, out_c
+        ):
             k_v = self.__kernel[out_d, k_d, k_r, k_c]
             yield k_v, input_index
-
 
     @property
     def kernel_shape(self):
@@ -421,6 +485,7 @@ class IndexMapper:
     output_size : tuple
         the mapped input layer's output size
     """
+
     def __init__(self, input_size, output_size):
         self.__input_size = input_size
         self.__output_size = output_size
