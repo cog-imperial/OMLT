@@ -81,12 +81,12 @@ def full_space_maxpool_layer(net_block, net, layer_block, layer):
     assert isinstance(input_layer, ConvLayer)
     assert input_layer.activation == "linear" # TODO - add support for non-increasing activation functions on preceding convolutional layer
 
-    assert np.product(layer.kernel_shape) >= 1
+    # note kernel indexes are the same set of values for any output index, so wlog get kernel indexes for (0, 0, 0)
     layer_block._kernel_indexes = pyo.Set(initialize=(kernel_index for kernel_index, _ in layer.kernel_index_with_input_indexes(0, 0, 0)))
     layer_block.q_maxpool = pyo.Var(layer.output_indexes, layer_block._kernel_indexes, within=pyo.Binary)
     layer_block._q_sum_maxpool = pyo.Constraint(layer.output_indexes)
-    layer_block._z_upper_bound_maxpool = pyo.Constraint(layer.output_indexes, layer_block._kernel_indexes)
-    layer_block._z_lower_bound_maxpool = pyo.Constraint(layer.output_indexes, layer_block._kernel_indexes)
+    layer_block._zhat_upper_bound = pyo.Constraint(layer.output_indexes, layer_block._kernel_indexes)
+    layer_block._zhat_lower_bound = pyo.Constraint(layer.output_indexes, layer_block._kernel_indexes)
 
     for output_index in layer.output_indexes:
         out_d, out_r, out_c = output_index
@@ -99,15 +99,15 @@ def full_space_maxpool_layer(net_block, net, layer_block, layer):
         layer_block.zhat[output_index].setlb(max(lbs))
         layer_block.zhat[output_index].setub(max(ubs))
 
-        layer_block._q_sum_maxpool[output_index] = (1 == sum(layer_block.q_maxpool[output_index, q_index] for q_index in layer_block._kernel_indexes))
+        layer_block._q_sum_maxpool[output_index] = (1 == sum(layer_block.q_maxpool[output_index, k] for k in layer_block._kernel_indexes))
 
         for l, input_index in layer.kernel_index_with_input_indexes(out_d, out_r, out_c):
-            layer_block._z_upper_bound_maxpool[output_index, l] = (
+            layer_block._zhat_upper_bound[output_index, l] = (
                 layer_block.zhat[output_index] <= input_layer_block.z[input_index] 
                                                 + sum(layer_block.q_maxpool[output_index, k] * _calculate_n_plus(output_index, l, k, layer, input_layer_block) 
                                                         for k in layer_block._kernel_indexes)
             )
-            layer_block._z_lower_bound_maxpool[output_index, l] = (
+            layer_block._zhat_lower_bound[output_index, l] = (
                 layer_block.zhat[output_index] >= input_layer_block.z[input_index]
             )
 
