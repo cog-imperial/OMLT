@@ -463,3 +463,4 @@ def _get_input_output_size(input_layer, transformer):
     if transformer is not None:
         return transformer.output_size
     return input_layer.output_size
+
