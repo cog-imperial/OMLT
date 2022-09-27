@@ -4,11 +4,11 @@ import numpy as np
 from onnx import numpy_helper
 
 from omlt.neuralnet.layer import (
-    ConvLayer,
+    ConvLayer2D,
     DenseLayer,
     IndexMapper,
     InputLayer,
-    PoolingLayer,
+    PoolingLayer2D,
 )
 from omlt.neuralnet.network_definition import NetworkDefinition
 
@@ -328,7 +328,7 @@ class NetworkParser:
         # expect 2d image with channels
         assert len(input_output_size) == 3
 
-        conv_layer = ConvLayer(
+        conv_layer = ConvLayer2D(
             input_output_size,
             output_size,
             strides,
@@ -412,7 +412,7 @@ class NetworkParser:
                 activation = maybe_node.op_type.lower()
                 next_nodes = maybe_next_nodes
 
-        pooling_layer = PoolingLayer(
+        pooling_layer = PoolingLayer2D(
             input_output_size,
             output_size,
             strides,

@@ -3,7 +3,7 @@ import pyomo.environ as pyo
 from pyomo.contrib.fbbt.fbbt import compute_bounds_on_expr
 
 from omlt.neuralnet.activations import NON_INCREASING_ACTIVATIONS
-from omlt.neuralnet.layer import ConvLayer, IndexMapper, PoolingLayer
+from omlt.neuralnet.layer import ConvLayer2D, IndexMapper, PoolingLayer2D
 
 
 # TODO: Change asserts to exceptions with messages (or ensure they
@@ -39,7 +39,7 @@ def full_space_dense_layer(net_block, net, layer_block, layer):
         return layer_block.zhat[output_index] == expr
 
 
-def full_space_conv_layer(net_block, net, layer_block, layer):
+def full_space_conv2d_layer(net_block, net, layer_block, layer):
     r"""
     Add full-space formulation of the 2-D convolutional layer to the block
 
@@ -57,7 +57,7 @@ def full_space_conv_layer(net_block, net, layer_block, layer):
         succ_layers = list(net.successors(layer))
         if len(succ_layers) == 1:
             succ_layer = succ_layers[0]
-            if isinstance(succ_layer, PoolingLayer):
+            if isinstance(succ_layer, PoolingLayer2D):
                 # activation applied after convolution layer, so there shouldn't be an activation after max pooling too
                 assert succ_layer.activation == "linear"
                 succ_layer.activation = layer.activation
@@ -81,9 +81,9 @@ def full_space_conv_layer(net_block, net, layer_block, layer):
         return layer_block.zhat[output_index] == expr
 
 
-def full_space_maxpool_layer(net_block, net, layer_block, layer):
+def full_space_maxpool2d_layer(net_block, net, layer_block, layer):
     input_layer, input_layer_block = _input_layer_and_block(net_block, net, layer)
-    assert isinstance(input_layer, ConvLayer)
+    assert isinstance(input_layer, ConvLayer2D)
     assert (
         input_layer.activation == "linear"
     )  # TODO - add support for non-increasing activation functions on preceding convolutional layer

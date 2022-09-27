@@ -2,11 +2,11 @@ import numpy as np
 import pytest
 
 from omlt.neuralnet.layer import (
-    ConvLayer,
+    ConvLayer2D,
     DenseLayer,
     IndexMapper,
     InputLayer,
-    PoolingLayer,
+    PoolingLayer2D,
 )
 
 
@@ -71,7 +71,7 @@ def test_convolutional_layer():
             ]
         ]
     ).astype(np.float32)
-    layer = ConvLayer([1, 7, 5], [1, 3, 3], [2, 1], weights)
+    layer = ConvLayer2D([1, 7, 5], [1, 3, 3], [2, 1], weights)
     y = layer.eval(x)
     assert np.array_equal(y, [[[42, 49, 56], [112, 119, 126], [182, 189, 196]]])
 
@@ -91,6 +91,6 @@ def test_maxpool_layer():
             ]
         ]
     ).astype(np.float32)
-    layer = PoolingLayer([1, 4, 4], [1, 2, 2], [2, 2], "max", [3, 3], 1)
+    layer = PoolingLayer2D([1, 4, 4], [1, 2, 2], [2, 2], "max", [3, 3], 1)
     y = layer.eval(x)
     assert np.array_equal(y, [[[11, 12], [15, 16]]])

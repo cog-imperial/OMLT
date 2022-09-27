@@ -11,11 +11,11 @@ from omlt.neuralnet import (
     ReducedSpaceSmoothNNFormulation,
 )
 from omlt.neuralnet.layer import (
-    ConvLayer,
+    ConvLayer2D,
     DenseLayer,
     IndexMapper,
     InputLayer,
-    PoolingLayer,
+    PoolingLayer2D,
 )
 
 
@@ -227,7 +227,7 @@ def _maxpool_conv_network(inputs):
     net.add_layer(input_layer)
 
     conv_layer_1_kernel = np.array([[[[-3, 0], [1, 5]]]])
-    conv_layer_1 = ConvLayer(
+    conv_layer_1 = ConvLayer2D(
         input_layer.output_size, [1, 4, 5], [2, 1], conv_layer_1_kernel
     )
     net.add_layer(conv_layer_1)
@@ -236,7 +236,7 @@ def _maxpool_conv_network(inputs):
     # have two consecutive conv layers,
     # to check that conv layer behaves normally when a non-max pool layer succeeds it
     conv_layer_2_kernel = np.array([[[[-2, -2], [-2, -2]]]])
-    conv_layer_2 = ConvLayer(
+    conv_layer_2 = ConvLayer2D(
         conv_layer_1.output_size,
         [1, 3, 4],
         [1, 1],
@@ -247,14 +247,14 @@ def _maxpool_conv_network(inputs):
     net.add_edge(conv_layer_1, conv_layer_2)
 
     # test normal ConvLayer -> MaxPoolLayer structure, with monotonic increasing activation part of ConvLayer
-    maxpool_layer_1 = PoolingLayer(
+    maxpool_layer_1 = PoolingLayer2D(
         conv_layer_2.output_size, [1, 1, 2], [2, 2], "max", [3, 2], 1
     )
     net.add_layer(maxpool_layer_1)
     net.add_edge(conv_layer_2, maxpool_layer_1)
 
     conv_layer_3_kernel = np.array([[[[4]]]])
-    conv_layer_3 = ConvLayer(
+    conv_layer_3 = ConvLayer2D(
         maxpool_layer_1.output_size, [1, 1, 2], [1, 1], conv_layer_3_kernel
     )
     net.add_layer(conv_layer_3)
@@ -266,7 +266,7 @@ def _maxpool_conv_network(inputs):
     maxpool_layer_2_index_mapper = IndexMapper(
         conv_layer_3.output_size, maxpool_layer_2_input_size
     )
-    maxpool_layer_2 = PoolingLayer(
+    maxpool_layer_2 = PoolingLayer2D(
         maxpool_layer_2_input_size,
         [1, 1, 1],
         [1, 1],

@@ -203,7 +203,7 @@ class DenseLayer(Layer):
         return y
 
 
-class TwoDimensionalLayer(Layer):
+class Layer2D(Layer):
     """
     Abstract two-dimensional layer that downsamples values in a kernel to a single value.
 
@@ -319,7 +319,7 @@ class TwoDimensionalLayer(Layer):
         raise NotImplementedError()
 
 
-class PoolingLayer(TwoDimensionalLayer):
+class PoolingLayer2D(Layer2D):
     """
     Two-dimensional pooling layer.
 
@@ -385,12 +385,12 @@ class PoolingLayer(TwoDimensionalLayer):
             x[index]
             for (_, index) in self.kernel_index_with_input_indexes(out_d, out_r, out_c)
         ]
-        assert self._pool_func_name in PoolingLayer._POOL_FUNCTIONS
-        pool_func = PoolingLayer._POOL_FUNCTIONS[self._pool_func_name]
+        assert self._pool_func_name in PoolingLayer2D._POOL_FUNCTIONS
+        pool_func = PoolingLayer2D._POOL_FUNCTIONS[self._pool_func_name]
         return pool_func(vals)
 
 
-class ConvLayer(TwoDimensionalLayer):
+class ConvLayer2D(Layer2D):
     """
     Two-dimensional convolutional layer.
 

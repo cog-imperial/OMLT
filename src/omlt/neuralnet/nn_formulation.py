@@ -17,11 +17,11 @@ from omlt.neuralnet.activations import (
     tanh_activation_constraint,
     tanh_activation_function,
 )
-from omlt.neuralnet.layer import ConvLayer, DenseLayer, InputLayer, PoolingLayer
+from omlt.neuralnet.layer import ConvLayer2D, DenseLayer, InputLayer, PoolingLayer2D
 from omlt.neuralnet.layers.full_space import (
-    full_space_conv_layer,
+    full_space_conv2d_layer,
     full_space_dense_layer,
-    full_space_maxpool_layer,
+    full_space_maxpool2d_layer,
 )
 from omlt.neuralnet.layers.partition_based import (
     default_partition_split_func,
@@ -37,8 +37,8 @@ def _ignore_input_layer():
 _DEFAULT_LAYER_CONSTRAINTS = {
     InputLayer: _ignore_input_layer,
     DenseLayer: full_space_dense_layer,
-    ConvLayer: full_space_conv_layer,
-    PoolingLayer: full_space_maxpool_layer,
+    ConvLayer2D: full_space_conv2d_layer,
+    PoolingLayer2D: full_space_maxpool2d_layer,
 }
 
 _DEFAULT_ACTIVATION_CONSTRAINTS = {
