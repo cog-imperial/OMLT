@@ -82,6 +82,40 @@ def full_space_conv2d_layer(net_block, net, layer_block, layer):
 
 
 def full_space_maxpool2d_layer(net_block, net, layer_block, layer):
+    r"""
+    Add Big-M max pooling formulation.
+
+    .. math::
+
+        \begin{align*}
+            \hat{z_i} \leq w\cdot x_{i}^{l} + \sum_{k{=}1}^{d} M_{i}^{l,k} q_{i}^{k} && 
+            \forall i \in N,\ \forall l \in \{ 1,...,d \} \\
+            \hat{z_i} \geq w\cdot x_{i}^{l} && \forall i \in N,\ \forall l \in \{ 1,...,d \} \\
+            (x_{i},\hat{z_i},q_{i}) \in [L_{i},U_{i}] \times \mathbb{R} \times \Delta^{d} && \forall i \in N \\
+            q_{i} \in \{ 0,1 \}^{d} && \forall i \in N \\
+            M_{i}^{l,k} = w\cdot max\{ L_{i}^{l} - L_{i}^{k}, 
+            \\ L_{i}^{l} - U_{i}^{k}, U_{i}^{l} - L_{i}^{k}, U_{i}^{l} - U_{i}^{k} \} 
+            && \forall i \in N,\ \forall l \in \{ 1,...,d \},\ \forall k \in \{ 1,...,d \}
+        \end{align*}
+
+    where :math:`w` is the convolution kernel on the preceding convolutional layer; :math:`d` is the number of features
+    in each of the :math:`N` max pooling windows; 
+    :math:`x_{i}` is the set of :math:`d` features in the :math:`i`-th max pooling window;
+    :math:`\Delta^{d}` is the :math:`d`-dimensional simplex; and [L_{i},U_{i}] are the bounds on x_{i}.
+
+    NOTE This formulation is adapted from the Anderson et al. (2020) formulation, section 5.1, with the following changes:
+
+    - OMLT presently does not support biases on convolutional layers. Bias terms from the original formulation 
+      are removed.
+
+    - The original formulation formulates the max of :math:`w^{l}\cdot x + b^{l}`, varying the weights :math:`w` 
+      and biases :math:`b` and keeping the input :math:`x` constant. Since convolutional layers have constant weights 
+      and biases convolved with varying portions of the feature map, this formulation formulates the max of 
+      :math:`w\cdot x^{l} + b`.
+
+    - Due to the above 2 changes, the calculation of :math:`N^{l,k}` is changed.
+    
+    """
     input_layer, input_layer_block = _input_layer_and_block(net_block, net, layer)
     assert isinstance(input_layer, ConvLayer2D)
     assert (
@@ -129,6 +163,8 @@ def full_space_maxpool2d_layer(net_block, net, layer_block, layer):
         for l, input_index in layer.kernel_index_with_input_indexes(
             out_d, out_r, out_c
         ):
+            # Since biases are zero,
+            # input_layer_block.z[input_index] is equal to w dot x in the formulation.
             layer_block._zhat_upper_bound[output_index, l] = layer_block.zhat[
                 output_index
             ] <= input_layer_block.z[input_index] + sum(
