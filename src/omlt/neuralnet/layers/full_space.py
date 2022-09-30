@@ -50,18 +50,17 @@ def full_space_conv2d_layer(net_block, net, layer_block, layer):
     """
     # If activation is an increasing function,
     #  move it onto successor max pooling layer (if it exists) for tighter max pooling formulation
+    succ_layers = list(net.successors(layer))
+    succ_layer = succ_layers[0] if len(succ_layers) == 1 else None
     if (
-        layer.activation not in NON_INCREASING_ACTIVATIONS
+        isinstance(succ_layer, PoolingLayer2D)
+        and layer.activation not in NON_INCREASING_ACTIVATIONS
         and layer.activation != "linear"
     ):
-        succ_layers = list(net.successors(layer))
-        if len(succ_layers) == 1:
-            succ_layer = succ_layers[0]
-            if isinstance(succ_layer, PoolingLayer2D):
-                # activation applied after convolution layer, so there shouldn't be an activation after max pooling too
-                assert succ_layer.activation == "linear"
-                succ_layer.activation = layer.activation
-                layer.activation = "linear"
+        # activation applied after convolution layer, so there shouldn't be an activation after max pooling too
+        assert succ_layer.activation == "linear"
+        succ_layer.activation = layer.activation
+        layer.activation = "linear"
 
     input_layer, input_layer_block = _input_layer_and_block(net_block, net, layer)
 
