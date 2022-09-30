@@ -28,6 +28,8 @@ class Layer:
         self.__input_size = input_size
         self.__output_size = output_size
         self.activation = activation
+        if input_index_mapper is None:
+            input_index_mapper = IndexMapper(input_size, input_size)
         self.__input_index_mapper = input_index_mapper
 
     @property
@@ -83,7 +85,7 @@ class Layer:
         """Return a list of the output indexes"""
         return list(itertools.product(*[range(v) for v in self.__output_size]))
 
-    def eval(self, x):
+    def eval_single_layer(self, x):
         """
         Evaluate the layer at x.
 
@@ -98,7 +100,7 @@ class Layer:
             else x[:]
         )
         assert x_reshaped.shape == tuple(self.input_size)
-        y = self._eval(x)
+        y = self._eval(x_reshaped)
         return self._apply_activation(y)
 
     def __repr__(self):
@@ -291,7 +293,7 @@ class Layer2D(Layer):
                         for i in range(len(input_index))
                     ):
                         continue
-                    yield (k_d, k_r, k_c), mapper(input_index)
+                    yield (k_d, k_r, k_c), input_index
 
     def get_input_index(self, out_index, kernel_index):
         """

@@ -147,7 +147,7 @@ def full_space_maxpool2d_layer(net_block, net, layer_block, layer):
         # as pyomo expressions cannot contain functions whose output depends on a comparison (except piecewise linear functions)
         # so compute lb and ub directly
         bounds = (
-            input_layer_block.z[input_index].bounds
+            input_layer_block.z[layer.input_index_mapper(input_index)].bounds
             for _, input_index in layer.kernel_index_with_input_indexes(
                 out_d, out_r, out_c
             )
@@ -163,6 +163,8 @@ def full_space_maxpool2d_layer(net_block, net, layer_block, layer):
         for l, input_index in layer.kernel_index_with_input_indexes(
             out_d, out_r, out_c
         ):
+            input_index = layer.input_index_mapper(input_index)
+
             # Since biases are zero,
             # input_layer_block.z[input_index] is equal to w dot x in the formulation.
             layer_block._zhat_upper_bound[output_index, l] = layer_block.zhat[
@@ -180,9 +182,8 @@ def full_space_maxpool2d_layer(net_block, net, layer_block, layer):
 def _calculate_n_plus(out_index, l, k, layer, input_layer_block):
     if l == k:
         return 0
-    x_l_index, x_k_index = layer.get_input_index(out_index, l), layer.get_input_index(
-        out_index, k
-    )
+    x_l_index = layer.input_index_mapper(layer.get_input_index(out_index, l))
+    x_k_index = layer.input_index_mapper(layer.get_input_index(out_index, k))
     return max(
         x_k_bound - x_l_bound
         for x_k_bound in input_layer_block.z[x_k_index].bounds

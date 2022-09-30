@@ -56,9 +56,9 @@ def two_node_network(activation, input_value):
     net.add_layer(dense_layer_1)
     net.add_edge(dense_layer_0, dense_layer_1)
 
-    y = input_layer.eval(np.asarray([input_value]))
-    y = dense_layer_0.eval(y)
-    y = dense_layer_1.eval(y)
+    y = input_layer.eval_single_layer(np.asarray([input_value]))
+    y = dense_layer_0.eval_single_layer(y)
+    y = dense_layer_1.eval_single_layer(y)
 
     return net, y
 
@@ -279,12 +279,12 @@ def _maxpool_conv_network(inputs):
     net.add_layer(maxpool_layer_2)
     net.add_edge(conv_layer_3, maxpool_layer_2)
 
-    y = input_layer.eval(inputs)
-    y = conv_layer_1.eval(y)
-    y = conv_layer_2.eval(y)
-    y = maxpool_layer_1.eval(y)
-    y = conv_layer_3.eval(y)
-    y = maxpool_layer_2.eval(y)
+    y = input_layer.eval_single_layer(inputs)
+    y = conv_layer_1.eval_single_layer(y)
+    y = conv_layer_2.eval_single_layer(y)
+    y = maxpool_layer_1.eval_single_layer(y)
+    y = conv_layer_3.eval_single_layer(y)
+    y = maxpool_layer_2.eval_single_layer(y)
 
     return net, y
 
