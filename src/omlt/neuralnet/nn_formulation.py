@@ -17,10 +17,11 @@ from omlt.neuralnet.activations import (
     tanh_activation_constraint,
     tanh_activation_function,
 )
-from omlt.neuralnet.layer import ConvLayer, DenseLayer, InputLayer
+from omlt.neuralnet.layer import ConvLayer2D, DenseLayer, InputLayer, PoolingLayer2D
 from omlt.neuralnet.layers.full_space import (
-    full_space_conv_layer,
+    full_space_conv2d_layer,
     full_space_dense_layer,
+    full_space_maxpool2d_layer,
 )
 from omlt.neuralnet.layers.partition_based import (
     default_partition_split_func,
@@ -36,7 +37,8 @@ def _ignore_input_layer():
 _DEFAULT_LAYER_CONSTRAINTS = {
     InputLayer: _ignore_input_layer,
     DenseLayer: full_space_dense_layer,
-    ConvLayer: full_space_conv_layer,
+    ConvLayer2D: full_space_conv2d_layer,
+    PoolingLayer2D: full_space_maxpool2d_layer,
 }
 
 _DEFAULT_ACTIVATION_CONSTRAINTS = {
@@ -175,23 +177,23 @@ def _build_neural_network_formulation(
             continue
         layer_id = id(layer)
         layer_block = block.layer[layer_id]
-        layer_constraints_func = layer_constraints.get(type(layer), None)
-        activation_constraints_func = activation_constraints.get(layer.activation, None)
 
+        layer_constraints_func = layer_constraints.get(type(layer), None)
         if layer_constraints_func is None:
             raise ValueError(
                 "Layer type {} is not supported by this formulation.".format(
                     type(layer)
                 )
             )
+        layer_constraints_func(block, net, layer_block, layer)
+
+        activation_constraints_func = activation_constraints.get(layer.activation, None)
         if activation_constraints_func is None:
             raise ValueError(
                 "Activation {} is not supported by this formulation.".format(
                     layer.activation
                 )
             )
-
-        layer_constraints_func(block, net, layer_block, layer)
         activation_constraints_func(block, net, layer_block, layer)
 
     # setup input variables constraints
