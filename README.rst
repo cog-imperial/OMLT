@@ -14,6 +14,11 @@
 .. image:: https://readthedocs.org/projects/omlt/badge/?version=latest
      :target: https://omlt.readthedocs.io/en/latest/?badge=latest
      :alt: Documentation Status
+     
+.. image:: https://user-images.githubusercontent.com/31448377/202018691-dfacb0f8-620d-4d48-b918-2fa8b8da3d26.png
+     :target: https://www.coin-or.org/
+     :alt: COIN
+     :width: 130px
 
 
 ===============================================
