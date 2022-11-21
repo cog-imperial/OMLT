@@ -1,9 +1,13 @@
 import tempfile
-
 import numpy as np
+import pytest
+
+from omlt.io import onnx_available
+if not onnx_available:
+    pytest.skip(allow_module_level=True)
+    
 import onnx
 import onnxruntime as ort
-import pytest
 from pyomo.environ import *
 
 from omlt import OffsetScaling, OmltBlock

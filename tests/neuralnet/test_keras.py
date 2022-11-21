@@ -1,6 +1,11 @@
 import numpy as np
 import pyomo.environ as pyo
 import pytest
+
+from omlt.io import keras_available
+if not keras_available:
+    pytest.skip(allow_module_level=True)
+
 import tensorflow.keras as keras
 from conftest import get_neural_network_data
 

@@ -1,4 +1,9 @@
 from pathlib import Path
+import pytest
+
+from omlt.io import onnx_available
+if not onnx_available:
+    pytest.skip(allow_module_level=True)
 
 import onnx
 import pyomo.environ as pe
