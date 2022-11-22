@@ -1,10 +1,12 @@
 import pytest
 
 from omlt.io import keras_available
+
 if not keras_available:
     pytest.skip(allow_module_level=True)
 
 import tensorflow.keras as keras
+
 from omlt.io.keras.keras_reader import load_keras_sequential
 
 

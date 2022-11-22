@@ -3,6 +3,7 @@ import pyomo.environ as pyo
 import pytest
 
 from omlt.io import keras_available
+
 if not keras_available:
     pytest.skip(allow_module_level=True)
 

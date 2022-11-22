@@ -2,10 +2,12 @@ import numpy as np
 import pytest
 
 from omlt.io import onnx_available
+
 if not onnx_available:
     pytest.skip(allow_module_level=True)
 
 import onnx
+
 from omlt.io.onnx import load_onnx_neural_network
 
 
