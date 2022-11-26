@@ -6,7 +6,6 @@ from omlt.dependencies import onnx, onnx_available
 if onnx_available:
     from omlt.io.onnx import load_onnx_neural_network
 
-
 @pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
 def test_linear_131(datadir):
     model = onnx.load(datadir.file("keras_linear_131.onnx"))
@@ -69,6 +68,7 @@ def test_conv(datadir):
     assert layers[1].kernel_shape == (2, 2)
 
 
+@pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
 def test_maxpool(datadir):
     model = onnx.load(datadir.file("maxpool_2d.onnx"))
     net = load_onnx_neural_network(model)
