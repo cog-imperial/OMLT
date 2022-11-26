@@ -3,8 +3,8 @@ import tempfile
 import numpy as np
 import pytest
 
+from omlt.dependencies import onnx, onnx_available
 from pyomo.common.dependencies import DeferredImportError
-from omlt.io import onnx, onnx_available
 
 if onnx_available:
     import onnxruntime as ort
@@ -19,6 +19,7 @@ from pyomo.environ import *
 from omlt import OffsetScaling, OmltBlock
 from omlt.neuralnet import FullSpaceNNFormulation
 
+@pytest.mark.skipif(onnx_available, reason="Test only valid when onnx not available")
 def test_onnx_not_available_exception(datadir):
     with pytest.raises(DeferredImportError):
         neural_net = onnx.load(datadir.file("keras_linear_131_relu.onnx"))
