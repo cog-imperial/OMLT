@@ -42,8 +42,8 @@ jobs:
 #      - name: "Run tox targets with full testing environment for ${{ matrix.python-version }}"
 #        run: "tox -e fullenv"
 
-#      - name: "Run tox targets with lean testing environment for ${{ matrix.python-version }}"
-#        run: "tox -e leanenv"
+      - name: "Run tox targets with lean testing environment for ${{ matrix.python-version }}"
+        run: "tox -re leanenv"
 
 #      - name: "Run tox notebooks targets for ${{ matrix.python-version }}"
 #        run: |
