@@ -1,4 +1,3 @@
-import numpy as np
 import pytest
 
 from omlt.dependencies import onnx, onnx_available
@@ -29,6 +28,7 @@ def test_linear_131_relu(datadir):
     assert layers[2].activation == "linear"
     assert layers[1].weights.shape == (1, 3)
     assert layers[2].weights.shape == (3, 1)
+
 
 @pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
 def test_linear_131_sigmoid(datadir):

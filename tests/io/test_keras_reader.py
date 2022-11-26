@@ -5,6 +5,7 @@ from omlt.dependencies import keras, keras_available
 if keras_available:
     from omlt.io.keras.keras_reader import load_keras_sequential
 
+
 @pytest.mark.skipif(
     not keras_available, reason="Test only valid when keras not available"
 )

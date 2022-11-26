@@ -19,12 +19,14 @@ from pyomo.environ import *
 from omlt import OffsetScaling, OmltBlock
 from omlt.neuralnet import FullSpaceNNFormulation
 
+
 @pytest.mark.skipif(onnx_available, reason="Test only valid when onnx not available")
 def test_onnx_not_available_exception(datadir):
     with pytest.raises(DeferredImportError):
         neural_net = onnx.load(datadir.file("keras_linear_131_relu.onnx"))
 
-@pytest.mark.skipif(onnx_available == False, reason="Need ONNX for this test")
+
+@pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
 def test_onnx_relu(datadir):
     neural_net = onnx.load(datadir.file("keras_linear_131_relu.onnx"))
 
@@ -65,7 +67,7 @@ def test_onnx_relu(datadir):
         assert value(model.nn.outputs[0]) == pytest.approx(y)
 
 
-@pytest.mark.skipif(onnx_available == False, reason="Need ONNX for this test")
+@pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
 def test_onnx_linear(datadir):
     neural_net = onnx.load(datadir.file("keras_linear_131.onnx"))
 
@@ -106,7 +108,7 @@ def test_onnx_linear(datadir):
         assert value(model.nn.outputs[0]) == pytest.approx(y)
 
 
-@pytest.mark.skipif(onnx_available == False, reason="Need ONNX for this test")
+@pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
 def test_onnx_sigmoid(datadir):
     neural_net = onnx.load(datadir.file("keras_linear_131_sigmoid.onnx"))
 
@@ -147,7 +149,7 @@ def test_onnx_sigmoid(datadir):
         assert value(model.nn.outputs[0]) == pytest.approx(y)
 
 
-@pytest.mark.skipif(onnx_available == False, reason="Need ONNX for this test")
+@pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
 def test_onnx_bounds_loader_writer(datadir):
     onnx_model = onnx.load(datadir.file("keras_conv_7x7_relu.onnx"))
     scaled_input_bounds = dict()

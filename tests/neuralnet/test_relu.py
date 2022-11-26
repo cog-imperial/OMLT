@@ -111,7 +111,7 @@ def test_two_node_ReluPartitionFormulation(two_node_network_relu):
     assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - 0) < 1e-3
 
 
-@pytest.mark.skipif(onnx_available == False, reason="Need ONNX for this test")
+@pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
 def test_conv_ReluBigMFormulation(datadir):
     from omlt.io.onnx import load_onnx_neural_network_with_bounds
 

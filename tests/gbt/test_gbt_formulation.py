@@ -1,14 +1,12 @@
 from pathlib import Path
 
-import pytest
-
 from omlt.dependencies import onnx, onnx_available
 
 import pyomo.environ as pe
 import pytest
 
 from omlt import OmltBlock
-from omlt.gbt.gbt_formulation import GBTBigMFormulation, add_formulation_to_block
+from omlt.gbt.gbt_formulation import GBTBigMFormulation
 from omlt.gbt.model import GradientBoostedTreeModel
 
 
