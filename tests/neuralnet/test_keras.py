@@ -2,10 +2,10 @@ import numpy as np
 import pyomo.environ as pyo
 import pytest
 
-from omlt.io import keras_available
-
-#if not keras_available:
-#    pytest.skip(allow_module_level=True)
+from pyomo.common.dependencies import DeferredImportError
+from omlt.io import keras, keras_available
+if keras_available:
+    from omlt.io.keras import load_keras_sequential
 
 from omlt.block import OmltBlock
 from omlt.neuralnet import FullSpaceNNFormulation, ReducedSpaceNNFormulation
@@ -13,10 +13,6 @@ from omlt.neuralnet.activations import ComplementarityReLUActivation
 from omlt.scaling import OffsetScaling
 
 from conftest import get_neural_network_data
-
-if keras_available:
-    import tensorflow.keras as keras
-    from omlt.io.keras import load_keras_sequential
 
 @pytest.mark.skipif(not keras_available, reason="Need keras for this test")
 def _test_keras_linear_131(keras_fname, reduced_space=False):
@@ -153,6 +149,10 @@ def test_keras_linear_big_reduced_space(datadir):
     _test_keras_linear_big("./models/big", reduced_space=True)
 
 
+def test_keras_not_available_exception(datadir):
+    with pytest.raises(DeferredImportError):
+        NN = keras.models.load_model(datadir.file("keras_linear_131_relu"))
+    
 @pytest.mark.skipif(not keras_available, reason="Need keras for this test")
 def test_scaling_NN_block(datadir):
     NN = keras.models.load_model(datadir.file("keras_linear_131_relu"))
