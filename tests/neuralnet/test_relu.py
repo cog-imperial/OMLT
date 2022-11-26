@@ -127,7 +127,7 @@ def test_conv_ReluBigMFormulation(datadir):
     input = np.eye(7, 7).reshape(1, 7, 7)
     x = input
     for layer in net.layers:
-        x = layer.eval(x)
+        x = layer.eval_single_layer(x)
     output = x
 
     for i in range(7):

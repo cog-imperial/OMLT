@@ -1,10 +1,19 @@
+import math
+
 import numpy as np
 from onnx import numpy_helper
 
-from omlt.neuralnet.layer import ConvLayer, DenseLayer, IndexMapper, InputLayer
+from omlt.neuralnet.layer import (
+    ConvLayer2D,
+    DenseLayer,
+    IndexMapper,
+    InputLayer,
+    PoolingLayer2D,
+)
 from omlt.neuralnet.network_definition import NetworkDefinition
 
 _ACTIVATION_OP_TYPES = ["Relu", "Sigmoid", "LogSoftmax"]
+_POOLING_OP_TYPES = ["MaxPool"]
 
 
 class NetworkParser:
@@ -146,6 +155,10 @@ class NetworkParser:
         elif node.op_type == "Reshape":
             next_nodes = self._consume_reshape_nodes(node, next_nodes)
             new_layer = new_layer_inputs = None
+        elif node.op_type in _POOLING_OP_TYPES:
+            next_nodes, new_layer, new_layer_inputs = self._consume_pool_nodes(
+                node, next_nodes
+            )
         else:
             raise Exception(f"Unhandled node type {node.op_type}")
 
@@ -185,9 +198,7 @@ class NetworkParser:
         assert node_weights.shape[1] == node_biases.shape[0]
         assert len(node.output) == 1
 
-        input_output_size = input_layer.output_size
-        if transformer is not None:
-            input_output_size = transformer.output_size
+        input_output_size = _get_input_output_size(input_layer, transformer)
 
         output_size = input_output_size[:-1] + [node_weights.shape[1]]
 
@@ -229,9 +240,7 @@ class NetworkParser:
         weights = np.transpose(weights)
         biases = self._initializers[in_2]
 
-        input_output_size = input_layer.output_size
-        if transformer is not None:
-            input_output_size = transformer.output_size
+        input_output_size = _get_input_output_size(input_layer, transformer)
 
         # output is the same size as input except for the last dimension
         output_size = input_output_size[:-1] + [weights.shape[1]]
@@ -274,9 +283,7 @@ class NetworkParser:
         else:
             [in_0, in_1, in_2] = list(node.input)
         input_layer, transformer = self._node_input_and_transformer(in_0)
-        input_output_size = input_layer.output_size
-        if transformer is not None:
-            input_output_size = transformer.output_size
+        input_output_size = _get_input_output_size(input_layer, transformer)
         weights = self._initializers[in_1]
         [out_channels, in_channels, *kernel_shape] = weights.shape
 
@@ -321,7 +328,7 @@ class NetworkParser:
         # expect 2d image with channels
         assert len(input_output_size) == 3
 
-        conv_layer = ConvLayer(
+        conv_layer = ConvLayer2D(
             input_output_size,
             output_size,
             strides,
@@ -345,6 +352,80 @@ class NetworkParser:
         transformer = IndexMapper(input_layer.output_size, list(output_size))
         self._node_map[node.output[0]] = (transformer, input_layer)
         return next_nodes
+
+    def _consume_pool_nodes(self, node, next_nodes):
+        """
+        Starting from a MaxPool node, consume nodes to form a pooling node with
+        (optional) activation function.
+        """
+        assert node.op_type in _POOLING_OP_TYPES
+        pool_func_name = "max"
+
+        # ONNX network should not contain indices output from MaxPool - not supported by OMLT
+        assert len(node.output) == 1
+
+        assert len(node.input) == 1
+        input_layer, transformer = self._node_input_and_transformer(node.input[0])
+        input_output_size = _get_input_output_size(input_layer, transformer)
+
+        # currently only support 2D image with channels.
+        if len(input_output_size) == 4:
+            # this means there is an extra dimension for number of batches
+            # batches not supported, so only accept if they're not there or there is only 1 batch
+            assert input_output_size[0] == 1
+            input_output_size = input_output_size[1:]
+        assert len(input_output_size) == 3
+
+        in_channels = input_output_size[0]
+
+        attr = _collect_attributes(node)
+        kernel_depth = attr["kernel_shape"][0]
+        kernel_shape = attr["kernel_shape"][1:]
+        strides = attr["strides"] if "strides" in attr else [1] * len(kernel_shape)
+
+        # check only kernel shape, stride, storage order are set
+        # everything else is not supported
+        assert ("dilations" not in attr) or (attr["dilations"] == [1, 1])
+        assert ("pads" not in attr) or (not np.any(attr["pads"]))
+        assert ("auto_pad" not in attr) or (attr["auto_pad"] == "NOTSET")
+        assert len(kernel_shape) == len(strides)
+        assert len(input_output_size) == len(kernel_shape) + 1
+
+        output_shape_wrapper = math.floor
+        if "ceil_mode" in attr and attr["ceil_mode"] == 1:
+            output_shape_wrapper = math.ceil
+
+        output_size = [in_channels]
+        for i in range(1, len(input_output_size)):
+            output_size.append(
+                output_shape_wrapper(
+                    (input_output_size[i] - kernel_shape[i - 1]) / strides[i - 1] + 1
+                )
+            )
+
+        activation = "linear"
+        if len(next_nodes) == 1:
+            # check if Relu
+            type_, maybe_node, maybe_next_nodes = self._nodes[next_nodes[0]]
+            if maybe_node.op_type in _ACTIVATION_OP_TYPES:
+                node = maybe_node
+                activation = maybe_node.op_type.lower()
+                next_nodes = maybe_next_nodes
+
+        pooling_layer = PoolingLayer2D(
+            input_output_size,
+            output_size,
+            strides,
+            pool_func_name,
+            tuple(kernel_shape),
+            kernel_depth,
+            activation=activation,
+            input_index_mapper=transformer,
+        )
+        self._node_map[node.name] = pooling_layer
+        self._node_map[node.output[0]] = pooling_layer
+
+        return next_nodes, pooling_layer, [input_layer]
 
     def _node_input_and_transformer(self, node_name):
         maybe_layer = self._node_map[node_name]
@@ -376,3 +457,9 @@ def _parse_constant_value(node):
     attr = _collect_attributes(node)
     value = attr["value"]
     return value
+
+
+def _get_input_output_size(input_layer, transformer):
+    if transformer is not None:
+        return transformer.output_size
+    return input_layer.output_size

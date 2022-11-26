@@ -67,3 +67,24 @@ def test_conv(datadir):
     assert layers[3].activation == "relu"
     assert layers[1].strides == [1, 1]
     assert layers[1].kernel_shape == (2, 2)
+
+
+def test_maxpool(datadir):
+    model = onnx.load(datadir.file("maxpool_2d.onnx"))
+    net = load_onnx_neural_network(model)
+    layers = list(net.layers)
+    assert len(layers) == 4
+    assert layers[1].activation == "relu"
+    assert layers[2].activation == "linear"
+    assert layers[3].activation == "linear"
+    assert layers[1].kernel_shape == (2, 3)
+    assert layers[2].kernel_shape == (1, 2)
+    assert layers[3].kernel_shape == (4, 2)
+    assert layers[1].strides == [1, 1]
+    assert layers[2].strides == [1, 2]
+    assert layers[3].strides == [3, 1]
+    assert layers[1].output_size == [3, 5, 5]
+    assert layers[2].output_size == [3, 5, 2]
+    assert layers[3].output_size == [3, 2, 1]
+    for layer in layers[1:]:
+        assert layer.kernel_depth == 3

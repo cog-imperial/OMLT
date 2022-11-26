@@ -16,3 +16,5 @@ ACTIVATION_FUNCTION_MAP = {
     "softplus": softplus_activation_function,
     "tanh": tanh_activation_function,
 }
+
+NON_INCREASING_ACTIVATIONS = []

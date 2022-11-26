@@ -1,0 +1,29 @@
+
+maxpool_2d:ª
+0
+xn1node1"MaxPool*
+kernel_shape@@@ 
+
+n1n2node2"Relu
+C
+n2n3node3"MaxPool*
+kernel_shape@@@ *
+strides@@ 
+T
+n3ynode4"MaxPool*
+	ceil_mode *
+kernel_shape@@@ *
+strides@@ 
+maxpool_2dZ
+x
+
+
+
+
+b
+y
+
+
+
+
+B

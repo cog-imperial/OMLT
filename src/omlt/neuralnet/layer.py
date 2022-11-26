@@ -25,11 +25,11 @@ class Layer:
     ):
         assert isinstance(input_size, list)
         assert isinstance(output_size, list)
-        if activation is None:
-            activation = "linear"
         self.__input_size = input_size
         self.__output_size = output_size
-        self.__activation = activation
+        self.activation = activation
+        if input_index_mapper is None:
+            input_index_mapper = IndexMapper(input_size, input_size)
         self.__input_index_mapper = input_index_mapper
 
     @property
@@ -46,6 +46,13 @@ class Layer:
     def activation(self):
         """Return the activation function"""
         return self.__activation
+
+    @activation.setter
+    def activation(self, new_activation):
+        """Change the activation function"""
+        if new_activation is None:
+            new_activation = "linear"
+        self.__activation = new_activation
 
     @property
     def input_index_mapper(self):
@@ -78,7 +85,7 @@ class Layer:
         """Return a list of the output indexes"""
         return list(itertools.product(*[range(v) for v in self.__output_size]))
 
-    def eval(self, x):
+    def eval_single_layer(self, x):
         """
         Evaluate the layer at x.
 
@@ -87,10 +94,13 @@ class Layer:
         x : array-like
             the input tensor. Must have size `self.input_size`.
         """
-        if self.__input_index_mapper is not None:
-            x = np.reshape(x, self.__input_index_mapper.output_size)
-        assert x.shape == tuple(self.input_size)
-        y = self._eval(x)
+        x_reshaped = (
+            np.reshape(x, self.__input_index_mapper.output_size)
+            if self.__input_index_mapper is not None
+            else x[:]
+        )
+        assert x_reshaped.shape == tuple(self.input_size)
+        y = self._eval(x_reshaped)
         return self._apply_activation(y)
 
     def __repr__(self):
@@ -195,7 +205,194 @@ class DenseLayer(Layer):
         return y
 
 
-class ConvLayer(Layer):
+class Layer2D(Layer):
+    """
+    Abstract two-dimensional layer that downsamples values in a kernel to a single value.
+
+    Parameters
+    ----------
+    input_size : tuple
+        the size of the input.
+    output_size : tuple
+        the size of the output.
+    strides : matrix-like
+        stride of the kernel.
+    activation : str or None
+        activation function name
+    input_index_mapper : IndexMapper or None
+        map indexes from this layer index to the input layer index size
+    """
+
+    def __init__(
+        self,
+        input_size,
+        output_size,
+        strides,
+        *,
+        activation=None,
+        input_index_mapper=None,
+    ):
+        super().__init__(
+            input_size,
+            output_size,
+            activation=activation,
+            input_index_mapper=input_index_mapper,
+        )
+        self.__strides = strides
+
+    @property
+    def strides(self):
+        """Return the stride of the layer"""
+        return self.__strides
+
+    @property
+    def kernel_shape(self):
+        """Return the shape of the kernel"""
+        raise NotImplementedError()
+
+    @property
+    def kernel_depth(self):
+        """Return the depth of the kernel"""
+        raise NotImplementedError()
+
+    def kernel_index_with_input_indexes(self, out_d, out_r, out_c):
+        """
+        Returns an iterator over the index within the kernel and input index
+        for the output at index `(out_d, out_r, out_c)`.
+
+        Parameters
+        ----------
+        out_d : int
+            the output depth.
+        out_r : int
+            the output row.
+        out_c : int
+            the output column.
+        """
+        kernel_d = self.kernel_depth
+        [kernel_r, kernel_c] = self.kernel_shape
+        [rows_stride, cols_stride] = self.__strides
+        start_in_d = 0
+        start_in_r = out_r * rows_stride
+        start_in_c = out_c * cols_stride
+        mapper = lambda x: x
+        if self.input_index_mapper is not None:
+            mapper = self.input_index_mapper
+
+        for k_d in range(kernel_d):
+            for k_r in range(kernel_r):
+                for k_c in range(kernel_c):
+                    input_index = (start_in_d + k_d, start_in_r + k_r, start_in_c + k_c)
+                    assert len(input_index) == len(self.input_size)
+                    # don't yield an out-of-bounds input index;
+                    # can happen if ceil mode is enabled for pooling layers
+                    # as this could require using a partial kernel
+                    # even though we loop over ALL kernel indexes.
+                    if not all(
+                        input_index[i] < self.input_size[i]
+                        for i in range(len(input_index))
+                    ):
+                        continue
+                    yield (k_d, k_r, k_c), input_index
+
+    def get_input_index(self, out_index, kernel_index):
+        """
+        Returns the input index corresponding to the output at `out_index`
+        and the kernel index `kernel_index`.
+        """
+        out_d, out_r, out_c = out_index
+        for candidate_kernel_index, input_index in self.kernel_index_with_input_indexes(
+            out_d, out_r, out_c
+        ):
+            if kernel_index == candidate_kernel_index:
+                return input_index
+
+    def _eval(self, x):
+        y = np.empty(shape=self.output_size)
+        assert len(self.output_size) == 3
+        [depth, rows, cols] = self.output_size
+        for out_d in range(depth):
+            for out_r in range(rows):
+                for out_c in range(cols):
+                    y[out_d, out_r, out_c] = self._eval_at_index(x, out_d, out_r, out_c)
+        return y
+
+    def _eval_at_index(self, x, out_d, out_r, out_c):
+        raise NotImplementedError()
+
+
+class PoolingLayer2D(Layer2D):
+    """
+    Two-dimensional pooling layer.
+
+    Parameters
+    ----------
+    input_size : tuple
+        the size of the input.
+    output_size : tuple
+        the size of the output.
+    strides : matrix-like
+        stride of the kernel.
+    pool_func : str
+        name of function used to pool values in a kernel to a single value.
+    transpose : bool
+        True iff input matrix is accepted in transposed (i.e. column-major)
+        form.
+    activation : str or None
+        activation function name
+    input_index_mapper : IndexMapper or None
+        map indexes from this layer index to the input layer index size
+    """
+
+    _POOL_FUNCTIONS = {"max": max}
+
+    def __init__(
+        self,
+        input_size,
+        output_size,
+        strides,
+        pool_func_name,
+        kernel_shape,
+        kernel_depth,
+        *,
+        activation=None,
+        input_index_mapper=None,
+    ):
+        super().__init__(
+            input_size,
+            output_size,
+            strides,
+            activation=activation,
+            input_index_mapper=input_index_mapper,
+        )
+        self._pool_func_name = pool_func_name
+        self._kernel_shape = kernel_shape
+        self._kernel_depth = kernel_depth
+
+    @property
+    def kernel_shape(self):
+        """Return the shape of the kernel"""
+        return self._kernel_shape
+
+    @property
+    def kernel_depth(self):
+        """Return the depth of the kernel"""
+        return self._kernel_depth
+
+    def __str__(self):
+        return f"PoolingLayer(input_size={self.input_size}, output_size={self.output_size}, strides={self.strides}, kernel_shape={self.kernel_shape}), pool_func_name={self._pool_func_name}"
+
+    def _eval_at_index(self, x, out_d, out_r, out_c):
+        vals = [
+            x[index]
+            for (_, index) in self.kernel_index_with_input_indexes(out_d, out_r, out_c)
+        ]
+        assert self._pool_func_name in PoolingLayer2D._POOL_FUNCTIONS
+        pool_func = PoolingLayer2D._POOL_FUNCTIONS[self._pool_func_name]
+        return pool_func(vals)
+
+
+class ConvLayer2D(Layer2D):
     """
     Two-dimensional convolutional layer.
 
@@ -204,7 +401,7 @@ class ConvLayer(Layer):
     input_size : tuple
         the size of the input.
     output_size : tuple
-        the size of the output.
+        the size of the output..
     strides : matrix-like
         stride of the cross-correlation kernel.
     kernel : matrix-like
@@ -228,10 +425,10 @@ class ConvLayer(Layer):
         super().__init__(
             input_size,
             output_size,
+            strides,
             activation=activation,
             input_index_mapper=input_index_mapper,
         )
-        self.__strides = strides
         self.__kernel = kernel
 
     def kernel_with_input_indexes(self, out_d, out_r, out_c):
@@ -243,36 +440,26 @@ class ConvLayer(Layer):
         ----------
         out_d : int
             the output depth.
-        out_d : int
+        out_r : int
             the output row.
         out_c : int
             the output column.
         """
-        [_, kernel_d, kernel_r, kernel_c] = self.__kernel.shape
-        [rows_stride, cols_stride] = self.__strides
-        start_in_d = 0
-        start_in_r = out_r * rows_stride
-        start_in_c = out_c * cols_stride
-        mapper = lambda x: x
-        if self.input_index_mapper is not None:
-            mapper = self.input_index_mapper
-
-        for k_d in range(kernel_d):
-            for k_r in range(kernel_r):
-                for k_c in range(kernel_c):
-                    k_v = self.__kernel[out_d, k_d, k_r, k_c]
-                    local_index = (start_in_d + k_d, start_in_r + k_r, start_in_c + k_c)
-                    yield k_v, mapper(local_index)
-
-    @property
-    def strides(self):
-        """Return the stride of the convolutional layer"""
-        return self.__strides
+        for (k_d, k_r, k_c), input_index in self.kernel_index_with_input_indexes(
+            out_d, out_r, out_c
+        ):
+            k_v = self.__kernel[out_d, k_d, k_r, k_c]
+            yield k_v, input_index
 
     @property
     def kernel_shape(self):
         """Return the shape of the cross-correlation kernel"""
         return self.__kernel.shape[2:]
+
+    @property
+    def kernel_depth(self):
+        """Return the depth of the cross-correlation kernel"""
+        return self.__kernel.shape[1]
 
     @property
     def kernel(self):
@@ -282,20 +469,11 @@ class ConvLayer(Layer):
     def __str__(self):
         return f"ConvLayer(input_size={self.input_size}, output_size={self.output_size}, strides={self.strides}, kernel_shape={self.kernel_shape})"
 
-    def _eval(self, x):
-        y = np.empty(shape=self.output_size)
-        assert len(self.output_size) == 3
-        [depth, rows, cols] = self.output_size
-        for out_d in range(depth):
-            for out_r in range(rows):
-                for out_c in range(cols):
-                    acc = 0.0
-                    for (k, index) in self.kernel_with_input_indexes(
-                        out_d, out_r, out_c
-                    ):
-                        acc += k * x[index]
-                    y[out_d, out_r, out_c] = acc
-        return y
+    def _eval_at_index(self, x, out_d, out_r, out_c):
+        acc = 0.0
+        for (k, index) in self.kernel_with_input_indexes(out_d, out_r, out_c):
+            acc += k * x[index]
+        return acc
 
 
 class IndexMapper:
