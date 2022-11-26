@@ -14,10 +14,12 @@ from omlt.scaling import OffsetScaling
 
 from conftest import get_neural_network_data
 
+
 @pytest.mark.skipif(keras_available, reason="Test only valid when keras not available")
 def test_keras_not_available_exception(datadir):
     with pytest.raises(DeferredImportError):
         NN = keras.models.load_model(datadir.file("keras_linear_131_relu"))
+
 
 def _test_keras_linear_131(keras_fname, reduced_space=False):
     x, y, x_test = get_neural_network_data("131")
