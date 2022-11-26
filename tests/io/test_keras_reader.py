@@ -3,7 +3,7 @@ import pytest
 from omlt.dependencies import keras, keras_available
 
 if keras_available:
-    from omlt.io.keras.keras_reader import load_keras_sequential
+    from omlt.io import load_keras_sequential
 
 
 @pytest.mark.skipif(

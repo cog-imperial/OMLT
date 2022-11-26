@@ -6,7 +6,7 @@ from pyomo.common.dependencies import DeferredImportError
 from omlt.dependencies import keras, keras_available
 
 if keras_available:
-    from omlt.io.keras import load_keras_sequential
+    from omlt.io import load_keras_sequential
 
 from omlt.block import OmltBlock
 from omlt.neuralnet import FullSpaceNNFormulation, ReducedSpaceNNFormulation
