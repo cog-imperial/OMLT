@@ -19,7 +19,6 @@ def test_keras_not_available_exception(datadir):
     with pytest.raises(DeferredImportError):
         NN = keras.models.load_model(datadir.file("keras_linear_131_relu"))
 
-@pytest.mark.skipif(not keras_available, reason="Need keras for this test")
 def _test_keras_linear_131(keras_fname, reduced_space=False):
     x, y, x_test = get_neural_network_data("131")
 
@@ -41,7 +40,6 @@ def _test_keras_linear_131(keras_fname, reduced_space=False):
         assert abs(pyo.value(m.neural_net_block.outputs[0]) - nn_outputs[d][0]) < 1e-5
 
 
-@pytest.mark.skipif(not keras_available, reason="Need keras for this test")
 def _test_keras_mip_relu_131(keras_fname):
     x, y, x_test = get_neural_network_data("131")
 
@@ -62,7 +60,6 @@ def _test_keras_mip_relu_131(keras_fname):
         assert abs(pyo.value(m.neural_net_block.outputs[0]) - nn_outputs[d][0]) < 1e-5
 
 
-@pytest.mark.skipif(not keras_available, reason="Need keras for this test")
 def _test_keras_complementarity_relu_131(keras_fname):
     x, y, x_test = get_neural_network_data("131")
 
@@ -84,7 +81,6 @@ def _test_keras_complementarity_relu_131(keras_fname):
         assert abs(pyo.value(m.neural_net_block.outputs[0]) - nn_outputs[d][0]) < 1e-4
 
 
-@pytest.mark.skipif(not keras_available, reason="Need keras for this test")
 def _test_keras_linear_big(keras_fname, reduced_space=False):
     x, y, x_test = get_neural_network_data("131")
 
