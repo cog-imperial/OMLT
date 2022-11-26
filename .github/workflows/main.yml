@@ -36,10 +36,10 @@ jobs:
           python -m pip install --upgrade coverage[toml] virtualenv tox tox-gh-actions          
           conda install -c conda-forge ipopt
 
-      - name: "Run tox targets with lean environment for ${{ matrix.python-version }}"
+      - name: "Run tox targets with full testing environment for ${{ matrix.python-version }}"
         run: "tox -e fullenv"
 
-      - name: "Run tox targets with lean environment for ${{ matrix.python-version }}"
+      - name: "Run tox targets with lean testing environment for ${{ matrix.python-version }}"
         run: "tox -e leanenv"
 
 #      - name: "Run tox targets for ${{ matrix.python-version }}"
