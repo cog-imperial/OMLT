@@ -5,7 +5,9 @@ from omlt.dependencies import keras, keras_available
 if keras_available:
     from omlt.io.keras.keras_reader import load_keras_sequential
 
-@pytest.mark.skipif(not keras_available, reason="Test only valid when keras not available")
+@pytest.mark.skipif(
+    not keras_available, reason="Test only valid when keras not available"
+)
 def test_keras_reader(datadir):
     nn = keras.models.load_model(datadir.file("keras_linear_131"), compile=False)
     net = load_keras_sequential(nn)

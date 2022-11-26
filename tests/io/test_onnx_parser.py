@@ -6,6 +6,7 @@ from omlt.dependencies import onnx, onnx_available
 if onnx_available:
     from omlt.io.onnx import load_onnx_neural_network
 
+
 @pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
 def test_linear_131(datadir):
     model = onnx.load(datadir.file("keras_linear_131.onnx"))
