@@ -4,19 +4,21 @@ import pytest
 
 from omlt.io import keras_available
 
-if not keras_available:
-    pytest.skip(allow_module_level=True)
-
-import tensorflow.keras as keras
-from conftest import get_neural_network_data
+#if not keras_available:
+#    pytest.skip(allow_module_level=True)
 
 from omlt.block import OmltBlock
-from omlt.io.keras import load_keras_sequential
 from omlt.neuralnet import FullSpaceNNFormulation, ReducedSpaceNNFormulation
 from omlt.neuralnet.activations import ComplementarityReLUActivation
 from omlt.scaling import OffsetScaling
 
+from conftest import get_neural_network_data
 
+if keras_available:
+    import tensorflow.keras as keras
+    from omlt.io.keras import load_keras_sequential
+
+@pytest.mark.skipif(not keras_available, reason="Need keras for this test")
 def _test_keras_linear_131(keras_fname, reduced_space=False):
     x, y, x_test = get_neural_network_data("131")
 
@@ -38,6 +40,7 @@ def _test_keras_linear_131(keras_fname, reduced_space=False):
         assert abs(pyo.value(m.neural_net_block.outputs[0]) - nn_outputs[d][0]) < 1e-5
 
 
+@pytest.mark.skipif(not keras_available, reason="Need keras for this test")
 def _test_keras_mip_relu_131(keras_fname):
     x, y, x_test = get_neural_network_data("131")
 
@@ -58,6 +61,7 @@ def _test_keras_mip_relu_131(keras_fname):
         assert abs(pyo.value(m.neural_net_block.outputs[0]) - nn_outputs[d][0]) < 1e-5
 
 
+@pytest.mark.skipif(not keras_available, reason="Need keras for this test")
 def _test_keras_complementarity_relu_131(keras_fname):
     x, y, x_test = get_neural_network_data("131")
 
@@ -79,6 +83,7 @@ def _test_keras_complementarity_relu_131(keras_fname):
         assert abs(pyo.value(m.neural_net_block.outputs[0]) - nn_outputs[d][0]) < 1e-4
 
 
+@pytest.mark.skipif(not keras_available, reason="Need keras for this test")
 def _test_keras_linear_big(keras_fname, reduced_space=False):
     x, y, x_test = get_neural_network_data("131")
 
@@ -101,6 +106,7 @@ def _test_keras_linear_big(keras_fname, reduced_space=False):
         assert abs(pyo.value(m.neural_net_block.outputs[0]) - nn_outputs[d][0]) < 1e-5
 
 
+@pytest.mark.skipif(not keras_available, reason="Need keras for this test")
 def test_keras_linear_131_full(datadir):
     _test_keras_linear_131(datadir.file("keras_linear_131"))
     _test_keras_linear_131(datadir.file("keras_linear_131_sigmoid"))
@@ -110,6 +116,7 @@ def test_keras_linear_131_full(datadir):
     )
 
 
+@pytest.mark.skipif(not keras_available, reason="Need keras for this test")
 def test_keras_linear_131_reduced(datadir):
     _test_keras_linear_131(datadir.file("keras_linear_131"), reduced_space=True)
     _test_keras_linear_131(
@@ -126,6 +133,7 @@ def test_keras_linear_131_reduced(datadir):
     )
 
 
+@pytest.mark.skipif(not keras_available, reason="Need keras for this test")
 def test_keras_linear_131_relu(datadir):
     _test_keras_mip_relu_131(
         datadir.file("keras_linear_131_relu"),
@@ -135,6 +143,7 @@ def test_keras_linear_131_relu(datadir):
     )
 
 
+@pytest.mark.skipif(not keras_available, reason="Need keras for this test")
 def test_keras_linear_big(datadir):
     _test_keras_linear_big(datadir.file("big"), reduced_space=False)
 
@@ -144,6 +153,7 @@ def test_keras_linear_big_reduced_space(datadir):
     _test_keras_linear_big("./models/big", reduced_space=True)
 
 
+@pytest.mark.skipif(not keras_available, reason="Need keras for this test")
 def test_scaling_NN_block(datadir):
     NN = keras.models.load_model(datadir.file("keras_linear_131_relu"))
 
