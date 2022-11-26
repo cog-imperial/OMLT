@@ -8,4 +8,4 @@ if onnx_available:
     )
 
 if keras_available:
-    from omlt.io.keras import load_keras_sequential    
+    from omlt.io.keras import load_keras_sequential
