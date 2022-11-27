@@ -1,14 +1,25 @@
 import numpy as np
 import pyomo.environ as pyo
 import pytest
-import tensorflow.keras as keras
-from conftest import get_neural_network_data
+
+from pyomo.common.dependencies import DeferredImportError
+from omlt.dependencies import keras, keras_available
+
+if keras_available:
+    from omlt.io import load_keras_sequential
 
 from omlt.block import OmltBlock
-from omlt.io.keras import load_keras_sequential
 from omlt.neuralnet import FullSpaceNNFormulation, ReducedSpaceNNFormulation
 from omlt.neuralnet.activations import ComplementarityReLUActivation
 from omlt.scaling import OffsetScaling
+
+from conftest import get_neural_network_data
+
+
+@pytest.mark.skipif(keras_available, reason="Test only valid when keras not available")
+def test_keras_not_available_exception(datadir):
+    with pytest.raises(DeferredImportError):
+        NN = keras.models.load_model(datadir.file("keras_linear_131_relu"))
 
 
 def _test_keras_linear_131(keras_fname, reduced_space=False):
@@ -95,6 +106,7 @@ def _test_keras_linear_big(keras_fname, reduced_space=False):
         assert abs(pyo.value(m.neural_net_block.outputs[0]) - nn_outputs[d][0]) < 1e-5
 
 
+@pytest.mark.skipif(not keras_available, reason="Need keras for this test")
 def test_keras_linear_131_full(datadir):
     _test_keras_linear_131(datadir.file("keras_linear_131"))
     _test_keras_linear_131(datadir.file("keras_linear_131_sigmoid"))
@@ -104,6 +116,7 @@ def test_keras_linear_131_full(datadir):
     )
 
 
+@pytest.mark.skipif(not keras_available, reason="Need keras for this test")
 def test_keras_linear_131_reduced(datadir):
     _test_keras_linear_131(datadir.file("keras_linear_131"), reduced_space=True)
     _test_keras_linear_131(
@@ -120,6 +133,7 @@ def test_keras_linear_131_reduced(datadir):
     )
 
 
+@pytest.mark.skipif(not keras_available, reason="Need keras for this test")
 def test_keras_linear_131_relu(datadir):
     _test_keras_mip_relu_131(
         datadir.file("keras_linear_131_relu"),
@@ -129,6 +143,7 @@ def test_keras_linear_131_relu(datadir):
     )
 
 
+@pytest.mark.skipif(not keras_available, reason="Need keras for this test")
 def test_keras_linear_big(datadir):
     _test_keras_linear_big(datadir.file("big"), reduced_space=False)
 
@@ -138,6 +153,7 @@ def test_keras_linear_big_reduced_space(datadir):
     _test_keras_linear_big("./models/big", reduced_space=True)
 
 
+@pytest.mark.skipif(not keras_available, reason="Need keras for this test")
 def test_scaling_NN_block(datadir):
     NN = keras.models.load_model(datadir.file("keras_linear_131_relu"))
 

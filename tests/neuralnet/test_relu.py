@@ -1,8 +1,9 @@
 import numpy as np
 import pyomo.environ as pyo
+import pytest
 
 from omlt.block import OmltBlock
-from omlt.io.onnx import load_onnx_neural_network_with_bounds
+from omlt.dependencies import onnx_available
 from omlt.neuralnet import (
     FullSpaceNNFormulation,
     ReluBigMFormulation,
@@ -110,7 +111,10 @@ def test_two_node_ReluPartitionFormulation(two_node_network_relu):
     assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - 0) < 1e-3
 
 
+@pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
 def test_conv_ReluBigMFormulation(datadir):
+    from omlt.io.onnx import load_onnx_neural_network_with_bounds
+
     net = load_onnx_neural_network_with_bounds(datadir.file("keras_conv_7x7_relu.onnx"))
     m = pyo.ConcreteModel()
 
