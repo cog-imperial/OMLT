@@ -1,7 +1,5 @@
 import tempfile
 
-import pytest
-
 from omlt.io.input_bounds import load_input_bounds, write_input_bounds
 
 

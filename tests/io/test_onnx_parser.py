@@ -1,10 +1,12 @@
-import numpy as np
-import onnx
 import pytest
 
-from omlt.io.onnx import load_onnx_neural_network
+from omlt.dependencies import onnx, onnx_available
+
+if onnx_available:
+    from omlt.io.onnx import load_onnx_neural_network
 
 
+@pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
 def test_linear_131(datadir):
     model = onnx.load(datadir.file("keras_linear_131.onnx"))
     net = load_onnx_neural_network(model)
@@ -16,6 +18,7 @@ def test_linear_131(datadir):
     assert layers[2].weights.shape == (3, 1)
 
 
+@pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
 def test_linear_131_relu(datadir):
     model = onnx.load(datadir.file("keras_linear_131_relu.onnx"))
     net = load_onnx_neural_network(model)
@@ -27,6 +30,7 @@ def test_linear_131_relu(datadir):
     assert layers[2].weights.shape == (3, 1)
 
 
+@pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
 def test_linear_131_sigmoid(datadir):
     model = onnx.load(datadir.file("keras_linear_131_sigmoid.onnx"))
     net = load_onnx_neural_network(model)
@@ -38,6 +42,7 @@ def test_linear_131_sigmoid(datadir):
     assert layers[2].weights.shape == (3, 1)
 
 
+@pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
 def test_gemm(datadir):
     model = onnx.load(datadir.file("gemm.onnx"))
     net = load_onnx_neural_network(model)
@@ -51,6 +56,7 @@ def test_gemm(datadir):
     assert layers[3].activation == "logsoftmax"
 
 
+@pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
 def test_conv(datadir):
     model = onnx.load(datadir.file("convx1_gemmx1.onnx"))
     net = load_onnx_neural_network(model)
@@ -63,6 +69,7 @@ def test_conv(datadir):
     assert layers[1].kernel_shape == (2, 2)
 
 
+@pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
 def test_maxpool(datadir):
     model = onnx.load(datadir.file("maxpool_2d.onnx"))
     net = load_onnx_neural_network(model)

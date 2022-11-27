@@ -1,20 +1,32 @@
 import tempfile
 
 import numpy as np
-import onnx
-import onnxruntime as ort
 import pytest
+
+from omlt.dependencies import onnx, onnx_available
+from pyomo.common.dependencies import DeferredImportError
+
+if onnx_available:
+    import onnxruntime as ort
+    from omlt.io.onnx import (
+        load_onnx_neural_network,
+        load_onnx_neural_network_with_bounds,
+        write_onnx_model_with_bounds,
+    )
+
 from pyomo.environ import *
 
 from omlt import OffsetScaling, OmltBlock
-from omlt.io.onnx import (
-    load_onnx_neural_network,
-    load_onnx_neural_network_with_bounds,
-    write_onnx_model_with_bounds,
-)
 from omlt.neuralnet import FullSpaceNNFormulation
 
 
+@pytest.mark.skipif(onnx_available, reason="Test only valid when onnx not available")
+def test_onnx_not_available_exception(datadir):
+    with pytest.raises(DeferredImportError):
+        neural_net = onnx.load(datadir.file("keras_linear_131_relu.onnx"))
+
+
+@pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
 def test_onnx_relu(datadir):
     neural_net = onnx.load(datadir.file("keras_linear_131_relu.onnx"))
 
@@ -55,6 +67,7 @@ def test_onnx_relu(datadir):
         assert value(model.nn.outputs[0]) == pytest.approx(y)
 
 
+@pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
 def test_onnx_linear(datadir):
     neural_net = onnx.load(datadir.file("keras_linear_131.onnx"))
 
@@ -95,6 +108,7 @@ def test_onnx_linear(datadir):
         assert value(model.nn.outputs[0]) == pytest.approx(y)
 
 
+@pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
 def test_onnx_sigmoid(datadir):
     neural_net = onnx.load(datadir.file("keras_linear_131_sigmoid.onnx"))
 
@@ -135,6 +149,7 @@ def test_onnx_sigmoid(datadir):
         assert value(model.nn.outputs[0]) == pytest.approx(y)
 
 
+@pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
 def test_onnx_bounds_loader_writer(datadir):
     onnx_model = onnx.load(datadir.file("keras_conv_7x7_relu.onnx"))
     scaled_input_bounds = dict()

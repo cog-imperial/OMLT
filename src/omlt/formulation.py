@@ -11,6 +11,7 @@ class _PyomoFormulationInterface(abc.ABC):
     _PyomoFormulation.
     """
 
+    @abc.abstractmethod
     def __init__(self):
         pass
 

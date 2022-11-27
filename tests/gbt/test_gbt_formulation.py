@@ -1,11 +1,12 @@
 from pathlib import Path
 
-import onnx
+from omlt.dependencies import onnx, onnx_available
+
 import pyomo.environ as pe
 import pytest
 
 from omlt import OmltBlock
-from omlt.gbt.gbt_formulation import GBTBigMFormulation, add_formulation_to_block
+from omlt.gbt.gbt_formulation import GBTBigMFormulation
 from omlt.gbt.model import GradientBoostedTreeModel
 
 
@@ -73,6 +74,7 @@ def test_formulation_with_continuous_variables():
 #     assert len(m.gbt.var_upper) == 31
 
 
+@pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
 def test_big_m_formulation_block():
     onnx_model = onnx.load(Path(__file__).parent / "continuous_model.onnx")
     model = GradientBoostedTreeModel(onnx_model)
@@ -85,6 +87,7 @@ def test_big_m_formulation_block():
     m.obj = pe.Objective(expr=0)
 
 
+@pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
 def test_big_m_formulation_block_with_dimension_subset():
     onnx_model = onnx.load(Path(__file__).parent / "dimension_subset.onnx")
     model = GradientBoostedTreeModel(onnx_model)
