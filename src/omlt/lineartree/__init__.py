@@ -23,4 +23,4 @@ We use the following notation to describe the gradient-boosted trees formulation
     \end{align*}
 """
 from omlt.lineartree.lt_formulation import GBTBigMFormulation
-from omlt.lineartree.lt_model import GradientBoostedTreeModel
+from omlt.lineartree.lt_model import LinearTreeModel
