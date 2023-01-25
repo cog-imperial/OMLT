@@ -19,7 +19,7 @@ class LinearTreeModel:
               are specified or they are generated using unscaled bounds.
         """
         self.__model = lt_model
-        self.__splits, self.__leaves, self.__thresholds =\
+        self._splits, self._leaves, self._thresholds =\
             _parse_Tree_Data(lt_model)
         self.__scaling_object = scaling_object
         self.__scaled_input_bounds = scaled_input_bounds
