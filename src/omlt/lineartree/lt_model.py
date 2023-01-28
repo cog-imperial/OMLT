@@ -2,7 +2,7 @@ import numpy as np
 
 class LinearTreeModel:
     def __init__(self, lt_model, scaling_object=None, scaled_input_bounds=None):
-        """
+        r"""
         Create a network definition object used to create the gradient-boosted trees
         formulation in Pyomo
 
@@ -25,9 +25,13 @@ class LinearTreeModel:
         self.__scaled_input_bounds = scaled_input_bounds
 
 def _parse_Tree_Data(model):
+
+    # Create the initial leaves and splits dictionaries. These are attributes of the 
+    # LinearModelTree Objet 
     leaves = model.summary(only_leaves=True)
     splits = model.summary()
 
+    # TODO: Pull out and make sure doesn't need global variabes
     def find_all_children_splits(split):
         """
         This helper function finds all multigeneration children splits for an argument split.
