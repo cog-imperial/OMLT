@@ -1,4 +1,7 @@
 import numpy as np
+import pprint
+pp = pprint.PrettyPrinter(indent=4)
+
 
 class LinearTreeModel:
     """
@@ -81,6 +84,7 @@ def find_all_children_splits(split, splits_dict):
     
     return all_splits
 
+
 def find_all_children_leaves(split, splits_dict, leaves_dict):
     """This helper function finds all multigeneration children leaves for an 
     argument split.
@@ -109,6 +113,7 @@ def find_all_children_leaves(split, splits_dict, leaves_dict):
     
     return all_leaves
 
+
 def _parse_Tree_Data(model):
 
     # Create the initial leaves and splits dictionaries 
@@ -123,38 +128,36 @@ def _parse_Tree_Data(model):
     # This loop removes unnecessary entries from the splits dictionary. This loop
     # also creates an entry for each leaf or split in the tree that indicates which split
     # is its parent
-    # for split in splits:
-    #     del splits[split]['loss']
-    #     del splits[split]['samples']
-    #     del splits[split]['models']
+    for split in splits:
+        left_child = splits[split]['children'][0]
+        right_child = splits[split]['children'][1]
 
-    #     left_child = splits[split]['children'][0]
-    #     right_child = splits[split]['children'][1]
-
-    #     if left_child in splits:
-    #         splits[left_child]['parent'] = split
-    #     else:
-    #         leaves[left_child]['parent'] = split
+        if left_child in splits:
+            splits[left_child]['parent'] = split
+        else:
+            leaves[left_child]['parent'] = split
         
-    #     if right_child in splits:
-    #         splits[right_child]['parent'] = split
-    #     else:
-    #         leaves[right_child]['parent'] = split
+        if right_child in splits:
+            splits[right_child]['parent'] = split
+        else:
+            leaves[right_child]['parent'] = split
     
     # This loop goes through all the splits and determines gets a list of all
     # the leaves to the left of a split and all the leaves to the right of a split
     for split in splits:
         left_child = splits[split]['children'][0]
         right_child = splits[split]['children'][1]
+        
         if left_child in splits:
             splits[split]['left_leaves'] = find_all_children_leaves(
-                left_child
+                left_child, splits, leaves
                 )
         else:
             splits[split]['left_leaves'] = [left_child]
+        
         if right_child in splits:
             splits[split]['right_leaves'] = find_all_children_leaves(
-                right_child
+                right_child, splits, leaves
                 )
         else:
             splits[split]['right_leaves'] = [right_child]
