@@ -1,9 +1,27 @@
 import numpy as np
 
 class LinearTreeModel:
-    def __init__(self, lt_model, scaling_object=None, scaled_input_bounds=None):
-        r"""
-        Create a network definition object used to create the gradient-boosted trees
+    """
+    Class to represent a linear tree model trained in the linear-tree package
+
+    Attributes:
+        __model (linear-tree model) : Linear Tree Model trained in linear-tree
+        __splits (dict) : Dict containing split information
+        __leaves (dict) : Dict containing leaf information
+        __thresholds (dict) : Dict containing splitting threshold information
+        __scaling_object (scaling object) : Scaling object to ensure scaled 
+            data match units of broader optimization problem
+        __scaled_input_bounds (dict): Dict containing scaled input bounds
+
+    References:
+        linear-tree : https://github.com/cerlymarco/linear-tree 
+    """
+
+    def __init__(
+        self, lt_model, scaling_object=None, scaled_input_bounds=None
+        ):
+        """
+        Create a LinearTreeModel object used to create the linear model tree
         formulation in Pyomo
 
         Args:
@@ -19,7 +37,7 @@ class LinearTreeModel:
               are specified or they are generated using unscaled bounds.
         """
         self.__model = lt_model
-        self._splits, self._leaves, self._thresholds =\
+        self.__splits, self.__leaves, self.__thresholds =\
             _parse_Tree_Data(lt_model)
         self.__scaling_object = scaling_object
         self.__scaled_input_bounds = scaled_input_bounds
@@ -114,11 +132,15 @@ def _parse_Tree_Data(model):
         left_child = splits[split]['children'][0]
         right_child = splits[split]['children'][1]
         if left_child in splits:
-            splits[split]['left_leaves'] = find_all_children_leaves(left_child)
+            splits[split]['left_leaves'] = find_all_children_leaves(
+                left_child
+                )
         else:
             splits[split]['left_leaves'] = [left_child]
         if right_child in splits:
-            splits[split]['right_leaves'] = find_all_children_leaves(right_child)
+            splits[split]['right_leaves'] = find_all_children_leaves(
+                right_child
+                )
         else:
             splits[split]['right_leaves'] = [right_child]
 
