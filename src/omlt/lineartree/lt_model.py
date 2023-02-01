@@ -52,7 +52,10 @@ def _parse_Tree_Data(model):
     # TODO: Pull out and make sure doesn't need global variabes
     def find_all_children_splits(split):
         """
-        This helper function finds all multigeneration children splits for an argument split.
+        This helper function finds all multigeneration children splits for an 
+        argument split.
+
+        Args:
         """
         # We will store all the split ids in a list.
         all_splits = []
@@ -62,18 +65,21 @@ def _parse_Tree_Data(model):
         child0 = splits[split]['children'][0]
         if child0 in splits:
             all_splits.append(child0)
+            all_splits.extend(find_all_children_splits(child0))
         
         # Same as above but with right child
         child1 = splits[split]['children'][1]
         if child1 in splits:
             all_splits.append(child1)
+            all_splits.extend(find_all_children_splits(child1))
+
         
         # Now iterate through the list and continue to check the same for all subsequent splits.
-        for child in all_splits:
-            if splits[child]['children'][0] in splits:
-                all_splits.append(splits[child]['children'][0])
-            if splits[child]['children'][1] in splits:
-                all_splits.append(splits[child]['children'][1])
+        # for child in all_splits:
+        #     if splits[child]['children'][0] in splits:
+        #         all_splits.append(splits[child]['children'][0])
+        #     if splits[child]['children'][1] in splits:
+        #         all_splits.append(splits[child]['children'][1])
         
         return all_splits
     
