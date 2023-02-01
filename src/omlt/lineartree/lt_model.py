@@ -80,8 +80,6 @@ def _parse_Tree_Data(model):
                 all_splits.append(splits[child]['children'][0])
             if splits[child]['children'][1] in splits:
                 all_splits.append(splits[child]['children'][1])
-
-        print(all_splits)
         
         return all_splits
     
@@ -93,6 +91,7 @@ def _parse_Tree_Data(model):
         all_leaves = []
         # Find all the splits that are children of the relevant split
         all_splits = find_all_children_splits(split)
+        print(all_splits)
         # If the current split not in all splits, append it to the list
         if split not in all_splits:
             all_splits.append(split)
