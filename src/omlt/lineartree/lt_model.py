@@ -42,46 +42,44 @@ class LinearTreeModel:
         self.__scaling_object = scaling_object
         self.__scaled_input_bounds = scaled_input_bounds
 
+
+# TODO: Pull out and make sure doesn't need global variabes
+def find_all_children_splits(split, splits_dict):
+    """
+    This helper function finds all multigeneration children splits for an 
+    argument split.
+
+    Args:
+        split : The split for which you are trying to find children splits
+        splits_dict: A dictionary of all the splits in the tree
+    
+    Returns:
+        all_splits : A list containing the Node IDs of all children splits
+    """
+    # We will store all the split ids in a list.
+    all_splits = []
+
+    # Check if the immediate left child of the argument split is also a split. If so
+    # append to the list
+    left_child = splits_dict[split]['children'][0]
+    if left_child in splits_dict:
+        all_splits.append(left_child)
+        all_splits.extend(find_all_children_splits(left_child, splits_dict))
+    
+    # Same as above but with right child
+    right_child = splits_dict[split]['children'][1]
+    if right_child in splits_dict:
+        all_splits.append(right_child)
+        all_splits.extend(find_all_children_splits(right_child, splits_dict))
+    
+    return all_splits
+
 def _parse_Tree_Data(model):
 
     # Create the initial leaves and splits dictionaries. These are attributes of the 
     # LinearModelTree Objet 
     leaves = model.summary(only_leaves=True)
     splits = model.summary()
-
-    # TODO: Pull out and make sure doesn't need global variabes
-    def find_all_children_splits(split):
-        """
-        This helper function finds all multigeneration children splits for an 
-        argument split.
-
-        Args:
-        """
-        # We will store all the split ids in a list.
-        all_splits = []
-
-        # Check if the immediate left child of the argument split is also a split. If so
-        # append to the list
-        child0 = splits[split]['children'][0]
-        if child0 in splits:
-            all_splits.append(child0)
-            all_splits.extend(find_all_children_splits(child0))
-        
-        # Same as above but with right child
-        child1 = splits[split]['children'][1]
-        if child1 in splits:
-            all_splits.append(child1)
-            all_splits.extend(find_all_children_splits(child1))
-
-        
-        # Now iterate through the list and continue to check the same for all subsequent splits.
-        # for child in all_splits:
-        #     if splits[child]['children'][0] in splits:
-        #         all_splits.append(splits[child]['children'][0])
-        #     if splits[child]['children'][1] in splits:
-        #         all_splits.append(splits[child]['children'][1])
-        
-        return all_splits
     
     def find_all_children_leaves(split):
         """
