@@ -80,6 +80,8 @@ def _parse_Tree_Data(model):
         #         all_splits.append(splits[child]['children'][0])
         #     if splits[child]['children'][1] in splits:
         #         all_splits.append(splits[child]['children'][1])
+
+        print(all_splits)
         
         return all_splits
     
