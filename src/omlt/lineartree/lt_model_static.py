@@ -84,20 +84,13 @@ class LinearTreeModel:
         # This loop removes unnecessary entries from the leaves dictionary and adds keys
         # for the slope and intercept. Also removes leaves from the splits dictionary
         for leaf in leaves:
-            del splits[leaf]
-            del leaves[leaf]['samples']
             leaves[leaf]['slope'] = list(leaves[leaf]['models'].coef_)
             leaves[leaf]['intercept'] = leaves[leaf]['models'].intercept_
-            del leaves[leaf]['models']
-        
+
         # This loop removes unnecessary entries from the splits dictionary. This loop
         # also creates an entry for each leaf or split in the tree that indicates which split
         # is its parent
         for split in splits:
-            del splits[split]['loss']
-            del splits[split]['samples']
-            del splits[split]['models']
-
             left_child = splits[split]['children'][0]
             right_child = splits[split]['children'][1]
 
@@ -121,7 +114,7 @@ class LinearTreeModel:
             else:
                 splits[split]['left_leaves'] = [left_child]
             if right_child in splits:
-                splits[split]['right_leaves'] = LinearTreeModel._find_all_children_leaves(right_child, splits)
+                splits[split]['right_leaves'] = LinearTreeModel._find_all_children_leaves(right_child, leaves, splits)
             else:
                 splits[split]['right_leaves'] = [right_child]
 
