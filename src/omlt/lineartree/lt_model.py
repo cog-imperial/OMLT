@@ -88,7 +88,7 @@ def _parse_Tree_Data(model):
         # Store the ids of the leaves in a list
         all_leaves = []
         # Find all the splits that are children of the relevant split
-        all_splits = find_all_children_splits(split)
+        all_splits = find_all_children_splits(split, splits)
         print(all_splits)
         # If the current split not in all splits, append it to the list
         if split not in all_splits:
