@@ -231,10 +231,11 @@ def _parse_Tree_Data(model):
             leaves[leaf]['bounds'][th] = [None, None]
 
     for split in splits:
+        var = splits[split]['col']
         for leaf in splits[split]['left_leaves']:
-            leaves[leaf]['bounds'][splits[split]['col']][1] = splits[split]['th']
+            leaves[leaf]['bounds'][var][1] = splits[split]['th']
         
         for leaf in splits[split]['right_leaves']:
-            leaves[leaf]['bounds'][splits[split]['col']][0] = splits[split]['th']
+            leaves[leaf]['bounds'][var][0] = splits[split]['th']
 
     return splits, leaves, splitting_thresholds
