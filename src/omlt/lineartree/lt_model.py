@@ -1,6 +1,4 @@
 import numpy as np
-import pprint
-pp = pprint.PrettyPrinter(indent=4)
 
 
 class LinearTreeModel:
@@ -17,7 +15,12 @@ class LinearTreeModel:
         __scaled_input_bounds (dict): Dict containing scaled input bounds
 
     References:
-        linear-tree : https://github.com/cerlymarco/linear-tree 
+        * linear-tree : https://github.com/cerlymarco/linear-tree
+        * Misic, V. "Optimization of tree ensembles." 
+             Operations Research 68.5 (2020): 1605-1624.
+        * Mistry, M., et al. "Mixed-integer convex nonlinear optimization 
+             with gradient-boosted trees embedded." INFORMS Journal on 
+             Computing (2020). 
     """
 
     def __init__(
@@ -57,7 +60,8 @@ class LinearTreeModel:
 
 
 def find_all_children_splits(split, splits_dict):
-    """This helper function finds all multigeneration children splits for an 
+    """
+    This helper function finds all multigeneration children splits for an 
     argument split.
 
     Arguments:
@@ -86,7 +90,8 @@ def find_all_children_splits(split, splits_dict):
 
 
 def find_all_children_leaves(split, splits_dict, leaves_dict):
-    """This helper function finds all multigeneration children leaves for an 
+    """
+    This helper function finds all multigeneration children leaves for an 
     argument split.
 
     Arguments:
@@ -101,12 +106,13 @@ def find_all_children_leaves(split, splits_dict, leaves_dict):
 
     # Find all the splits that are children of the relevant split
     all_splits = find_all_children_splits(split, splits_dict)
-    print(all_splits)
-    # If the current split not in all splits, append it to the list
+    
+    # Ensure the current split is included 
     if split not in all_splits:
         all_splits.append(split)
-    # For each leaf, check if the parents appear in the list of splits. If so,
-    # It must be a leaf of the split
+    
+    # For each leaf, check if the parents appear in the list of children 
+    # splits (all_splits). If so, it must be a leaf of the argument split
     for leaf in leaves_dict:
         if leaves_dict[leaf]['parent'] in all_splits:
             all_leaves.append(leaf)
@@ -115,19 +121,42 @@ def find_all_children_leaves(split, splits_dict, leaves_dict):
 
 
 def _parse_Tree_Data(model):
+    """
+    This function creates the data structures with the information required
+    for creation of the variables, sets, and constraints in the pyomo
+    reformulation of the linear model decision trees. Note that these data
+    structures are attributes of the LinearTreeModel Class.
 
+    Arguments:
+        model -- Trained linear-tree model
+
+    Returns:
+        leaves - Dict containing the following information for each leaf:
+            1) 'slope' - The slope of the fitted line at that leaf
+            2) 'intercept' - The intercept of the line at that lead
+            3) 'parent' - The parent split or node of that leaf
+        splits - Dict containing the following information for each split:
+            1) 'children' - The child nodes of that split
+            2) 'col' - The variable(feature) to split on (beginning at 0)
+            3) 'left_leaves' - All the leaves to the left of that split
+            4) 'right_leaves' - All the leaves to the right of that split
+            5) 'parent' - The parent node of the split. Node zero has no parent
+            6) 'th' - The threshold of the split
+            7) 'y_index' - Indices corresponding to Mistry et. al. y binary
+                    variable
+        vars_dict - Dict of tree inputs and their respective thresholds
+    """
     # Create the initial leaves and splits dictionaries 
     leaves = model.summary(only_leaves=True)
     splits = model.summary()
 
-    # This loop adds keys for the slope and intercept. 
+    # This loop adds keys for the slopes and intercept. 
     for leaf in leaves:
+        del splits[leaf]
         leaves[leaf]['slope'] = list(leaves[leaf]['models'].coef_)
         leaves[leaf]['intercept'] = leaves[leaf]['models'].intercept_
     
-    # This loop removes unnecessary entries from the splits dictionary. This loop
-    # also creates an entry for each leaf or split in the tree that indicates which split
-    # is its parent
+    # This loop creates an parent node id entry for each node in the tree
     for split in splits:
         left_child = splits[split]['children'][0]
         right_child = splits[split]['children'][1]
@@ -142,8 +171,8 @@ def _parse_Tree_Data(model):
         else:
             leaves[right_child]['parent'] = split
     
-    # This loop goes through all the splits and determines gets a list of all
-    # the leaves to the left of a split and all the leaves to the right of a split
+    # This loop creates an entry for the all the leaves to the left and right
+    # of a split
     for split in splits:
         left_child = splits[split]['children'][0]
         right_child = splits[split]['children'][1]
@@ -163,7 +192,7 @@ def _parse_Tree_Data(model):
             splits[split]['right_leaves'] = [right_child]
 
     # For each variable that appears in the tree, go through all the splits
-    # and assign its splitting threshold to the correct entry in this nested dictionary
+    # and record its splitting threshold
     splitting_thresholds = {}
     for split in splits:
         var = splits[split]['col']
@@ -172,18 +201,23 @@ def _parse_Tree_Data(model):
         var = splits[split]['col']
         splitting_thresholds[var][split] = splits[split]['th']
 
-    # Make sure every nested dictionary in the vars_dict dictionary is sorted by value since
-    # this plays an important role in the ordering of the indices of binary variables y_ij in the Misic 
-    # formulation
+    # Make sure every nested dictionary in the splitting_thresholds dictionary 
+    # is sorted by value
     for var in splitting_thresholds:
-       splitting_thresholds[var] = dict(sorted(splitting_thresholds[var].items(), key=lambda x: x[1]))
+       splitting_thresholds[var] = dict(
+           sorted(splitting_thresholds[var].items(), key=lambda x: x[1])
+           )
 
-    # Once the splitting threshold dictionary
+    # Record the ordered indices of the binary variable y. The first index
+    # is the splitting variable. The second index is its location in the 
+    # ordered dictionary of thresholds for that variable.
     for split in splits:
         var = splits[split]['col']
         splits[split]['y_index'] = []
-        splits[split]['y_index'].append(splits[split]['col'])
-        splits[split]['y_index'].append(list(splitting_thresholds[var]).index(split))
+        splits[split]['y_index'].append(var)
+        splits[split]['y_index'].append(
+            list(splitting_thresholds[var]).index(split)
+            )
 
     # Go through and 
     for leaf in leaves:
@@ -191,6 +225,7 @@ def _parse_Tree_Data(model):
     
     L = np.array(list(leaves.keys()))
     features = np.arange(0,len(leaves[L[0]]['slope']))
+    
     for th in features:
         for leaf in leaves:
             leaves[leaf]['bounds'][th] = [None, None]
