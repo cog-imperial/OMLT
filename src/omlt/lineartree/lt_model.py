@@ -52,11 +52,13 @@ class LinearTreeModel:
                 If None, then no bounds are specified or they are generated 
                 using unscaled bounds.(default: {None})
         """
-        self.__model = lt_model
-        self.__splits, self.__leaves, self.__thresholds =\
+        self._model = lt_model
+        self._splits, self._leaves, self._thresholds =\
             _parse_Tree_Data(lt_model)
-        self.__scaling_object = scaling_object
-        self.__scaled_input_bounds = scaled_input_bounds
+        self._scaling_object = scaling_object
+        self._scaled_input_bounds = scaled_input_bounds
+        self._n_inputs = find_n_inputs(self._leaves)
+        self._n_outputs = 1
 
 
 def find_all_children_splits(split, splits_dict):
@@ -118,6 +120,22 @@ def find_all_children_leaves(split, splits_dict, leaves_dict):
             all_leaves.append(leaf)
     
     return all_leaves
+
+
+def find_n_inputs(leaves):
+    """
+    Finds the number of inputs using the length of the slope vector in the 
+    first leaf
+
+    Arguments:
+        leaves -- Dictionary of leaf information
+
+    Returns:
+        Number of inputs
+    """
+    L = np.array(list(leaves.keys()))
+    n_inputs = len(np.arange(0,len(leaves[L[0]]['slope'])))
+    return n_inputs
 
 
 def _parse_Tree_Data(model):
