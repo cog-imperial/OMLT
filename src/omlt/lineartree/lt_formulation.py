@@ -30,11 +30,13 @@ class LinearTreeGDPFormulation(_PyomoFormulation):
         super().__init__()
         self.model_definition = lt_model
         self.transformation = transformation
-
+        
+        # Ensure that the GDP transformation given is supported
         supported_transformations = ['bigm', 'hull', 'mbigm']
         if transformation not in supported_transformations:
             raise Exception("Transformation must be bigm, mbigm, or hull")
         
+        # Ensure that bounds are given otherwise cannot use Pyomo.GDP
         if self.model_definition._scaled_input_bounds == None:
             raise Exception("Input Bounds needed for Pyomo.GDP transformations")
 
