@@ -68,7 +68,7 @@ class LinearTreeGDPFormulation(_PyomoFormulation):
             transformation = self.transformation
         )
 
-# TODO Figure out a better way to deal with these bounds
+
 def reassign_bounds(leaves, input_bounds):
     """
     This helper function reassigns bounds that are None to the bounds
@@ -84,20 +84,14 @@ def reassign_bounds(leaves, input_bounds):
     """
     L = np.array(list(leaves.keys()))
     features = np.arange(0, len(leaves[L[0]]['slope']))
-    if input_bounds is not None:
-        for l in L:
-            for f in features:
-                if leaves[l]['bounds'][f][0] == None:
-                    leaves[l]['bounds'][f][0] = input_bounds[f][0]
-                if leaves[l]['bounds'][f][1] == None:
-                    leaves[l]['bounds'][f][1] = input_bounds[f][1]
-    # else:
-    #     for l in L:
-    #         for f in features:
-    #             if leaves[l]['bounds'][f][0] == None:
-    #                 leaves[l]['bounds'][f][0] = -1e50
-    #             if leaves[l]['bounds'][f][1] == None:
-    #                 leaves[l]['bounds'][f][1] = 1e50
+
+    for l in L:
+        for f in features:
+            if leaves[l]['bounds'][f][0] == None:
+                leaves[l]['bounds'][f][0] = input_bounds[f][0]
+            if leaves[l]['bounds'][f][1] == None:
+                leaves[l]['bounds'][f][1] = input_bounds[f][1]
+
     return leaves
 
 def build_output_bounds(leaves, input_bounds):
