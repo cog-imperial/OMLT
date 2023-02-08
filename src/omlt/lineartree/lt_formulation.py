@@ -89,14 +89,17 @@ def reassign_bounds(leaves, input_bounds):
                     leaves[l]['bounds'][f][0] = input_bounds[f][0]
                 if leaves[l]['bounds'][f][1] == None:
                     leaves[l]['bounds'][f][1] = input_bounds[f][1]
-    else:
-        for l in L:
-            for f in features:
-                if leaves[l]['bounds'][f][0] == None:
-                    leaves[l]['bounds'][f][0] = -1e50
-                if leaves[l]['bounds'][f][1] == None:
-                    leaves[l]['bounds'][f][1] = 1e50
+    # else:
+    #     for l in L:
+    #         for f in features:
+    #             if leaves[l]['bounds'][f][0] == None:
+    #                 leaves[l]['bounds'][f][0] = -1e50
+    #             if leaves[l]['bounds'][f][1] == None:
+    #                 leaves[l]['bounds'][f][1] = 1e50
     return leaves
+
+def build_output_bounds(leaves, input_bounds):
+    return
 
 
 def add_GDP_formulation_to_block(
@@ -112,16 +115,16 @@ def add_GDP_formulation_to_block(
     leaves = reassign_bounds(leaves, input_bounds)
 
     # Create a disjunct for each leaf containing the bound constraints
-    # and the linear model expression. See paper.
+    # and the linear model expression.
     def disjuncts_rule(d, l):
 
         def lb_Rule(d, f):
             return input_vars[f] >= leaves[l]['bounds'][f][0]
-        d.lbCon = pe.Constraint(features, rule=lb_Rule)
+        d.lb_constraint = pe.Constraint(features, rule=lb_Rule)
 
         def ub_Rule(d, f):
             return input_vars[f] <= leaves[l]['bounds'][f][1]
-        d.ubCon = pe.Constraint(features, rule=ub_Rule)
+        d.ub_constraint = pe.Constraint(features, rule=ub_Rule)
 
         slope = leaves[l]['slope']
         intercept = leaves[l]['intercept']
@@ -129,6 +132,7 @@ def add_GDP_formulation_to_block(
             expr=sum(slope[k]*input_vars[k] for k in features) 
             + intercept == output_vars[0]
             )
+        
     block.disjunct = Disjunct(L, rule=disjuncts_rule)
 
     block.final_disjunction = Disjunction(

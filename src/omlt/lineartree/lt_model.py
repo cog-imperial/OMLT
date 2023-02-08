@@ -54,7 +54,7 @@ class LinearTreeModel:
         """
         self._model = lt_model
         self._splits, self._leaves, self._thresholds =\
-            _parse_Tree_Data(lt_model)
+            parse_Tree_Data(lt_model)
         self._scaling_object = scaling_object
         self._scaled_input_bounds = scaled_input_bounds
         self._n_inputs = find_n_inputs(self._leaves)
@@ -138,7 +138,7 @@ def find_n_inputs(leaves):
     return n_inputs
 
 
-def _parse_Tree_Data(model):
+def parse_Tree_Data(model):
     """
     This function creates the data structures with the information required
     for creation of the variables, sets, and constraints in the pyomo
