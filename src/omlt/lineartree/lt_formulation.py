@@ -111,6 +111,8 @@ def build_output_bounds(leaves, input_bounds):
     """
     L = np.array(list(leaves.keys()))
     features = np.arange(0, len(leaves[L[0]]['slope']))
+
+    # Initialize bounds and variables
     bounds = [0, 0]
     upper_bound = 0
     lower_bound = 0
