@@ -5,6 +5,8 @@ import pyomo.environ as pe
 
 from omlt.formulation import _PyomoFormulation, _setup_scaled_inputs_outputs
 from pyomo.gdp import Disjunct, Disjunction
+import pprint
+pp = pprint.PrettyPrinter(indent=4)
 
 
 class LinearTreeGDPFormulation(_PyomoFormulation):
@@ -95,7 +97,41 @@ def reassign_bounds(leaves, input_bounds):
     return leaves
 
 def build_output_bounds(leaves, input_bounds):
-    return
+    """
+    This function develops bounds of the output variable based on the values
+    of the input_bounds and the signs of the slope
+
+    Arguments:
+        leaves -- Dict of leaf information
+        input_bounds -- Dict of input bounds
+
+    Returns:
+        List that contains the conservative lower and upper bounds of the 
+        output variable
+    """
+    L = np.array(list(leaves.keys()))
+    features = np.arange(0, len(leaves[L[0]]['slope']))
+    bounds = [0, 0]
+    upper_bound = 0
+    lower_bound = 0
+    for l in leaves:
+        slopes = leaves[l]['slope']
+        intercept = leaves[l]['intercept']
+        for k in features:
+            if slopes[k] <= 0:
+                upper_bound += slopes[k]*input_bounds[k][0]+intercept
+                lower_bound += slopes[k]*input_bounds[k][1]+intercept
+            else:
+                upper_bound += slopes[k]*input_bounds[k][1]+intercept
+                lower_bound += slopes[k]*input_bounds[k][0]+intercept
+            if upper_bound >= bounds[1]:
+                bounds[1] = upper_bound
+            if lower_bound <= bounds[0]:
+                bounds[0]= lower_bound
+        upper_bound = 0
+        lower_bound = 0
+    
+    return bounds 
 
 
 def add_GDP_formulation_to_block(
@@ -109,6 +145,14 @@ def add_GDP_formulation_to_block(
     features = np.arange(0, len(leaves[L[0]]['slope']))
 
     leaves = reassign_bounds(leaves, input_bounds)
+    output_bounds = build_output_bounds(leaves, input_bounds)
+    
+    # Ouptuts are automatically scaled because based on whether inputs/outputs 
+    # scaled.
+    block.outputs.setub(output_bounds[1])
+    block.outputs.setlb(output_bounds[0])
+    block.scaled_outputs.setub(output_bounds[1])
+    block.scaled_outputs.setlb(output_bounds[0])
 
     # Create a disjunct for each leaf containing the bound constraints
     # and the linear model expression.
@@ -137,5 +181,5 @@ def add_GDP_formulation_to_block(
     
     transformation_string = 'gdp.' + transformation
     
-    pe.TransformationFactory(transformation_string).apply_to(block, bigM=1000)
+    pe.TransformationFactory(transformation_string).apply_to(block)
 
