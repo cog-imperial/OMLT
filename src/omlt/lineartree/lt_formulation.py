@@ -29,6 +29,18 @@ class LinearTreeGDPFormulation(_PyomoFormulation):
             23:607–642
     """
     def __init__(self, lt_model, transformation='bigm'):
+        """_summary_
+
+        Arguments:
+            lt_model -- _description_
+
+        Keyword Arguments:
+            transformation -- _description_ (default: {'bigm'})
+
+        Raises:
+            Exception: _description_
+            Exception: _description_
+        """
         super().__init__()
         self.model_definition = lt_model
         self.transformation = transformation
@@ -138,7 +150,18 @@ def build_output_bounds(leaves, input_bounds):
 
 def add_GDP_formulation_to_block(
     block, model_definition, input_vars, output_vars, transformation):
-    
+    """_summary_
+
+    Arguments:
+        block -- _description_
+        model_definition -- _description_
+        input_vars -- _description_
+        output_vars -- _description_
+        transformation -- _description_
+
+    Returns:
+        _description_
+    """
     leaves = model_definition._leaves
     input_bounds = model_definition._scaled_input_bounds
     
@@ -149,8 +172,7 @@ def add_GDP_formulation_to_block(
     leaves = reassign_bounds(leaves, input_bounds)
     output_bounds = build_output_bounds(leaves, input_bounds)
     
-    # Ouptuts are automatically scaled because based on whether inputs/outputs 
-    # scaled.
+    # Ouptuts are automatically scaled based on whether inputs are scaled
     block.outputs.setub(output_bounds[1])
     block.outputs.setlb(output_bounds[0])
     block.scaled_outputs.setub(output_bounds[1])
