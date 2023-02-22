@@ -29,17 +29,20 @@ class LinearTreeGDPFormulation(_PyomoFormulation):
             23:607–642
     """
     def __init__(self, lt_model, transformation='bigm'):
-        """_summary_
+        """
+        Create a LinearTreeGDPFormulation object 
 
         Arguments:
-            lt_model -- _description_
+            lt_model -- trained linear-tree model
 
         Keyword Arguments:
-            transformation -- _description_ (default: {'bigm'})
+            transformation -- choose which Pyomo.GDP formulation to apply. 
+                Supported transformations are bigm, hull, mbigm 
+                (default: {'bigm'})
 
         Raises:
-            Exception: _description_
-            Exception: _description_
+            Exception: If transformation not in supported transformations
+            Exception: If no input bounds are given
         """
         super().__init__()
         self.model_definition = lt_model
@@ -52,7 +55,7 @@ class LinearTreeGDPFormulation(_PyomoFormulation):
         
         # Ensure that bounds are given otherwise cannot use Pyomo.GDP
         if self.model_definition._scaled_input_bounds == None:
-            raise Exception("Input Bounds needed for Pyomo.GDP transformations")
+            raise Exception("Input Bounds needed for Pyomo.GDP")
 
     @property
     def input_indexes(self):
@@ -150,17 +153,16 @@ def build_output_bounds(leaves, input_bounds):
 
 def add_GDP_formulation_to_block(
     block, model_definition, input_vars, output_vars, transformation):
-    """_summary_
+    """
+    This function adds the GDP representation to the OmltBlock using Pyomo.GDP
 
     Arguments:
-        block -- _description_
-        model_definition -- _description_
-        input_vars -- _description_
-        output_vars -- _description_
-        transformation -- _description_
+        block -- OmltBlock
+        model_definition -- LinearTreeModel
+        input_vars -- input variables to the linear tree model
+        output_vars -- output variable of the linear tree model
+        transformation -- Transformation to apply
 
-    Returns:
-        _description_
     """
     leaves = model_definition._leaves
     input_bounds = model_definition._scaled_input_bounds
@@ -169,7 +171,12 @@ def add_GDP_formulation_to_block(
     L = np.array(list(leaves.keys()))
     features = np.arange(0, len(leaves[L[0]]['slope']))
 
+    # Replaces any lower/upper bounds in the leaves dictionary of value None
+    # with the values of the input bounds 
     leaves = reassign_bounds(leaves, input_bounds)
+
+    # Use the input_bounds and the linear models in the leaves to calculate
+    # the lower and upper bounds on the output variable. Required for Pyomo.GDP
     output_bounds = build_output_bounds(leaves, input_bounds)
     
     # Ouptuts are automatically scaled based on whether inputs are scaled
