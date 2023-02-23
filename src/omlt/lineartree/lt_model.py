@@ -226,6 +226,7 @@ def parse_Tree_Data(model):
            sorted(splitting_thresholds[var].items(), key=lambda x: x[1])
            )
 
+    # TODO Can eliminate if not using the Mistry et. al. formulations
     # Record the ordered indices of the binary variable y. The first index
     # is the splitting variable. The second index is its location in the 
     # ordered dictionary of thresholds for that variable.
@@ -237,17 +238,23 @@ def parse_Tree_Data(model):
             list(splitting_thresholds[var]).index(split)
             )
 
-    # Go through and 
+    # For each leaf, create an empty dictionary that will store the lower 
+    # and upper bounds of each feature.
     for leaf in leaves:
         leaves[leaf]['bounds'] = {}
     
     L = np.array(list(leaves.keys()))
     features = np.arange(0,len(leaves[L[0]]['slope']))
     
+    # For each feature in each leaf, initialize lower and upper bounds to None
     for th in features:
         for leaf in leaves:
             leaves[leaf]['bounds'][th] = [None, None]
 
+    # TODO Can implement recursion here as well to eliminate nested loops.
+    # Finally, go through each split and assign it's threshold value as the
+    # upper bound to all the leaves descending to the left of the split and
+    # as the lower bound to all the leaves descending to the right.
     for split in splits:
         var = splits[split]['col']
         for leaf in splits[split]['left_leaves']:

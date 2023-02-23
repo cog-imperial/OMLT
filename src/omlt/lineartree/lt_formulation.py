@@ -86,7 +86,7 @@ class LinearTreeGDPFormulation(_PyomoFormulation):
         )
 
 
-def reassign_bounds(leaves, input_bounds):
+def reassign_none_bounds(leaves, input_bounds):
     """
     This helper function reassigns bounds that are None to the bounds
     input by the user
@@ -173,7 +173,7 @@ def add_GDP_formulation_to_block(
 
     # Replaces any lower/upper bounds in the leaves dictionary of value None
     # with the values of the input bounds 
-    leaves = reassign_bounds(leaves, input_bounds)
+    leaves = reassign_none_bounds(leaves, input_bounds)
 
     # Use the input_bounds and the linear models in the leaves to calculate
     # the lower and upper bounds on the output variable. Required for Pyomo.GDP
