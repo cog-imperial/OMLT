@@ -228,7 +228,7 @@ def parse_Tree_Data(model):
            sorted(splitting_thresholds[var].items(), key=lambda x: x[1])
            )
 
-    # TODO Can eliminate if not using the Mistry et. al. formulations
+    # TODO Can eliminate if not implementing the Mistry et. al. formulations
     # Record the ordered indices of the binary variable y. The first index
     # is the splitting variable. The second index is its location in the 
     # ordered dictionary of thresholds for that variable.
