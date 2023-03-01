@@ -16,6 +16,8 @@ class LinearTreeModel:
 
     References:
         * linear-tree : https://github.com/cerlymarco/linear-tree
+        * Ammari et al. (2023) Linear Model Decision Trees as Surrogates in
+            Optimization for Engineering Applications
         * Misic, V. "Optimization of tree ensembles." 
              Operations Research 68.5 (2020): 1605-1624.
         * Mistry, M., et al. "Mixed-integer convex nonlinear optimization 
