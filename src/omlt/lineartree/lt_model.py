@@ -6,18 +6,18 @@ class LinearTreeModel:
     Class to represent a linear tree model trained in the linear-tree package
 
     Attributes:
-        __model (linear-tree model) : Linear Tree Model trained in linear-tree
-        __splits (dict) : Dict containing split information
-        __leaves (dict) : Dict containing leaf information
-        __thresholds (dict) : Dict containing splitting threshold information
-        __scaling_object (scaling object) : Scaling object to ensure scaled 
+        _model (linear-tree model) : Linear Tree Model trained in linear-tree
+        _splits (dict) : Dict containing split information
+        _leaves (dict) : Dict containing leaf information
+        _thresholds (dict) : Dict containing splitting threshold information
+        _scaling_object (scaling object) : Scaling object to ensure scaled 
             data match units of broader optimization problem
-        __scaled_input_bounds (dict): Dict containing scaled input bounds
+        _scaled_input_bounds (dict): Dict containing scaled input bounds
 
     References:
         * linear-tree : https://github.com/cerlymarco/linear-tree
         * Ammari et al. (2023) Linear Model Decision Trees as Surrogates in
-            Optimization for Engineering Applications
+            Optimization of Engineering Applications
         * Misic, V. "Optimization of tree ensembles." 
              Operations Research 68.5 (2020): 1605-1624.
         * Mistry, M., et al. "Mixed-integer convex nonlinear optimization 

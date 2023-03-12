@@ -23,7 +23,7 @@ class LinearTreeGDPFormulation(_PyomoFormulation):
 
     References:
         * Ammari et al. (2023) Linear Model Decision Trees as Surrogates in
-            Optimization for Engineering Applications 
+            Optimization of Engineering Applications 
         * Chen et al. (2022) Pyomo.GDP: An ecosystem for logic based modeling 
             and optimization development. Optimization and Engineering, 
             23:607–642
