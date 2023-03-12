@@ -253,7 +253,6 @@ def parse_Tree_Data(model):
         for leaf in leaves:
             leaves[leaf]['bounds'][th] = [None, None]
 
-    # TODO Can implement recursion here as well to eliminate nested loops.
     # Finally, go through each split and assign it's threshold value as the
     # upper bound to all the leaves descending to the left of the split and
     # as the lower bound to all the leaves descending to the right.
