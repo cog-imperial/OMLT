@@ -64,26 +64,27 @@ def test_linear_tree_model():
     assert(ltmodel_small._n_inputs == 1)
     assert(ltmodel_small._n_outputs == 1)
     # test for splits
-    assert(ltmodel_small._splits.keys() == 5)
+    assert(len(ltmodel_small._splits.keys()) == 5)
     splits_key_list = ['col', 'th', 'loss', 'samples', 'parent', 'children', 'models', 'left_leaves', 'right_leaves', 'y_index']
     for i in ltmodel_small._splits.keys():
-        for key in ltmodel_small[i]._splits.keys():
+        for key in ltmodel_small._splits[i].keys():
             assert(key in splits_key_list)
     # test for leaves
-    assert(ltmodel_small._leaves.keys() == 6)
+    assert(len(ltmodel_small._leaves.keys()) == 6)
     leaves_key_list = ['loss', 'samples', 'models', 'slope', 'intercept', 'parent', 'bounds']
     for j in ltmodel_small._leaves.keys():
-        for key in ltmodel_small[j]._leaves.keys():
+        for key in ltmodel_small._leaves[j].keys():
             assert(key in leaves_key_list)
     # TODO: do we need to test slope and bounds in leaves_dic
     # test for thresholds
     # test whether each feature has threshold
     assert(len(ltmodel_small._thresholds.keys()) == ltmodel_small._n_inputs)
     thresholds_count = 0
-    for _ in range(len(ltmodel_small._threholds.keys())):
-        thresholds_count += 1
+    for k in range(len(ltmodel_small._thresholds.keys())):
+        for _ in range(len(ltmodel_small._thresholds[k].keys())):
+            thresholds_count += 1
     # test number of thresholds
-    assert(thresholds_count == ltmodel_small._splits.keys())
+    assert(thresholds_count == len(ltmodel_small._splits.keys()))
 
 # TODO: not sure whether we would like to test different transformations
 def test_formulation():
