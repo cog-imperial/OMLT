@@ -55,10 +55,12 @@ def linear_model_tree(X, y):
 
 def test_linear_tree_model():
     regr_small = linear_model_tree(X=X_small, y=y_small)
+    input_bounds={0:(min(X_small)[0], max(X_small)[0])}
     # check the type of the lmt
     assert(str(type(regr_small)) == "<class 'lineartree.lineartree.LinearTreeRegressor'>")
-    ltmodel_small = LinearTreeModel(regr_small)
-    # TODO: is _scaling_object, _scaled_input_bounds are essential?
+    ltmodel_small = LinearTreeModel(regr_small, scaled_input_bounds = input_bounds)
+    # TODO: is _scaling_object are essential?
+    assert(ltmodel_small._scaled_input_bounds is not None)
     assert(ltmodel_small._n_inputs == 1)
     assert(ltmodel_small._n_outputs == 1)
     # test for splits
@@ -83,8 +85,27 @@ def test_linear_tree_model():
     # test number of thresholds
     assert(thresholds_count == ltmodel_small._splits.keys())
 
-    pass
-
 # TODO: not sure whether we would like to test different transformations
 def test_formulation():
-    pass
+    regr_small = linear_model_tree(X=X_small, y=y_small)
+    input_bounds={0:(min(X_small)[0], max(X_small)[0])} 
+    ltmodel_small = LinearTreeModel(regr_small, scaled_input_bounds = input_bounds)
+    formulation1_lt = LinearTreeGDPFormulation(ltmodel_small, transformation='bigm')
+    model1 = pe.ConcreteModel()
+    model1.x = pe.Var(initialize = 0)
+    model1.y = pe.Var(initialize = 0)
+    model1.obj = pe.Objective(expr=1)
+    model1.lt = OmltBlock()
+    model1.lt.build_formulation(formulation1_lt)
+    model1.x.fix(0.5)
+    @model1.Constraint()
+    def connect_inputs(mdl):
+        return mdl.x == mdl.lt.inputs[0]
+    @model1.Constraint()
+    def connect_outputs(mdl):
+        return mdl.y == mdl.lt.outputs[0]
+    status_1_bigm = pe.SolverFactory('gurobi').solve(model1, tee=True)
+    pe.assert_optimal_termination(status_1_bigm)
+    solution_1_bigm = (pe.value(model1.x),pe.value(model1.y))
+    y_pred = regr_small.predict(np.array(solution_1_bigm[0]).reshape(1,-1))
+    assert(y_pred[0] - solution_1_bigm[1] <= 1e-3)
