@@ -75,6 +75,16 @@ def test_linear_tree_model():
     for j in ltmodel_small._leaves.keys():
         for key in ltmodel_small._leaves[j].keys():
             assert(key in leaves_key_list)
+            if key == 'slope':
+                assert(len(ltmodel_small._leaves[j][key]) == ltmodel_small._n_inputs)
+            elif key == 'bounds':
+                features = ltmodel_small._leaves[j][key].keys()
+                for k in range(len(features)):
+                    lb = ltmodel_small._leaves[j][key][k][0]
+                    ub = ltmodel_small._leaves[j][key][k][1]
+                    # there is chance that don't have lb and ub at this step
+                    if lb is not None and ub is not None:
+                        assert(lb <= ub)
     # TODO: do we need to test slope and bounds in leaves_dic
     # test for thresholds
     # test whether each feature has threshold
