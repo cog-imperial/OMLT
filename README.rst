@@ -112,7 +112,7 @@ Example
 Development
 ===========
 
-OMLT uses :code:`tox`. to manage development tasks:
+OMLT uses :code:`tox` to manage development tasks:
 
 * :code:`tox -av` to list available tasks
 * :code:`tox` to run tests
