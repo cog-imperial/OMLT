@@ -112,14 +112,14 @@ Example
 Development
 ===========
 
-OMLT uses `tox` to manage development tasks:
+OMLT uses :code:`tox` to manage development tasks:
 
-* `tox -av` to list available tasks
-* `tox` to run tests
-* `tox -e lint` to check formatting and code styles
-* `tox -e format` to automatically format files
-* `tox -e docs` to build the documentation
-* `tox -e publish` to publish the package to PyPi
+* :code:`tox -av` to list available tasks
+* :code:`tox` to run tests
+* :code:`tox -e lint` to check formatting and code styles
+* :code:`tox -e format` to automatically format files
+* :code:`tox -e docs` to build the documentation
+* :code:`tox -e publish` to publish the package to PyPi
 
 Contributors
 ============
