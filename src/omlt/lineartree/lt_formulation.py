@@ -86,6 +86,67 @@ class LinearTreeGDPFormulation(_PyomoFormulation):
         )
 
 
+class LinearTreeHybridBigMFormulation(_PyomoFormulation):
+    """
+    Class to add LinearTree Hybrid Big-M formulation to OmltBlock. 
+
+    Attributes:
+        Inherited from _PyomoFormulation Class
+        model_definition : LinearTreeModel object
+        transformation : choose which transformation to apply. The supported
+            transformations are bigm, mbigm, and hull.
+
+    References:
+        * Ammari et al. (2023) Linear Model Decision Trees as Surrogates in
+            Optimization of Engineering Applications 
+    """
+    def __init__(self, lt_model):
+        """
+        Create a LinearTreeHybridBigMFormulation object 
+
+        Arguments:
+            lt_model -- trained linear-tree model
+
+        Keyword Arguments:
+            transformation -- choose which Pyomo.GDP formulation to apply. 
+                Supported transformations are bigm, hull, mbigm 
+                (default: {'bigm'})
+
+        Raises:
+            Exception: If transformation not in supported transformations
+            Exception: If no input bounds are given
+        """
+        super().__init__()
+        self.model_definition = lt_model
+
+    @property
+    def input_indexes(self):
+        """The indexes of the formulation inputs."""
+        return list(range(self.model_definition._n_inputs))
+
+    @property
+    def output_indexes(self):
+        """The indexes of the formulation output."""
+        return list(range(self.model_definition._n_outputs))
+
+    def _build_formulation(self):
+        """This method is called by the OmltBlock to build the corresponding
+        mathematical formulation on the Pyomo block.
+        """
+        _setup_scaled_inputs_outputs(
+            self.block,
+            self.model_definition._scaling_object,
+            self.model_definition._scaled_input_bounds,
+        )
+
+        add_hybrid_formulation_to_block(
+            block=self.block,
+            model_definition=self.model_definition,
+            input_vars=self.block.scaled_inputs,
+            output_vars=self.block.scaled_outputs
+        )
+
+
 def reassign_none_bounds(leaves, input_bounds):
     """
     This helper function reassigns bounds that are None to the bounds
@@ -111,10 +172,11 @@ def reassign_none_bounds(leaves, input_bounds):
 
     return leaves
 
+
 def build_output_bounds(leaves, input_bounds):
     """
-    This function develops bounds of the output variable based on the values
-    of the input_bounds and the signs of the slope
+    This helped function develops bounds of the output variable based on the 
+    values of the input_bounds and the signs of the slope
 
     Arguments:
         leaves -- Dict of leaf information
@@ -213,4 +275,57 @@ def add_GDP_formulation_to_block(
     transformation_string = 'gdp.' + transformation
     
     pe.TransformationFactory(transformation_string).apply_to(block)
+
+
+def add_hybrid_formulation_to_block(
+    block, model_definition, input_vars, output_vars):
+    """
+    This function adds the Hybrid BigM representation to the OmltBlock
+
+    Arguments:
+        block -- OmltBlock
+        model_definition -- LinearTreeModel
+        input_vars -- input variables to the linear tree model
+        output_vars -- output variable of the linear tree model
+    """
+    leaves = model_definition._leaves
+    input_bounds = model_definition._scaled_input_bounds
+    
+    # The set of leaves and the set of features
+    L = np.array(list(leaves.keys()))
+    features = np.arange(0, len(leaves[L[0]]['slope']))
+
+    # Replaces any lower/upper bounds in the leaves dictionary of value None
+    # with the values of the input bounds 
+    leaves = reassign_none_bounds(leaves, input_bounds)
+
+    # Use the input_bounds and the linear models in the leaves to calculate
+    # the lower and upper bounds on the output variable. Required for Pyomo.GDP
+    output_bounds = build_output_bounds(leaves, input_bounds)
+    
+    # Ouptuts are automatically scaled based on whether inputs are scaled
+    block.outputs.setub(output_bounds[1])
+    block.outputs.setlb(output_bounds[0])
+    block.scaled_outputs.setub(output_bounds[1])
+    block.scaled_outputs.setlb(output_bounds[0])
+
+    # Create a disjunct for each leaf containing the bound constraints
+    # and the linear model expression.
+    block.z = pe.Var(L, within=pe.Binary)
+
+    def lower_bound_constraints(m, f):
+        return sum(leaves[l]['bounds'][f][0]*m.z[l] for l in L) <= input_vars[f]
+    block.lbCon = pe.Constraint(features, rule=lower_bound_constraints)
+
+    def upper_bound_constraints(m, f):
+        return sum(leaves[l]['bounds'][f][1]*m.z[l] for l in L) >= input_vars[f]
+    block.ubCon = pe.Constraint(features, rule=upper_bound_constraints)
+
+    block.linCon = pe.Constraint(expr = 
+        output_vars[0] == sum((sum(leaves[l]['slope'][f]*input_vars[f] for f in features) + 
+                               leaves[l]['intercept'])*block.z[l] for l in L)
+                               )
+
+    block.onlyOne = pe.Constraint(expr = sum(block.z[l] for l in L) == 1)
+    
 

@@ -1,2 +1,2 @@
-from omlt.lineartree.lt_formulation import LinearTreeGDPFormulation
+from omlt.lineartree.lt_formulation import LinearTreeGDPFormulation, LinearTreeHybridBigMFormulation
 from omlt.lineartree.lt_model import LinearTreeModel
