@@ -2,6 +2,7 @@ import numpy as np
 import pyomo.environ as pe
 from lineartree import LinearTreeRegressor
 from sklearn.linear_model import LinearRegression
+import pytest
 
 from omlt import OmltBlock
 from omlt.lineartree import LinearTreeGDPFormulation, LinearTreeModel
@@ -125,6 +126,30 @@ def test_hull_formulation():
     input_bounds={0:(min(X_small)[0], max(X_small)[0])} 
     ltmodel_small = LinearTreeModel(regr_small, scaled_input_bounds = input_bounds)
     formulation1_lt = LinearTreeGDPFormulation(ltmodel_small, transformation='hull')
+    model1 = pe.ConcreteModel()
+    model1.x = pe.Var(initialize = 0)
+    model1.y = pe.Var(initialize = 0)
+    model1.obj = pe.Objective(expr=1)
+    model1.lt = OmltBlock()
+    model1.lt.build_formulation(formulation1_lt)
+    model1.x.fix(0.5)
+    @model1.Constraint()
+    def connect_inputs(mdl):
+        return mdl.x == mdl.lt.inputs[0]
+    @model1.Constraint()
+    def connect_outputs(mdl):
+        return mdl.y == mdl.lt.outputs[0]
+    status_1_bigm = pe.SolverFactory('gurobi').solve(model1, tee=True)
+    pe.assert_optimal_termination(status_1_bigm)
+    solution_1_bigm = (pe.value(model1.x),pe.value(model1.y))
+    y_pred = regr_small.predict(np.array(solution_1_bigm[0]).reshape(1,-1))
+    assert(y_pred[0] - solution_1_bigm[1] <= 1e-4)
+
+def test_mbigm_formulation():
+    regr_small = linear_model_tree(X=X_small, y=y_small)
+    input_bounds={0:(min(X_small)[0], max(X_small)[0])} 
+    ltmodel_small = LinearTreeModel(regr_small, scaled_input_bounds = input_bounds)
+    formulation1_lt = LinearTreeGDPFormulation(ltmodel_small, transformation='mbigm')
     model1 = pe.ConcreteModel()
     model1.x = pe.Var(initialize = 0)
     model1.y = pe.Var(initialize = 0)
