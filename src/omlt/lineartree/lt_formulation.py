@@ -171,7 +171,7 @@ def reassign_none_bounds(leaves, input_bounds):
 
 def build_output_bounds(leaves, input_bounds):
     """
-    This helped function develops bounds of the output variable based on the 
+    This helper function develops bounds of the output variable based on the 
     values of the input_bounds and the signs of the slope
 
     Arguments:
