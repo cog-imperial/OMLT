@@ -178,7 +178,7 @@ def parse_Tree_Data(model):
             if 'children' not in model[entry].keys():
                 leaves[entry] = model[entry]
     else:
-        raise Exception("Unrecognized model entry. Must be dict or linear-tree instance")
+        raise Exception("Model entry must be dict or linear-tree instance")
 
     # This loop adds keys for the slopes and intercept. 
     for leaf in leaves:
