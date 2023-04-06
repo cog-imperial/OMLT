@@ -5,8 +5,6 @@ import pyomo.environ as pe
 
 from omlt.formulation import _PyomoFormulation, _setup_scaled_inputs_outputs
 from pyomo.gdp import Disjunct, Disjunction
-import pprint
-pp = pprint.PrettyPrinter(indent=4)
 
 
 class LinearTreeGDPFormulation(_PyomoFormulation):
