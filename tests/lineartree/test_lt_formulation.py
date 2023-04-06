@@ -188,6 +188,34 @@ def test_mbigm_formulation_single_var():
     y_pred = regr_small.predict(np.array(solution_1_bigm[0]).reshape(1, -1))
     assert(y_pred[0] - solution_1_bigm[1] <= 1e-4)
 
+
+def test_hybrid_bigm_formulation_single_var():
+    regr_small = linear_model_tree(X=X_small, y=y_small)
+    input_bounds = {0: (min(X_small)[0], max(X_small)[0])}
+    ltmodel_small = LinearTreeModel(regr_small, scaled_input_bounds=input_bounds)
+    formulation1_lt = LinearTreeGDPFormulation(ltmodel_small)
+    model1 = pe.ConcreteModel()
+    model1.x = pe.Var(initialize=0)
+    model1.y = pe.Var(initialize=0)
+    model1.obj = pe.Objective(expr=1)
+    model1.lt = OmltBlock()
+    model1.lt.build_formulation(formulation1_lt)
+    model1.x.fix(0.5)
+
+    @model1.Constraint()
+    def connect_inputs(mdl):
+        return mdl.x == mdl.lt.inputs[0]
+
+    @model1.Constraint()
+    def connect_outputs(mdl):
+        return mdl.y == mdl.lt.outputs[0]
+    status_1_bigm = pe.SolverFactory('gurobi').solve(model1, tee=True)
+    pe.assert_optimal_termination(status_1_bigm)
+    solution_1_bigm = (pe.value(model1.x), pe.value(model1.y))
+    y_pred = regr_small.predict(np.array(solution_1_bigm[0]).reshape(1, -1))
+    assert(y_pred[0] - solution_1_bigm[1] <= 1e-4)
+
+
 #### MULTIVARIATE INPUT TESTING ####
 X = np.array([[4.98534526, 1.8977914 ],
               [4.38751717, 4.48456528],
@@ -283,7 +311,7 @@ def test_linear_tree_model_multi_var():
     assert(thresholds_count == len(ltmodel_small._splits.keys()))
 
 
-def test_bigm_formulation_multivar_var():
+def test_bigm_formulation_multi_var():
     regr = linear_model_tree(X=X, y=Y)
     input_bounds = {0: (min(X[:,0]), max(X[:,0])),
                     1: (min(X[:,1]), max(X[:,1]))}
@@ -318,7 +346,7 @@ def test_bigm_formulation_multivar_var():
     assert(y_pred[0] - solution_1_bigm <= 1e-4)
 
 
-def test_hull_formulation_multivar_var():
+def test_hull_formulation_multi_var():
     regr = linear_model_tree(X=X, y=Y)
     input_bounds = {0: (min(X[:,0]), max(X[:,0])),
                     1: (min(X[:,1]), max(X[:,1]))}
@@ -353,7 +381,7 @@ def test_hull_formulation_multivar_var():
     assert(y_pred[0] - solution_1_bigm <= 1e-4)
 
 
-def test_mbigm_formulation_multivar_var():
+def test_mbigm_formulation_multi_var():
     regr = linear_model_tree(X=X, y=Y)
     input_bounds = {0: (min(X[:,0]), max(X[:,0])),
                     1: (min(X[:,1]), max(X[:,1]))}
@@ -387,3 +415,37 @@ def test_mbigm_formulation_multivar_var():
                                    ).reshape(1, -1))
     assert(y_pred[0] - solution_1_bigm <= 1e-4)
 
+
+def test_hybrid_bigm_formulation_multi_var():
+    regr = linear_model_tree(X=X, y=Y)
+    input_bounds = {0: (min(X[:,0]), max(X[:,0])),
+                    1: (min(X[:,1]), max(X[:,1]))}
+    ltmodel_small = LinearTreeModel(regr, scaled_input_bounds=input_bounds)
+    formulation1_lt = LinearTreeGDPFormulation(ltmodel_small)
+    model1 = pe.ConcreteModel()
+    model1.x0 = pe.Var(initialize=0)
+    model1.x1 = pe.Var(initialize=0)
+    model1.y = pe.Var(initialize=0)
+    model1.obj = pe.Objective(expr=1)
+    model1.lt = OmltBlock()
+    model1.lt.build_formulation(formulation1_lt)
+    model1.x0.fix(0.5)
+    model1.x1.fix(0.8)
+
+    @model1.Constraint()
+    def connect_input1(mdl):
+        return mdl.x0 == mdl.lt.inputs[0]
+    
+    @model1.Constraint()
+    def connect_input2(mdl):
+        return mdl.x1 == mdl.lt.inputs[1]
+
+    @model1.Constraint()
+    def connect_outputs(mdl):
+        return mdl.y == mdl.lt.outputs[0]
+    status_1_bigm = pe.SolverFactory('gurobi').solve(model1, tee=True)
+    pe.assert_optimal_termination(status_1_bigm)
+    solution_1_bigm = pe.value(model1.y)
+    y_pred = regr.predict(np.array([pe.value(model1.x0), pe.value(model1.x1)]
+                                   ).reshape(1, -1))
+    assert(y_pred[0] - solution_1_bigm <= 1e-4)
