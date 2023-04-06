@@ -1,4 +1,5 @@
 import numpy as np
+import lineartree
 
 
 class LinearTreeModel:
@@ -167,8 +168,17 @@ def parse_Tree_Data(model):
         vars_dict - Dict of tree inputs and their respective thresholds
     """
     # Create the initial leaves and splits dictionaries 
-    leaves = model.summary(only_leaves=True)
-    splits = model.summary()
+    if isinstance(model, lineartree.lineartree.LinearTreeRegressor) == True:
+        leaves = model.summary(only_leaves=True)
+        splits = model.summary()
+    elif isinstance(model, dict) == True:
+        splits = model
+        leaves = {}
+        for entry in model:
+            if 'children' not in model[entry].keys():
+                leaves[entry] = model[entry]
+    else:
+        raise Exception("Unrecognized model entry. Must be dict or linear-tree instance")
 
     # This loop adds keys for the slopes and intercept. 
     for leaf in leaves:
