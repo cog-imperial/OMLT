@@ -5,7 +5,7 @@ from sklearn.linear_model import LinearRegression
 import pytest
 
 from omlt import OmltBlock
-from omlt.lineartree import LinearTreeGDPFormulation, LinearTreeModel
+from omlt.lineartree import LinearTreeGDPFormulation, LinearTreeModel, LinearTreeHybridBigMFormulation
 import omlt
 
 def linear_model_tree(X, y):
@@ -193,7 +193,7 @@ def test_hybrid_bigm_formulation_single_var():
     regr_small = linear_model_tree(X=X_small, y=y_small)
     input_bounds = {0: (min(X_small)[0], max(X_small)[0])}
     ltmodel_small = LinearTreeModel(regr_small, scaled_input_bounds=input_bounds)
-    formulation1_lt = LinearTreeGDPFormulation(ltmodel_small)
+    formulation1_lt = LinearTreeHybridBigMFormulation(ltmodel_small)
     model1 = pe.ConcreteModel()
     model1.x = pe.Var(initialize=0)
     model1.y = pe.Var(initialize=0)
@@ -421,7 +421,7 @@ def test_hybrid_bigm_formulation_multi_var():
     input_bounds = {0: (min(X[:,0]), max(X[:,0])),
                     1: (min(X[:,1]), max(X[:,1]))}
     ltmodel_small = LinearTreeModel(regr, scaled_input_bounds=input_bounds)
-    formulation1_lt = LinearTreeGDPFormulation(ltmodel_small)
+    formulation1_lt = LinearTreeHybridBigMFormulation(ltmodel_small)
     model1 = pe.ConcreteModel()
     model1.x0 = pe.Var(initialize=0)
     model1.x1 = pe.Var(initialize=0)
