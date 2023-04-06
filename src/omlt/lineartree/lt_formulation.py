@@ -111,10 +111,6 @@ class LinearTreeHybridBigMFormulation(_PyomoFormulation):
             transformation -- choose which Pyomo.GDP formulation to apply. 
                 Supported transformations are bigm, hull, mbigm 
                 (default: {'bigm'})
-
-        Raises:
-            Exception: If transformation not in supported transformations
-            Exception: If no input bounds are given
         """
         super().__init__()
         self.model_definition = lt_model
