@@ -149,7 +149,8 @@ def parse_Tree_Data(model):
     structures are attributes of the LinearTreeModel Class.
 
     Arguments:
-        model -- Trained linear-tree model
+        model -- Trained linear-tree model or dic containing linear-tree model
+            summary (e.g. dict = model.summary())
 
     Returns:
         leaves - Dict containing the following information for each leaf:
@@ -166,6 +167,10 @@ def parse_Tree_Data(model):
             7) 'y_index' - Indices corresponding to Mistry et. al. y binary
                     variable
         vars_dict - Dict of tree inputs and their respective thresholds
+
+    Raises:
+            Exception: If input dict is not equal to model.summary()
+            Exception: If input model is not a dict or linear-tree instance
     """
     # Create the initial leaves and splits dictionaries 
     if isinstance(model, lineartree.lineartree.LinearTreeRegressor) == True:
@@ -174,9 +179,21 @@ def parse_Tree_Data(model):
     elif isinstance(model, dict) == True:
         splits = model
         leaves = {}
+        num_splits_in_model = 0
+        count = 0
         for entry in model:
             if 'children' not in model[entry].keys():
                 leaves[entry] = model[entry]
+            elif len(model[entry]['children']) <= 2:
+                num_splits_in_model += 1
+                if model[entry]['children'][0] not in model.keys():
+                    count += 1
+            elif len(model[entry]['children']) > 1:
+                num_splits_in_model += 1
+                if model[entry]['children'][1] not in model.keys():
+                    count += 1
+        if count > 0 or num_splits_in_model == 0:
+            raise Exception('Input dict must be the summary of the linear-tree model e.g. dict = model.summary()')
     else:
         raise Exception("Model entry must be dict or linear-tree instance")
 
