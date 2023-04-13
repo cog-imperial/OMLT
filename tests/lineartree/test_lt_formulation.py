@@ -85,10 +85,10 @@ def test_linear_tree_model_single_var():
     for j in ltmodel_small._leaves.keys():
         for key in ltmodel_small._leaves[j].keys():
             assert(key in leaves_key_list)
-            # if the key is slope, test the shape of it
+            # if the key is slope, ensure slope dimension match n_inputs
             if key == 'slope':
                 assert(len(ltmodel_small._leaves[j][key]) == ltmodel_small._n_inputs)
-            # elif the key is bounds, test the lb <= ub
+            # elif the key is bounds, test ensure lb <= ub
             elif key == 'bounds':
                 features = ltmodel_small._leaves[j][key].keys()
                 for k in range(len(features)):
@@ -113,13 +113,13 @@ def test_bigm_formulation_single_var():
     input_bounds = {0: (min(X_small)[0], max(X_small)[0])}
     ltmodel_small = LinearTreeModel(regr_small, scaled_input_bounds=input_bounds)
     formulation1_lt = LinearTreeGDPFormulation(ltmodel_small, transformation='bigm')
+
     model1 = pe.ConcreteModel()
     model1.x = pe.Var(initialize=0)
     model1.y = pe.Var(initialize=0)
     model1.obj = pe.Objective(expr=1)
     model1.lt = OmltBlock()
     model1.lt.build_formulation(formulation1_lt)
-    model1.x.fix(0.5)
 
     @model1.Constraint()
     def connect_inputs(mdl):
@@ -128,6 +128,9 @@ def test_bigm_formulation_single_var():
     @model1.Constraint()
     def connect_outputs(mdl):
         return mdl.y == mdl.lt.outputs[0]
+    
+    model1.x.fix(0.5)
+
     status_1_bigm = pe.SolverFactory('gurobi').solve(model1, tee=True)
     pe.assert_optimal_termination(status_1_bigm)
     solution_1_bigm = (pe.value(model1.x), pe.value(model1.y))
@@ -140,13 +143,13 @@ def test_hull_formulation_single_var():
     input_bounds = {0: (min(X_small)[0], max(X_small)[0])}
     ltmodel_small = LinearTreeModel(regr_small, scaled_input_bounds=input_bounds)
     formulation1_lt = LinearTreeGDPFormulation(ltmodel_small, transformation='hull')
+
     model1 = pe.ConcreteModel()
     model1.x = pe.Var(initialize=0)
     model1.y = pe.Var(initialize=0)
     model1.obj = pe.Objective(expr=1)
     model1.lt = OmltBlock()
     model1.lt.build_formulation(formulation1_lt)
-    model1.x.fix(0.5)
 
     @model1.Constraint()
     def connect_inputs(mdl):
@@ -155,6 +158,9 @@ def test_hull_formulation_single_var():
     @model1.Constraint()
     def connect_outputs(mdl):
         return mdl.y == mdl.lt.outputs[0]
+    
+    model1.x.fix(0.5)
+
     status_1_bigm = pe.SolverFactory('gurobi').solve(model1, tee=True)
     pe.assert_optimal_termination(status_1_bigm)
     solution_1_bigm = (pe.value(model1.x), pe.value(model1.y))
@@ -167,13 +173,13 @@ def test_mbigm_formulation_single_var():
     input_bounds = {0: (min(X_small)[0], max(X_small)[0])}
     ltmodel_small = LinearTreeModel(regr_small, scaled_input_bounds=input_bounds)
     formulation1_lt = LinearTreeGDPFormulation(ltmodel_small, transformation='mbigm')
+
     model1 = pe.ConcreteModel()
     model1.x = pe.Var(initialize=0)
     model1.y = pe.Var(initialize=0)
     model1.obj = pe.Objective(expr=1)
     model1.lt = OmltBlock()
     model1.lt.build_formulation(formulation1_lt)
-    model1.x.fix(0.5)
 
     @model1.Constraint()
     def connect_inputs(mdl):
@@ -182,6 +188,9 @@ def test_mbigm_formulation_single_var():
     @model1.Constraint()
     def connect_outputs(mdl):
         return mdl.y == mdl.lt.outputs[0]
+    
+    model1.x.fix(0.5)
+
     status_1_bigm = pe.SolverFactory('gurobi').solve(model1, tee=True)
     pe.assert_optimal_termination(status_1_bigm)
     solution_1_bigm = (pe.value(model1.x), pe.value(model1.y))
@@ -194,13 +203,13 @@ def test_hybrid_bigm_formulation_single_var():
     input_bounds = {0: (min(X_small)[0], max(X_small)[0])}
     ltmodel_small = LinearTreeModel(regr_small, scaled_input_bounds=input_bounds)
     formulation1_lt = LinearTreeHybridBigMFormulation(ltmodel_small)
+
     model1 = pe.ConcreteModel()
     model1.x = pe.Var(initialize=0)
     model1.y = pe.Var(initialize=0)
     model1.obj = pe.Objective(expr=1)
     model1.lt = OmltBlock()
     model1.lt.build_formulation(formulation1_lt)
-    model1.x.fix(0.5)
 
     @model1.Constraint()
     def connect_inputs(mdl):
@@ -209,6 +218,9 @@ def test_hybrid_bigm_formulation_single_var():
     @model1.Constraint()
     def connect_outputs(mdl):
         return mdl.y == mdl.lt.outputs[0]
+    
+    model1.x.fix(0.5)
+
     status_1_bigm = pe.SolverFactory('gurobi').solve(model1, tee=True)
     pe.assert_optimal_termination(status_1_bigm)
     solution_1_bigm = (pe.value(model1.x), pe.value(model1.y))
@@ -217,6 +229,7 @@ def test_hybrid_bigm_formulation_single_var():
 
 
 #### MULTIVARIATE INPUT TESTING ####
+
 X = np.array([[4.98534526, 1.8977914 ],
               [4.38751717, 4.48456528],
               [2.65451539, 2.44426211],
@@ -266,10 +279,12 @@ def test_linear_tree_model_multi_var():
     input_bounds = {0: (min(X[:,0]), max(X[:,0])),
                     1: (min(X[:,1]), max(X[:,1]))}
     ltmodel_small = LinearTreeModel(regr, scaled_input_bounds=input_bounds)
+
     # assert attributes in LinearTreeModel
     assert(ltmodel_small._scaled_input_bounds is not None)
     assert(ltmodel_small._n_inputs == 2)
     assert(ltmodel_small._n_outputs == 1)
+
     # test for splits
     # assert the number of splits
     assert(len(ltmodel_small._splits.keys()) == 5)
@@ -317,6 +332,7 @@ def test_bigm_formulation_multi_var():
                     1: (min(X[:,1]), max(X[:,1]))}
     ltmodel_small = LinearTreeModel(regr, scaled_input_bounds=input_bounds)
     formulation1_lt = LinearTreeGDPFormulation(ltmodel_small, transformation='bigm')
+
     model1 = pe.ConcreteModel()
     model1.x0 = pe.Var(initialize=0)
     model1.x1 = pe.Var(initialize=0)
@@ -324,8 +340,6 @@ def test_bigm_formulation_multi_var():
     model1.obj = pe.Objective(expr=1)
     model1.lt = OmltBlock()
     model1.lt.build_formulation(formulation1_lt)
-    model1.x0.fix(0.5)
-    model1.x1.fix(0.8)
 
     @model1.Constraint()
     def connect_input1(mdl):
@@ -338,6 +352,10 @@ def test_bigm_formulation_multi_var():
     @model1.Constraint()
     def connect_outputs(mdl):
         return mdl.y == mdl.lt.outputs[0]
+
+    model1.x0.fix(0.5)
+    model1.x1.fix(0.8)
+
     status_1_bigm = pe.SolverFactory('gurobi').solve(model1, tee=True)
     pe.assert_optimal_termination(status_1_bigm)
     solution_1_bigm = pe.value(model1.y)
@@ -352,6 +370,7 @@ def test_hull_formulation_multi_var():
                     1: (min(X[:,1]), max(X[:,1]))}
     ltmodel_small = LinearTreeModel(regr, scaled_input_bounds=input_bounds)
     formulation1_lt = LinearTreeGDPFormulation(ltmodel_small, transformation='hull')
+
     model1 = pe.ConcreteModel()
     model1.x0 = pe.Var(initialize=0)
     model1.x1 = pe.Var(initialize=0)
@@ -359,8 +378,6 @@ def test_hull_formulation_multi_var():
     model1.obj = pe.Objective(expr=1)
     model1.lt = OmltBlock()
     model1.lt.build_formulation(formulation1_lt)
-    model1.x0.fix(0.5)
-    model1.x1.fix(0.8)
 
     @model1.Constraint()
     def connect_input1(mdl):
@@ -373,6 +390,10 @@ def test_hull_formulation_multi_var():
     @model1.Constraint()
     def connect_outputs(mdl):
         return mdl.y == mdl.lt.outputs[0]
+    
+    model1.x0.fix(0.5)
+    model1.x1.fix(0.8)
+    
     status_1_bigm = pe.SolverFactory('gurobi').solve(model1, tee=True)
     pe.assert_optimal_termination(status_1_bigm)
     solution_1_bigm = pe.value(model1.y)
@@ -387,6 +408,7 @@ def test_mbigm_formulation_multi_var():
                     1: (min(X[:,1]), max(X[:,1]))}
     ltmodel_small = LinearTreeModel(regr, scaled_input_bounds=input_bounds)
     formulation1_lt = LinearTreeGDPFormulation(ltmodel_small, transformation='mbigm')
+
     model1 = pe.ConcreteModel()
     model1.x0 = pe.Var(initialize=0)
     model1.x1 = pe.Var(initialize=0)
@@ -394,8 +416,6 @@ def test_mbigm_formulation_multi_var():
     model1.obj = pe.Objective(expr=1)
     model1.lt = OmltBlock()
     model1.lt.build_formulation(formulation1_lt)
-    model1.x0.fix(0.5)
-    model1.x1.fix(0.8)
 
     @model1.Constraint()
     def connect_input1(mdl):
@@ -408,6 +428,10 @@ def test_mbigm_formulation_multi_var():
     @model1.Constraint()
     def connect_outputs(mdl):
         return mdl.y == mdl.lt.outputs[0]
+    
+    model1.x0.fix(0.5)
+    model1.x1.fix(0.8)
+    
     status_1_bigm = pe.SolverFactory('gurobi').solve(model1, tee=True)
     pe.assert_optimal_termination(status_1_bigm)
     solution_1_bigm = pe.value(model1.y)
@@ -422,6 +446,7 @@ def test_hybrid_bigm_formulation_multi_var():
                     1: (min(X[:,1]), max(X[:,1]))}
     ltmodel_small = LinearTreeModel(regr, scaled_input_bounds=input_bounds)
     formulation1_lt = LinearTreeHybridBigMFormulation(ltmodel_small)
+
     model1 = pe.ConcreteModel()
     model1.x0 = pe.Var(initialize=0)
     model1.x1 = pe.Var(initialize=0)
@@ -429,8 +454,6 @@ def test_hybrid_bigm_formulation_multi_var():
     model1.obj = pe.Objective(expr=1)
     model1.lt = OmltBlock()
     model1.lt.build_formulation(formulation1_lt)
-    model1.x0.fix(0.5)
-    model1.x1.fix(0.8)
 
     @model1.Constraint()
     def connect_input1(mdl):
@@ -443,6 +466,10 @@ def test_hybrid_bigm_formulation_multi_var():
     @model1.Constraint()
     def connect_outputs(mdl):
         return mdl.y == mdl.lt.outputs[0]
+    
+    model1.x0.fix(0.5)
+    model1.x1.fix(0.8)
+
     status_1_bigm = pe.SolverFactory('gurobi').solve(model1, tee=True)
     pe.assert_optimal_termination(status_1_bigm)
     solution_1_bigm = pe.value(model1.y)
@@ -500,3 +527,13 @@ def test_summary_dict_as_argument():
         for _ in range(len(ltmodel_small._thresholds[k].keys())):
             thresholds_count += 1
     assert(thresholds_count == len(ltmodel_small._splits.keys()))
+
+
+def test_raise_exception_if_wrong_model_instance():
+    regr = linear_model_tree(X=X, y=Y)
+    input_bounds = {0: (min(X[:,0]), max(X[:,0])),
+                    1: (min(X[:,1]), max(X[:,1]))}
+    with pytest.raises(Exception):
+        ltmodel_small = LinearTreeModel(regr.summary(only_leaves=True), scaled_input_bounds=input_bounds)
+    with pytest.raises(Exception):
+        ltmodel_small = LinearTreeModel((0,0), scaled_input_bounds=input_bounds)
