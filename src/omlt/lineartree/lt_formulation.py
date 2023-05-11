@@ -50,10 +50,6 @@ class LinearTreeGDPFormulation(_PyomoFormulation):
         supported_transformations = ['bigm', 'hull', 'mbigm']
         if transformation not in supported_transformations:
             raise Exception("Transformation must be bigm, mbigm, or hull")
-        
-        # Ensure that bounds are given otherwise cannot use Pyomo.GDP
-        if self.model_definition._scaled_input_bounds == None:
-            raise Exception("Input Bounds needed for Pyomo.GDP")
 
     @property
     def input_indexes(self):
@@ -141,32 +137,6 @@ class LinearTreeHybridBigMFormulation(_PyomoFormulation):
         )
 
 
-def reassign_none_bounds(leaves, input_bounds):
-    """
-    This helper function reassigns bounds that are None to the bounds
-    input by the user
-
-    Arguments:
-        leaves -- The dictionary of leaf information. Attribute of the 
-            LinearTreeModel object
-        input_bounds -- The nested dictionary
-
-    Returns:
-        The modified leaves dict without any bounds that are listed as None
-    """
-    L = np.array(list(leaves.keys()))
-    features = np.arange(0, len(leaves[L[0]]['slope']))
-
-    for l in L:
-        for f in features:
-            if leaves[l]['bounds'][f][0] == None:
-                leaves[l]['bounds'][f][0] = input_bounds[f][0]
-            if leaves[l]['bounds'][f][1] == None:
-                leaves[l]['bounds'][f][1] = input_bounds[f][1]
-
-    return leaves
-
-
 def build_output_bounds(leaves, input_bounds):
     """
     This helper function develops bounds of the output variable based on the 
@@ -227,10 +197,6 @@ def add_GDP_formulation_to_block(
     L = np.array(list(leaves.keys()))
     features = np.arange(0, len(leaves[L[0]]['slope']))
 
-    # Replaces any lower/upper bounds in the leaves dictionary of value None
-    # with the values of the input bounds 
-    leaves = reassign_none_bounds(leaves, input_bounds)
-
     # Use the input_bounds and the linear models in the leaves to calculate
     # the lower and upper bounds on the output variable. Required for Pyomo.GDP
     output_bounds = build_output_bounds(leaves, input_bounds)
@@ -288,10 +254,6 @@ def add_hybrid_formulation_to_block(
     # The set of leaves and the set of features
     L = np.array(list(leaves.keys()))
     features = np.arange(0, len(leaves[L[0]]['slope']))
-
-    # Replaces any lower/upper bounds in the leaves dictionary of value None
-    # with the values of the input bounds 
-    leaves = reassign_none_bounds(leaves, input_bounds)
 
     # Use the input_bounds and the linear models in the leaves to calculate
     # the lower and upper bounds on the output variable. Required for Pyomo.GDP
