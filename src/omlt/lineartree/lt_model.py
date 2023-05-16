@@ -14,6 +14,7 @@ class LinearTreeModel:
         _scaling_object (scaling object) : Scaling object to ensure scaled 
             data match units of broader optimization problem
         _scaled_input_bounds (dict): Dict containing scaled input bounds
+        _unscaled_input_bounds (dict): Dict containing unscaled input bounds
 
     References:
         * linear-tree : https://github.com/cerlymarco/linear-tree
@@ -30,31 +31,29 @@ class LinearTreeModel:
         self, lt_regressor, scaling_object=None, scaled_input_bounds=None,
             unscaled_input_bounds=None
         ):
-        """ 
-        Create a LinearTreeModel object used to create the linear model tree
-        formulation in Pyomo
-
-           scaling_object : ScalingInterface or None
-              A scaling object to specify the scaling parameters for the
-              linear model tree inputs and outputs. If None, then no
-              scaling is performed.
-           scaled_input_bounds : dict or None
-              A dict that contains the bounds on the scaled variables (the
-              direct inputs to the tree ensemble). If None, then no bounds
-              are specified or they are generated using unscaled bounds.
+        """Create a LinearTreeModel object and define attributes based on the 
+        trained linear model decision tree.
 
         Arguments:
             lt_regressor -- A LinearTreeRegressor model that is trained by the 
                 linear-tree package
 
         Keyword Arguments:
-            scaling_object -- A scaling object to specify the scaling 
-                parameters for the linear model tree inputs and outputs. 
-                If None, then no scaling is performed. (default: {None})
-            scaled_input_bounds -- A dict that contains the bounds on the 
-                scaled variables (the direct inputs to the tree ensemble). 
-                If None, then no bounds are specified or they are generated 
-                using unscaled bounds.(default: {None})
+            scaling_object --A scaling object to specify the scaling parameters 
+                for the linear model tree inputs and outputs. If None, then no 
+                scaling is performed. (default: {None})
+            scaled_input_bounds -- A dict that contains the bounds on the scaled 
+                variables (the direct inputs to the tree). If None, then the 
+                user must specify the bounds via the input_bounds argument.
+                (default: {None})
+            unscaled_input_bounds -- A dict that contains the bounds on the 
+                variables (the direct inputs to the tree). If None, then the 
+                user must specify the scaled bounds via the scaled_input_bounds 
+                argument.( (default: {None})
+
+        Raises:
+            Exception: Input bounds required. If unscaled_input_bounds and
+                scaled_input_bounds is None, raise Exception.
         """
         self._model = lt_regressor
         self._scaling_object = scaling_object
@@ -163,8 +162,8 @@ def find_n_inputs(leaves):
         Number of inputs
     """
     T = np.array(list(leaves.keys()))
-    L0 = np.array(list(leaves[T[0]].keys()))
-    n_inputs = len(np.arange(0,len(leaves[T[0]][L0[0]]['slope'])))
+    L = np.array(list(leaves[T[0]].keys()))
+    n_inputs = len(np.arange(0,len(leaves[T[0]][L[0]]['slope'])))
     return n_inputs
 
 
@@ -225,7 +224,11 @@ def parse_Tree_Data(model, input_bounds):
             Exception: If input dict is not equal to model.summary()
             Exception: If input model is not a dict or linear-tree instance
     """
-    # Create the initial leaves and splits dictionaries 
+    # Create the initial leaves and splits dictionaries depending on the 
+    # instance of the model (can be either a LinearTreeRegressor or dict).
+    # Include checks to ensure that the input dict is the model summary which
+    # is obtained by calling the summary() method contained within the 
+    # linear-tree package (e.g. dict = model.summary()) 
     if isinstance(model, lineartree.lineartree.LinearTreeRegressor) == True:
         leaves = model.summary(only_leaves=True)
         splits = model.summary()
@@ -234,6 +237,8 @@ def parse_Tree_Data(model, input_bounds):
         leaves = {}
         num_splits_in_model = 0
         count = 0
+        # Checks to ensure that the input nested dictionary contains the 
+        # correct information
         for entry in model:
             if 'children' not in model[entry].keys():
                 leaves[entry] = model[entry]
@@ -250,7 +255,8 @@ def parse_Tree_Data(model, input_bounds):
     else:
         raise Exception("Model entry must be dict or linear-tree instance")
 
-    # This loop adds keys for the slopes and intercept. 
+    # This loop adds keys for the slopes and intercept and removes the leaf 
+    # keys in the splits dictionary 
     for leaf in leaves:
         del splits[leaf]
         leaves[leaf]['slope'] = list(leaves[leaf]['models'].coef_)
@@ -346,6 +352,9 @@ def parse_Tree_Data(model, input_bounds):
     
     leaves = reassign_none_bounds(leaves, input_bounds)
 
+    # We use the same formulations developed for gradient boosted linear trees
+    # so we nest the leaves, splits, and thresholds attributes in a "one-tree" 
+    # tree.
     leaves = {0: leaves}
     splits = {0: splits}
     splitting_thresholds = {0:splitting_thresholds}

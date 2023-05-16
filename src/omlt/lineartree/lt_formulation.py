@@ -40,7 +40,6 @@ class LinearTreeGDPFormulation(_PyomoFormulation):
 
         Raises:
             Exception: If transformation not in supported transformations
-            Exception: If no input bounds are given
         """
         super().__init__()
         self.model_definition = lt_model
@@ -143,7 +142,7 @@ def build_output_bounds(model_def, input_bounds):
     values of the input_bounds and the signs of the slope
 
     Arguments:
-        leaves -- Dict of leaf information
+        model_def -- Model definition
         input_bounds -- Dict of input bounds
 
     Returns:
@@ -265,12 +264,15 @@ def add_hybrid_formulation_to_block(
     input_bounds = model_definition._scaled_input_bounds
     n_inputs = model_definition._n_inputs
     
-    # The set of leaves and the set of features
+    # The set of trees
     T = list(leaves.keys())
+    # Create a list of tuples that contains the tree and leaf indices. Note that
+    # the leaf indices depend on the tree in the ensemble.
     t_l = []
     for tree in T:
         for l in leaves[tree].keys():
             t_l.append((tree, l))
+
     features = np.arange(0, n_inputs)
 
     # Use the input_bounds and the linear models in the leaves to calculate
@@ -283,27 +285,29 @@ def add_hybrid_formulation_to_block(
     block.scaled_outputs.setub(output_bounds[1])
     block.scaled_outputs.setlb(output_bounds[0])
 
-    # Create a disjunct for each leaf containing the bound constraints
-    # and the linear model expression.
+    # Create the intermeditate variables. z is binary that indicates which leaf
+    # in tree t is returned. intermediate_output is the output of tree t and 
+    # the total output of the model is the sum of the intermediate_output vars
     block.z = pe.Var(t_l, within=pe.Binary)
     block.intermediate_output = pe.Var(T)
-
+    
+    @block.Constraint(features, T)
     def lower_bound_constraints(m, f, t):
         L = list(leaves[t].keys())
         return sum(leaves[t][l]['bounds'][f][0]*m.z[t, l] for l in L) <= input_vars[f]
-    block.lbCon = pe.Constraint(features, T,  rule=lower_bound_constraints)
 
+    @block.Constraint(features, T)
     def upper_bound_constraints(m, f, t):
         L = list(leaves[t].keys())
         return sum(leaves[t][l]['bounds'][f][1]*m.z[t, l] for l in L) >= input_vars[f]
-    block.ubCon = pe.Constraint(features, T, rule=upper_bound_constraints)
 
+    @block.Constraint(T)
     def linear_constraint(m, t):
         L = list(leaves[t].keys())
-        return block.intermediate_output[t] == sum((sum(leaves[t][l]['slope'][f]*input_vars[f] for f in features) + 
+        return block.intermediate_output[t] == sum(
+            (sum(leaves[t][l]['slope'][f]*input_vars[f] for f in features) + 
                             leaves[t][l]['intercept'])*block.z[t, l] for l in L
                             )
-    block.linCon = pe.Constraint(T, rule=linear_constraint)
 
     @block.Constraint(T)
     def only_one(b, t):
