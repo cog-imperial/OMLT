@@ -73,7 +73,8 @@ class LinearTreeModel:
                     k: (lbs[k], ubs[k]) for k in unscaled_input_bounds.keys()
                 }
 
-            # If unscaled input bounds provided and no scaler provided, scaled input bounds = unscaled input bounds
+            # If unscaled input bounds provided and no scaler provided, scaled 
+            # input bounds = unscaled input bounds
             elif unscaled_input_bounds is not None and scaling_object is None:
                 scaled_input_bounds = unscaled_input_bounds
             elif unscaled_input_bounds is None:
