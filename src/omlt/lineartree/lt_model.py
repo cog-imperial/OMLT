@@ -162,8 +162,9 @@ def find_n_inputs(leaves):
     Returns:
         Number of inputs
     """
-    L = np.array(list(leaves.keys()))
-    n_inputs = len(np.arange(0,len(leaves[L[0]]['slope'])))
+    T = np.array(list(leaves.keys()))
+    L0 = np.array(list(leaves[T[0]].keys()))
+    n_inputs = len(np.arange(0,len(leaves[T[0]][L0[0]]['slope'])))
     return n_inputs
 
 
@@ -344,5 +345,9 @@ def parse_Tree_Data(model, input_bounds):
             leaves[leaf]['bounds'][var][0] = splits[split]['th']
     
     leaves = reassign_none_bounds(leaves, input_bounds)
+
+    leaves = {0: leaves}
+    splits = {0: splits}
+    splitting_thresholds = {0:splitting_thresholds}
 
     return splits, leaves, splitting_thresholds

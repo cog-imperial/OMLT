@@ -69,43 +69,43 @@ def test_linear_tree_model_single_var():
     assert(ltmodel_small._n_outputs == 1)
     # test for splits
     # assert the number of splits
-    assert(len(ltmodel_small._splits.keys()) == 5)
+    assert(len(ltmodel_small._splits[0].keys()) == 5)
     splits_key_list = ['col', 'th', 'loss', 'samples', 'parent',
                        'children', 'models', 'left_leaves', 'right_leaves', 'y_index']
     # assert whether all the dicts have such keys
-    for i in ltmodel_small._splits.keys():
-        for key in ltmodel_small._splits[i].keys():
+    for i in ltmodel_small._splits[0].keys():
+        for key in ltmodel_small._splits[0][i].keys():
             assert(key in splits_key_list)
     # test for leaves
     # assert the number of leaves
-    assert(len(ltmodel_small._leaves.keys()) == 6)
+    assert(len(ltmodel_small._leaves[0].keys()) == 6)
     # assert whether all the dicts have such keys
     leaves_key_list = ['loss', 'samples', 'models',
                        'slope', 'intercept', 'parent', 'bounds']
-    for j in ltmodel_small._leaves.keys():
-        for key in ltmodel_small._leaves[j].keys():
+    for j in ltmodel_small._leaves[0].keys():
+        for key in ltmodel_small._leaves[0][j].keys():
             assert(key in leaves_key_list)
             # if the key is slope, ensure slope dimension match n_inputs
             if key == 'slope':
-                assert(len(ltmodel_small._leaves[j][key]) == ltmodel_small._n_inputs)
+                assert(len(ltmodel_small._leaves[0][j][key]) == ltmodel_small._n_inputs)
             # elif the key is bounds, test ensure lb <= ub
             elif key == 'bounds':
-                features = ltmodel_small._leaves[j][key].keys()
+                features = ltmodel_small._leaves[0][j][key].keys()
                 for k in range(len(features)):
-                    lb = ltmodel_small._leaves[j][key][k][0]
-                    ub = ltmodel_small._leaves[j][key][k][1]
+                    lb = ltmodel_small._leaves[0][j][key][k][0]
+                    ub = ltmodel_small._leaves[0][j][key][k][1]
                     # there is chance that don't have lb and ub at this step
                     if lb is not None and ub is not None:
                         assert(lb <= ub)
     # test for thresholds
     # assert whether each feature has threshold
-    assert(len(ltmodel_small._thresholds.keys()) == ltmodel_small._n_inputs)
+    assert(len(ltmodel_small._thresholds[0].keys()) == ltmodel_small._n_inputs)
     # assert the number of thresholds
     thresholds_count = 0
-    for k in range(len(ltmodel_small._thresholds.keys())):
-        for _ in range(len(ltmodel_small._thresholds[k].keys())):
+    for k in range(len(ltmodel_small._thresholds[0].keys())):
+        for _ in range(len(ltmodel_small._thresholds[0][k].keys())):
             thresholds_count += 1
-    assert(thresholds_count == len(ltmodel_small._splits.keys()))
+    assert(thresholds_count == len(ltmodel_small._splits[0].keys()))
 
 
 def test_bigm_formulation_single_var():
@@ -287,43 +287,43 @@ def test_linear_tree_model_multi_var():
 
     # test for splits
     # assert the number of splits
-    assert(len(ltmodel_small._splits.keys()) == 5)
+    assert(len(ltmodel_small._splits[0].keys()) == 5)
     splits_key_list = ['col', 'th', 'loss', 'samples', 'parent',
                        'children', 'models', 'left_leaves', 'right_leaves', 'y_index']
     # assert whether all the dicts have such keys
-    for i in ltmodel_small._splits.keys():
-        for key in ltmodel_small._splits[i].keys():
+    for i in ltmodel_small._splits[0].keys():
+        for key in ltmodel_small._splits[0][i].keys():
             assert(key in splits_key_list)
     # test for leaves
     # assert the number of leaves
-    assert(len(ltmodel_small._leaves.keys()) == 6)
+    assert(len(ltmodel_small._leaves[0].keys()) == 6)
     # assert whether all the dicts have such keys
     leaves_key_list = ['loss', 'samples', 'models',
                        'slope', 'intercept', 'parent', 'bounds']
-    for j in ltmodel_small._leaves.keys():
-        for key in ltmodel_small._leaves[j].keys():
+    for j in ltmodel_small._leaves[0].keys():
+        for key in ltmodel_small._leaves[0][j].keys():
             assert(key in leaves_key_list)
             # if the key is slope, test the shape of it
             if key == 'slope':
-                assert(len(ltmodel_small._leaves[j][key]) == ltmodel_small._n_inputs)
+                assert(len(ltmodel_small._leaves[0][j][key]) == ltmodel_small._n_inputs)
             # elif the key is bounds, test the lb <= ub
             elif key == 'bounds':
-                features = ltmodel_small._leaves[j][key].keys()
+                features = ltmodel_small._leaves[0][j][key].keys()
                 for k in range(len(features)):
-                    lb = ltmodel_small._leaves[j][key][k][0]
-                    ub = ltmodel_small._leaves[j][key][k][1]
+                    lb = ltmodel_small._leaves[0][j][key][k][0]
+                    ub = ltmodel_small._leaves[0][j][key][k][1]
                     # there is chance that don't have lb and ub at this step
                     if lb is not None and ub is not None:
                         assert(lb <= ub)
     # test for thresholds
     # assert whether each feature has threshold
-    assert(len(ltmodel_small._thresholds.keys()) == ltmodel_small._n_inputs)
+    assert(len(ltmodel_small._thresholds[0].keys()) == ltmodel_small._n_inputs)
     # assert the number of thresholds
     thresholds_count = 0
-    for k in range(len(ltmodel_small._thresholds.keys())):
-        for _ in range(len(ltmodel_small._thresholds[k].keys())):
+    for k in range(len(ltmodel_small._thresholds[0].keys())):
+        for _ in range(len(ltmodel_small._thresholds[0][k].keys())):
             thresholds_count += 1
-    assert(thresholds_count == len(ltmodel_small._splits.keys()))
+    assert(thresholds_count == len(ltmodel_small._splits[0].keys()))
 
 
 def test_bigm_formulation_multi_var():
@@ -490,43 +490,43 @@ def test_summary_dict_as_argument():
     assert(ltmodel_small._n_outputs == 1)
     # test for splits
     # assert the number of splits
-    assert(len(ltmodel_small._splits.keys()) == 5)
+    assert(len(ltmodel_small._splits[0].keys()) == 5)
     splits_key_list = ['col', 'th', 'loss', 'samples', 'parent',
                        'children', 'models', 'left_leaves', 'right_leaves', 'y_index']
     # assert whether all the dicts have such keys
-    for i in ltmodel_small._splits.keys():
-        for key in ltmodel_small._splits[i].keys():
+    for i in ltmodel_small._splits[0].keys():
+        for key in ltmodel_small._splits[0][i].keys():
             assert(key in splits_key_list)
     # test for leaves
     # assert the number of leaves
-    assert(len(ltmodel_small._leaves.keys()) == 6)
+    assert(len(ltmodel_small._leaves[0].keys()) == 6)
     # assert whether all the dicts have such keys
     leaves_key_list = ['loss', 'samples', 'models',
                        'slope', 'intercept', 'parent', 'bounds']
-    for j in ltmodel_small._leaves.keys():
-        for key in ltmodel_small._leaves[j].keys():
+    for j in ltmodel_small._leaves[0].keys():
+        for key in ltmodel_small._leaves[0][j].keys():
             assert(key in leaves_key_list)
             # if the key is slope, test the shape of it
             if key == 'slope':
-                assert(len(ltmodel_small._leaves[j][key]) == ltmodel_small._n_inputs)
+                assert(len(ltmodel_small._leaves[0][j][key]) == ltmodel_small._n_inputs)
             # elif the key is bounds, test the lb <= ub
             elif key == 'bounds':
-                features = ltmodel_small._leaves[j][key].keys()
+                features = ltmodel_small._leaves[0][j][key].keys()
                 for k in range(len(features)):
-                    lb = ltmodel_small._leaves[j][key][k][0]
-                    ub = ltmodel_small._leaves[j][key][k][1]
+                    lb = ltmodel_small._leaves[0][j][key][k][0]
+                    ub = ltmodel_small._leaves[0][j][key][k][1]
                     # there is chance that don't have lb and ub at this step
                     if lb is not None and ub is not None:
                         assert(lb <= ub)
     # test for thresholds
     # assert whether each feature has threshold
-    assert(len(ltmodel_small._thresholds.keys()) == ltmodel_small._n_inputs)
+    assert(len(ltmodel_small._thresholds[0].keys()) == ltmodel_small._n_inputs)
     # assert the number of thresholds
     thresholds_count = 0
-    for k in range(len(ltmodel_small._thresholds.keys())):
-        for _ in range(len(ltmodel_small._thresholds[k].keys())):
+    for k in range(len(ltmodel_small._thresholds[0].keys())):
+        for _ in range(len(ltmodel_small._thresholds[0][k].keys())):
             thresholds_count += 1
-    assert(thresholds_count == len(ltmodel_small._splits.keys()))
+    assert(thresholds_count == len(ltmodel_small._splits[0].keys()))
 
 
 def test_raise_exception_if_wrong_model_instance():
