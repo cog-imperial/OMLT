@@ -214,7 +214,7 @@ def add_GDP_formulation_to_block(
     block.scaled_outputs.setub(output_bounds[1])
     block.scaled_outputs.setlb(output_bounds[0])
 
-    block.disjunction_output = pe.Var(T, bounds=(output_bounds[0], output_bounds[1]))
+    block.intermediate_output = pe.Var(T, bounds=(output_bounds[0], output_bounds[1]))
 
     # Create a disjunct for each leaf containing the bound constraints
     # and the linear model expression.
@@ -231,7 +231,7 @@ def add_GDP_formulation_to_block(
         intercept = leaves[t][l]['intercept']
         d.linear_exp = pe.Constraint(
             expr=sum(slope[k]*input_vars[k] for k in features) 
-            + intercept == block.disjunction_output[t]
+            + intercept == block.intermediate_output[t]
             )    
     block.disjunct = Disjunct(t_l, rule=disjuncts_rule)
 
@@ -242,7 +242,7 @@ def add_GDP_formulation_to_block(
 
     block.total_output = pe.Constraint(expr = 
                                        output_vars[0] == 
-                                       sum(block.disjunction_output[t] for t in T))
+                                       sum(block.intermediate_output[t] for t in T))
     
     transformation_string = 'gdp.' + transformation
     
@@ -310,7 +310,7 @@ def add_hybrid_formulation_to_block(
                             )
 
     @block.Constraint(T)
-    def only_one(b, t):
+    def only_one_leaf_per_tree(b, t):
         L = list(leaves[t].keys())
         return sum(block.z[t, l] for l in L) == 1 
     
