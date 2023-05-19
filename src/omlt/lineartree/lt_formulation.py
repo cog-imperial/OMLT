@@ -1,10 +1,8 @@
-import collections
-
 import numpy as np
 import pyomo.environ as pe
+from pyomo.gdp import Disjunct
 
 from omlt.formulation import _PyomoFormulation, _setup_scaled_inputs_outputs
-from pyomo.gdp import Disjunct, Disjunction
 
 
 class LinearTreeGDPFormulation(_PyomoFormulation):
@@ -44,11 +42,11 @@ class LinearTreeGDPFormulation(_PyomoFormulation):
         super().__init__()
         self.model_definition = lt_model
         self.transformation = transformation
-        
+
         # Ensure that the GDP transformation given is supported
         supported_transformations = ['bigm', 'hull', 'mbigm']
         if transformation not in supported_transformations:
-            raise Exception("Transformation must be bigm, mbigm, or hull")
+            raise NotImplementedError("Supported transformations are bigm, mbigm, or hull")
 
     @property
     def input_indexes(self):
@@ -70,7 +68,7 @@ class LinearTreeGDPFormulation(_PyomoFormulation):
             self.model_definition._scaled_input_bounds,
         )
 
-        _add_GDP_formulation_to_block(
+        _add_gdp_formulation_to_block(
             block=self.block,
             model_definition=self.model_definition,
             input_vars=self.block.scaled_inputs,
@@ -151,17 +149,17 @@ def _build_output_bounds(model_def, input_bounds):
     """
     leaves = model_def._leaves
     n_inputs = model_def._n_inputs
-    T = np.array(list(leaves.keys()))
+    tree_ids = np.array(list(leaves.keys()))
     features = np.arange(0, n_inputs)
 
     # Initialize bounds and variables
     bounds = [0, 0]
     upper_bound = 0
     lower_bound = 0
-    for t in T:
-        for l in leaves[t]:
-            slopes = leaves[t][l]['slope']
-            intercept = leaves[t][l]['intercept']
+    for tree in tree_ids:
+        for leaf in leaves[tree]:
+            slopes = leaves[tree][leaf]['slope']
+            intercept = leaves[tree][leaf]['intercept']
             for k in features:
                 if slopes[k] <= 0:
                     upper_bound += slopes[k]*input_bounds[k][0]+intercept
@@ -175,11 +173,11 @@ def _build_output_bounds(model_def, input_bounds):
                     bounds[0]= lower_bound
             upper_bound = 0
             lower_bound = 0
-    
-    return bounds 
+
+    return bounds
 
 
-def _add_GDP_formulation_to_block(
+def _add_gdp_formulation_to_block(
     block, model_definition, input_vars, output_vars, transformation):
     """
     This function adds the GDP representation to the OmltBlock using Pyomo.GDP
@@ -197,55 +195,55 @@ def _add_GDP_formulation_to_block(
     n_inputs = model_definition._n_inputs
 
     # The set of leaves and the set of features
-    T = list(leaves.keys())
+    tree_ids = list(leaves.keys())
     t_l = []
-    for tree in T:
-        for l in leaves[tree].keys():
-            t_l.append((tree, l))
+    for tree in tree_ids:
+        for leaf in leaves[tree].keys():
+            t_l.append((tree, leaf))
     features = np.arange(0, n_inputs)
 
     # Use the input_bounds and the linear models in the leaves to calculate
     # the lower and upper bounds on the output variable. Required for Pyomo.GDP
     output_bounds = _build_output_bounds(model_definition, input_bounds)
-    
+
     # Ouptuts are automatically scaled based on whether inputs are scaled
     block.outputs.setub(output_bounds[1])
     block.outputs.setlb(output_bounds[0])
     block.scaled_outputs.setub(output_bounds[1])
     block.scaled_outputs.setlb(output_bounds[0])
 
-    block.intermediate_output = pe.Var(T, bounds=(output_bounds[0], output_bounds[1]))
+    block.intermediate_output = pe.Var(tree_ids, bounds=(output_bounds[0], output_bounds[1]))
 
     # Create a disjunct for each leaf containing the bound constraints
     # and the linear model expression.
-    def disjuncts_rule(d, t, l):
-        def lb_Rule(d, f):
-            return input_vars[f] >= leaves[t][l]['bounds'][f][0]
-        d.lb_constraint = pe.Constraint(features, rule=lb_Rule)
+    def disjuncts_rule(dsj, tree, leaf):
+        def lb_rule(dsj, feat):
+            return input_vars[feat] >= leaves[tree][leaf]['bounds'][feat][0]
+        dsj.lb_constraint = pe.Constraint(features, rule=lb_rule)
 
-        def ub_Rule(d, f):
-            return input_vars[f] <= leaves[t][l]['bounds'][f][1]
-        d.ub_constraint = pe.Constraint(features, rule=ub_Rule)
+        def ub_rule(dsj, feat):
+            return input_vars[feat] <= leaves[tree][leaf]['bounds'][feat][1]
+        dsj.ub_constraint = pe.Constraint(features, rule=ub_rule)
 
-        slope = leaves[t][l]['slope']
-        intercept = leaves[t][l]['intercept']
-        d.linear_exp = pe.Constraint(
-            expr=sum(slope[k]*input_vars[k] for k in features) 
-            + intercept == block.intermediate_output[t]
-            )    
+        slope = leaves[tree][leaf]['slope']
+        intercept = leaves[tree][leaf]['intercept']
+        dsj.linear_exp = pe.Constraint(
+            expr=sum(slope[k]*input_vars[k] for k in features)
+            + intercept == block.intermediate_output[tree]
+            )
     block.disjunct = Disjunct(t_l, rule=disjuncts_rule)
 
-    @block.Disjunction(T)
-    def disjunction_rule(b, t):
-        L = list(leaves[t].keys())
-        return [block.disjunct[t, l] for l in L]
+    @block.Disjunction(tree_ids)
+    def disjunction_rule(b, tree):
+        leaf_ids = list(leaves[tree].keys())
+        return [block.disjunct[tree, leaf] for leaf in leaf_ids]
 
-    block.total_output = pe.Constraint(expr = 
-                                       output_vars[0] == 
-                                       sum(block.intermediate_output[t] for t in T))
-    
+    block.total_output = pe.Constraint(expr =
+                                       output_vars[0] ==
+                                       sum(block.intermediate_output[tree] for tree in tree_ids))
+
     transformation_string = 'gdp.' + transformation
-    
+
     pe.TransformationFactory(transformation_string).apply_to(block)
 
 
@@ -263,22 +261,22 @@ def _add_hybrid_formulation_to_block(
     leaves = model_definition._leaves
     input_bounds = model_definition._scaled_input_bounds
     n_inputs = model_definition._n_inputs
-    
+
     # The set of trees
-    T = list(leaves.keys())
+    tree_ids = list(leaves.keys())
     # Create a list of tuples that contains the tree and leaf indices. Note that
     # the leaf indices depend on the tree in the ensemble.
     t_l = []
-    for tree in T:
-        for l in leaves[tree].keys():
-            t_l.append((tree, l))
+    for tree in tree_ids:
+        for leaf in leaves[tree].keys():
+            t_l.append((tree, leaf))
 
     features = np.arange(0, n_inputs)
 
     # Use the input_bounds and the linear models in the leaves to calculate
     # the lower and upper bounds on the output variable. Required for Pyomo.GDP
     output_bounds = _build_output_bounds(model_definition, input_bounds)
-    
+
     # Ouptuts are automatically scaled based on whether inputs are scaled
     block.outputs.setub(output_bounds[1])
     block.outputs.setlb(output_bounds[0])
@@ -286,35 +284,36 @@ def _add_hybrid_formulation_to_block(
     block.scaled_outputs.setlb(output_bounds[0])
 
     # Create the intermeditate variables. z is binary that indicates which leaf
-    # in tree t is returned. intermediate_output is the output of tree t and 
+    # in tree t is returned. intermediate_output is the output of tree t and
     # the total output of the model is the sum of the intermediate_output vars
     block.z = pe.Var(t_l, within=pe.Binary)
-    block.intermediate_output = pe.Var(T)
-    
-    @block.Constraint(features, T)
-    def lower_bound_constraints(m, f, t):
-        L = list(leaves[t].keys())
-        return sum(leaves[t][l]['bounds'][f][0]*m.z[t, l] for l in L) <= input_vars[f]
+    block.intermediate_output = pe.Var(tree_ids)
 
-    @block.Constraint(features, T)
-    def upper_bound_constraints(m, f, t):
-        L = list(leaves[t].keys())
-        return sum(leaves[t][l]['bounds'][f][1]*m.z[t, l] for l in L) >= input_vars[f]
+    @block.Constraint(features, tree_ids)
+    def lower_bound_constraints(mdl, feat, tree):
+        leaf_ids = list(leaves[tree].keys())
+        return sum(leaves[tree][leaf]['bounds'][feat][0]*mdl.z[tree, leaf] for leaf in leaf_ids)\
+              <= input_vars[feat]
 
-    @block.Constraint(T)
-    def linear_constraint(m, t):
-        L = list(leaves[t].keys())
-        return block.intermediate_output[t] == sum(
-            (sum(leaves[t][l]['slope'][f]*input_vars[f] for f in features) + 
-                            leaves[t][l]['intercept'])*block.z[t, l] for l in L
-                            )
+    @block.Constraint(features, tree_ids)
+    def upper_bound_constraints(mdl, feat, tree):
+        leaf_ids = list(leaves[tree].keys())
+        return sum(leaves[tree][leaf]['bounds'][feat][1]*mdl.z[tree, leaf] for leaf in leaf_ids)\
+              >= input_vars[feat]
 
-    @block.Constraint(T)
-    def only_one_leaf_per_tree(b, t):
-        L = list(leaves[t].keys())
-        return sum(block.z[t, l] for l in L) == 1 
-    
+    @block.Constraint(tree_ids)
+    def linear_constraint(mdl, tree):
+        leaf_ids = list(leaves[tree].keys())
+        return block.intermediate_output[tree] == sum(
+            (sum(leaves[tree][leaf]['slope'][feat]*input_vars[feat] for feat in features) +
+                 leaves[tree][leaf]['intercept'])*block.z[tree, leaf] for leaf in leaf_ids
+                 )
+
+    @block.Constraint(tree_ids)
+    def only_one_leaf_per_tree(b, tree):
+        leaf_ids = list(leaves[tree].keys())
+        return sum(block.z[tree, leaf] for leaf in leaf_ids) == 1
+
     @block.Constraint()
     def output_sum_of_trees(b):
-        return output_vars[0] == sum(block.intermediate_output[t] for t in T)
-
+        return output_vars[0] == sum(block.intermediate_output[tree] for tree in tree_ids)
