@@ -1,11 +1,14 @@
 import numpy as np
 import pyomo.environ as pe
-from lineartree import LinearTreeRegressor
-from sklearn.linear_model import LinearRegression
 import pytest
 
+from omlt.dependencies import lineartree_available
+if lineartree_available:
+    from lineartree import LinearTreeRegressor
+    from sklearn.linear_model import LinearRegression
+    from omlt.linear_tree import LinearTreeGDPFormulation, LinearTreeHybridBigMFormulation, LinearTreeDefinition
+
 from omlt import OmltBlock
-from omlt.lineartree import LinearTreeGDPFormulation, LinearTreeHybridBigMFormulation, LinearTreeDefinition
 import omlt
 
 def linear_model_tree(X, y):
@@ -58,6 +61,7 @@ y_small = np.array([[0.04296633],
                     [1.71225268]])
 
 
+@pytest.mark.skipif(not lineartree_available, reason='Need Linear-Tree Package')
 def test_linear_tree_model_single_var():
     # construct a LinearTreeDefinition
     regr_small = linear_model_tree(X=X_small, y=y_small)
@@ -108,6 +112,7 @@ def test_linear_tree_model_single_var():
     assert(thresholds_count == len(ltmodel_small._splits[0].keys()))
 
 
+@pytest.mark.skipif(not lineartree_available, reason='Need Linear-Tree Package')
 def test_bigm_formulation_single_var():
     regr_small = linear_model_tree(X=X_small, y=y_small)
     input_bounds = {0: (min(X_small)[0], max(X_small)[0])}
@@ -138,6 +143,7 @@ def test_bigm_formulation_single_var():
     assert(y_pred[0] - solution_1_bigm[1] <= 1e-4)
 
 
+@pytest.mark.skipif(not lineartree_available, reason='Need Linear-Tree Package')
 def test_hull_formulation_single_var():
     regr_small = linear_model_tree(X=X_small, y=y_small)
     input_bounds = {0: (min(X_small)[0], max(X_small)[0])}
@@ -168,6 +174,7 @@ def test_hull_formulation_single_var():
     assert(y_pred[0] - solution_1_bigm[1] <= 1e-4)
 
 
+@pytest.mark.skipif(not lineartree_available, reason='Need Linear-Tree Package')
 def test_mbigm_formulation_single_var():
     regr_small = linear_model_tree(X=X_small, y=y_small)
     input_bounds = {0: (min(X_small)[0], max(X_small)[0])}
@@ -198,6 +205,7 @@ def test_mbigm_formulation_single_var():
     assert(y_pred[0] - solution_1_bigm[1] <= 1e-4)
 
 
+@pytest.mark.skipif(not lineartree_available, reason='Need Linear-Tree Package')
 def test_hybrid_bigm_formulation_single_var():
     regr_small = linear_model_tree(X=X_small, y=y_small)
     input_bounds = {0: (min(X_small)[0], max(X_small)[0])}
@@ -273,6 +281,7 @@ Y = np.array([[10.23341638],
               [ 3.37287403]])
 
 
+@pytest.mark.skipif(not lineartree_available, reason='Need Linear-Tree Package')
 def test_linear_tree_model_multi_var():
     # construct a LinearTreeDefinition
     regr = linear_model_tree(X=X, y=Y)
@@ -326,6 +335,7 @@ def test_linear_tree_model_multi_var():
     assert(thresholds_count == len(ltmodel_small._splits[0].keys()))
 
 
+@pytest.mark.skipif(not lineartree_available, reason='Need Linear-Tree Package')
 def test_bigm_formulation_multi_var():
     regr = linear_model_tree(X=X, y=Y)
     input_bounds = {0: (min(X[:,0]), max(X[:,0])),
@@ -364,6 +374,7 @@ def test_bigm_formulation_multi_var():
     assert(y_pred[0] - solution_1_bigm <= 1e-4)
 
 
+@pytest.mark.skipif(not lineartree_available, reason='Need Linear-Tree Package')
 def test_hull_formulation_multi_var():
     regr = linear_model_tree(X=X, y=Y)
     input_bounds = {0: (min(X[:,0]), max(X[:,0])),
@@ -402,6 +413,7 @@ def test_hull_formulation_multi_var():
     assert(y_pred[0] - solution_1_bigm <= 1e-4)
 
 
+@pytest.mark.skipif(not lineartree_available, reason='Need Linear-Tree Package')
 def test_mbigm_formulation_multi_var():
     regr = linear_model_tree(X=X, y=Y)
     input_bounds = {0: (min(X[:,0]), max(X[:,0])),
@@ -440,6 +452,7 @@ def test_mbigm_formulation_multi_var():
     assert(y_pred[0] - solution_1_bigm <= 1e-4)
 
 
+@pytest.mark.skipif(not lineartree_available, reason='Need Linear-Tree Package')
 def test_hybrid_bigm_formulation_multi_var():
     regr = linear_model_tree(X=X, y=Y)
     input_bounds = {0: (min(X[:,0]), max(X[:,0])),
@@ -478,6 +491,7 @@ def test_hybrid_bigm_formulation_multi_var():
     assert(y_pred[0] - solution_1_bigm <= 1e-4)
 
 
+@pytest.mark.skipif(not lineartree_available, reason='Need Linear-Tree Package')
 def test_summary_dict_as_argument():
     # construct a LinearTreeDefinition
     regr = linear_model_tree(X=X, y=Y)
@@ -529,6 +543,7 @@ def test_summary_dict_as_argument():
     assert(thresholds_count == len(ltmodel_small._splits[0].keys()))
 
 
+@pytest.mark.skipif(not lineartree_available, reason='Need Linear-Tree Package')
 def test_raise_exception_if_wrong_model_instance():
     regr = linear_model_tree(X=X, y=Y)
     input_bounds = {0: (min(X[:,0]), max(X[:,0])),
