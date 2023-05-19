@@ -5,7 +5,7 @@ from sklearn.linear_model import LinearRegression
 import pytest
 
 from omlt import OmltBlock
-from omlt.lineartree import LinearTreeGDPFormulation, LinearTreeModel, LinearTreeHybridBigMFormulation
+from omlt.lineartree import LinearTreeGDPFormulation, LinearTreeHybridBigMFormulation, LinearTreeDefinition
 import omlt
 
 def linear_model_tree(X, y):
@@ -59,10 +59,10 @@ y_small = np.array([[0.04296633],
 
 
 def test_linear_tree_model_single_var():
-    # construct a LinearTreeModel
+    # construct a LinearTreeDefinition
     regr_small = linear_model_tree(X=X_small, y=y_small)
     input_bounds = {0: (min(X_small)[0], max(X_small)[0])}
-    ltmodel_small = LinearTreeModel(regr_small, scaled_input_bounds=input_bounds)
+    ltmodel_small = LinearTreeDefinition(regr_small, scaled_input_bounds=input_bounds)
 
     assert(ltmodel_small._scaled_input_bounds is not None)
     assert(ltmodel_small._n_inputs == 1)
@@ -111,7 +111,7 @@ def test_linear_tree_model_single_var():
 def test_bigm_formulation_single_var():
     regr_small = linear_model_tree(X=X_small, y=y_small)
     input_bounds = {0: (min(X_small)[0], max(X_small)[0])}
-    ltmodel_small = LinearTreeModel(regr_small, scaled_input_bounds=input_bounds)
+    ltmodel_small = LinearTreeDefinition(regr_small, scaled_input_bounds=input_bounds)
     formulation1_lt = LinearTreeGDPFormulation(ltmodel_small, transformation='bigm')
 
     model1 = pe.ConcreteModel()
@@ -131,7 +131,7 @@ def test_bigm_formulation_single_var():
     
     model1.x.fix(0.5)
 
-    status_1_bigm = pe.SolverFactory('gurobi').solve(model1, tee=True)
+    status_1_bigm = pe.SolverFactory('cbc').solve(model1, tee=True)
     pe.assert_optimal_termination(status_1_bigm)
     solution_1_bigm = (pe.value(model1.x), pe.value(model1.y))
     y_pred = regr_small.predict(np.array(solution_1_bigm[0]).reshape(1, -1))
@@ -141,7 +141,7 @@ def test_bigm_formulation_single_var():
 def test_hull_formulation_single_var():
     regr_small = linear_model_tree(X=X_small, y=y_small)
     input_bounds = {0: (min(X_small)[0], max(X_small)[0])}
-    ltmodel_small = LinearTreeModel(regr_small, scaled_input_bounds=input_bounds)
+    ltmodel_small = LinearTreeDefinition(regr_small, scaled_input_bounds=input_bounds)
     formulation1_lt = LinearTreeGDPFormulation(ltmodel_small, transformation='hull')
 
     model1 = pe.ConcreteModel()
@@ -161,7 +161,7 @@ def test_hull_formulation_single_var():
     
     model1.x.fix(0.5)
 
-    status_1_bigm = pe.SolverFactory('gurobi').solve(model1, tee=True)
+    status_1_bigm = pe.SolverFactory('cbc').solve(model1, tee=True)
     pe.assert_optimal_termination(status_1_bigm)
     solution_1_bigm = (pe.value(model1.x), pe.value(model1.y))
     y_pred = regr_small.predict(np.array(solution_1_bigm[0]).reshape(1, -1))
@@ -171,7 +171,7 @@ def test_hull_formulation_single_var():
 def test_mbigm_formulation_single_var():
     regr_small = linear_model_tree(X=X_small, y=y_small)
     input_bounds = {0: (min(X_small)[0], max(X_small)[0])}
-    ltmodel_small = LinearTreeModel(regr_small, scaled_input_bounds=input_bounds)
+    ltmodel_small = LinearTreeDefinition(regr_small, scaled_input_bounds=input_bounds)
     formulation1_lt = LinearTreeGDPFormulation(ltmodel_small, transformation='mbigm')
 
     model1 = pe.ConcreteModel()
@@ -191,7 +191,7 @@ def test_mbigm_formulation_single_var():
     
     model1.x.fix(0.5)
 
-    status_1_bigm = pe.SolverFactory('gurobi').solve(model1, tee=True)
+    status_1_bigm = pe.SolverFactory('cbc').solve(model1, tee=True)
     pe.assert_optimal_termination(status_1_bigm)
     solution_1_bigm = (pe.value(model1.x), pe.value(model1.y))
     y_pred = regr_small.predict(np.array(solution_1_bigm[0]).reshape(1, -1))
@@ -201,7 +201,7 @@ def test_mbigm_formulation_single_var():
 def test_hybrid_bigm_formulation_single_var():
     regr_small = linear_model_tree(X=X_small, y=y_small)
     input_bounds = {0: (min(X_small)[0], max(X_small)[0])}
-    ltmodel_small = LinearTreeModel(regr_small, scaled_input_bounds=input_bounds)
+    ltmodel_small = LinearTreeDefinition(regr_small, scaled_input_bounds=input_bounds)
     formulation1_lt = LinearTreeHybridBigMFormulation(ltmodel_small)
 
     model1 = pe.ConcreteModel()
@@ -274,13 +274,13 @@ Y = np.array([[10.23341638],
 
 
 def test_linear_tree_model_multi_var():
-    # construct a LinearTreeModel
+    # construct a LinearTreeDefinition
     regr = linear_model_tree(X=X, y=Y)
     input_bounds = {0: (min(X[:,0]), max(X[:,0])),
                     1: (min(X[:,1]), max(X[:,1]))}
-    ltmodel_small = LinearTreeModel(regr, scaled_input_bounds=input_bounds)
+    ltmodel_small = LinearTreeDefinition(regr, scaled_input_bounds=input_bounds)
 
-    # assert attributes in LinearTreeModel
+    # assert attributes in LinearTreeDefinition
     assert(ltmodel_small._scaled_input_bounds is not None)
     assert(ltmodel_small._n_inputs == 2)
     assert(ltmodel_small._n_outputs == 1)
@@ -330,7 +330,7 @@ def test_bigm_formulation_multi_var():
     regr = linear_model_tree(X=X, y=Y)
     input_bounds = {0: (min(X[:,0]), max(X[:,0])),
                     1: (min(X[:,1]), max(X[:,1]))}
-    ltmodel_small = LinearTreeModel(regr, scaled_input_bounds=input_bounds)
+    ltmodel_small = LinearTreeDefinition(regr, scaled_input_bounds=input_bounds)
     formulation1_lt = LinearTreeGDPFormulation(ltmodel_small, transformation='bigm')
 
     model1 = pe.ConcreteModel()
@@ -356,7 +356,7 @@ def test_bigm_formulation_multi_var():
     model1.x0.fix(0.5)
     model1.x1.fix(0.8)
 
-    status_1_bigm = pe.SolverFactory('gurobi').solve(model1, tee=True)
+    status_1_bigm = pe.SolverFactory('cbc').solve(model1, tee=True)
     pe.assert_optimal_termination(status_1_bigm)
     solution_1_bigm = pe.value(model1.y)
     y_pred = regr.predict(np.array([pe.value(model1.x0), pe.value(model1.x1)]
@@ -368,7 +368,7 @@ def test_hull_formulation_multi_var():
     regr = linear_model_tree(X=X, y=Y)
     input_bounds = {0: (min(X[:,0]), max(X[:,0])),
                     1: (min(X[:,1]), max(X[:,1]))}
-    ltmodel_small = LinearTreeModel(regr, scaled_input_bounds=input_bounds)
+    ltmodel_small = LinearTreeDefinition(regr, scaled_input_bounds=input_bounds)
     formulation1_lt = LinearTreeGDPFormulation(ltmodel_small, transformation='hull')
 
     model1 = pe.ConcreteModel()
@@ -394,7 +394,7 @@ def test_hull_formulation_multi_var():
     model1.x0.fix(0.5)
     model1.x1.fix(0.8)
     
-    status_1_bigm = pe.SolverFactory('gurobi').solve(model1, tee=True)
+    status_1_bigm = pe.SolverFactory('cbc').solve(model1, tee=True)
     pe.assert_optimal_termination(status_1_bigm)
     solution_1_bigm = pe.value(model1.y)
     y_pred = regr.predict(np.array([pe.value(model1.x0), pe.value(model1.x1)]
@@ -406,7 +406,7 @@ def test_mbigm_formulation_multi_var():
     regr = linear_model_tree(X=X, y=Y)
     input_bounds = {0: (min(X[:,0]), max(X[:,0])),
                     1: (min(X[:,1]), max(X[:,1]))}
-    ltmodel_small = LinearTreeModel(regr, scaled_input_bounds=input_bounds)
+    ltmodel_small = LinearTreeDefinition(regr, scaled_input_bounds=input_bounds)
     formulation1_lt = LinearTreeGDPFormulation(ltmodel_small, transformation='mbigm')
 
     model1 = pe.ConcreteModel()
@@ -432,7 +432,7 @@ def test_mbigm_formulation_multi_var():
     model1.x0.fix(0.5)
     model1.x1.fix(0.8)
     
-    status_1_bigm = pe.SolverFactory('gurobi').solve(model1, tee=True)
+    status_1_bigm = pe.SolverFactory('cbc').solve(model1, tee=True)
     pe.assert_optimal_termination(status_1_bigm)
     solution_1_bigm = pe.value(model1.y)
     y_pred = regr.predict(np.array([pe.value(model1.x0), pe.value(model1.x1)]
@@ -444,7 +444,7 @@ def test_hybrid_bigm_formulation_multi_var():
     regr = linear_model_tree(X=X, y=Y)
     input_bounds = {0: (min(X[:,0]), max(X[:,0])),
                     1: (min(X[:,1]), max(X[:,1]))}
-    ltmodel_small = LinearTreeModel(regr, scaled_input_bounds=input_bounds)
+    ltmodel_small = LinearTreeDefinition(regr, scaled_input_bounds=input_bounds)
     formulation1_lt = LinearTreeHybridBigMFormulation(ltmodel_small)
 
     model1 = pe.ConcreteModel()
@@ -479,12 +479,12 @@ def test_hybrid_bigm_formulation_multi_var():
 
 
 def test_summary_dict_as_argument():
-    # construct a LinearTreeModel
+    # construct a LinearTreeDefinition
     regr = linear_model_tree(X=X, y=Y)
     input_bounds = {0: (min(X[:,0]), max(X[:,0])),
                     1: (min(X[:,1]), max(X[:,1]))}
-    ltmodel_small = LinearTreeModel(regr.summary(), scaled_input_bounds=input_bounds)
-    # assert attributes in LinearTreeModel
+    ltmodel_small = LinearTreeDefinition(regr.summary(), scaled_input_bounds=input_bounds)
+    # assert attributes in LinearTreeDefinition
     assert(ltmodel_small._scaled_input_bounds is not None)
     assert(ltmodel_small._n_inputs == 2)
     assert(ltmodel_small._n_outputs == 1)
@@ -534,6 +534,6 @@ def test_raise_exception_if_wrong_model_instance():
     input_bounds = {0: (min(X[:,0]), max(X[:,0])),
                     1: (min(X[:,1]), max(X[:,1]))}
     with pytest.raises(Exception):
-        ltmodel_small = LinearTreeModel(regr.summary(only_leaves=True), scaled_input_bounds=input_bounds)
+        ltmodel_small = LinearTreeDefinition(regr.summary(only_leaves=True), scaled_input_bounds=input_bounds)
     with pytest.raises(Exception):
-        ltmodel_small = LinearTreeModel((0,0), scaled_input_bounds=input_bounds)
+        ltmodel_small = LinearTreeDefinition((0,0), scaled_input_bounds=input_bounds)

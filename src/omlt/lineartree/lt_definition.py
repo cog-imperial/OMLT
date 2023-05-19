@@ -2,7 +2,7 @@ import numpy as np
 import lineartree
 
 
-class LinearTreeModel:
+class LinearTreeDefinition:
     """
     Class to represent a linear tree model trained in the linear-tree package
 
@@ -31,7 +31,7 @@ class LinearTreeModel:
         self, lt_regressor, scaling_object=None, scaled_input_bounds=None,
             unscaled_input_bounds=None
         ):
-        """Create a LinearTreeModel object and define attributes based on the 
+        """Create a LinearTreeDefinition object and define attributes based on the 
         trained linear model decision tree.
 
         Arguments:
@@ -84,13 +84,13 @@ class LinearTreeModel:
         self._scaled_input_bounds = scaled_input_bounds
 
         self._splits, self._leaves, self._thresholds =\
-            parse_Tree_Data(lt_regressor, scaled_input_bounds)
+            _parse_Tree_Data(lt_regressor, scaled_input_bounds)
 
-        self._n_inputs = find_n_inputs(self._leaves)
+        self._n_inputs = _find_n_inputs(self._leaves)
         self._n_outputs = 1
 
 
-def find_all_children_splits(split, splits_dict):
+def _find_all_children_splits(split, splits_dict):
     """
     This helper function finds all multigeneration children splits for an 
     argument split.
@@ -109,18 +109,18 @@ def find_all_children_splits(split, splits_dict):
     left_child = splits_dict[split]['children'][0]
     if left_child in splits_dict:
         all_splits.append(left_child)
-        all_splits.extend(find_all_children_splits(left_child, splits_dict))
+        all_splits.extend(_find_all_children_splits(left_child, splits_dict))
     
     # Same as above but with right child
     right_child = splits_dict[split]['children'][1]
     if right_child in splits_dict:
         all_splits.append(right_child)
-        all_splits.extend(find_all_children_splits(right_child, splits_dict))
+        all_splits.extend(_find_all_children_splits(right_child, splits_dict))
     
     return all_splits
 
 
-def find_all_children_leaves(split, splits_dict, leaves_dict):
+def _find_all_children_leaves(split, splits_dict, leaves_dict):
     """
     This helper function finds all multigeneration children leaves for an 
     argument split.
@@ -136,7 +136,7 @@ def find_all_children_leaves(split, splits_dict, leaves_dict):
     all_leaves = []
 
     # Find all the splits that are children of the relevant split
-    all_splits = find_all_children_splits(split, splits_dict)
+    all_splits = _find_all_children_splits(split, splits_dict)
     
     # Ensure the current split is included 
     if split not in all_splits:
@@ -151,7 +151,7 @@ def find_all_children_leaves(split, splits_dict, leaves_dict):
     return all_leaves
 
 
-def find_n_inputs(leaves):
+def _find_n_inputs(leaves):
     """
     Finds the number of inputs using the length of the slope vector in the 
     first leaf
@@ -168,14 +168,14 @@ def find_n_inputs(leaves):
     return n_inputs
 
 
-def reassign_none_bounds(leaves, input_bounds):
+def _reassign_none_bounds(leaves, input_bounds):
     """
     This helper function reassigns bounds that are None to the bounds
     input by the user
 
     Arguments:
         leaves -- The dictionary of leaf information. Attribute of the 
-            LinearTreeModel object
+            LinearTreeDefinition object
         input_bounds -- The nested dictionary
 
     Returns:
@@ -194,12 +194,12 @@ def reassign_none_bounds(leaves, input_bounds):
     return leaves
 
 
-def parse_Tree_Data(model, input_bounds):
+def _parse_Tree_Data(model, input_bounds):
     """
     This function creates the data structures with the information required
     for creation of the variables, sets, and constraints in the pyomo
     reformulation of the linear model decision trees. Note that these data
-    structures are attributes of the LinearTreeModel Class.
+    structures are attributes of the LinearTreeDefinition Class.
 
     Arguments:
         model -- Trained linear-tree model or dic containing linear-tree model
@@ -285,14 +285,14 @@ def parse_Tree_Data(model, input_bounds):
         right_child = splits[split]['children'][1]
         
         if left_child in splits:
-            splits[split]['left_leaves'] = find_all_children_leaves(
+            splits[split]['left_leaves'] = _find_all_children_leaves(
                 left_child, splits, leaves
                 )
         else:
             splits[split]['left_leaves'] = [left_child]
         
         if right_child in splits:
-            splits[split]['right_leaves'] = find_all_children_leaves(
+            splits[split]['right_leaves'] = _find_all_children_leaves(
                 right_child, splits, leaves
                 )
         else:
@@ -351,7 +351,7 @@ def parse_Tree_Data(model, input_bounds):
         for leaf in splits[split]['right_leaves']:
             leaves[leaf]['bounds'][var][0] = splits[split]['th']
     
-    leaves = reassign_none_bounds(leaves, input_bounds)
+    leaves = _reassign_none_bounds(leaves, input_bounds)
 
     # We use the same formulations developed for gradient boosted linear trees
     # so we nest the leaves, splits, and thresholds attributes in a "one-tree" 

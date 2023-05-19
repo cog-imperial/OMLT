@@ -70,7 +70,7 @@ class LinearTreeGDPFormulation(_PyomoFormulation):
             self.model_definition._scaled_input_bounds,
         )
 
-        add_GDP_formulation_to_block(
+        _add_GDP_formulation_to_block(
             block=self.block,
             model_definition=self.model_definition,
             input_vars=self.block.scaled_inputs,
@@ -128,7 +128,7 @@ class LinearTreeHybridBigMFormulation(_PyomoFormulation):
             self.model_definition._scaled_input_bounds,
         )
 
-        add_hybrid_formulation_to_block(
+        _add_hybrid_formulation_to_block(
             block=self.block,
             model_definition=self.model_definition,
             input_vars=self.block.scaled_inputs,
@@ -136,7 +136,7 @@ class LinearTreeHybridBigMFormulation(_PyomoFormulation):
         )
 
 
-def build_output_bounds(model_def, input_bounds):
+def _build_output_bounds(model_def, input_bounds):
     """
     This helper function develops bounds of the output variable based on the 
     values of the input_bounds and the signs of the slope
@@ -179,7 +179,7 @@ def build_output_bounds(model_def, input_bounds):
     return bounds 
 
 
-def add_GDP_formulation_to_block(
+def _add_GDP_formulation_to_block(
     block, model_definition, input_vars, output_vars, transformation):
     """
     This function adds the GDP representation to the OmltBlock using Pyomo.GDP
@@ -206,7 +206,7 @@ def add_GDP_formulation_to_block(
 
     # Use the input_bounds and the linear models in the leaves to calculate
     # the lower and upper bounds on the output variable. Required for Pyomo.GDP
-    output_bounds = build_output_bounds(model_definition, input_bounds)
+    output_bounds = _build_output_bounds(model_definition, input_bounds)
     
     # Ouptuts are automatically scaled based on whether inputs are scaled
     block.outputs.setub(output_bounds[1])
@@ -249,7 +249,7 @@ def add_GDP_formulation_to_block(
     pe.TransformationFactory(transformation_string).apply_to(block)
 
 
-def add_hybrid_formulation_to_block(
+def _add_hybrid_formulation_to_block(
     block, model_definition, input_vars, output_vars):
     """
     This function adds the Hybrid BigM representation to the OmltBlock
@@ -277,7 +277,7 @@ def add_hybrid_formulation_to_block(
 
     # Use the input_bounds and the linear models in the leaves to calculate
     # the lower and upper bounds on the output variable. Required for Pyomo.GDP
-    output_bounds = build_output_bounds(model_definition, input_bounds)
+    output_bounds = _build_output_bounds(model_definition, input_bounds)
     
     # Ouptuts are automatically scaled based on whether inputs are scaled
     block.outputs.setub(output_bounds[1])
