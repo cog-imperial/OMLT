@@ -229,7 +229,7 @@ def test_hybrid_bigm_formulation_single_var():
     
     model1.x.fix(0.5)
 
-    status_1_bigm = pe.SolverFactory('gurobi').solve(model1, tee=True)
+    status_1_bigm = pe.SolverFactory('scip').solve(model1, tee=True)
     pe.assert_optimal_termination(status_1_bigm)
     solution_1_bigm = (pe.value(model1.x), pe.value(model1.y))
     y_pred = regr_small.predict(np.array(solution_1_bigm[0]).reshape(1, -1))
@@ -483,7 +483,7 @@ def test_hybrid_bigm_formulation_multi_var():
     model1.x0.fix(0.5)
     model1.x1.fix(0.8)
 
-    status_1_bigm = pe.SolverFactory('gurobi').solve(model1, tee=True)
+    status_1_bigm = pe.SolverFactory('scip').solve(model1, tee=True)
     pe.assert_optimal_termination(status_1_bigm)
     solution_1_bigm = pe.value(model1.y)
     y_pred = regr.predict(np.array([pe.value(model1.x0), pe.value(model1.x1)]
