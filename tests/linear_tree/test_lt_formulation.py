@@ -11,6 +11,10 @@ if lineartree_available:
 from omlt import OmltBlock
 import omlt
 
+scip_available = pe.SolverFactory('scip').available()
+cbc_available = pe.SolverFactory('cbc').available()
+gurobi_available = pe.SolverFactory('gurobi').available()
+
 def linear_model_tree(X, y):
     regr = LinearTreeRegressor(LinearRegression(), criterion='mse', max_depth=5)
     regr.fit(X, y)
@@ -112,7 +116,7 @@ def test_linear_tree_model_single_var():
     assert(thresholds_count == len(ltmodel_small._splits[0].keys()))
 
 
-@pytest.mark.skipif(not lineartree_available, reason='Need Linear-Tree Package')
+@pytest.mark.skipif(not lineartree_available or not cbc_available, reason='Need Linear-Tree Package and cbc')
 def test_bigm_formulation_single_var():
     regr_small = linear_model_tree(X=X_small, y=y_small)
     input_bounds = {0: (min(X_small)[0], max(X_small)[0])}
@@ -143,7 +147,7 @@ def test_bigm_formulation_single_var():
     assert(y_pred[0] - solution_1_bigm[1] <= 1e-4)
 
 
-@pytest.mark.skipif(not lineartree_available, reason='Need Linear-Tree Package')
+@pytest.mark.skipif(not lineartree_available or not cbc_available, reason='Need Linear-Tree Package and cbc')
 def test_hull_formulation_single_var():
     regr_small = linear_model_tree(X=X_small, y=y_small)
     input_bounds = {0: (min(X_small)[0], max(X_small)[0])}
@@ -174,7 +178,7 @@ def test_hull_formulation_single_var():
     assert(y_pred[0] - solution_1_bigm[1] <= 1e-4)
 
 
-@pytest.mark.skipif(not lineartree_available, reason='Need Linear-Tree Package')
+@pytest.mark.skipif(not lineartree_available or not gurobi_available, reason='Need Linear-Tree Package and gurobi')
 def test_mbigm_formulation_single_var():
     regr_small = linear_model_tree(X=X_small, y=y_small)
     input_bounds = {0: (min(X_small)[0], max(X_small)[0])}
@@ -198,14 +202,14 @@ def test_mbigm_formulation_single_var():
     
     model1.x.fix(0.5)
 
-    status_1_bigm = pe.SolverFactory('cbc').solve(model1, tee=True)
+    status_1_bigm = pe.SolverFactory('gurobi').solve(model1, tee=True)
     pe.assert_optimal_termination(status_1_bigm)
     solution_1_bigm = (pe.value(model1.x), pe.value(model1.y))
     y_pred = regr_small.predict(np.array(solution_1_bigm[0]).reshape(1, -1))
     assert(y_pred[0] - solution_1_bigm[1] <= 1e-4)
 
 
-@pytest.mark.skipif(not lineartree_available, reason='Need Linear-Tree Package')
+@pytest.mark.skipif(not lineartree_available or not scip_available, reason='Need Linear-Tree Package')
 def test_hybrid_bigm_formulation_single_var():
     regr_small = linear_model_tree(X=X_small, y=y_small)
     input_bounds = {0: (min(X_small)[0], max(X_small)[0])}
@@ -335,7 +339,7 @@ def test_linear_tree_model_multi_var():
     assert(thresholds_count == len(ltmodel_small._splits[0].keys()))
 
 
-@pytest.mark.skipif(not lineartree_available, reason='Need Linear-Tree Package')
+@pytest.mark.skipif(not lineartree_available or not cbc_available, reason='Need Linear-Tree Package and cbc')
 def test_bigm_formulation_multi_var():
     regr = linear_model_tree(X=X, y=Y)
     input_bounds = {0: (min(X[:,0]), max(X[:,0])),
@@ -374,7 +378,7 @@ def test_bigm_formulation_multi_var():
     assert(y_pred[0] - solution_1_bigm <= 1e-4)
 
 
-@pytest.mark.skipif(not lineartree_available, reason='Need Linear-Tree Package')
+@pytest.mark.skipif(not lineartree_available or not cbc_available, reason='Need Linear-Tree Package and cbc')
 def test_hull_formulation_multi_var():
     regr = linear_model_tree(X=X, y=Y)
     input_bounds = {0: (min(X[:,0]), max(X[:,0])),
@@ -413,7 +417,7 @@ def test_hull_formulation_multi_var():
     assert(y_pred[0] - solution_1_bigm <= 1e-4)
 
 
-@pytest.mark.skipif(not lineartree_available, reason='Need Linear-Tree Package')
+@pytest.mark.skipif(not lineartree_available or not gurobi_available, reason='Need Linear-Tree Package and gurobi')
 def test_mbigm_formulation_multi_var():
     regr = linear_model_tree(X=X, y=Y)
     input_bounds = {0: (min(X[:,0]), max(X[:,0])),
@@ -444,7 +448,7 @@ def test_mbigm_formulation_multi_var():
     model1.x0.fix(0.5)
     model1.x1.fix(0.8)
     
-    status_1_bigm = pe.SolverFactory('cbc').solve(model1, tee=True)
+    status_1_bigm = pe.SolverFactory('gurobi').solve(model1, tee=True)
     pe.assert_optimal_termination(status_1_bigm)
     solution_1_bigm = pe.value(model1.y)
     y_pred = regr.predict(np.array([pe.value(model1.x0), pe.value(model1.x1)]
@@ -452,7 +456,7 @@ def test_mbigm_formulation_multi_var():
     assert(y_pred[0] - solution_1_bigm <= 1e-4)
 
 
-@pytest.mark.skipif(not lineartree_available, reason='Need Linear-Tree Package')
+@pytest.mark.skipif(not lineartree_available or not scip_available, reason='Need Linear-Tree Package and scip')
 def test_hybrid_bigm_formulation_multi_var():
     regr = linear_model_tree(X=X, y=Y)
     input_bounds = {0: (min(X[:,0]), max(X[:,0])),
