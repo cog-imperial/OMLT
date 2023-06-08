@@ -14,6 +14,8 @@ github `page <https://github.com/cog-imperial/OMLT/tree/main/docs/notebooks/>`_.
 
 * `mnist_example_convolutional.ipynb <https://github.com/cog-imperial/OMLT/blob/main/docs/notebooks/neuralnet/mnist_example_convolutional.ipynb>`_ trains a convolutional neural network on MNIST and uses OMLT to find adversarial examples.
 
+* `example_graph_neural_network.ipynb <https://github.com/cog-imperial/OMLT/blob/main/docs/notebooks/example_graph_neural_network.ipynb>`_ transforms graph neural networks into dense neural networks and use OMLT to solve optimization problems.
+
 * `auto-thermal-reformer.ipynb <https://github.com/cog-imperial/OMLT/blob/main/docs/notebooks/neuralnet/auto-thermal-reformer.ipynb>`_ develops a neural network surrogate (using sigmoid activations) with data from a process model built using `IDAES-PSE <https://github.com/IDAES/idaes-pse>`_.
 
 * `auto-thermal-reformer-relu.ipynb <https://github.com/cog-imperial/OMLT/blob/main/docs/notebooks/neuralnet/auto-thermal-reformer-relu.ipynb>`_ develops a neural network surrogate (using ReLU activations) with data from a process model built using `IDAES-PSE <https://github.com/IDAES/idaes-pse>`_.

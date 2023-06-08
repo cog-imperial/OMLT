@@ -22,6 +22,8 @@ from omlt.neuralnet.layers.full_space import (
     full_space_conv2d_layer,
     full_space_dense_layer,
     full_space_maxpool2d_layer,
+    full_space_gnn_layer_bilinear,
+    full_space_gnn_layer_bigm,
 )
 from omlt.neuralnet.layers.partition_based import (
     default_partition_split_func,
@@ -172,13 +174,23 @@ def _build_neural_network_formulation(
 
         return b
 
-    for layer in layers:
+    for layer_index, layer in enumerate(layers):
         if isinstance(layer, InputLayer):
             continue
         layer_id = id(layer)
         layer_block = block.layer[layer_id]
 
         layer_constraints_func = layer_constraints.get(type(layer), None)
+
+        if "gnn_layers" in dir(
+            block
+        ):  # if the block has GNN layers, then apply one of these two formulations
+            if layer_index in block.gnn_layers:
+                if block.gnn_formulation == "bilinear":
+                    layer_constraints_func = full_space_gnn_layer_bilinear
+                elif block.gnn_formulation == "bigM":
+                    layer_constraints_func = full_space_gnn_layer_bigm
+
         if layer_constraints_func is None:
             raise ValueError(
                 "Layer type {} is not supported by this formulation.".format(
