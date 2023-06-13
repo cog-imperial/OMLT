@@ -3,7 +3,7 @@ from pyomo.common.fileutils import this_file_dir
 from testbook import testbook
 import os 
 
-from omlt.dependencies import keras_available, onnx_available, tensorflow_available
+from omlt.dependencies import keras_available, onnx_available
 
 # TODO: These will be replaced with stronger tests using testbook soon
 def _test_run_notebook(folder, notebook_fname, n_cells):
