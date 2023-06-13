@@ -80,12 +80,10 @@ def scalar_or_tuple(x):
 def _setup_scaled_inputs_outputs(block, scaler=None, scaled_input_bounds=None):
     if scaled_input_bounds is not None:
 
-        def bounds_rule(m, *k):
-            return scaled_input_bounds.__getitem__(scalar_or_tuple(k))
-
-        # bounds_rule = lambda m, *k : scaled_input_bounds.__getitem__(scalar_or_tuple(k))
+        bnds = {k: (float(scaled_input_bounds[k][0]), \
+                    float(scaled_input_bounds[k][1])) for k in block.inputs_set}
         block.scaled_inputs = pyo.Var(
-            block.inputs_set, initialize=0, bounds=bounds_rule
+            block.inputs_set, initialize=0, bounds=bnds
         )
     else:
         block.scaled_inputs = pyo.Var(block.inputs_set, initialize=0)
