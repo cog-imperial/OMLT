@@ -219,8 +219,10 @@ def test_invalid_layer_type():
 
 def _maxpool_conv_network(inputs):
     input_size = [1, 8, 6]
-    input_bounds = np.empty(input_size, dtype="i,i")
-    input_bounds.fill((-10, 10))
+    input_bounds = {}
+    for i in range(input_size[1]):
+        for j in range(input_size[2]):
+            input_bounds[(0, i, j)] = (-10.0, 10.0)
     net = NetworkDefinition(scaled_input_bounds=input_bounds)
 
     input_layer = InputLayer(input_size)
@@ -327,8 +329,9 @@ def test_maxpool_FullSpaceNNFormulation():
 
 def three_node_graph_neural_network(activation):
     input_size = [6]
-    input_bounds = [(-10.0, 10.0) for i in range(6)]
-
+    input_bounds = {}
+    for i in range(input_size[0]):
+        input_bounds[(i)] = (-10.0, 10.0)
     net = NetworkDefinition(scaled_input_bounds=input_bounds)
 
     input_layer = InputLayer(input_size)
@@ -340,15 +343,15 @@ def three_node_graph_neural_network(activation):
         activation=activation,
         weights=np.array(
             [
-                [1.0, 0.0, 1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0],
-                [0.0, 1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0, 1.0],
-                [1.0, -1.0, 1.0, 1.0, 0.0, 1.0, 1.0, -1.0, 1.0],
-                [-1.0, 1.0, 1.0, 0.0, 1.0, 1.0, -1.0, 1.0, 1.0],
-                [1.0, -1.0, 1.0, 1.0, -1.0, 1.0, 1.0, 0.0, 1.0],
-                [-1.0, 1.0, 1.0, -1.0, 1.0, 1.0, 0.0, 1.0, 1.0],
+                [1, 0, 1, 1, -1, 1, 1, -1, 1],
+                [0, 1, 1, -1, 1, 1, -1, 1, 1],
+                [1, -1, 1, 1, 0, 1, 1, -1, 1],
+                [-1, 1, 1, 0, 1, 1, -1, 1, 1],
+                [1, -1, 1, 1, -1, 1, 1, 0, 1],
+                [-1, 1, 1, -1, 1, 1, 0, 1, 1],
             ]
         ),
-        biases=np.array([-1.0, 0.0, 1.0, -1.0, 0.0, 1.0, -1.0, 0.0, 1.0]),
+        biases=np.array([-1, 0, 1, -1, 0, 1, -1, 0, 1]),
     )
     net.add_layer(dense_layer_0)
     net.add_edge(input_layer, dense_layer_0)
@@ -360,32 +363,31 @@ def examples_of_graphs(graph_type):
     # complete graph
     if graph_type == "complete":
         A = np.ones([3, 3], dtype=int)
-        y = np.array([-11.0, 9.0, 1.0, -12.0, 11.0, 1.0, -10.0, 10.0, 1.0])
+        y = np.array([-11, 9, 1, -12, 11, 1, -10, 10, 1])
     # edgeless graph
     elif graph_type == "edgeless":
         A = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
-        y = np.array([-4.0, 2.0, 0.0, -2.0, 1.0, 1.0, -3.0, 3.0, 2.0])
+        y = np.array([-4, 2, 0, -2, 1, 1, -3, 3, 2])
     # line graph, i.e., 0-1-2
     elif graph_type == "line":
         A = np.array([[1, 1, 0], [1, 1, 1], [0, 1, 1]])
-        y = np.array([-6.0, 4.0, 0.0, -12.0, 11.0, 1.0, -5.0, 5.0, 2.0])
+        y = np.array([-6, 4, 0, -12, 11, 1, -5, 5, 2])
     return A, y
 
 
 def _test_three_node_graph_neural_network(gnn_formulation, graph_type):
     m = pyo.ConcreteModel()
     m.nn = OmltBlock()
-    inputs = np.array([-3.0, 2.0, -1.0, 1.0, -2.0, 3.0])
+    inputs = np.array([-3, 2, -1, 1, -2, 3])
     net = three_node_graph_neural_network("linear")
 
-    # add graph information
     m.nn.N = 3
     m.nn.A = pyo.Var(
         pyo.Set(initialize=range(m.nn.N)),
         pyo.Set(initialize=range(m.nn.N)),
         within=pyo.Binary,
     )
-    # specify the indexes of GNN layers and the type of formulation
+
     m.nn.gnn_layers = [1]
     m.nn.gnn_formulation = gnn_formulation
 
