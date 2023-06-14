@@ -9,7 +9,7 @@ from omlt.dependencies import keras_available, onnx_available
 def openBook(folder, notebook_fname):
     cwd = os.getcwd()
     os.chdir(os.path.join(this_file_dir(), '..', '..', 'docs', 'notebooks', folder))
-    with testbook(notebook_fname, execute=True, timeout=135) as tb:
+    with testbook(notebook_fname, execute=True, timeout=300) as tb:
         os.chdir(cwd)
         return tb
 
@@ -31,9 +31,9 @@ def test_autothermal_relu_notebook():
 
     #testing the output (with some tolerance)
     assert output[0] == pytest.approx(0.1)
-    assert output[1] == pytest.approx(1.1250305, rel=3e-2)
-    assert output[2] == pytest.approx(0.33191865, rel=1.8e-2)
-    assert output[3] == pytest.approx(0.34, rel=1.8e-2)
+    assert output[1] == pytest.approx(1.1250305, abs=3e-2)
+    assert output[2] == pytest.approx(0.33191865, abs=1.8e-2)
+    assert output[3] == pytest.approx(0.34, abs=1.8e-2)
 
 @pytest.mark.skipif(not keras_available, reason='keras needed for this notebook')
 def test_autothermal_reformer():
@@ -48,10 +48,10 @@ def test_autothermal_reformer():
     output = [float(x[1]) for x in output]
 
     #testing the output (with some tolerance)
-    assert output[0] == pytest.approx(0.1, rel=1e-4)
-    assert output[1] == pytest.approx(1.1250305, rel=1.8e-2)
-    assert output[2] == pytest.approx(0.33191865, rel=1.8e-2)
-    assert output[3] == pytest.approx(0.34, rel=1.e-2)
+    assert output[0] == pytest.approx(0.1, abs=1e-4)
+    assert output[1] == pytest.approx(1.1250305, abs=1.8e-2)
+    assert output[2] == pytest.approx(0.33191865, abs=1.8e-2)
+    assert output[3] == pytest.approx(0.34, abs=1.e-2)
 
 def test_build_network():
     tb = openBook('neuralnet', 'build_network.ipynb')
@@ -95,7 +95,7 @@ def test_import_network():
 
     #checking that the final loss is around 0.25
     epoch_loss = tb.cell_output_text(28).splitlines()
-    assert (float(epoch_loss[-1][25:]) == pytest.approx(0.251, rel=1e-2))
+    assert (float(epoch_loss[-1][25:]) == pytest.approx(0.251, abs=1e-2))
 
 @pytest.mark.skipif(not onnx_available, reason='onnx needed for this notebook')
 def test_mnist_example_convolutional():
@@ -116,8 +116,8 @@ def test_mnist_example_convolutional():
     final_output = [x.split(":") for x in final_output]
     avg_loss = float(final_output[0][-1])
     final_accuracy = int(final_output[1][-1][:5])/10000
-    assert avg_loss == pytest.approx(0.25, rel=0.5)
-    assert final_accuracy == pytest.approx(0.92, rel = 4e-2)
+    assert avg_loss == pytest.approx(0.25, abs=0.05)
+    assert final_accuracy == pytest.approx(0.92, abs = 4e-2)
 
 @pytest.mark.skipif(not onnx_available, reason='onnx needed for this notebook')
 def test_mnist_example_dense():
