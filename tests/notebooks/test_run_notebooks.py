@@ -13,6 +13,13 @@ def openBook(folder, notebook_fname):
         os.chdir(cwd)
         return tb
 
+def trainingAccuracy(trainingList):
+    final_output = trainingList[-1].split(",")
+    final_output = [x.split(":") for x in final_output]
+    avg_loss = float(final_output[0][-1])
+    final_accuracy = int(final_output[1][-1][:5])/10000
+    return (avg_loss, final_accuracy)
+
 #asserts that every cell was succesfully executed
 def _test_run_notebook(tb, n_cells):
     assert tb.code_cells_executed == n_cells
@@ -112,10 +119,8 @@ def test_mnist_example_convolutional():
 
     #check accuracy of the training
     training_output = tb.cell_output_text(10).splitlines()
-    final_output = training_output[-1].split(",")
-    final_output = [x.split(":") for x in final_output]
-    avg_loss = float(final_output[0][-1])
-    final_accuracy = int(final_output[1][-1][:5])/10000
+    results = trainingAccuracy(training_output)
+    avg_loss, final_accuracy = results[0], results[1]
     assert avg_loss == pytest.approx(0.25, abs=0.05)
     assert final_accuracy == pytest.approx(0.92, abs = 4e-2)
 
@@ -123,6 +128,13 @@ def test_mnist_example_convolutional():
 def test_mnist_example_dense():
     tb = openBook('neuralnet', 'mnist_example_dense.ipynb')
     _test_run_notebook(tb, 13)
+
+    #check accuracy of the training
+    training_output = tb.cell_output_text(10).splitlines()
+    results = trainingAccuracy(training_output)
+    avg_loss, final_accuracy = results[0], results[1]
+    assert avg_loss == pytest.approx(0.0879, abs=0.01)
+    assert final_accuracy == pytest.approx(0.95, abs=0.05)
 
 @pytest.mark.skipif(not keras_available, reason='keras needed for this notebook')
 def test_neural_network_formulations():
