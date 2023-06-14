@@ -19,21 +19,22 @@ class LinearTreeGDPFormulation(_PyomoFormulation):
 
     References:
         * Ammari et al. (2023) Linear Model Decision Trees as Surrogates in
-            Optimization of Engineering Applications 
-        * Chen et al. (2022) Pyomo.GDP: An ecosystem for logic based modeling 
-            and optimization development. Optimization and Engineering, 
+            Optimization of Engineering Applications
+        * Chen et al. (2022) Pyomo.GDP: An ecosystem for logic based modeling
+            and optimization development. Optimization and Engineering,
             23:607–642
     """
-    def __init__(self, lt_model, transformation='bigm'):
+
+    def __init__(self, lt_model, transformation="bigm"):
         """
-        Create a LinearTreeGDPFormulation object 
+        Create a LinearTreeGDPFormulation object
 
         Arguments:
             lt_model -- trained linear-tree model
 
         Keyword Arguments:
-            transformation -- choose which Pyomo.GDP formulation to apply. 
-                Supported transformations are bigm, hull, mbigm 
+            transformation -- choose which Pyomo.GDP formulation to apply.
+                Supported transformations are bigm, hull, mbigm
                 (default: {'bigm'})
 
         Raises:
@@ -44,10 +45,11 @@ class LinearTreeGDPFormulation(_PyomoFormulation):
         self.transformation = transformation
 
         # Ensure that the GDP transformation given is supported
-        supported_transformations = ['bigm', 'hull', 'mbigm', 'custom']
+        supported_transformations = ["bigm", "hull", "mbigm", "custom"]
         if transformation not in supported_transformations:
-            raise NotImplementedError("Supported transformations are: " + 
-                                      "bigm, mbigm, hull, and custom")
+            raise NotImplementedError(
+                "Supported transformations are: " + "bigm, mbigm, hull, and custom"
+            )
 
     @property
     def input_indexes(self):
@@ -74,13 +76,13 @@ class LinearTreeGDPFormulation(_PyomoFormulation):
             model_definition=self.model_definition,
             input_vars=self.block.scaled_inputs,
             output_vars=self.block.scaled_outputs,
-            transformation = self.transformation
+            transformation=self.transformation,
         )
 
 
 class LinearTreeHybridBigMFormulation(_PyomoFormulation):
     """
-    Class to add LinearTree Hybrid Big-M formulation to OmltBlock. 
+    Class to add LinearTree Hybrid Big-M formulation to OmltBlock.
 
     Attributes:
         Inherited from _PyomoFormulation Class
@@ -90,18 +92,19 @@ class LinearTreeHybridBigMFormulation(_PyomoFormulation):
 
     References:
         * Ammari et al. (2023) Linear Model Decision Trees as Surrogates in
-            Optimization of Engineering Applications 
+            Optimization of Engineering Applications
     """
+
     def __init__(self, lt_model):
         """
-        Create a LinearTreeHybridBigMFormulation object 
+        Create a LinearTreeHybridBigMFormulation object
 
         Arguments:
             lt_model -- trained linear-tree model
 
         Keyword Arguments:
-            transformation -- choose which Pyomo.GDP formulation to apply. 
-                Supported transformations are bigm, hull, mbigm 
+            transformation -- choose which Pyomo.GDP formulation to apply.
+                Supported transformations are bigm, hull, mbigm
                 (default: {'bigm'})
         """
         super().__init__()
@@ -131,13 +134,13 @@ class LinearTreeHybridBigMFormulation(_PyomoFormulation):
             block=self.block,
             model_definition=self.model_definition,
             input_vars=self.block.scaled_inputs,
-            output_vars=self.block.scaled_outputs
+            output_vars=self.block.scaled_outputs,
         )
 
 
 def _build_output_bounds(model_def, input_bounds):
     """
-    This helper function develops bounds of the output variable based on the 
+    This helper function develops bounds of the output variable based on the
     values of the input_bounds and the signs of the slope
 
     Arguments:
@@ -145,7 +148,7 @@ def _build_output_bounds(model_def, input_bounds):
         input_bounds -- Dict of input bounds
 
     Returns:
-        List that contains the conservative lower and upper bounds of the 
+        List that contains the conservative lower and upper bounds of the
         output variable
     """
     leaves = model_def._leaves
@@ -159,19 +162,19 @@ def _build_output_bounds(model_def, input_bounds):
     lower_bound = 0
     for tree in tree_ids:
         for leaf in leaves[tree]:
-            slopes = leaves[tree][leaf]['slope']
-            intercept = leaves[tree][leaf]['intercept']
+            slopes = leaves[tree][leaf]["slope"]
+            intercept = leaves[tree][leaf]["intercept"]
             for k in features:
                 if slopes[k] <= 0:
-                    upper_bound += slopes[k]*input_bounds[k][0]+intercept
-                    lower_bound += slopes[k]*input_bounds[k][1]+intercept
+                    upper_bound += slopes[k] * input_bounds[k][0] + intercept
+                    lower_bound += slopes[k] * input_bounds[k][1] + intercept
                 else:
-                    upper_bound += slopes[k]*input_bounds[k][1]+intercept
-                    lower_bound += slopes[k]*input_bounds[k][0]+intercept
+                    upper_bound += slopes[k] * input_bounds[k][1] + intercept
+                    lower_bound += slopes[k] * input_bounds[k][0] + intercept
                 if upper_bound >= bounds[1]:
                     bounds[1] = upper_bound
                 if lower_bound <= bounds[0]:
-                    bounds[0]= lower_bound
+                    bounds[0] = lower_bound
             upper_bound = 0
             lower_bound = 0
 
@@ -179,7 +182,8 @@ def _build_output_bounds(model_def, input_bounds):
 
 
 def _add_gdp_formulation_to_block(
-    block, model_definition, input_vars, output_vars, transformation):
+    block, model_definition, input_vars, output_vars, transformation
+):
     """
     This function adds the GDP representation to the OmltBlock using Pyomo.GDP
 
@@ -213,25 +217,30 @@ def _add_gdp_formulation_to_block(
     block.scaled_outputs.setub(output_bounds[1])
     block.scaled_outputs.setlb(output_bounds[0])
 
-    block.intermediate_output = pe.Var(tree_ids, bounds=(output_bounds[0], output_bounds[1]))
+    block.intermediate_output = pe.Var(
+        tree_ids, bounds=(output_bounds[0], output_bounds[1])
+    )
 
     # Create a disjunct for each leaf containing the bound constraints
     # and the linear model expression.
     def disjuncts_rule(dsj, tree, leaf):
         def lb_rule(dsj, feat):
-            return input_vars[feat] >= leaves[tree][leaf]['bounds'][feat][0]
+            return input_vars[feat] >= leaves[tree][leaf]["bounds"][feat][0]
+
         dsj.lb_constraint = pe.Constraint(features, rule=lb_rule)
 
         def ub_rule(dsj, feat):
-            return input_vars[feat] <= leaves[tree][leaf]['bounds'][feat][1]
+            return input_vars[feat] <= leaves[tree][leaf]["bounds"][feat][1]
+
         dsj.ub_constraint = pe.Constraint(features, rule=ub_rule)
 
-        slope = leaves[tree][leaf]['slope']
-        intercept = leaves[tree][leaf]['intercept']
+        slope = leaves[tree][leaf]["slope"]
+        intercept = leaves[tree][leaf]["intercept"]
         dsj.linear_exp = pe.Constraint(
-            expr=sum(slope[k]*input_vars[k] for k in features)
-            + intercept == block.intermediate_output[tree]
-            )
+            expr=sum(slope[k] * input_vars[k] for k in features) + intercept
+            == block.intermediate_output[tree]
+        )
+
     block.disjunct = Disjunct(t_l, rule=disjuncts_rule)
 
     @block.Disjunction(tree_ids)
@@ -239,18 +248,17 @@ def _add_gdp_formulation_to_block(
         leaf_ids = list(leaves[tree].keys())
         return [block.disjunct[tree, leaf] for leaf in leaf_ids]
 
-    block.total_output = pe.Constraint(expr =
-                                       output_vars[0] ==
-                                       sum(block.intermediate_output[tree] for tree in tree_ids))
+    block.total_output = pe.Constraint(
+        expr=output_vars[0] == sum(block.intermediate_output[tree] for tree in tree_ids)
+    )
 
-    transformation_string = 'gdp.' + transformation
+    transformation_string = "gdp." + transformation
 
-    if transformation != 'custom':
+    if transformation != "custom":
         pe.TransformationFactory(transformation_string).apply_to(block)
 
 
-def _add_hybrid_formulation_to_block(
-    block, model_definition, input_vars, output_vars):
+def _add_hybrid_formulation_to_block(block, model_definition, input_vars, output_vars):
     """
     This function adds the Hybrid BigM representation to the OmltBlock
 
@@ -294,22 +302,39 @@ def _add_hybrid_formulation_to_block(
     @block.Constraint(features, tree_ids)
     def lower_bound_constraints(mdl, feat, tree):
         leaf_ids = list(leaves[tree].keys())
-        return sum(leaves[tree][leaf]['bounds'][feat][0]*mdl.z[tree, leaf] for leaf in leaf_ids)\
-              <= input_vars[feat]
+        return (
+            sum(
+                leaves[tree][leaf]["bounds"][feat][0] * mdl.z[tree, leaf]
+                for leaf in leaf_ids
+            )
+            <= input_vars[feat]
+        )
 
     @block.Constraint(features, tree_ids)
     def upper_bound_constraints(mdl, feat, tree):
         leaf_ids = list(leaves[tree].keys())
-        return sum(leaves[tree][leaf]['bounds'][feat][1]*mdl.z[tree, leaf] for leaf in leaf_ids)\
-              >= input_vars[feat]
+        return (
+            sum(
+                leaves[tree][leaf]["bounds"][feat][1] * mdl.z[tree, leaf]
+                for leaf in leaf_ids
+            )
+            >= input_vars[feat]
+        )
 
     @block.Constraint(tree_ids)
     def linear_constraint(mdl, tree):
         leaf_ids = list(leaves[tree].keys())
         return block.intermediate_output[tree] == sum(
-            (sum(leaves[tree][leaf]['slope'][feat]*input_vars[feat] for feat in features) +
-                 leaves[tree][leaf]['intercept'])*block.z[tree, leaf] for leaf in leaf_ids
-                 )
+            (
+                sum(
+                    leaves[tree][leaf]["slope"][feat] * input_vars[feat]
+                    for feat in features
+                )
+                + leaves[tree][leaf]["intercept"]
+            )
+            * block.z[tree, leaf]
+            for leaf in leaf_ids
+        )
 
     @block.Constraint(tree_ids)
     def only_one_leaf_per_tree(b, tree):
@@ -318,4 +343,6 @@ def _add_hybrid_formulation_to_block(
 
     @block.Constraint()
     def output_sum_of_trees(b):
-        return output_vars[0] == sum(block.intermediate_output[tree] for tree in tree_ids)
+        return output_vars[0] == sum(
+            block.intermediate_output[tree] for tree in tree_ids
+        )

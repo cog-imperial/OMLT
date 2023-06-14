@@ -11,7 +11,7 @@ class LinearTreeDefinition:
         _splits (dict) : Dict containing split information
         _leaves (dict) : Dict containing leaf information
         _thresholds (dict) : Dict containing splitting threshold information
-        _scaling_object (scaling object) : Scaling object to ensure scaled 
+        _scaling_object (scaling object) : Scaling object to ensure scaled
             data match units of broader optimization problem
         _scaled_input_bounds (dict): Dict containing scaled input bounds
         _unscaled_input_bounds (dict): Dict containing unscaled input bounds
@@ -20,35 +20,38 @@ class LinearTreeDefinition:
         * linear-tree : https://github.com/cerlymarco/linear-tree
         * Ammari et al. (2023) Linear Model Decision Trees as Surrogates in
             Optimization of Engineering Applications
-        * Misic, V. "Optimization of tree ensembles." 
+        * Misic, V. "Optimization of tree ensembles."
              Operations Research 68.5 (2020): 1605-1624.
-        * Mistry, M., et al. "Mixed-integer convex nonlinear optimization 
-             with gradient-boosted trees embedded." INFORMS Journal on 
-             Computing (2020). 
+        * Mistry, M., et al. "Mixed-integer convex nonlinear optimization
+             with gradient-boosted trees embedded." INFORMS Journal on
+             Computing (2020).
     """
 
     def __init__(
-        self, lt_regressor, scaling_object=None, scaled_input_bounds=None,
-            unscaled_input_bounds=None
-        ):
-        """Create a LinearTreeDefinition object and define attributes based on the 
+        self,
+        lt_regressor,
+        scaling_object=None,
+        scaled_input_bounds=None,
+        unscaled_input_bounds=None,
+    ):
+        """Create a LinearTreeDefinition object and define attributes based on the
         trained linear model decision tree.
 
         Arguments:
-            lt_regressor -- A LinearTreeRegressor model that is trained by the 
+            lt_regressor -- A LinearTreeRegressor model that is trained by the
                 linear-tree package
 
         Keyword Arguments:
-            scaling_object --A scaling object to specify the scaling parameters 
-                for the linear model tree inputs and outputs. If None, then no 
+            scaling_object --A scaling object to specify the scaling parameters
+                for the linear model tree inputs and outputs. If None, then no
                 scaling is performed. (default: {None})
-            scaled_input_bounds -- A dict that contains the bounds on the scaled 
-                variables (the direct inputs to the tree). If None, then the 
+            scaled_input_bounds -- A dict that contains the bounds on the scaled
+                variables (the direct inputs to the tree). If None, then the
                 user must specify the bounds via the input_bounds argument.
                 (default: {None})
-            unscaled_input_bounds -- A dict that contains the bounds on the 
-                variables (the direct inputs to the tree). If None, then the 
-                user must specify the scaled bounds via the scaled_input_bounds 
+            unscaled_input_bounds -- A dict that contains the bounds on the
+                variables (the direct inputs to the tree). If None, then the
+                user must specify the scaled bounds via the scaled_input_bounds
                 argument.( (default: {None})
 
         Raises:
@@ -58,9 +61,8 @@ class LinearTreeDefinition:
         self._model = lt_regressor
         self._scaling_object = scaling_object
 
-         # Process input bounds to insure scaled input bounds exist for formulations
+        # Process input bounds to insure scaled input bounds exist for formulations
         if scaled_input_bounds is None:
-
             if unscaled_input_bounds is not None and scaling_object is not None:
                 lbs = scaling_object.get_scaled_input_expressions(
                     {k: t[0] for k, t in unscaled_input_bounds.items()}
@@ -78,13 +80,16 @@ class LinearTreeDefinition:
             elif unscaled_input_bounds is not None and scaling_object is None:
                 scaled_input_bounds = unscaled_input_bounds
             elif unscaled_input_bounds is None:
-                raise ValueError('Input Bounds needed to represent linear trees as MIPs')
+                raise ValueError(
+                    "Input Bounds needed to represent linear trees as MIPs"
+                )
 
         self._unscaled_input_bounds = unscaled_input_bounds
         self._scaled_input_bounds = scaled_input_bounds
 
-        self._splits, self._leaves, self._thresholds =\
-            _parse_tree_data(lt_regressor, scaled_input_bounds)
+        self._splits, self._leaves, self._thresholds = _parse_tree_data(
+            lt_regressor, scaled_input_bounds
+        )
 
         self._n_inputs = _find_n_inputs(self._leaves)
         self._n_outputs = 1
@@ -92,7 +97,7 @@ class LinearTreeDefinition:
 
 def _find_all_children_splits(split, splits_dict):
     """
-    This helper function finds all multigeneration children splits for an 
+    This helper function finds all multigeneration children splits for an
     argument split.
 
     Arguments:
@@ -106,13 +111,13 @@ def _find_all_children_splits(split, splits_dict):
 
     # Check if the immediate left child of the argument split is also a split.
     # If so append to the list then use recursion to generate the remainder
-    left_child = splits_dict[split]['children'][0]
+    left_child = splits_dict[split]["children"][0]
     if left_child in splits_dict:
         all_splits.append(left_child)
         all_splits.extend(_find_all_children_splits(left_child, splits_dict))
 
     # Same as above but with right child
-    right_child = splits_dict[split]['children'][1]
+    right_child = splits_dict[split]["children"][1]
     if right_child in splits_dict:
         all_splits.append(right_child)
         all_splits.extend(_find_all_children_splits(right_child, splits_dict))
@@ -122,7 +127,7 @@ def _find_all_children_splits(split, splits_dict):
 
 def _find_all_children_leaves(split, splits_dict, leaves_dict):
     """
-    This helper function finds all multigeneration children leaves for an 
+    This helper function finds all multigeneration children leaves for an
     argument split.
 
     Arguments:
@@ -145,7 +150,7 @@ def _find_all_children_leaves(split, splits_dict, leaves_dict):
     # For each leaf, check if the parents appear in the list of children
     # splits (all_splits). If so, it must be a leaf of the argument split
     for leaf in leaves_dict:
-        if leaves_dict[leaf]['parent'] in all_splits:
+        if leaves_dict[leaf]["parent"] in all_splits:
             all_leaves.append(leaf)
 
     return all_leaves
@@ -153,7 +158,7 @@ def _find_all_children_leaves(split, splits_dict, leaves_dict):
 
 def _find_n_inputs(leaves):
     """
-    Finds the number of inputs using the length of the slope vector in the 
+    Finds the number of inputs using the length of the slope vector in the
     first leaf
 
     Arguments:
@@ -166,7 +171,7 @@ def _find_n_inputs(leaves):
     leaf_indices = np.array(list(leaves[tree_indices[0]].keys()))
     tree_one = tree_indices[0]
     leaf_one = leaf_indices[0]
-    n_inputs = len(np.arange(0,len(leaves[tree_one][leaf_one]['slope'])))
+    n_inputs = len(np.arange(0, len(leaves[tree_one][leaf_one]["slope"])))
     return n_inputs
 
 
@@ -176,7 +181,7 @@ def _reassign_none_bounds(leaves, input_bounds):
     input by the user
 
     Arguments:
-        leaves -- The dictionary of leaf information. Attribute of the 
+        leaves -- The dictionary of leaf information. Attribute of the
             LinearTreeDefinition object
         input_bounds -- The nested dictionary
 
@@ -185,14 +190,14 @@ def _reassign_none_bounds(leaves, input_bounds):
     """
     leaf_indices = np.array(list(leaves.keys()))
     leaf_one = leaf_indices[0]
-    features = np.arange(0, len(leaves[leaf_one]['slope']))
+    features = np.arange(0, len(leaves[leaf_one]["slope"]))
 
     for leaf in leaf_indices:
         for feat in features:
-            if leaves[leaf]['bounds'][feat][0] is None:
-                leaves[leaf]['bounds'][feat][0] = input_bounds[feat][0]
-            if leaves[leaf]['bounds'][feat][1] is None:
-                leaves[leaf]['bounds'][feat][1] = input_bounds[feat][1]
+            if leaves[leaf]["bounds"][feat][0] is None:
+                leaves[leaf]["bounds"][feat][0] = input_bounds[feat][0]
+            if leaves[leaf]["bounds"][feat][1] is None:
+                leaves[leaf]["bounds"][feat][1] = input_bounds[feat][1]
 
     return leaves
 
@@ -244,19 +249,21 @@ def _parse_tree_data(model, input_bounds):
         # Checks to ensure that the input nested dictionary contains the
         # correct information
         for entry in model:
-            if 'children' not in model[entry].keys():
+            if "children" not in model[entry].keys():
                 leaves[entry] = model[entry]
-            elif len(model[entry]['children']) <= 2:
+            elif len(model[entry]["children"]) <= 2:
                 num_splits_in_model += 1
-                if model[entry]['children'][0] not in model.keys():
+                if model[entry]["children"][0] not in model.keys():
                     count += 1
-            elif len(model[entry]['children']) > 1:
+            elif len(model[entry]["children"]) > 1:
                 num_splits_in_model += 1
-                if model[entry]['children'][1] not in model.keys():
+                if model[entry]["children"][1] not in model.keys():
                     count += 1
         if count > 0 or num_splits_in_model == 0:
-            raise ValueError('Input dict must be the summary of the linear-tree model' +\
-                             ' e.g. dict = model.summary()')
+            raise ValueError(
+                "Input dict must be the summary of the linear-tree model"
+                + " e.g. dict = model.summary()"
+            )
     else:
         raise TypeError("Model entry must be dict or linear-tree instance")
 
@@ -264,96 +271,94 @@ def _parse_tree_data(model, input_bounds):
     # keys in the splits dictionary
     for leaf in leaves:
         del splits[leaf]
-        leaves[leaf]['slope'] = list(leaves[leaf]['models'].coef_)
-        leaves[leaf]['intercept'] = leaves[leaf]['models'].intercept_
+        leaves[leaf]["slope"] = list(leaves[leaf]["models"].coef_)
+        leaves[leaf]["intercept"] = leaves[leaf]["models"].intercept_
 
     # This loop creates an parent node id entry for each node in the tree
     for split in splits:
-        left_child = splits[split]['children'][0]
-        right_child = splits[split]['children'][1]
+        left_child = splits[split]["children"][0]
+        right_child = splits[split]["children"][1]
 
         if left_child in splits:
-            splits[left_child]['parent'] = split
+            splits[left_child]["parent"] = split
         else:
-            leaves[left_child]['parent'] = split
+            leaves[left_child]["parent"] = split
 
         if right_child in splits:
-            splits[right_child]['parent'] = split
+            splits[right_child]["parent"] = split
         else:
-            leaves[right_child]['parent'] = split
+            leaves[right_child]["parent"] = split
 
     # This loop creates an entry for the all the leaves to the left and right
     # of a split
     for split in splits:
-        left_child = splits[split]['children'][0]
-        right_child = splits[split]['children'][1]
+        left_child = splits[split]["children"][0]
+        right_child = splits[split]["children"][1]
 
         if left_child in splits:
-            splits[split]['left_leaves'] = _find_all_children_leaves(
+            splits[split]["left_leaves"] = _find_all_children_leaves(
                 left_child, splits, leaves
-                )
+            )
         else:
-            splits[split]['left_leaves'] = [left_child]
+            splits[split]["left_leaves"] = [left_child]
 
         if right_child in splits:
-            splits[split]['right_leaves'] = _find_all_children_leaves(
+            splits[split]["right_leaves"] = _find_all_children_leaves(
                 right_child, splits, leaves
-                )
+            )
         else:
-            splits[split]['right_leaves'] = [right_child]
+            splits[split]["right_leaves"] = [right_child]
 
     # For each variable that appears in the tree, go through all the splits
     # and record its splitting threshold
     splitting_thresholds = {}
     for split in splits:
-        var = splits[split]['col']
+        var = splits[split]["col"]
         splitting_thresholds[var] = {}
     for split in splits:
-        var = splits[split]['col']
-        splitting_thresholds[var][split] = splits[split]['th']
+        var = splits[split]["col"]
+        splitting_thresholds[var][split] = splits[split]["th"]
 
     # Make sure every nested dictionary in the splitting_thresholds dictionary
     # is sorted by value
     for var in splitting_thresholds:
         splitting_thresholds[var] = dict(
-           sorted(splitting_thresholds[var].items(), key=lambda x: x[1])
-           )
+            sorted(splitting_thresholds[var].items(), key=lambda x: x[1])
+        )
 
     # NOTE: Can eliminate if not implementing the Mistry et. al. formulations
     # Record the ordered indices of the binary variable y. The first index
     # is the splitting variable. The second index is its location in the
     # ordered dictionary of thresholds for that variable.
     for split in splits:
-        var = splits[split]['col']
-        splits[split]['y_index'] = []
-        splits[split]['y_index'].append(var)
-        splits[split]['y_index'].append(
-            list(splitting_thresholds[var]).index(split)
-            )
+        var = splits[split]["col"]
+        splits[split]["y_index"] = []
+        splits[split]["y_index"].append(var)
+        splits[split]["y_index"].append(list(splitting_thresholds[var]).index(split))
 
     # For each leaf, create an empty dictionary that will store the lower
     # and upper bounds of each feature.
     for leaf in leaves:
-        leaves[leaf]['bounds'] = {}
+        leaves[leaf]["bounds"] = {}
 
     leaf_ids = np.array(list(leaves.keys()))
-    features = np.arange(0,len(leaves[leaf_ids[0]]['slope']))
+    features = np.arange(0, len(leaves[leaf_ids[0]]["slope"]))
 
     # For each feature in each leaf, initialize lower and upper bounds to None
     for feat in features:
         for leaf in leaves:
-            leaves[leaf]['bounds'][feat] = [None, None]
+            leaves[leaf]["bounds"][feat] = [None, None]
 
     # Finally, go through each split and assign it's threshold value as the
     # upper bound to all the leaves descending to the left of the split and
     # as the lower bound to all the leaves descending to the right.
     for split in splits:
-        var = splits[split]['col']
-        for leaf in splits[split]['left_leaves']:
-            leaves[leaf]['bounds'][var][1] = splits[split]['th']
+        var = splits[split]["col"]
+        for leaf in splits[split]["left_leaves"]:
+            leaves[leaf]["bounds"][var][1] = splits[split]["th"]
 
-        for leaf in splits[split]['right_leaves']:
-            leaves[leaf]['bounds'][var][0] = splits[split]['th']
+        for leaf in splits[split]["right_leaves"]:
+            leaves[leaf]["bounds"][var][0] = splits[split]["th"]
 
     leaves = _reassign_none_bounds(leaves, input_bounds)
 
@@ -362,6 +367,6 @@ def _parse_tree_data(model, input_bounds):
     # tree.
     leaves = {0: leaves}
     splits = {0: splits}
-    splitting_thresholds = {0:splitting_thresholds}
+    splitting_thresholds = {0: splitting_thresholds}
 
     return splits, leaves, splitting_thresholds
