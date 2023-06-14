@@ -471,7 +471,7 @@ class ConvLayer2D(Layer2D):
 
     def _eval_at_index(self, x, out_d, out_r, out_c):
         acc = 0.0
-        for (k, index) in self.kernel_with_input_indexes(out_d, out_r, out_c):
+        for k, index in self.kernel_with_input_indexes(out_d, out_r, out_c):
             acc += k * x[index]
         return acc
 
