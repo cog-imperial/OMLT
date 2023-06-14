@@ -44,9 +44,10 @@ class LinearTreeGDPFormulation(_PyomoFormulation):
         self.transformation = transformation
 
         # Ensure that the GDP transformation given is supported
-        supported_transformations = ['bigm', 'hull', 'mbigm']
+        supported_transformations = ['bigm', 'hull', 'mbigm', 'custom']
         if transformation not in supported_transformations:
-            raise NotImplementedError("Supported transformations are bigm, mbigm, or hull")
+            raise NotImplementedError("Supported transformations are: " + 
+                                      "bigm, mbigm, hull, and custom")
 
     @property
     def input_indexes(self):
@@ -244,7 +245,8 @@ def _add_gdp_formulation_to_block(
 
     transformation_string = 'gdp.' + transformation
 
-    pe.TransformationFactory(transformation_string).apply_to(block)
+    if transformation != 'custom':
+        pe.TransformationFactory(transformation_string).apply_to(block)
 
 
 def _add_hybrid_formulation_to_block(
