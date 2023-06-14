@@ -1,7 +1,8 @@
+import os
+
 import pytest
 from pyomo.common.fileutils import this_file_dir
 from testbook import testbook
-import os
 
 from omlt.dependencies import keras_available, onnx_available
 

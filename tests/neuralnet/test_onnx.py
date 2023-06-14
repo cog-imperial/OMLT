@@ -2,9 +2,9 @@ import tempfile
 
 import numpy as np
 import pytest
+from pyomo.common.dependencies import DeferredImportError
 
 from omlt.dependencies import onnx, onnx_available
-from pyomo.common.dependencies import DeferredImportError
 
 if onnx_available:
     import onnxruntime as ort
