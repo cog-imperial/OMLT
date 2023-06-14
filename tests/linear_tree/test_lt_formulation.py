@@ -648,9 +648,10 @@ def test_summary_dict_as_argument():
 def test_raise_exception_if_wrong_model_instance():
     regr = linear_model_tree(X=X, y=Y)
     input_bounds = {0: (min(X[:, 0]), max(X[:, 0])), 1: (min(X[:, 1]), max(X[:, 1]))}
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Input dict must be the summary of the linear-tree model"
+                + " e.g. dict = model.summary()"):
         ltmodel_small = LinearTreeDefinition(
             regr.summary(only_leaves=True), scaled_input_bounds=input_bounds
         )
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Model entry must be dict or linear-tree instance"):
         ltmodel_small = LinearTreeDefinition((0, 0), scaled_input_bounds=input_bounds)
