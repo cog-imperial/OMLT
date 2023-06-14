@@ -1,7 +1,7 @@
 import pytest
 from pyomo.common.fileutils import this_file_dir
 from testbook import testbook
-import os 
+import os
 
 from omlt.dependencies import keras_available, onnx_available
 
@@ -32,7 +32,7 @@ def test_import_network():
 @pytest.mark.skipif(not onnx_available, reason='onnx needed for this notebook')
 def test_mnist_example_convolutional():
     _test_run_notebook('neuralnet', 'mnist_example_convolutional.ipynb', 13)
-    
+
 @pytest.mark.skipif(not onnx_available, reason='onnx needed for this notebook')
 def test_mnist_example_dense():
     _test_run_notebook('neuralnet', 'mnist_example_dense.ipynb', 13)
@@ -40,4 +40,3 @@ def test_mnist_example_dense():
 @pytest.mark.skipif(not keras_available, reason='keras needed for this notebook')
 def test_neural_network_formulations():
     _test_run_notebook('neuralnet', 'neural_network_formulations.ipynb', 21)
-    
