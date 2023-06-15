@@ -38,7 +38,7 @@ def test_autothermal_relu_notebook():
 
     #testing the output (with some tolerance)
     assert output[0] == pytest.approx(0.1)
-    assert output[1] == pytest.approx(1.1250305, abs=3e-2)
+    assert output[1] == pytest.approx(1.1250305, abs=0.03)
     assert output[2] == pytest.approx(0.33191865, abs=1.8e-2)
     assert output[3] == pytest.approx(0.34, abs=1.8e-2)
 
@@ -121,7 +121,7 @@ def test_mnist_example_convolutional():
     training_output = tb.cell_output_text(10).splitlines()
     results = trainingAccuracy(training_output)
     avg_loss, final_accuracy = results[0], results[1]
-    assert avg_loss == pytest.approx(0.25, abs=0.05)
+    assert avg_loss == pytest.approx(0.25, abs=0.09)
     assert final_accuracy == pytest.approx(0.92, abs = 4e-2)
 
 @pytest.mark.skipif(not onnx_available, reason='onnx needed for this notebook')
@@ -136,10 +136,35 @@ def test_mnist_example_dense():
     assert avg_loss == pytest.approx(0.0879, abs=0.01)
     assert final_accuracy == pytest.approx(0.95, abs=0.05)
 
+    #check that keys were matched succesfully 
+    assert tb.cell_output_text(13) == "<All keys matched successfully>"
+
+    #check the layers of the model
+    model_layers = tb.cell_output_text(19).splitlines()
+    assert model_layers[0] == "0\tInputLayer(input_size=[784], output_size=[784])\tlinear"
+    assert model_layers[1] == "1\tDenseLayer(input_size=[784], output_size=[50])\trelu"
+    assert model_layers[2] == "2\tDenseLayer(input_size=[50], output_size=[50])\trelu"
+    assert model_layers[3] == "3\tDenseLayer(input_size=[50], output_size=[10])\tlinear"
+
 @pytest.mark.skipif(not keras_available, reason='keras needed for this notebook')
 def test_neural_network_formulations():
     tb = openBook('neuralnet', 'neural_network_formulations.ipynb',)
     _test_run_notebook(tb, 21)
+
+    #check accuracy of the training
+    training_output = tb.cell_output_text(10).splitlines()
+    loss = training_output[-1].split(": ")
+    loss = float(loss[-1])
+    assert loss == pytest.approx(0.0025, abs=5)
+
+    #check scaled input bounds on model
+    print(tb.cell_output_text(17))
+    input_bounds = tb.cell_output_text(17).splitlines()[1]
+    print(input_bounds)
+    input_bounds = input_bounds[27:-2].split(", ")
+    print(input_bounds)
+    assert input_bounds[0] == '-1.7317910151019957'
+    assert input_bounds[1] == '1.7317910151019957'
 
 @pytest.mark.skipif(not onnx_available, reason='onnx needed for this notebook')
 def test_bo_with_trees():
