@@ -31,7 +31,7 @@ def test_build_network():
     _test_run_notebook("neuralnet", "build_network.ipynb", 37)
 
 
-@pytest.mark.skipif(not onnx_available, reason="onnx needed for this notebook")
+@pytest.mark.skipif( (not onnx_available) or (not keras_available), reason="onnx and keras needed for this notebook")
 def test_import_network():
     _test_run_notebook("neuralnet", "import_network.ipynb", 16)
 
