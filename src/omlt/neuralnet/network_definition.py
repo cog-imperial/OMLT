@@ -32,7 +32,6 @@ class NetworkDefinition:
 
         # Process input bounds to insure scaled input bounds exist for formulations
         if scaled_input_bounds is None:
-
             if unscaled_input_bounds is not None and scaling_object is not None:
                 lbs = scaling_object.get_scaled_input_expressions(
                     {k: t[0] for k, t in unscaled_input_bounds.items()}
