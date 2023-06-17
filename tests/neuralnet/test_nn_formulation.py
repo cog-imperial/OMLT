@@ -218,9 +218,11 @@ def test_invalid_layer_type():
 
 
 def _maxpool_conv_network(inputs):
-    input_size = [1, 8, 6]
-    input_bounds = np.empty(input_size, dtype="i,i")
-    input_bounds.fill((-10, 10))
+    input_size = [1, 8, 6]    
+    input_bounds = {}
+    for i in range(input_size[1]):
+        for j in range(input_size[2]):
+            input_bounds[(0, i, j)] = (-10.0, 10.0)
     net = NetworkDefinition(scaled_input_bounds=input_bounds)
 
     input_layer = InputLayer(input_size)
