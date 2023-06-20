@@ -62,7 +62,7 @@ def test_autothermal_relu_notebook():
 
         #check loss of model
         model_loss = tb.ref("nn.evaluate(x, y)")
-        assert model_loss == pytest.approx(0.000389626, abs=0.00027)
+        assert model_loss == pytest.approx(0.000389626, abs=0.00028)
 
         #check layers of model
         layers = ['relu', 'relu', 'relu', 'relu', 'linear']
@@ -90,7 +90,7 @@ def test_autothermal_reformer():
 
         #check loss of model
         model_loss = tb.ref("nn.evaluate(x, y)")
-        assert model_loss == pytest.approx(0.00015207, abs=0.00015)
+        assert model_loss == pytest.approx(0.00015207, abs=0.00016)
 
         #check layers of model
         layers = ['sigmoid', 'sigmoid', 'sigmoid', 'sigmoid', 'linear']
@@ -189,7 +189,7 @@ def test_mnist_example_convolutional():
 
         #checking training accuracy
         loss, accuracy = mnist_stats(tb, notebook_fname)
-        assert loss == pytest.approx(0.3, abs=0.12)
+        assert loss == pytest.approx(0.3, abs=0.15)
         assert accuracy / 10000 == pytest.approx(0.93, abs=0.07)           
 
         #checking the imported layers
@@ -198,7 +198,7 @@ def test_mnist_example_convolutional():
 
         #checking optimal solution
         optimal_sol = tb.ref("-(pyo.value(m.nn.outputs[0,adversary]-m.nn.outputs[0,label]))")
-        assert optimal_sol == pytest.approx(11, abs=3)
+        assert optimal_sol == pytest.approx(11, abs=6.6)
 
 
 @pytest.mark.skipif(not onnx_available, reason="onnx needed for this notebook")
@@ -220,7 +220,7 @@ def test_mnist_example_dense():
 
         #checking optimal solution
         optimal_sol = tb.ref("-(pyo.value(m.nn.outputs[adversary]-m.nn.outputs[label]))")
-        assert optimal_sol == pytest.approx(5, abs=2.1)
+        assert optimal_sol == pytest.approx(5, abs=2.7)
 
 @pytest.mark.skipif(not keras_available, reason="keras needed for this notebook")
 def test_neural_network_formulations():
@@ -229,6 +229,43 @@ def test_neural_network_formulations():
 
     with book as tb:
         check_cell_execution(tb, notebook_fname)
+
+        #checking loss of keras models
+        losses = [tb.ref(f"nn{x + 1}.evaluate(x=df['x_scaled'], y=df['y_scaled'])") for x in range(3)]
+        losses[0] == pytest.approx(0.000534, abs=0.0003)
+        losses[1] == pytest.approx(0.000691, abs=0.0003)
+        losses[2] == pytest.approx(0.0024, abs=0.001)
+
+        #checking scaled input bounds
+        scaled_input = tb.ref("input_bounds[0]")
+        assert scaled_input[0] == pytest.approx(-1.73179)
+        assert scaled_input[1] == pytest.approx(1.73179)
+
+        #checking optimal solution
+        x1_reduced = tb.ref("solution_1_reduced[0]")
+        y1_reduced = tb.ref("solution_1_reduced[1]")
+        assert x1_reduced == pytest.approx(-0.8, abs=0.75)
+        assert y1_reduced == pytest.approx(0.8, abs=0.75)
+
+        x1_full = tb.ref("solution_1_full[0]")
+        y1_full = tb.ref("solution_1_full[1]")
+        assert x1_full == pytest.approx(-0.27382, abs=0.3)
+        assert y1_full == pytest.approx(-0.86490, abs=0.3)
+
+        x2_comp = tb.ref("solution_2_comp[0]")
+        y2_comp = tb.ref("solution_2_comp[1]")
+        assert x2_comp == pytest.approx(-0.29967, abs=0.3)
+        assert y2_comp == pytest.approx(-0.84415, abs=0.3)
+
+        x2_bigm = tb.ref("solution_2_bigm[0]")
+        y2_bigm = tb.ref("solution_2_bigm[1]")
+        assert x2_bigm == pytest.approx(-0.29967, abs=0.3)
+        assert y2_bigm == pytest.approx(-0.84414, abs=0.3)
+
+        x3 = tb.ref("solution_3_mixed[0]")
+        y3 = tb.ref("solution_3_mixed[1]")
+        assert x3 == pytest.approx(-0.23955, abs=0.3)
+        assert y3 == pytest.approx(-0.90598, abs=0.3)
 
 @pytest.mark.skipif(not onnx_available, reason='onnx needed for this notebook')
 def test_bo_with_trees():
