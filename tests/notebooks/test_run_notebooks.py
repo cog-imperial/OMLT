@@ -1,5 +1,6 @@
 import os
 import pytest
+import nbformat
 from pyomo.common.fileutils import this_file_dir
 from testbook import testbook
 from omlt.dependencies import keras_available, onnx_available
@@ -14,8 +15,9 @@ def open_book(folder, notebook_fname, **kwargs):
 
 
 #checks that the number of executed cells matches the expected
-def check_cell_execution(tb, n_cells):
-    assert tb.code_cells_executed == n_cells
+def check_cell_execution(tb, notebook_fname, **kwargs):
+    injections = kwargs.get("injections", 0)
+    assert tb.code_cells_executed == cell_counter(notebook_fname, only_code_cells=True) + injections
 
 def check_layers(tb, activations, network):
     tb.inject(f"""
@@ -23,13 +25,28 @@ def check_layers(tb, activations, network):
                     for layer_id, layer in enumerate({network}):
                         assert activations[layer_id] in str(layer.activation)
                 """)
+    
+def cell_counter(notebook_fname, **kwargs):
+    only_code_cells = kwargs.get('only_code_cells', False)
+    nb = nbformat.read(notebook_fname, as_version=4)
+    nb = nbformat.validator.normalize(nb)[1]
+    if only_code_cells:
+        total = 0
+        for cell in nb.cells:
+            if cell['cell_type'] == 'code':
+                total += 1
+        return total 
+    else:
+        return len(nb.cells)
+
 
 @pytest.mark.skipif(not keras_available, reason="keras needed for this notebook")
 def test_autothermal_relu_notebook():
-    book = open_book('neuralnet', "auto-thermal-reformer-relu.ipynb")
+    notebook_fname = "auto-thermal-reformer-relu.ipynb"
+    book = open_book('neuralnet', notebook_fname)
 
     with book as tb:
-        check_cell_execution(tb, 13)
+        check_cell_execution(tb, notebook_fname)
 
         #check loss of model
         model_loss = tb.ref("nn.evaluate(x, y)")
@@ -53,10 +70,11 @@ def test_autothermal_relu_notebook():
 
 @pytest.mark.skipif(not keras_available, reason="keras needed for this notebook")
 def test_autothermal_reformer():
-    book = open_book('neuralnet', "auto-thermal-reformer.ipynb")
+    notebook_fname = "auto-thermal-reformer.ipynb"
+    book = open_book('neuralnet', notebook_fname)
 
     with book as tb:
-        check_cell_execution(tb, 13)
+        check_cell_execution(tb, notebook_fname)
 
         #check loss of model
         model_loss = tb.ref("nn.evaluate(x, y)")
@@ -79,10 +97,11 @@ def test_autothermal_reformer():
 
 
 def test_build_network():
-    book = open_book('neuralnet', "build_network.ipynb")
+    notebook_fname = "build_network.ipynb"
+    book = open_book('neuralnet', notebook_fname)
 
     with book as tb:
-        check_cell_execution(tb, 37)
+        check_cell_execution(tb, notebook_fname)
 
         #check for correct layers
         layers = ['linear', 'linear', 'relu']
@@ -101,15 +120,16 @@ def test_build_network():
     reason="onnx and keras needed for this notebook",
 )
 def test_import_network():
-    book = open_book('neuralnet', "import_network.ipynb", execute=False)
+    notebook_fname = "import_network.ipynb"
+    book = open_book('neuralnet', notebook_fname, execute=False)
 
     with book as tb:
         #inject cell that reads in loss and accuracy of keras model
+        #TODO: add something that checks where to inject code cell instead of hardcoding
         tb.inject("keras_loss, keras_accuracy = model.evaluate(X, Y)", before=25, run=False)
         tb.execute()
 
-        #add one to true number because of injection
-        check_cell_execution(tb, 17)
+        check_cell_execution(tb, notebook_fname, injections=1)
 
         #check input bounds
         input_bounds = tb.ref("input_bounds")
@@ -125,7 +145,7 @@ def test_import_network():
         #checking accuracy and loss of keras model
         keras_loss, keras_accuracy = tb.ref('keras_loss'), tb.ref("keras_accuracy")
         assert keras_loss == pytest.approx(5.4, abs=4.8)
-        assert keras_accuracy == pytest.approx(0.45, abs=0.21)
+        assert keras_accuracy == pytest.approx(0.48, abs=0.21)
 
         #checking loss of pytorch model
         pytorch_loss = tb.ref("loss.item()")
@@ -149,34 +169,57 @@ def test_import_network():
 
 @pytest.mark.skipif(not onnx_available, reason="onnx needed for this notebook")
 def test_mnist_example_convolutional():
-    book = open_book('neuralnet', "mnist_example_convolutional.ipynb")
+    notebook_fname = "mnist_example_convolutional.ipynb"
+    book = open_book('neuralnet', notebook_fname)
 
     with book as tb:
-        check_cell_execution(tb, 13)
+        check_cell_execution(tb, notebook_fname)
+
+        #checking training accuracy
+        total_cells = cell_counter("mnist_example_convolutional.ipynb")
+        tb.inject("test(model, test_loader)")
+
+        model_stats = tb.cell_output_text(total_cells)
+        model_stats = model_stats.split(" ")
+        loss = float(model_stats[4][:-1])
+        accuracy = int(model_stats[-2][:-6])
+        
+        assert loss == pytest.approx(0.3, abs=0.12)
+        assert accuracy / 10000 == pytest.approx(0.95, abs=0.05)           
 
         #checking the imported layers
         layers = ['linear', 'relu', 'relu', 'relu', 'linear']
         check_layers(tb, layers, "network_definition.layers")
 
+        #checking optimal solution
+        true_label = tb.ref("pyo.value(m.nn.outputs[0, label])")
+        adverserial_label = tb.ref("pyo.value(m.nn.outputs[0, adversary])")
+        optimal_sol = -(adverserial_label - true_label)
+        assert optimal_sol == pytest.approx(10, abs=5.9)
+
 
 @pytest.mark.skipif(not onnx_available, reason="onnx needed for this notebook")
 def test_mnist_example_dense():
-    book = open_book('neuralnet', "mnist_example_dense.ipynb")
+    notebook_fname = "mnist_example_dense.ipynb"
+    book = open_book('neuralnet', notebook_fname)
 
     with book as tb:
-        check_cell_execution(tb, 13)
+        check_cell_execution(tb, notebook_fname)
 
 
 @pytest.mark.skipif(not keras_available, reason="keras needed for this notebook")
 def test_neural_network_formulations():
-    book = open_book('neuralnet', "neural_network_formulations.ipynb")
+    notebook_fname = "neural_network_formulations.ipynb"
+    book = open_book('neuralnet', notebook_fname)
 
     with book as tb:
-        check_cell_execution(tb, 21)
+        check_cell_execution(tb, notebook_fname)
 
 @pytest.mark.skipif(not onnx_available, reason='onnx needed for this notebook')
 def test_bo_with_trees():
-    book = open_book('', "bo_with_trees.ipynb")
+    notebook_fname = "bo_with_trees.ipynb"
+    book = open_book('', notebook_fname)
 
     with book as tb:
-        check_cell_execution(tb, 10)
+        check_cell_execution(tb, notebook_fname)
+        
