@@ -85,7 +85,7 @@ def test_linear_tree_model_single_var():
     # construct a LinearTreeDefinition
     regr_small = linear_model_tree(X=X_small, y=y_small)
     input_bounds = {0: (min(X_small)[0], max(X_small)[0])}
-    ltmodel_small = LinearTreeDefinition(regr_small, scaled_input_bounds=input_bounds)
+    ltmodel_small = LinearTreeDefinition(regr_small, unscaled_input_bounds=input_bounds)
 
     assert ltmodel_small._scaled_input_bounds is not None
     assert ltmodel_small._n_inputs == 1
@@ -155,7 +155,7 @@ def test_linear_tree_model_single_var():
 def test_bigm_formulation_single_var():
     regr_small = linear_model_tree(X=X_small, y=y_small)
     input_bounds = {0: (min(X_small)[0], max(X_small)[0])}
-    ltmodel_small = LinearTreeDefinition(regr_small, scaled_input_bounds=input_bounds)
+    ltmodel_small = LinearTreeDefinition(regr_small, unscaled_input_bounds=input_bounds)
     formulation1_lt = LinearTreeGDPFormulation(ltmodel_small, transformation="bigm")
 
     model1 = pe.ConcreteModel()
@@ -189,7 +189,7 @@ def test_bigm_formulation_single_var():
 def test_hull_formulation_single_var():
     regr_small = linear_model_tree(X=X_small, y=y_small)
     input_bounds = {0: (min(X_small)[0], max(X_small)[0])}
-    ltmodel_small = LinearTreeDefinition(regr_small, scaled_input_bounds=input_bounds)
+    ltmodel_small = LinearTreeDefinition(regr_small, unscaled_input_bounds=input_bounds)
     formulation1_lt = LinearTreeGDPFormulation(ltmodel_small, transformation="hull")
 
     model1 = pe.ConcreteModel()
@@ -223,7 +223,7 @@ def test_hull_formulation_single_var():
 def test_mbigm_formulation_single_var():
     regr_small = linear_model_tree(X=X_small, y=y_small)
     input_bounds = {0: (min(X_small)[0], max(X_small)[0])}
-    ltmodel_small = LinearTreeDefinition(regr_small, scaled_input_bounds=input_bounds)
+    ltmodel_small = LinearTreeDefinition(regr_small, unscaled_input_bounds=input_bounds)
     formulation1_lt = LinearTreeGDPFormulation(ltmodel_small, transformation="mbigm")
 
     model1 = pe.ConcreteModel()
@@ -251,12 +251,13 @@ def test_mbigm_formulation_single_var():
 
 
 @pytest.mark.skipif(
-    not lineartree_available or not scip_available, reason="Need Linear-Tree Package"
+    not lineartree_available or not scip_available,
+    reason="Need Linear-Tree Package and scip",
 )
 def test_hybrid_bigm_formulation_single_var():
     regr_small = linear_model_tree(X=X_small, y=y_small)
     input_bounds = {0: (min(X_small)[0], max(X_small)[0])}
-    ltmodel_small = LinearTreeDefinition(regr_small, scaled_input_bounds=input_bounds)
+    ltmodel_small = LinearTreeDefinition(regr_small, unscaled_input_bounds=input_bounds)
     formulation1_lt = LinearTreeHybridBigMFormulation(ltmodel_small)
 
     model1 = pe.ConcreteModel()
@@ -281,6 +282,39 @@ def test_hybrid_bigm_formulation_single_var():
     solution_1_bigm = (pe.value(model1.x), pe.value(model1.y))
     y_pred = regr_small.predict(np.array(solution_1_bigm[0]).reshape(1, -1))
     assert y_pred[0] - solution_1_bigm[1] <= 1e-4
+
+
+@pytest.mark.skipif(not lineartree_available, reason="Need Linear-Tree Package")
+def test_scaling():
+    mean_x_small = np.mean(X_small)
+    std_x_small = np.std(X_small)
+    mean_y_small = np.mean(y_small)
+    std_y_small = np.std(y_small)
+    scaled_x = (X_small - mean_x_small) / std_x_small
+    scaled_y = (y_small - mean_y_small) / std_y_small
+    scaled_input_bounds = {0: (np.min(scaled_x), np.max(scaled_x))}
+    unscaled_input_bounds = {0: (np.min(X_small), np.max(X_small))}
+
+    scaler = omlt.scaling.OffsetScaling(
+        offset_inputs=[mean_x_small],
+        factor_inputs=[std_x_small],
+        offset_outputs=[mean_y_small],
+        factor_outputs=[std_y_small],
+    )
+
+    regr = linear_model_tree(scaled_x, scaled_y)
+
+    regr.fit(np.reshape(scaled_x, (-1, 1)), scaled_y)
+
+    lt_def2 = LinearTreeDefinition(
+        regr, unscaled_input_bounds=unscaled_input_bounds, scaling_object=scaler
+    )
+    assert lt_def2._scaled_input_bounds[0][0] - scaled_input_bounds[0][0] <= 1e-5
+    assert lt_def2._scaled_input_bounds[0][1] - scaled_input_bounds[0][1] <= 1e-5
+    with pytest.raises(
+        Exception, match="Input Bounds needed to represent linear trees as MIPs"
+    ):
+        ltmodel_scaled = LinearTreeDefinition(regr)
 
 
 #### MULTIVARIATE INPUT TESTING ####
@@ -341,7 +375,7 @@ def test_linear_tree_model_multi_var():
     # construct a LinearTreeDefinition
     regr = linear_model_tree(X=X, y=Y)
     input_bounds = {0: (min(X[:, 0]), max(X[:, 0])), 1: (min(X[:, 1]), max(X[:, 1]))}
-    ltmodel_small = LinearTreeDefinition(regr, scaled_input_bounds=input_bounds)
+    ltmodel_small = LinearTreeDefinition(regr, unscaled_input_bounds=input_bounds)
 
     # assert attributes in LinearTreeDefinition
     assert ltmodel_small._scaled_input_bounds is not None
@@ -413,7 +447,7 @@ def test_linear_tree_model_multi_var():
 def test_bigm_formulation_multi_var():
     regr = linear_model_tree(X=X, y=Y)
     input_bounds = {0: (min(X[:, 0]), max(X[:, 0])), 1: (min(X[:, 1]), max(X[:, 1]))}
-    ltmodel_small = LinearTreeDefinition(regr, scaled_input_bounds=input_bounds)
+    ltmodel_small = LinearTreeDefinition(regr, unscaled_input_bounds=input_bounds)
     formulation1_lt = LinearTreeGDPFormulation(ltmodel_small, transformation="bigm")
 
     model1 = pe.ConcreteModel()
@@ -455,7 +489,7 @@ def test_bigm_formulation_multi_var():
 def test_hull_formulation_multi_var():
     regr = linear_model_tree(X=X, y=Y)
     input_bounds = {0: (min(X[:, 0]), max(X[:, 0])), 1: (min(X[:, 1]), max(X[:, 1]))}
-    ltmodel_small = LinearTreeDefinition(regr, scaled_input_bounds=input_bounds)
+    ltmodel_small = LinearTreeDefinition(regr, unscaled_input_bounds=input_bounds)
     formulation1_lt = LinearTreeGDPFormulation(ltmodel_small, transformation="hull")
 
     model1 = pe.ConcreteModel()
@@ -497,7 +531,7 @@ def test_hull_formulation_multi_var():
 def test_mbigm_formulation_multi_var():
     regr = linear_model_tree(X=X, y=Y)
     input_bounds = {0: (min(X[:, 0]), max(X[:, 0])), 1: (min(X[:, 1]), max(X[:, 1]))}
-    ltmodel_small = LinearTreeDefinition(regr, scaled_input_bounds=input_bounds)
+    ltmodel_small = LinearTreeDefinition(regr, unscaled_input_bounds=input_bounds)
     formulation1_lt = LinearTreeGDPFormulation(ltmodel_small, transformation="mbigm")
 
     model1 = pe.ConcreteModel()
@@ -539,7 +573,7 @@ def test_mbigm_formulation_multi_var():
 def test_hybrid_bigm_formulation_multi_var():
     regr = linear_model_tree(X=X, y=Y)
     input_bounds = {0: (min(X[:, 0]), max(X[:, 0])), 1: (min(X[:, 1]), max(X[:, 1]))}
-    ltmodel_small = LinearTreeDefinition(regr, scaled_input_bounds=input_bounds)
+    ltmodel_small = LinearTreeDefinition(regr, unscaled_input_bounds=input_bounds)
     formulation1_lt = LinearTreeHybridBigMFormulation(ltmodel_small)
 
     model1 = pe.ConcreteModel()
@@ -580,7 +614,7 @@ def test_summary_dict_as_argument():
     regr = linear_model_tree(X=X, y=Y)
     input_bounds = {0: (min(X[:, 0]), max(X[:, 0])), 1: (min(X[:, 1]), max(X[:, 1]))}
     ltmodel_small = LinearTreeDefinition(
-        regr.summary(), scaled_input_bounds=input_bounds
+        regr.summary(), unscaled_input_bounds=input_bounds
     )
     # assert attributes in LinearTreeDefinition
     assert ltmodel_small._scaled_input_bounds is not None
@@ -647,6 +681,8 @@ def test_summary_dict_as_argument():
 @pytest.mark.skipif(not lineartree_available, reason="Need Linear-Tree Package")
 def test_raise_exception_if_wrong_model_instance():
     regr = linear_model_tree(X=X, y=Y)
+    wrong_summary_dict = regr.summary()
+    del wrong_summary_dict[1]
     input_bounds = {0: (min(X[:, 0]), max(X[:, 0])), 1: (min(X[:, 1]), max(X[:, 1]))}
     with pytest.raises(
         Exception,
@@ -660,3 +696,11 @@ def test_raise_exception_if_wrong_model_instance():
         Exception, match="Model entry must be dict or linear-tree instance"
     ):
         ltmodel_small = LinearTreeDefinition((0, 0), scaled_input_bounds=input_bounds)
+    with pytest.raises(
+        Exception,
+        match="Input dict must be the summary of the linear-tree model"
+        + " e.g. dict = model.summary()",
+    ):
+        ltmodel_small = LinearTreeDefinition(
+            wrong_summary_dict, scaled_input_bounds=input_bounds
+        )
