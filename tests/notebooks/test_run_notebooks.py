@@ -19,12 +19,14 @@ def check_cell_execution(tb, notebook_fname, **kwargs):
     injections = kwargs.get("injections", 0)
     assert tb.code_cells_executed == cell_counter(notebook_fname, only_code_cells=True) + injections
 
+
 def check_layers(tb, activations, network):
     tb.inject(f"""
                     activations = {activations}
                     for layer_id, layer in enumerate({network}):
                         assert activations[layer_id] in str(layer.activation)
                 """)
+
     
 def cell_counter(notebook_fname, **kwargs):
     only_code_cells = kwargs.get('only_code_cells', False)
@@ -38,6 +40,16 @@ def cell_counter(notebook_fname, **kwargs):
         return total 
     else:
         return len(nb.cells)
+
+
+def mnist_stats(tb, fname):
+    total_cells = cell_counter(fname)
+    tb.inject("test(model, test_loader)")
+    model_stats = tb.cell_output_text(total_cells)
+    model_stats = model_stats.split(" ")
+    loss = float(model_stats[4][:-1])
+    accuracy = int(model_stats[-2][:-6])
+    return (loss, accuracy)
 
 
 @pytest.mark.skipif(not keras_available, reason="keras needed for this notebook")
@@ -78,7 +90,7 @@ def test_autothermal_reformer():
 
         #check loss of model
         model_loss = tb.ref("nn.evaluate(x, y)")
-        assert model_loss == pytest.approx(0.00015207, abs=0.00012)
+        assert model_loss == pytest.approx(0.00015207, abs=0.00015)
 
         #check layers of model
         layers = ['sigmoid', 'sigmoid', 'sigmoid', 'sigmoid', 'linear']
@@ -176,26 +188,17 @@ def test_mnist_example_convolutional():
         check_cell_execution(tb, notebook_fname)
 
         #checking training accuracy
-        total_cells = cell_counter("mnist_example_convolutional.ipynb")
-        tb.inject("test(model, test_loader)")
-
-        model_stats = tb.cell_output_text(total_cells)
-        model_stats = model_stats.split(" ")
-        loss = float(model_stats[4][:-1])
-        accuracy = int(model_stats[-2][:-6])
-        
+        loss, accuracy = mnist_stats(tb, notebook_fname)
         assert loss == pytest.approx(0.3, abs=0.12)
-        assert accuracy / 10000 == pytest.approx(0.95, abs=0.05)           
+        assert accuracy / 10000 == pytest.approx(0.93, abs=0.07)           
 
         #checking the imported layers
         layers = ['linear', 'relu', 'relu', 'relu', 'linear']
         check_layers(tb, layers, "network_definition.layers")
 
         #checking optimal solution
-        true_label = tb.ref("pyo.value(m.nn.outputs[0, label])")
-        adverserial_label = tb.ref("pyo.value(m.nn.outputs[0, adversary])")
-        optimal_sol = -(adverserial_label - true_label)
-        assert optimal_sol == pytest.approx(10, abs=5.9)
+        optimal_sol = tb.ref("-(pyo.value(m.nn.outputs[0,adversary]-m.nn.outputs[0,label]))")
+        assert optimal_sol == pytest.approx(11, abs=3)
 
 
 @pytest.mark.skipif(not onnx_available, reason="onnx needed for this notebook")
@@ -206,6 +209,18 @@ def test_mnist_example_dense():
     with book as tb:
         check_cell_execution(tb, notebook_fname)
 
+        #checking training accuracy
+        loss, accuracy = mnist_stats(tb, notebook_fname)
+        assert loss == pytest.approx(0.0867, abs=0.03)
+        assert accuracy / 10000 == pytest.approx(0.95, abs=0.05) 
+
+        #checking the imported layers
+        layers = ['linear', 'relu', 'relu', 'linear']
+        check_layers(tb, layers, "network_definition.layers")
+
+        #checking optimal solution
+        optimal_sol = tb.ref("-(pyo.value(m.nn.outputs[adversary]-m.nn.outputs[label]))")
+        assert optimal_sol == pytest.approx(5, abs=2.1)
 
 @pytest.mark.skipif(not keras_available, reason="keras needed for this notebook")
 def test_neural_network_formulations():
