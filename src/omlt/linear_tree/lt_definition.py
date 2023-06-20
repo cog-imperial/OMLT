@@ -9,7 +9,7 @@ class LinearTreeDefinition:
     Attributes:
         _model (linear-tree model) : Linear Tree Model trained in linear-tree
         _splits (dict) : Dict containing split node information
-        _leaves (dict) : Dict containing leaf information
+        _leaves (dict) : Dict containing leaf node information
         _thresholds (dict) : Dict containing splitting threshold information
         _scaling_object (scaling object) : Scaling object to ensure scaled
             data match units of broader optimization problem
