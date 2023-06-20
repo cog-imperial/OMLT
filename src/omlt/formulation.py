@@ -82,7 +82,6 @@ def _setup_scaled_inputs_outputs(block, scaler=None, scaled_input_bounds=None):
             k: (float(scaled_input_bounds[k][0]), float(scaled_input_bounds[k][1]))
             for k in block.inputs_set
         }
-
         block.scaled_inputs = pyo.Var(block.inputs_set, initialize=0, bounds=bnds)
     else:
         block.scaled_inputs = pyo.Var(block.inputs_set, initialize=0)
