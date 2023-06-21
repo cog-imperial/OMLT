@@ -1,19 +1,19 @@
 import numpy as np
 import pyomo.environ as pyo
 import pytest
-
 from pyomo.common.dependencies import DeferredImportError
+
 from omlt.dependencies import keras, keras_available
 
 if keras_available:
     from omlt.io import load_keras_sequential
 
+from conftest import get_neural_network_data
+
 from omlt.block import OmltBlock
 from omlt.neuralnet import FullSpaceNNFormulation, ReducedSpaceNNFormulation
 from omlt.neuralnet.activations import ComplementarityReLUActivation
 from omlt.scaling import OffsetScaling
-
-from conftest import get_neural_network_data
 
 
 @pytest.mark.skipif(keras_available, reason="Test only valid when keras not available")

@@ -51,7 +51,6 @@ class OffsetScaling(ScalingInterface):
     """
 
     def __init__(self, offset_inputs, factor_inputs, offset_outputs, factor_outputs):
-
         super(OffsetScaling, self).__init__()
         self.__x_offset = convert_to_dict(offset_inputs)
         self.__x_factor = convert_to_dict(factor_inputs)

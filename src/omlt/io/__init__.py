@@ -1,4 +1,4 @@
-from omlt.dependencies import onnx_available, keras_available
+from omlt.dependencies import keras_available, onnx_available
 
 if onnx_available:
     from omlt.io.onnx import (
