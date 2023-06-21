@@ -205,6 +205,95 @@ class DenseLayer(Layer):
         return y
 
 
+class GNNLayer(DenseLayer):
+    """
+    GNN layer implementing `output = activation(dot(input, weights, edge) + biases)`.
+
+    Parameters
+    ----------
+    input_size : tuple
+        the size of the input.
+    output_size : tuple
+        the size of the output.
+    weight : matrix-like
+        the weight matrix.
+    biases : array-like
+        the biases.
+    N : int
+        number of nodes in the graph
+    activation : str or None
+        activation function name
+    input_index_mapper : IndexMapper or None
+        map indexes from this layer index to the input layer index size
+    """
+
+    def __init__(
+        self,
+        input_size,
+        output_size,
+        weights,
+        biases,
+        N,
+        *,
+        activation=None,
+        input_index_mapper=None,
+    ):
+        super().__init__(
+            input_size,
+            output_size,
+            weights=weights,
+            biases=biases,
+            activation=activation,
+            input_index_mapper=input_index_mapper,
+        )
+        assert input_size[-1] % N == 0
+        assert output_size[-1] % N == 0
+        self.__N = N
+        self.__gnn_input_size = input_size[-1] // N
+        self.__gnn_output_size = output_size[-1] // N
+
+    @property
+    def N(self):
+        """Return the number of nodes in the graphs"""
+        return self.__N
+
+    @property
+    def gnn_input_size(self):
+        """Return the size of the input tensor in original GNN"""
+        return self.__gnn_input_size
+
+    @property
+    def gnn_output_size(self):
+        """Return the size of the output tensor in original GNN"""
+        return self.__gnn_output_size
+
+    def __str__(self):
+        return f"GNNLayer(input_size={self.input_size}, output_size={self.output_size})"
+
+    def _eval_with_adjacency(self, x, A):
+        x_reshaped = (
+            np.reshape(x, self.input_index_mapper.output_size)
+            if self.input_index_mapper is not None
+            else x[:]
+        )
+        assert x_reshaped.shape == tuple(self.input_size)
+        y = np.zeros(shape=self.output_size)
+        for output_index in self.output_indexes:
+            for input_index in self.input_indexes:
+                if input_index[:-1] == output_index[:-1]:
+                    y[output_index] += (
+                        x_reshaped[input_index]
+                        * self.weights[input_index[-1], output_index[-1]]
+                        * A[
+                            input_index[-1] // self.gnn_input_size,
+                            output_index[-1] // self.gnn_output_size,
+                        ]
+                    )
+            y[output_index] += self.biases[output_index[-1]]
+
+        return y
+
+
 class Layer2D(Layer):
     """
     Abstract two-dimensional layer that downsamples values in a kernel to a single value.
@@ -471,7 +560,7 @@ class ConvLayer2D(Layer2D):
 
     def _eval_at_index(self, x, out_d, out_r, out_c):
         acc = 0.0
-        for (k, index) in self.kernel_with_input_indexes(out_d, out_r, out_c):
+        for k, index in self.kernel_with_input_indexes(out_d, out_r, out_c):
             acc += k * x[index]
         return acc
 

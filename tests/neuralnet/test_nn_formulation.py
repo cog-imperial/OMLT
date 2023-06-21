@@ -18,6 +18,8 @@ from omlt.neuralnet.layer import (
     PoolingLayer2D,
 )
 
+from omlt.neuralnet.network_definition import gnn_layer_definition
+
 
 def two_node_network(activation, input_value):
     """
@@ -327,38 +329,6 @@ def test_maxpool_FullSpaceNNFormulation():
     assert abs(pyo.value(m.neural_net_block.outputs[0, 0, 0]) - y[0, 0, 0]) < 1e-6
 
 
-def three_node_graph_neural_network(activation):
-    input_size = [6]
-    input_bounds = {}
-    for i in range(input_size[0]):
-        input_bounds[(i)] = (-10.0, 10.0)
-    net = NetworkDefinition(scaled_input_bounds=input_bounds)
-
-    input_layer = InputLayer(input_size)
-    net.add_layer(input_layer)
-
-    dense_layer_0 = DenseLayer(
-        input_layer.output_size,
-        [9],
-        activation=activation,
-        weights=np.array(
-            [
-                [1, 0, 1, 1, -1, 1, 1, -1, 1],
-                [0, 1, 1, -1, 1, 1, -1, 1, 1],
-                [1, -1, 1, 1, 0, 1, 1, -1, 1],
-                [-1, 1, 1, 0, 1, 1, -1, 1, 1],
-                [1, -1, 1, 1, -1, 1, 1, 0, 1],
-                [-1, 1, 1, -1, 1, 1, 0, 1, 1],
-            ]
-        ),
-        biases=np.array([-1, 0, 1, -1, 0, 1, -1, 0, 1]),
-    )
-    net.add_layer(dense_layer_0)
-    net.add_edge(input_layer, dense_layer_0)
-
-    return net
-
-
 def examples_of_graphs(graph_type):
     # complete graph
     if graph_type == "complete":
@@ -375,37 +345,65 @@ def examples_of_graphs(graph_type):
     return A, y
 
 
-def _test_three_node_graph_neural_network(gnn_formulation, graph_type):
+def three_node_graph_neural_network(activation):
+    input_size = [6]
+    input_bounds = {}
+    for i in range(input_size[0]):
+        input_bounds[(i)] = (-10.0, 10.0)
+    net = NetworkDefinition(scaled_input_bounds=input_bounds)
+
+    input_layer = InputLayer(input_size)
+    net.add_layer(input_layer)
+
+    dense_layer = DenseLayer(
+        [6],
+        [9],
+        activation=activation,
+        weights=np.array(
+            [
+                [1, 0, 1, 1, -1, 1, 1, -1, 1],
+                [0, 1, 1, -1, 1, 1, -1, 1, 1],
+                [1, -1, 1, 1, 0, 1, 1, -1, 1],
+                [-1, 1, 1, 0, 1, 1, -1, 1, 1],
+                [1, -1, 1, 1, -1, 1, 1, 0, 1],
+                [-1, 1, 1, -1, 1, 1, 0, 1, 1],
+            ]
+        ),
+        biases=np.array([-1, 0, 1, -1, 0, 1, -1, 0, 1]),
+    )
+    net.add_layer(dense_layer)
+    net.add_edge(input_layer, dense_layer)
+
+    gnn_net = gnn_layer_definition(net, N=3, gnn_layers=[1])
+
+    return gnn_net
+
+
+def _test_three_node_graph_neural_network(graph_type):
     m = pyo.ConcreteModel()
     m.nn = OmltBlock()
-    inputs = np.array([-3, 2, -1, 1, -2, 3])
-    net = three_node_graph_neural_network("linear")
+    gnn_net = three_node_graph_neural_network("linear")
 
-    m.nn.N = 3
+    N = 3
     m.nn.A = pyo.Var(
-        pyo.Set(initialize=range(m.nn.N)),
-        pyo.Set(initialize=range(m.nn.N)),
+        pyo.Set(initialize=range(N)),
+        pyo.Set(initialize=range(N)),
         within=pyo.Binary,
     )
 
-    m.nn.gnn_layers = [1]
-    m.nn.gnn_formulation = gnn_formulation
+    m.nn.build_formulation(FullSpaceNNFormulation(gnn_net))
 
-    m.nn.build_formulation(FullSpaceNNFormulation(net))
-
+    inputs = np.array([-3, 2, -1, 1, -2, 3])
     A, y = examples_of_graphs(graph_type)
-    for i in range(m.nn.N):
-        for j in range(m.nn.N):
+    for i in range(N):
+        for j in range(N):
             m.nn.A[i, j].fix(A[i, j])
     for i in range(6):
         m.nn.inputs[i].fix(inputs[i])
 
-    if gnn_formulation == "bilinear":
-        assert m.nvariables() == 63
-        assert m.nconstraints() == 48
-    elif gnn_formulation == "bigM":
-        assert m.nvariables() == 81
-        assert m.nconstraints() == 120
+    assert m.nvariables() == 81
+    assert m.nconstraints() == 120
+
     m.obj = pyo.Objective(expr=0)
 
     status = pyo.SolverFactory("cbc").solve(m, tee=False)
@@ -413,21 +411,18 @@ def _test_three_node_graph_neural_network(gnn_formulation, graph_type):
     for i in range(9):
         assert abs(pyo.value(m.nn.outputs[i]) - y[i]) < 1e-6
 
-    if gnn_formulation == "bigM":
-        for i in range(6):
-            for j in range(3):
-                assert (
-                    abs(
-                        pyo.value(m.nn.layer[m.nn.layers.at(1)].zbar[i, j])
-                        - pyo.value(m.nn.A[i // 2, j]) * inputs[i]
-                    )
-                    < 1e-6
+    for i in range(6):
+        for j in range(3):
+            assert (
+                abs(
+                    pyo.value(m.nn.layer[m.nn.layers.at(1)].zbar[i, j])
+                    - pyo.value(m.nn.A[i // 2, j]) * inputs[i]
                 )
+                < 1e-6
+            )
 
 
 def test_three_node_graph_neural_network():
-    gnn_formulations = ["bilinear", "bigM"]
     graph_types = ["complete", "edgeless", "line"]
-    for gnn_formulation in gnn_formulations:
-        for graph_type in graph_types:
-            _test_three_node_graph_neural_network(gnn_formulation, graph_type)
+    for graph_type in graph_types:
+        _test_three_node_graph_neural_network(graph_type)

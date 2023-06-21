@@ -39,57 +39,7 @@ def full_space_dense_layer(net_block, net, layer_block, layer):
         return layer_block.zhat[output_index] == expr
 
 
-def full_space_gnn_layer_bilinear(net_block, net, layer_block, layer):
-    r"""
-    Add full-space formulation of the gnn layer to the block
-
-    .. math::
-
-        \begin{align*}
-        & \hat z_i = \sum_{j{=}1}^{M_i} A_{v_i,v_j} w_{ij} z_j + b_i  && \forall i \in N \\
-        & A_{v_i,v_j}\in\{0,1\}
-        \end{align*}
-
-    where :math:`v_i` is the graph indexing of the i-th node.
-
-    """
-
-    input_layer, input_layer_block = _input_layer_and_block(net_block, net, layer)
-
-    input_channel = layer.input_size[0] // net_block.N
-    output_channel = layer.output_size[0] // net_block.N
-
-    @layer_block.Constraint(layer.output_indexes)
-    def gnn_layer_bilinear_formulation(b, *output_index):
-        # dense layers multiply only the last dimension of
-        # their inputs
-        expr = 0.0
-        for local_index, input_index in layer.input_indexes_with_input_layer_indexes:
-            w = layer.weights[input_index[-1], output_index[-1]]
-
-            input_node_index = input_index[-1] // input_channel
-            output_node_index = output_index[-1] // output_channel
-
-            expr += (
-                input_layer_block.z[input_index]
-                * w
-                * net_block.A[input_node_index, output_node_index]
-            )
-        # move this at the end to avoid numpy/pyomo var bug
-        output_node_index = output_index[-1] // output_channel
-        expr += layer.biases[output_index[-1]]
-
-        lb, ub = compute_bounds_on_expr(expr)
-        layer_block.zhat[output_index].setlb(lb)
-        layer_block.zhat[output_index].setub(ub)
-
-        return layer_block.zhat[output_index] == expr
-
-
-from omlt.neuralnet.layer import InputLayer
-
-
-def full_space_gnn_layer_bigm(net_block, net, layer_block, layer):
+def full_space_gnn_layer(net_block, net, layer_block, layer):
     r"""
     Add full-space formulation of the gnn layer to the block
 
@@ -99,6 +49,8 @@ def full_space_gnn_layer_bigm(net_block, net, layer_block, layer):
         \hat z_i &= \sum_{j{=}1}^{M_i} w_{ij} \bar z_{ij} + b_i  && \forall i \in N \\
         \bar z_{ij} &= A_{v_i,v_j} z_{j}
         \end{align*}
+
+    where :math:`A_{v_i,v_j}` is the binary variable controlling the edge between node :math:`v_i` and :math:`v_j`.
 
     The big-M formulation for :math:`\bar z_{ij}` is given by:
 
@@ -114,105 +66,100 @@ def full_space_gnn_layer_bigm(net_block, net, layer_block, layer):
     """
 
     input_layer, input_layer_block = _input_layer_and_block(net_block, net, layer)
-    input_channel = layer.input_size[0] // net_block.N
-    output_channel = layer.output_size[0] // net_block.N
 
     input_layer_block.zbar = pyo.Var(
-        pyo.Set(initialize=range(layer.input_size[0])),
-        pyo.Set(initialize=range(net_block.N)),
+        pyo.Set(initialize=layer.input_indexes),
+        pyo.Set(initialize=range(layer.N)),
         initialize=0,
     )
-
     input_layer_block._zbar_lower_bound_z_big_m = pyo.Constraint(
-        pyo.Set(initialize=range(layer.input_size[0] * net_block.N))
+        pyo.Set(initialize=layer.input_indexes),
+        pyo.Set(initialize=range(layer.N)),
     )
     input_layer_block._zbar_upper_bound_z_big_m = pyo.Constraint(
-        pyo.Set(initialize=range(layer.input_size[0] * net_block.N))
+        pyo.Set(initialize=layer.input_indexes),
+        pyo.Set(initialize=range(layer.N)),
     )
     input_layer_block._zbar_lower_bound_big_m = pyo.Constraint(
-        pyo.Set(initialize=range(layer.input_size[0] * net_block.N))
+        pyo.Set(initialize=layer.input_indexes),
+        pyo.Set(initialize=range(layer.N)),
     )
     input_layer_block._zbar_upper_bound_big_m = pyo.Constraint(
-        pyo.Set(initialize=range(layer.input_size[0] * net_block.N))
+        pyo.Set(initialize=layer.input_indexes),
+        pyo.Set(initialize=range(layer.N)),
     )
-
     # set dummy parameters here to avoid warning message from Pyomo
     input_layer_block._abs_bound_big_m = pyo.Param(
-        input_layer.output_indexes, default=1e6, mutable=True
+        layer.input_indexes, default=1e6, mutable=True
     )
 
-    for input_index in layer.input_indexes:
+    for local_index, input_index in layer.input_indexes_with_input_layer_indexes:
         lb, ub = input_layer_block.z[input_index].bounds
-        input_layer_block._abs_bound_big_m[input_index] = max(abs(lb), abs(ub))
+        input_layer_block._abs_bound_big_m[local_index] = max(abs(lb), abs(ub))
 
-        for output_node_index in range(net_block.N):
-            input_layer_block.zbar[input_index, output_node_index].setlb(min(0, lb))
-            input_layer_block.zbar[input_index, output_node_index].setub(max(0, ub))
+        input_node_index = local_index[-1] // layer.gnn_input_size
 
-            input_node_index = input_index[-1] // input_channel
+        for output_node_index in range(layer.N):
+            input_layer_block.zbar[local_index, output_node_index].setlb(min(0, lb))
+            input_layer_block.zbar[local_index, output_node_index].setub(max(0, ub))
 
-            constraint_index = input_index[-1] * net_block.N + output_node_index
             input_layer_block._zbar_lower_bound_z_big_m[
-                constraint_index
+                local_index, output_node_index
             ] = input_layer_block.zbar[
-                input_index, output_node_index
+                local_index, output_node_index
             ] >= input_layer_block.z[
                 input_index
             ] - input_layer_block._abs_bound_big_m[
-                input_index
+                local_index
             ] * (
                 1.0 - net_block.A[input_node_index, output_node_index]
             )
 
             input_layer_block._zbar_upper_bound_z_big_m[
-                constraint_index
+                local_index, output_node_index
             ] = input_layer_block.zbar[
-                input_index, output_node_index
+                local_index, output_node_index
             ] <= input_layer_block.z[
                 input_index
             ] + input_layer_block._abs_bound_big_m[
-                input_index
+                local_index
             ] * (
                 1.0 - net_block.A[input_node_index, output_node_index]
             )
 
-            input_layer_block._zbar_lower_bound_big_m[constraint_index] = (
-                input_layer_block.zbar[input_index, output_node_index]
-                >= -input_layer_block._abs_bound_big_m[input_index]
+            input_layer_block._zbar_lower_bound_big_m[
+                local_index, output_node_index
+            ] = (
+                input_layer_block.zbar[local_index, output_node_index]
+                >= -input_layer_block._abs_bound_big_m[local_index]
                 * net_block.A[input_node_index, output_node_index]
             )
 
-            input_layer_block._zbar_upper_bound_big_m[constraint_index] = (
-                input_layer_block.zbar[input_index, output_node_index]
-                <= input_layer_block._abs_bound_big_m[input_index]
+            input_layer_block._zbar_upper_bound_big_m[
+                local_index, output_node_index
+            ] = (
+                input_layer_block.zbar[local_index, output_node_index]
+                <= input_layer_block._abs_bound_big_m[local_index]
                 * net_block.A[input_node_index, output_node_index]
             )
-
-    # input_layer_block._zbar_lower_bound_z_big_m.pprint()
-    # input_layer_block._zbar_upper_bound_z_big_m.pprint()
-    # input_layer_block._zbar_lower_bound_big_m.pprint()
-    # input_layer_block._zbar_upper_bound_big_m.pprint()
 
     @layer_block.Constraint(layer.output_indexes)
-    def dense_layer(b, *output_index):
-        # dense layers multiply only the last dimension of
+    def gnn_layer(b, *output_index):
+        # gnn layers multiply only the last dimension of
         # their inputs
         expr = 0.0
-        for local_index, input_index in layer.input_indexes_with_input_layer_indexes:
-            w = layer.weights[input_index[-1], output_index[-1]]
-
-            input_node_index = input_index[-1] // input_channel
-            output_node_index = output_index[-1] // output_channel
-
-            expr += input_layer_block.zbar[input_index, output_node_index] * w
+        for local_index in layer.input_indexes:
+            w = layer.weights[local_index[-1], output_index[-1]]
+            output_node_index = output_index[-1] // layer.gnn_output_size
+            expr += input_layer_block.zbar[local_index, output_node_index] * w
         # move this at the end to avoid numpy/pyomo var bug
-        output_node_index = output_index[-1] // output_channel
+        output_node_index = output_index[-1] // layer.gnn_output_size
         expr += layer.biases[output_index[-1]]
 
         lb, ub = compute_bounds_on_expr(expr)
         layer_block.zhat[output_index].setlb(lb)
         layer_block.zhat[output_index].setub(ub)
-        # print(layer_block.zhat[output_index] == expr)
+
         return layer_block.zhat[output_index] == expr
 
 

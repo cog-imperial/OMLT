@@ -7,6 +7,7 @@ from omlt.neuralnet.layer import (
     IndexMapper,
     InputLayer,
     PoolingLayer2D,
+    GNNLayer,
 )
 
 
@@ -94,3 +95,40 @@ def test_maxpool_layer():
     layer = PoolingLayer2D([1, 4, 4], [1, 2, 2], [2, 2], "max", [3, 3], 1)
     y = layer.eval_single_layer(x)
     assert np.array_equal(y, [[[11, 12], [15, 16]]])
+
+
+def test_gnn_layer_with_input_index_mapper():
+    weights = np.array(
+        [
+            [1, 0, 1, 1, -1, 1, 1, -1, 1],
+            [0, 1, 1, -1, 1, 1, -1, 1, 1],
+            [1, -1, 1, 1, 0, 1, 1, -1, 1],
+            [-1, 1, 1, 0, 1, 1, -1, 1, 1],
+            [1, -1, 1, 1, -1, 1, 1, 0, 1],
+            [-1, 1, 1, -1, 1, 1, 0, 1, 1],
+        ]
+    )
+
+    biases = np.array([-1, 0, 1, -1, 0, 1, -1, 0, 1])
+
+    # input has size [6], but the previous node output is [3, 2]
+    # use mapper to map between the two
+    t = IndexMapper([1, 2, 2, 3], [1, 2, 6])
+    layer = GNNLayer([1, 2, 6], [1, 2, 9], weights, biases, N=3, input_index_mapper=t)
+
+    inputs = np.array([[[[-3, 2, -1], [1, -2, 3]], [[0, 0, 0], [0, 0, 0]]]])
+
+    A1 = np.ones([3, 3], dtype=int)
+    y1 = np.array(
+        [[[-11, 9, 1, -12, 11, 1, -10, 10, 1], [-1, 0, 1, -1, 0, 1, -1, 0, 1]]]
+    )
+    assert np.array_equal(layer._eval_with_adjacency(inputs, A1), y1)
+    assert np.array_equal(layer.eval_single_layer(inputs), y1)
+
+    A2 = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+    y2 = np.array([[[-4, 2, 0, -2, 1, 1, -3, 3, 2], [-1, 0, 1, -1, 0, 1, -1, 0, 1]]])
+    assert np.array_equal(layer._eval_with_adjacency(inputs, A2), y2)
+
+    A3 = np.array([[1, 1, 0], [1, 1, 1], [0, 1, 1]])
+    y3 = np.array([[[-6, 4, 0, -12, 11, 1, -5, 5, 2], [-1, 0, 1, -1, 0, 1, -1, 0, 1]]])
+    assert np.array_equal(layer._eval_with_adjacency(inputs, A3), y3)
