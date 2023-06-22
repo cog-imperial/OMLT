@@ -27,7 +27,8 @@ def check_layers(tb, activations, network):
                         assert activations[layer_id] in str(layer.activation)
                 """)
 
-    
+
+#counting number of cells 
 def cell_counter(notebook_fname, **kwargs):
     only_code_cells = kwargs.get('only_code_cells', False)
     nb = nbformat.read(notebook_fname, as_version=4)
@@ -242,6 +243,7 @@ def test_neural_network_formulations():
         assert scaled_input[1] == pytest.approx(1.73179)
 
         #checking optimal solution
+        #TODO: make a helper function for all of these
         x1_reduced = tb.ref("solution_1_reduced[0]")
         y1_reduced = tb.ref("solution_1_reduced[1]")
         assert x1_reduced == pytest.approx(-0.8, abs=0.75)
@@ -274,4 +276,6 @@ def test_bo_with_trees():
 
     with book as tb:
         check_cell_execution(tb, notebook_fname)
+
+        #not sure what to put here...
         
