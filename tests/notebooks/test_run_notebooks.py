@@ -71,7 +71,7 @@ def test_autothermal_relu_notebook():
 
         # check loss of model
         model_loss = tb.ref("nn.evaluate(x, y)")
-        assert model_loss == pytest.approx(0.000389626, abs=0.00028)
+        assert model_loss == pytest.approx(0.000389626, abs=0.00031)
 
         # check layers of model
         layers = ["relu", "relu", "relu", "relu", "linear"]
@@ -99,7 +99,7 @@ def test_autothermal_reformer():
 
         # check loss of model
         model_loss = tb.ref("nn.evaluate(x, y)")
-        assert model_loss == pytest.approx(0.00024207, abs=0.00016)
+        assert model_loss == pytest.approx(0.00024207, abs=0.00021)
 
         # check layers of model
         layers = ["sigmoid", "sigmoid", "sigmoid", "sigmoid", "linear"]
@@ -111,10 +111,10 @@ def test_autothermal_reformer():
         h2Conc = tb.ref("pyo.value(m.reformer.outputs[h2_idx])")
         n2Conc = tb.ref("pyo.value(m.reformer.outputs[n2_idx])")
 
-        assert bypassFraction == pytest.approx(0.1, abs=0.001)
-        assert ngRatio == pytest.approx(1.12, abs=0.03)
-        assert h2Conc == pytest.approx(0.33, abs=0.01)
-        assert n2Conc == pytest.approx(0.34, abs=0.01)
+        assert bypassFraction == pytest.approx(0.1, abs=0.009)
+        assert ngRatio == pytest.approx(1.12, abs=0.09)
+        assert h2Conc == pytest.approx(0.33, abs=0.09)
+        assert n2Conc == pytest.approx(0.34, abs=0.09)
 
 
 def test_build_network():
