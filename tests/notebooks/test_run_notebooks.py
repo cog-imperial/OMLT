@@ -23,6 +23,7 @@ def check_cell_execution(tb, notebook_fname, **kwargs):
     )
 
 
+# checks for correct type and number of layers in a model
 def check_layers(tb, activations, network):
     tb.inject(
         f"""
@@ -49,6 +50,7 @@ def cell_counter(notebook_fname, **kwargs):
         return len(nb.cells)
 
 
+# gets model stats for mnist notebooks
 def mnist_stats(tb, fname):
     total_cells = cell_counter(fname)
     tb.inject("test(model, test_loader)")
