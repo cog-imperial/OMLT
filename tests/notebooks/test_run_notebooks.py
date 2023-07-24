@@ -64,6 +64,14 @@ def mnist_stats(tb, fname):
     return (loss, accuracy)
 
 
+# neural network formulation notebook helper
+def neural_network_checker(tb, ref_string, val1, val2, tolerance):
+    x = tb.ref(f"{ref_string}[0]")
+    y = tb.ref(f"{ref_string}[1]")
+    assert x == pytest.approx(val1, abs=tolerance)
+    assert y == pytest.approx(val2, abs=tolerance)
+
+
 @pytest.mark.skipif(not keras_available, reason="keras needed for this notebook")
 def test_autothermal_relu_notebook():
     notebook_fname = "auto-thermal-reformer-relu.ipynb"
@@ -294,7 +302,6 @@ def test_neural_network_formulations():
             print(solutions)
             return False
 
-        # TODO: make a helper function for all of these
         assert matches_one_of(tb.ref("solution_1_reduced[0]"),
                               tb.ref("solution_1_reduced[1]"),
                               possible_solutions)
@@ -317,6 +324,7 @@ def test_neural_network_formulations():
 
 @pytest.mark.skipif(not onnx_available or not lightgbm_available,
                     reason="onnx and lightgbm needed for this notebook")
+
 def test_bo_with_trees():
     notebook_fname = "bo_with_trees.ipynb"
     book = open_book("", notebook_fname)
