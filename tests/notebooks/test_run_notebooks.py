@@ -1,9 +1,13 @@
 import os
-import pytest
+
 import nbformat
+import pytest
 from pyomo.common.fileutils import this_file_dir
 from testbook import testbook
+
 from omlt.dependencies import keras_available, onnx_available
+
+# TODO: We need to try and write these tests to rely on internal consistencies and less on absolute numbers and tolerances
 
 
 # return testbook for given notebook
@@ -42,7 +46,6 @@ def cell_counter(notebook_fname, **kwargs):
     if only_code_cells:
         total = 0
         for cell in nb.cells:
-            print(cell)
             if cell["cell_type"] == "code" and len(cell["source"]) != 0:
                 total += 1
         return total
@@ -212,6 +215,7 @@ def test_mnist_example_convolutional():
 
         # checking training accuracy
         loss, accuracy = mnist_stats(tb, notebook_fname)
+        # TODO: These rel and abs tolerances are too specific - fragile?
         assert loss == pytest.approx(0.3, abs=0.24)
         assert accuracy / 10000 == pytest.approx(0.91, abs=0.09)
 
