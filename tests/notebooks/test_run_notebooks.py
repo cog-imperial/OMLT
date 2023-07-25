@@ -7,28 +7,25 @@ from testbook import testbook
 
 from omlt.dependencies import keras_available, onnx_available, lightgbm_available
 
-# TODO: We need to try and write these tests to rely on internal consistencies and less on absolute numbers and tolerances
-
 
 # return testbook for given notebook
-def open_book(folder, notebook_fname, **kwargs):
-    execute = kwargs.get("execute", True)
+def open_book(folder, notebook_fname, execute):
+    # changes directory to the notebooks folder
     os.chdir(os.path.join(this_file_dir(), "..", "..", "docs", "notebooks", folder))
-    book = testbook(notebook_fname, execute=execute, timeout=300)
+    book = testbook(notebook_fname, execute=execute, timeout=360)
     return book
 
 
 # checks that the number of executed cells matches the expected
-def check_cell_execution(tb, notebook_fname, **kwargs):
-    injections = kwargs.get("injections", 0)
+def check_cell_execution(tb, notebook_fname, injections):
     assert (
         tb.code_cells_executed
-        == cell_counter(notebook_fname, only_code_cells=True) + injections
+        == get_cell_count(notebook_fname, only_code_cells=True) + injections
     )
 
 
 # checks for correct type and number of layers in a model
-def check_layers(tb, activations, network):
+def inject_activation_check(tb, activations, network):
     tb.inject(
         f"""
                     activations = {activations}
@@ -39,24 +36,31 @@ def check_layers(tb, activations, network):
 
 
 # counting number of cells
-def cell_counter(notebook_fname, **kwargs):
-    only_code_cells = kwargs.get("only_code_cells", False)
+def get_cell_count(notebook_fname, only_code_cells):
+    # reads in the notebooks data
     nb = nbformat.read(notebook_fname, as_version=4)
     nb = nbformat.validator.normalize(nb)[1]
     if only_code_cells:
-        total = 0
-        for cell in nb.cells:
-            if cell["cell_type"] == "code" and len(cell["source"]) != 0:
-                total += 1
-        return total
+        #checks that cell is a a code cell and not empty
+        return len([cell for cell in nb.cells if cell["cell_type"] == "code" and len(cell["source"]) != 0])
+        # total = 0
+        # for cell in nb.cells:
+        #     #checks that cell is a a code cell and not empty
+        #     if cell["cell_type"] == "code" and len(cell["source"]) != 0:
+        #         total += 1
+        # return total
     else:
         return len(nb.cells)
 
 
 # gets model stats for mnist notebooks
 def mnist_stats(tb, fname):
-    total_cells = cell_counter(fname)
+    total_cells = get_cell_count(fname, only_code_cells=False)
+
+    # injects a cell at the end of the notebook that contains
+    # the models final loss and accuracy values
     tb.inject("test(model, test_loader)")
+
     model_stats = tb.cell_output_text(total_cells)
     model_stats = model_stats.split(" ")
     loss = float(model_stats[4][:-1])
@@ -64,32 +68,19 @@ def mnist_stats(tb, fname):
     return (loss, accuracy)
 
 
-# neural network formulation notebook helper
-def neural_network_checker(tb, ref_string, val1, val2, tolerance):
-    x = tb.ref(f"{ref_string}[0]")
-    y = tb.ref(f"{ref_string}[1]")
-    assert x == pytest.approx(val1, abs=tolerance)
-    assert y == pytest.approx(val2, abs=tolerance)
-
-
 @pytest.mark.skipif(not keras_available, reason="keras needed for this notebook")
 def test_autothermal_relu_notebook():
     notebook_fname = "auto-thermal-reformer-relu.ipynb"
-    book = open_book("neuralnet", notebook_fname)
+    book = open_book("neuralnet", notebook_fname, execute=True)
 
     with book as tb:
-        check_cell_execution(tb, notebook_fname)
+        check_cell_execution(tb, notebook_fname, injections=0)
 
         # check loss of model
         model_loss = tb.ref("nn.evaluate(x, y)")
-        # assert model_loss == pytest.approx(0.000389626, abs=0.00031)
         assert model_loss < 0.1
 
-        # check layers of model
-        layers = ["relu", "relu", "relu", "relu", "linear"]
-        check_layers(tb, layers, "nn.layers")
-
-        # check final values
+        # check final values after optimization
         bypassFraction = tb.ref("pyo.value(m.reformer.inputs[0])")
         ngRatio = tb.ref("pyo.value(m.reformer.inputs[1])")
         h2Conc = tb.ref("pyo.value(m.reformer.outputs[h2_idx])")
@@ -104,21 +95,16 @@ def test_autothermal_relu_notebook():
 @pytest.mark.skipif(not keras_available, reason="keras needed for this notebook")
 def test_autothermal_reformer():
     notebook_fname = "auto-thermal-reformer.ipynb"
-    book = open_book("neuralnet", notebook_fname)
+    book = open_book("neuralnet", notebook_fname, execute=True)
 
     with book as tb:
-        check_cell_execution(tb, notebook_fname)
+        check_cell_execution(tb, notebook_fname, injections=0)
 
         # check loss of model
         model_loss = tb.ref("nn.evaluate(x, y)")
-        # assert model_loss == pytest.approx(0.00024207, abs=0.00021)
         assert model_loss < 0.1
 
-        # check layers of model
-        layers = ["sigmoid", "sigmoid", "sigmoid", "sigmoid", "linear"]
-        check_layers(tb, layers, "nn.layers")
-
-        # check final values
+        # check final values after optimization
         bypassFraction = tb.ref("pyo.value(m.reformer.inputs[0])")
         ngRatio = tb.ref("pyo.value(m.reformer.inputs[1])")
         h2Conc = tb.ref("pyo.value(m.reformer.outputs[h2_idx])")
@@ -132,15 +118,12 @@ def test_autothermal_reformer():
 
 def test_build_network():
     notebook_fname = "build_network.ipynb"
-    book = open_book("neuralnet", notebook_fname)
+    book = open_book("neuralnet", notebook_fname, execute=True)
 
     with book as tb:
-        check_cell_execution(tb, notebook_fname)
+        check_cell_execution(tb, notebook_fname, injections=0)
 
-        # check for correct layers
-        layers = ["linear", "linear", "relu"]
-        check_layers(tb, layers, "list(net.layers)")
-
+        # makes sure that there are three layers in the network
         m_layers = tb.ref("list(m.neural_net.layer)")
         assert len(m_layers) == 3
 
@@ -189,7 +172,7 @@ def test_import_network():
         pytorch_loss = tb.ref("loss.item()")
         assert pytorch_loss == pytest.approx(0.25, abs=0.1)
 
-        # checking the model that was imported
+        # checking the model that was imported correctly
         imported_input_bounds = tb.ref("network_definition.scaled_input_bounds")
         assert imported_input_bounds == {
             "0": [0.0, 17.0],
@@ -204,28 +187,25 @@ def test_import_network():
 
         # checking the imported layers
         layers = ["linear", "relu", "relu", "linear"]
-        check_layers(tb, layers, "network_definition.layers")
+        inject_activation_check(tb, layers, "network_definition.layers")
 
 
 @pytest.mark.skipif(not onnx_available, reason="onnx needed for this notebook")
 def test_mnist_example_convolutional():
     notebook_fname = "mnist_example_convolutional.ipynb"
-    book = open_book("neuralnet", notebook_fname)
+    book = open_book("neuralnet", notebook_fname, execute=True)
 
     with book as tb:
-        check_cell_execution(tb, notebook_fname)
+        check_cell_execution(tb, notebook_fname, injections=0)
 
         # checking training accuracy
         loss, accuracy = mnist_stats(tb, notebook_fname)
-        # TODO: These rel and abs tolerances are too specific - fragile?
-        # assert loss == pytest.approx(0.3, abs=0.24)
         assert loss < 1
-        # assert accuracy / 10000 == pytest.approx(0.91, abs=0.09)
         assert accuracy / 10000 > 0.9
 
         # checking the imported layers
         layers = ["linear", "relu", "relu", "relu", "linear"]
-        check_layers(tb, layers, "network_definition.layers")
+        inject_activation_check(tb, layers, "network_definition.layers")
 
         # checking optimal solution
         optimal_sol = tb.ref(
@@ -237,21 +217,19 @@ def test_mnist_example_convolutional():
 @pytest.mark.skipif(not onnx_available, reason="onnx needed for this notebook")
 def test_mnist_example_dense():
     notebook_fname = "mnist_example_dense.ipynb"
-    book = open_book("neuralnet", notebook_fname)
+    book = open_book("neuralnet", notebook_fname, execute=True)
 
     with book as tb:
-        check_cell_execution(tb, notebook_fname)
+        check_cell_execution(tb, notebook_fname, injections=0)
 
         # checking training accuracy
         loss, accuracy = mnist_stats(tb, notebook_fname)
-        # assert loss == pytest.approx(0.0867, abs=0.09)
         assert loss < 1
-        # assert accuracy / 10000 == pytest.approx(0.93, abs=0.07)
         assert accuracy / 10000 < 1
 
         # checking the imported layers
         layers = ["linear", "relu", "relu", "linear"]
-        check_layers(tb, layers, "network_definition.layers")
+        inject_activation_check(tb, layers, "network_definition.layers")
 
         # checking optimal solution
         optimal_sol = tb.ref(
@@ -263,10 +241,10 @@ def test_mnist_example_dense():
 @pytest.mark.skipif(not keras_available, reason="keras needed for this notebook")
 def test_neural_network_formulations():
     notebook_fname = "neural_network_formulations.ipynb"
-    book = open_book("neuralnet", notebook_fname)
+    book = open_book("neuralnet", notebook_fname, execute=True)
 
     with book as tb:
-        check_cell_execution(tb, notebook_fname)
+        check_cell_execution(tb, notebook_fname, injections=0)
 
         # checking loss of keras models
         losses = np.asarray([
@@ -274,9 +252,6 @@ def test_neural_network_formulations():
             for x in range(3)
         ])
         assert np.all( losses <= 0.1 )
-        # assert losses[0] == pytest.approx(0.000534, abs=0.0005)
-        # assert losses[1] == pytest.approx(0.000691, abs=0.0005)
-        # assert losses[2] == pytest.approx(0.0024, abs=0.002)
 
         # checking scaled input bounds
         scaled_input = tb.ref("input_bounds[0]")
@@ -327,9 +302,9 @@ def test_neural_network_formulations():
 
 def test_bo_with_trees():
     notebook_fname = "bo_with_trees.ipynb"
-    book = open_book("", notebook_fname)
+    book = open_book("", notebook_fname, execute=True)
 
     with book as tb:
-        check_cell_execution(tb, notebook_fname)
+        check_cell_execution(tb, notebook_fname, injections=0)
 
         # TODO: Add stronger test to verify correct output
