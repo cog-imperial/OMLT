@@ -55,7 +55,7 @@ def get_cell_count(notebook_fname, only_code_cells):
 
 
 # gets model stats for mnist notebooks
-def mnist_stats(tb, fname):
+def get_mnist_stats(tb, fname):
     total_cells = get_cell_count(fname, only_code_cells=False)
 
     # injects a cell at the end of the notebook that contains
@@ -173,7 +173,7 @@ def test_import_network():
         pytorch_loss = tb.ref("loss.item()")
         assert pytorch_loss == pytest.approx(0.25, abs=0.1)
 
-        # checking the model that was imported correctly
+        # checking that the model was imported correctly
         imported_input_bounds = tb.ref("network_definition.scaled_input_bounds")
         assert imported_input_bounds == {
             "0": [0.0, 17.0],
@@ -200,7 +200,7 @@ def test_mnist_example_convolutional():
         check_cell_execution(tb, notebook_fname, injections=0)
 
         # checking training accuracy
-        loss, accuracy = mnist_stats(tb, notebook_fname)
+        loss, accuracy = get_mnist_stats(tb, notebook_fname)
         assert loss < 1
         assert accuracy / 10000 > 0.9
 
@@ -224,7 +224,7 @@ def test_mnist_example_dense():
         check_cell_execution(tb, notebook_fname, injections=0)
 
         # checking training accuracy
-        loss, accuracy = mnist_stats(tb, notebook_fname)
+        loss, accuracy = get_mnist_stats(tb, notebook_fname)
         assert loss < 1
         assert accuracy / 10000 < 1
 
@@ -324,3 +324,5 @@ def test_bo_with_trees():
         check_cell_execution(tb, notebook_fname, injections=0)
 
         # TODO: Add stronger test to verify correct output
+        y_min = tb.ref("min(data['y'])")
+        assert y_min < 10
