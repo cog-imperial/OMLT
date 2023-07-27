@@ -96,19 +96,9 @@ class LinearTreeDefinition:
         self.__n_outputs = 1
 
     @property
-    def model(self):
-        """Returns linear-tree model"""
-        return self.__model
-
-    @property
     def scaling_object(self):
         """Returns scaling object"""
         return self.__scaling_object
-
-    @property
-    def unscaled_input_bounds(self):
-        """Returns dict containing unscaled input bounds"""
-        return self.__unscaled_input_bounds
 
     @property
     def scaled_input_bounds(self):
