@@ -53,7 +53,7 @@ class LinearTreeDefinition:
             unscaled_input_bounds -- A dict that contains the bounds on the
                 variables (the direct inputs to the tree). If None, then the
                 user must specify the scaled bounds via the scaled_input_bounds
-                argument.( (default: {None})
+                argument. (default: {None})
 
         Raises:
             Exception: Input bounds required. If unscaled_input_bounds and
