@@ -87,12 +87,19 @@ def test_linear_tree_model_single_var():
     input_bounds = {0: (min(X_small)[0], max(X_small)[0])}
     ltmodel_small = LinearTreeDefinition(regr_small, unscaled_input_bounds=input_bounds)
 
-    assert ltmodel_small._scaled_input_bounds is not None
-    assert ltmodel_small._n_inputs == 1
-    assert ltmodel_small._n_outputs == 1
+    scaled_input_bounds = ltmodel_small.scaled_input_bounds
+    n_inputs = ltmodel_small.n_inputs
+    n_outputs = ltmodel_small.n_outputs
+    splits = ltmodel_small.splits
+    leaves = ltmodel_small.leaves
+    thresholds = ltmodel_small.thresholds
+
+    assert scaled_input_bounds is not None
+    assert n_inputs == 1
+    assert n_outputs == 1
     # test for splits
     # assert the number of splits
-    assert len(ltmodel_small._splits[0].keys()) == 5
+    assert len(splits[0].keys()) == 5
     splits_key_list = [
         "col",
         "th",
@@ -106,12 +113,12 @@ def test_linear_tree_model_single_var():
         "y_index",
     ]
     # assert whether all the dicts have such keys
-    for i in ltmodel_small._splits[0].keys():
-        for key in ltmodel_small._splits[0][i].keys():
+    for i in splits[0].keys():
+        for key in splits[0][i].keys():
             assert key in splits_key_list
     # test for leaves
     # assert the number of leaves
-    assert len(ltmodel_small._leaves[0].keys()) == 6
+    assert len(leaves[0].keys()) == 6
     # assert whether all the dicts have such keys
     leaves_key_list = [
         "loss",
@@ -122,30 +129,30 @@ def test_linear_tree_model_single_var():
         "parent",
         "bounds",
     ]
-    for j in ltmodel_small._leaves[0].keys():
-        for key in ltmodel_small._leaves[0][j].keys():
+    for j in leaves[0].keys():
+        for key in leaves[0][j].keys():
             assert key in leaves_key_list
             # if the key is slope, ensure slope dimension match n_inputs
             if key == "slope":
-                assert len(ltmodel_small._leaves[0][j][key]) == ltmodel_small._n_inputs
+                assert len(leaves[0][j][key]) == n_inputs
             # elif the key is bounds, test ensure lb <= ub
             elif key == "bounds":
-                features = ltmodel_small._leaves[0][j][key].keys()
+                features = leaves[0][j][key].keys()
                 for k in range(len(features)):
-                    lb = ltmodel_small._leaves[0][j][key][k][0]
-                    ub = ltmodel_small._leaves[0][j][key][k][1]
+                    lb = leaves[0][j][key][k][0]
+                    ub = leaves[0][j][key][k][1]
                     # there is chance that don't have lb and ub at this step
                     if lb is not None and ub is not None:
                         assert lb <= ub
     # test for thresholds
     # assert whether each feature has threshold
-    assert len(ltmodel_small._thresholds[0].keys()) == ltmodel_small._n_inputs
+    assert len(thresholds[0].keys()) == n_inputs
     # assert the number of thresholds
     thresholds_count = 0
-    for k in range(len(ltmodel_small._thresholds[0].keys())):
-        for _ in range(len(ltmodel_small._thresholds[0][k].keys())):
+    for k in range(len(thresholds[0].keys())):
+        for _ in range(len(thresholds[0][k].keys())):
             thresholds_count += 1
-    assert thresholds_count == len(ltmodel_small._splits[0].keys())
+    assert thresholds_count == len(splits[0].keys())
 
 
 @pytest.mark.skipif(
@@ -309,8 +316,8 @@ def test_scaling():
     lt_def2 = LinearTreeDefinition(
         regr, unscaled_input_bounds=unscaled_input_bounds, scaling_object=scaler
     )
-    assert lt_def2._scaled_input_bounds[0][0] - scaled_input_bounds[0][0] <= 1e-5
-    assert lt_def2._scaled_input_bounds[0][1] - scaled_input_bounds[0][1] <= 1e-5
+    assert lt_def2.scaled_input_bounds[0][0] - scaled_input_bounds[0][0] <= 1e-5
+    assert lt_def2.scaled_input_bounds[0][1] - scaled_input_bounds[0][1] <= 1e-5
     with pytest.raises(
         Exception, match="Input Bounds needed to represent linear trees as MIPs"
     ):
@@ -377,14 +384,21 @@ def test_linear_tree_model_multi_var():
     input_bounds = {0: (min(X[:, 0]), max(X[:, 0])), 1: (min(X[:, 1]), max(X[:, 1]))}
     ltmodel_small = LinearTreeDefinition(regr, unscaled_input_bounds=input_bounds)
 
+    scaled_input_bounds = ltmodel_small.scaled_input_bounds
+    n_inputs = ltmodel_small.n_inputs
+    n_outputs = ltmodel_small.n_outputs
+    splits = ltmodel_small.splits
+    leaves = ltmodel_small.leaves
+    thresholds = ltmodel_small.thresholds
+
     # assert attributes in LinearTreeDefinition
-    assert ltmodel_small._scaled_input_bounds is not None
-    assert ltmodel_small._n_inputs == 2
-    assert ltmodel_small._n_outputs == 1
+    assert scaled_input_bounds is not None
+    assert n_inputs == 2
+    assert n_outputs == 1
 
     # test for splits
     # assert the number of splits
-    assert len(ltmodel_small._splits[0].keys()) == 5
+    assert len(splits[0].keys()) == 5
     splits_key_list = [
         "col",
         "th",
@@ -398,12 +412,12 @@ def test_linear_tree_model_multi_var():
         "y_index",
     ]
     # assert whether all the dicts have such keys
-    for i in ltmodel_small._splits[0].keys():
-        for key in ltmodel_small._splits[0][i].keys():
+    for i in splits[0].keys():
+        for key in splits[0][i].keys():
             assert key in splits_key_list
     # test for leaves
     # assert the number of leaves
-    assert len(ltmodel_small._leaves[0].keys()) == 6
+    assert len(leaves[0].keys()) == 6
     # assert whether all the dicts have such keys
     leaves_key_list = [
         "loss",
@@ -414,30 +428,30 @@ def test_linear_tree_model_multi_var():
         "parent",
         "bounds",
     ]
-    for j in ltmodel_small._leaves[0].keys():
-        for key in ltmodel_small._leaves[0][j].keys():
+    for j in leaves[0].keys():
+        for key in leaves[0][j].keys():
             assert key in leaves_key_list
             # if the key is slope, test the shape of it
             if key == "slope":
-                assert len(ltmodel_small._leaves[0][j][key]) == ltmodel_small._n_inputs
+                assert len(leaves[0][j][key]) == n_inputs
             # elif the key is bounds, test the lb <= ub
             elif key == "bounds":
-                features = ltmodel_small._leaves[0][j][key].keys()
+                features = leaves[0][j][key].keys()
                 for k in range(len(features)):
-                    lb = ltmodel_small._leaves[0][j][key][k][0]
-                    ub = ltmodel_small._leaves[0][j][key][k][1]
+                    lb = leaves[0][j][key][k][0]
+                    ub = leaves[0][j][key][k][1]
                     # there is chance that don't have lb and ub at this step
                     if lb is not None and ub is not None:
                         assert lb <= ub
     # test for thresholds
     # assert whether each feature has threshold
-    assert len(ltmodel_small._thresholds[0].keys()) == ltmodel_small._n_inputs
+    assert len(thresholds[0].keys()) == n_inputs
     # assert the number of thresholds
     thresholds_count = 0
-    for k in range(len(ltmodel_small._thresholds[0].keys())):
-        for _ in range(len(ltmodel_small._thresholds[0][k].keys())):
+    for k in range(len(thresholds[0].keys())):
+        for _ in range(len(thresholds[0][k].keys())):
             thresholds_count += 1
-    assert thresholds_count == len(ltmodel_small._splits[0].keys())
+    assert thresholds_count == len(splits[0].keys())
 
 
 @pytest.mark.skipif(
@@ -616,13 +630,21 @@ def test_summary_dict_as_argument():
     ltmodel_small = LinearTreeDefinition(
         regr.summary(), unscaled_input_bounds=input_bounds
     )
+
+    scaled_input_bounds = ltmodel_small.scaled_input_bounds
+    n_inputs = ltmodel_small.n_inputs
+    n_outputs = ltmodel_small.n_outputs
+    splits = ltmodel_small.splits
+    leaves = ltmodel_small.leaves
+    thresholds = ltmodel_small.thresholds
+
     # assert attributes in LinearTreeDefinition
-    assert ltmodel_small._scaled_input_bounds is not None
-    assert ltmodel_small._n_inputs == 2
-    assert ltmodel_small._n_outputs == 1
+    assert scaled_input_bounds is not None
+    assert n_inputs == 2
+    assert n_outputs == 1
     # test for splits
     # assert the number of splits
-    assert len(ltmodel_small._splits[0].keys()) == 5
+    assert len(splits[0].keys()) == 5
     splits_key_list = [
         "col",
         "th",
@@ -636,12 +658,12 @@ def test_summary_dict_as_argument():
         "y_index",
     ]
     # assert whether all the dicts have such keys
-    for i in ltmodel_small._splits[0].keys():
-        for key in ltmodel_small._splits[0][i].keys():
+    for i in splits[0].keys():
+        for key in splits[0][i].keys():
             assert key in splits_key_list
     # test for leaves
     # assert the number of leaves
-    assert len(ltmodel_small._leaves[0].keys()) == 6
+    assert len(leaves[0].keys()) == 6
     # assert whether all the dicts have such keys
     leaves_key_list = [
         "loss",
@@ -652,30 +674,30 @@ def test_summary_dict_as_argument():
         "parent",
         "bounds",
     ]
-    for j in ltmodel_small._leaves[0].keys():
-        for key in ltmodel_small._leaves[0][j].keys():
+    for j in leaves[0].keys():
+        for key in leaves[0][j].keys():
             assert key in leaves_key_list
             # if the key is slope, test the shape of it
             if key == "slope":
-                assert len(ltmodel_small._leaves[0][j][key]) == ltmodel_small._n_inputs
+                assert len(leaves[0][j][key]) == n_inputs
             # elif the key is bounds, test the lb <= ub
             elif key == "bounds":
-                features = ltmodel_small._leaves[0][j][key].keys()
+                features = leaves[0][j][key].keys()
                 for k in range(len(features)):
-                    lb = ltmodel_small._leaves[0][j][key][k][0]
-                    ub = ltmodel_small._leaves[0][j][key][k][1]
+                    lb = leaves[0][j][key][k][0]
+                    ub = leaves[0][j][key][k][1]
                     # there is chance that don't have lb and ub at this step
                     if lb is not None and ub is not None:
                         assert lb <= ub
     # test for thresholds
     # assert whether each feature has threshold
-    assert len(ltmodel_small._thresholds[0].keys()) == ltmodel_small._n_inputs
+    assert len(thresholds[0].keys()) == n_inputs
     # assert the number of thresholds
     thresholds_count = 0
-    for k in range(len(ltmodel_small._thresholds[0].keys())):
-        for _ in range(len(ltmodel_small._thresholds[0][k].keys())):
+    for k in range(len(thresholds[0].keys())):
+        for _ in range(len(thresholds[0][k].keys())):
             thresholds_count += 1
-    assert thresholds_count == len(ltmodel_small._splits[0].keys())
+    assert thresholds_count == len(splits[0].keys())
 
 
 @pytest.mark.skipif(not lineartree_available, reason="Need Linear-Tree Package")

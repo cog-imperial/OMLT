@@ -7,19 +7,20 @@ class LinearTreeDefinition:
     Class to represent a linear tree model trained in the linear-tree package
 
     Attributes:
-        _model (linear-tree model) : Linear Tree Model trained in linear-tree
-        _splits (dict) : Dict containing split node information
-        _leaves (dict) : Dict containing leaf node information
-        _thresholds (dict) : Dict containing splitting threshold information
-        _scaling_object (scaling object) : Scaling object to ensure scaled
+        __model (linear-tree model) : Linear Tree Model trained in linear-tree
+        __splits (dict) : Dict containing split node information
+        __leaves (dict) : Dict containing leaf node information
+        __thresholds (dict) : Dict containing splitting threshold information
+        __scaling_object (scaling object) : Scaling object to ensure scaled
             data match units of broader optimization problem
-        _scaled_input_bounds (dict): Dict containing scaled input bounds
-        _unscaled_input_bounds (dict): Dict containing unscaled input bounds
+        __scaled_input_bounds (dict): Dict containing scaled input bounds
+        __unscaled_input_bounds (dict): Dict containing unscaled input bounds
 
     References:
         * linear-tree : https://github.com/cerlymarco/linear-tree
         * Ammari et al. (2023) Linear Model Decision Trees as Surrogates in
-            Optimization of Engineering Applications
+            Optimization of Engineering Applications. Computers & Chemical
+            Engineering
         * Misic, V. "Optimization of tree ensembles."
              Operations Research 68.5 (2020): 1605-1624.
         * Mistry, M., et al. "Mixed-integer convex nonlinear optimization
@@ -58,8 +59,8 @@ class LinearTreeDefinition:
             Exception: Input bounds required. If unscaled_input_bounds and
                 scaled_input_bounds is None, raise Exception.
         """
-        self._model = lt_regressor
-        self._scaling_object = scaling_object
+        self.__model = lt_regressor
+        self.__scaling_object = scaling_object
 
         # Process input bounds to insure scaled input bounds exist for formulations
         if scaled_input_bounds is None:
@@ -84,15 +85,64 @@ class LinearTreeDefinition:
                     "Input Bounds needed to represent linear trees as MIPs"
                 )
 
-        self._unscaled_input_bounds = unscaled_input_bounds
-        self._scaled_input_bounds = scaled_input_bounds
+        self.__unscaled_input_bounds = unscaled_input_bounds
+        self.__scaled_input_bounds = scaled_input_bounds
 
-        self._splits, self._leaves, self._thresholds = _parse_tree_data(
+        self.__splits, self.__leaves, self.__thresholds = _parse_tree_data(
             lt_regressor, scaled_input_bounds
         )
 
-        self._n_inputs = _find_n_inputs(self._leaves)
-        self._n_outputs = 1
+        self.__n_inputs = _find_n_inputs(self.__leaves)
+        self.__n_outputs = 1
+
+    @property
+    def model(self):
+        """Returns linear-tree model"""
+        return self.__model
+
+    @property
+    def scaling_object(self):
+        """Returns scaling object"""
+        return self.__scaling_object
+
+    @property
+    def unscaled_input_bounds(self):
+        """Returns dict containing unscaled input bounds"""
+        return self.__unscaled_input_bounds
+
+    @property
+    def scaled_input_bounds(self):
+        """Returns dict containing scaled input bounds"""
+        return self.__scaled_input_bounds
+
+    @property
+    def splits(self):
+        """Returns dict containing split information"""
+        return self.__splits
+
+    @property
+    def leaves(self):
+        """Returns duct containing leaf information"""
+        return self.__leaves
+
+    @property
+    def thresholds(self):
+        """Returns dict containing threshold information"""
+        return self.__thresholds
+
+    @property
+    def n_inputs(self):
+        """Returns number of inputs to the linear tree"""
+        return self.__n_inputs
+
+    @property
+    def n_outputs(self):
+        """Returns number of outputs to the linear tree"""
+        return self.__n_outputs
+
+    @scaling_object.setter
+    def scaling_object(self, scaling_object):
+        self.__scaling_object = scaling_object
 
 
 def _find_all_children_splits(split, splits_dict):

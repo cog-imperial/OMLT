@@ -15,11 +15,12 @@ class LinearTreeGDPFormulation(_PyomoFormulation):
         Inherited from _PyomoFormulation Class
         model_definition : LinearTreeModel object
         transformation : choose which transformation to apply. The supported
-            transformations are bigm, mbigm, and hull.
+            transformations are bigm, mbigm, hull, and custom.
 
     References:
         * Ammari et al. (2023) Linear Model Decision Trees as Surrogates in
-            Optimization of Engineering Applications
+            Optimization of Engineering Applications. Computers & Chemical
+            Engineering
         * Chen et al. (2022) Pyomo.GDP: An ecosystem for logic based modeling
             and optimization development. Optimization and Engineering,
             23:607–642
@@ -54,12 +55,12 @@ class LinearTreeGDPFormulation(_PyomoFormulation):
     @property
     def input_indexes(self):
         """The indexes of the formulation inputs."""
-        return list(range(self.model_definition._n_inputs))
+        return list(range(self.model_definition.n_inputs))
 
     @property
     def output_indexes(self):
         """The indexes of the formulation output."""
-        return list(range(self.model_definition._n_outputs))
+        return list(range(self.model_definition.n_outputs))
 
     def _build_formulation(self):
         """This method is called by the OmltBlock to build the corresponding
@@ -67,8 +68,8 @@ class LinearTreeGDPFormulation(_PyomoFormulation):
         """
         _setup_scaled_inputs_outputs(
             self.block,
-            self.model_definition._scaling_object,
-            self.model_definition._scaled_input_bounds,
+            self.model_definition.scaling_object,
+            self.model_definition.scaled_input_bounds,
         )
 
         _add_gdp_formulation_to_block(
@@ -92,7 +93,8 @@ class LinearTreeHybridBigMFormulation(_PyomoFormulation):
 
     References:
         * Ammari et al. (2023) Linear Model Decision Trees as Surrogates in
-            Optimization of Engineering Applications
+            Optimization of Engineering Applications. Computers & Chemical
+            Engineering
     """
 
     def __init__(self, lt_model):
@@ -101,11 +103,6 @@ class LinearTreeHybridBigMFormulation(_PyomoFormulation):
 
         Arguments:
             lt_model -- trained linear-tree model
-
-        Keyword Arguments:
-            transformation -- choose which Pyomo.GDP formulation to apply.
-                Supported transformations are bigm, hull, mbigm
-                (default: {'bigm'})
         """
         super().__init__()
         self.model_definition = lt_model
@@ -113,12 +110,12 @@ class LinearTreeHybridBigMFormulation(_PyomoFormulation):
     @property
     def input_indexes(self):
         """The indexes of the formulation inputs."""
-        return list(range(self.model_definition._n_inputs))
+        return list(range(self.model_definition.n_inputs))
 
     @property
     def output_indexes(self):
         """The indexes of the formulation output."""
-        return list(range(self.model_definition._n_outputs))
+        return list(range(self.model_definition.n_outputs))
 
     def _build_formulation(self):
         """This method is called by the OmltBlock to build the corresponding
@@ -126,8 +123,8 @@ class LinearTreeHybridBigMFormulation(_PyomoFormulation):
         """
         _setup_scaled_inputs_outputs(
             self.block,
-            self.model_definition._scaling_object,
-            self.model_definition._scaled_input_bounds,
+            self.model_definition.scaling_object,
+            self.model_definition.scaled_input_bounds,
         )
 
         _add_hybrid_formulation_to_block(
@@ -151,8 +148,8 @@ def _build_output_bounds(model_def, input_bounds):
         List that contains the conservative lower and upper bounds of the
         output variable
     """
-    leaves = model_def._leaves
-    n_inputs = model_def._n_inputs
+    leaves = model_def.leaves
+    n_inputs = model_def.n_inputs
     tree_ids = np.array(list(leaves.keys()))
     features = np.arange(0, n_inputs)
 
@@ -195,9 +192,9 @@ def _add_gdp_formulation_to_block(
         transformation -- Transformation to apply
 
     """
-    leaves = model_definition._leaves
-    input_bounds = model_definition._scaled_input_bounds
-    n_inputs = model_definition._n_inputs
+    leaves = model_definition.leaves
+    input_bounds = model_definition.scaled_input_bounds
+    n_inputs = model_definition.n_inputs
 
     # The set of leaves and the set of features
     tree_ids = list(leaves.keys())
@@ -268,9 +265,9 @@ def _add_hybrid_formulation_to_block(block, model_definition, input_vars, output
         input_vars -- input variables to the linear tree model
         output_vars -- output variable of the linear tree model
     """
-    leaves = model_definition._leaves
-    input_bounds = model_definition._scaled_input_bounds
-    n_inputs = model_definition._n_inputs
+    leaves = model_definition.leaves
+    input_bounds = model_definition.scaled_input_bounds
+    n_inputs = model_definition.n_inputs
 
     # The set of trees
     tree_ids = list(leaves.keys())
