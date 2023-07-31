@@ -35,7 +35,7 @@ class LinearTreeGDPFormulation(_PyomoFormulation):
 
         Keyword Arguments:
             transformation -- choose which Pyomo.GDP formulation to apply.
-                Supported transformations are bigm, hull, mbigm
+                Supported transformations are bigm, hull, mbigm, and custom
                 (default: {'bigm'})
 
         Raises:
