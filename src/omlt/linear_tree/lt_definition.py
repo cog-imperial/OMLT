@@ -130,10 +130,6 @@ class LinearTreeDefinition:
         """Returns number of outputs to the linear tree"""
         return self.__n_outputs
 
-    @scaling_object.setter
-    def scaling_object(self, scaling_object):
-        self.__scaling_object = scaling_object
-
 
 def _find_all_children_splits(split, splits_dict):
     """
