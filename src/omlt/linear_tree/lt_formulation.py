@@ -6,32 +6,54 @@ from omlt.formulation import _PyomoFormulation, _setup_scaled_inputs_outputs
 
 
 class LinearTreeGDPFormulation(_PyomoFormulation):
-    """
-    Class to add LinearTree GDP formulation to OmltBlock. We use Pyomo.GDP
+    r"""
+    Class to add a Linear Tree GDP formulation to OmltBlock. We use Pyomo.GDP
     to create the disjuncts and disjunctions and then apply a transformation
-    to convert to mixed-integer programming representation.
+    to convert to a mixed-integer programming representation.
+
+    .. math::
+        \begin{align*}
+            & \underset{\ell \in L}{\bigvee} \left[ \begin{gathered}
+            Z_{\ell} \\
+            \underline{x}_{\ell} \leq x \leq \overline{x}_{\ell}  \\
+            d = a_{\ell}^T x + b_{\ell} \end{gathered} \right] \\
+            & \texttt{exactly_one} \{ Z_{\ell} : \ell \in L \} \\
+            & x^L \leq x \leq x^U \\
+            & x \in \mathbb{R}^n \\
+            & Z_{\ell} \in \{ \texttt{True, False} \} \quad \forall \ \ell \in L
+        \end{align*}
+
+    Additional nomenclature for this formulation is as follows:
+
+    .. math::
+        \begin{align*}
+        Z_{\ell} &:= \text{Boolean variable indicating which leaf is selected} \\
+        \overline{x}_{\ell} &:= \text{Vector of upper bounds for leaf } \ell \in L \\
+        \underline{x}_{\ell} &:= \text{Vector of lower bounds for leaf } \ell \in L \\
+        x^U &:= \text{Vector of global upper bounds} \\
+        x^L &:= \text{Vector of global lower bounds} \\
+        \end{align*}
+
 
     Attributes:
         Inherited from _PyomoFormulation Class
-        model_definition : LinearTreeModel object
+        model_definition : LinearTreeDefinition object
         transformation : choose which transformation to apply. The supported
             transformations are bigm, mbigm, hull, and custom.
 
     References:
         * Ammari et al. (2023) Linear Model Decision Trees as Surrogates in
-            Optimization of Engineering Applications. Computers & Chemical
-            Engineering
-        * Chen et al. (2022) Pyomo.GDP: An ecosystem for logic based modeling
-            and optimization development. Optimization and Engineering,
-            23:607–642
+          Optimization of Engineering Applications. Computers & Chemical Engineering
+        * Chen et al. (2022) Pyomo.GDP: An ecosystem for logic based modeling and
+          optimization development. Optimization and Engineering, 23:607–642
     """
 
-    def __init__(self, lt_model, transformation="bigm"):
+    def __init__(self, lt_definition, transformation="bigm"):
         """
         Create a LinearTreeGDPFormulation object
 
         Arguments:
-            lt_model -- trained linear-tree model
+            lt_definition -- LinearTreeDefintion Object
 
         Keyword Arguments:
             transformation -- choose which Pyomo.GDP formulation to apply.
@@ -42,14 +64,14 @@ class LinearTreeGDPFormulation(_PyomoFormulation):
             Exception: If transformation not in supported transformations
         """
         super().__init__()
-        self.model_definition = lt_model
+        self.model_definition = lt_definition
         self.transformation = transformation
 
         # Ensure that the GDP transformation given is supported
         supported_transformations = ["bigm", "hull", "mbigm", "custom"]
         if transformation not in supported_transformations:
             raise NotImplementedError(
-                "Supported transformations are: " + "bigm, mbigm, hull, and custom"
+                "Supported transformations are: bigm, mbigm, hull, and custom"
             )
 
     @property
@@ -82,30 +104,44 @@ class LinearTreeGDPFormulation(_PyomoFormulation):
 
 
 class LinearTreeHybridBigMFormulation(_PyomoFormulation):
-    """
-    Class to add LinearTree Hybrid Big-M formulation to OmltBlock.
+    r"""
+    Class to add a Linear Tree Hybrid Big-M formulation to OmltBlock.
+
+    .. math::
+        \begin{align*}
+        & d = \sum_{\ell \in L} (a_{\ell}^T x + b_{\ell})z_{\ell} \\
+        & x_i \leq \sum_{\ell \in L} \overline{x}_{i,\ell} z_{\ell} &&
+            \forall i \in [n] \\
+        & x_i \geq \sum_{\ell \in L} \underline{x}_{i,\ell} z_{\ell} &&
+            \forall i \in [n] \\
+        & \sum_{\ell \in L} z_{\ell} = 1
+        \end{align*}
+
+    Where the following additional nomenclature is defined:
+
+    .. math::
+        \begin{align*}
+        [n] &:= \text{the integer set of variables that the tree splits on
+          (e.g. [n] = {1, 2, ... , n})} \\
+        \overline{x}_{\ell} &:= \text{Vector of upper bounds for leaf } \ell \in L \\
+        \underline{x}_{\ell} &:= \text{Vector of lower bounds for leaf } \ell \in L \\
+        \end{align*}
 
     Attributes:
         Inherited from _PyomoFormulation Class
-        model_definition : LinearTreeModel object
-        transformation : choose which transformation to apply. The supported
-            transformations are bigm, mbigm, and hull.
+        model_definition : LinearTreeDefinition object
 
-    References:
-        * Ammari et al. (2023) Linear Model Decision Trees as Surrogates in
-            Optimization of Engineering Applications. Computers & Chemical
-            Engineering
     """
 
-    def __init__(self, lt_model):
+    def __init__(self, lt_definition):
         """
         Create a LinearTreeHybridBigMFormulation object
 
         Arguments:
-            lt_model -- trained linear-tree model
+            lt_definition -- LinearTreeDefinition Object
         """
         super().__init__()
-        self.model_definition = lt_model
+        self.model_definition = lt_definition
 
     @property
     def input_indexes(self):
@@ -186,7 +222,7 @@ def _add_gdp_formulation_to_block(
 
     Arguments:
         block -- OmltBlock
-        model_definition -- LinearTreeModel
+        model_definition -- LinearTreeDefinition Object
         input_vars -- input variables to the linear tree model
         output_vars -- output variable of the linear tree model
         transformation -- Transformation to apply
@@ -261,7 +297,7 @@ def _add_hybrid_formulation_to_block(block, model_definition, input_vars, output
 
     Arguments:
         block -- OmltBlock
-        model_definition -- LinearTreeModel
+        model_definition -- LinearTreeDefinition Object
         input_vars -- input variables to the linear tree model
         output_vars -- output variable of the linear tree model
     """

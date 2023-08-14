@@ -18,14 +18,6 @@ class LinearTreeDefinition:
 
     References:
         * linear-tree : https://github.com/cerlymarco/linear-tree
-        * Ammari et al. (2023) Linear Model Decision Trees as Surrogates in
-            Optimization of Engineering Applications. Computers & Chemical
-            Engineering
-        * Misic, V. "Optimization of tree ensembles."
-             Operations Research 68.5 (2020): 1605-1624.
-        * Mistry, M., et al. "Mixed-integer convex nonlinear optimization
-             with gradient-boosted trees embedded." INFORMS Journal on
-             Computing (2020).
     """
 
     def __init__(
@@ -43,7 +35,7 @@ class LinearTreeDefinition:
                 linear-tree package
 
         Keyword Arguments:
-            scaling_object --A scaling object to specify the scaling parameters
+            scaling_object -- A scaling object to specify the scaling parameters
                 for the linear model tree inputs and outputs. If None, then no
                 scaling is performed. (default: {None})
             scaled_input_bounds -- A dict that contains the bounds on the scaled
@@ -112,7 +104,7 @@ class LinearTreeDefinition:
 
     @property
     def leaves(self):
-        """Returns duct containing leaf information"""
+        """Returns dict containing leaf information"""
         return self.__leaves
 
     @property
@@ -287,13 +279,11 @@ def _parse_tree_data(model, input_bounds):
         for entry in model:
             if "children" not in model[entry].keys():
                 leaves[entry] = model[entry]
-            elif len(model[entry]["children"]) <= 2:
+            else:
+                left_child = model[entry]["children"][0]
+                right_child = model[entry]["children"][1]
                 num_splits_in_model += 1
-                if model[entry]["children"][0] not in model.keys():
-                    count += 1
-            elif len(model[entry]["children"]) > 1:
-                num_splits_in_model += 1
-                if model[entry]["children"][1] not in model.keys():
+                if (left_child or right_child) not in model.keys():
                     count += 1
         if count > 0 or num_splits_in_model == 0:
             raise ValueError(

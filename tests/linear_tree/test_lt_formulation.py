@@ -3,6 +3,7 @@ import pyomo.environ as pe
 import pytest
 
 from omlt.dependencies import lineartree_available
+from pytest import approx
 
 if lineartree_available:
     from lineartree import LinearTreeRegressor
@@ -186,7 +187,7 @@ def test_bigm_formulation_single_var():
     pe.assert_optimal_termination(status_1_bigm)
     solution_1_bigm = (pe.value(model1.x), pe.value(model1.y))
     y_pred = regr_small.predict(np.array(solution_1_bigm[0]).reshape(1, -1))
-    assert y_pred[0] - solution_1_bigm[1] <= 1e-4
+    assert y_pred[0] == approx(solution_1_bigm[1])
 
 
 @pytest.mark.skipif(
@@ -220,7 +221,7 @@ def test_hull_formulation_single_var():
     pe.assert_optimal_termination(status_1_bigm)
     solution_1_bigm = (pe.value(model1.x), pe.value(model1.y))
     y_pred = regr_small.predict(np.array(solution_1_bigm[0]).reshape(1, -1))
-    assert y_pred[0] - solution_1_bigm[1] <= 1e-4
+    assert y_pred[0] == approx(solution_1_bigm[1])
 
 
 @pytest.mark.skipif(
@@ -254,7 +255,7 @@ def test_mbigm_formulation_single_var():
     pe.assert_optimal_termination(status_1_bigm)
     solution_1_bigm = (pe.value(model1.x), pe.value(model1.y))
     y_pred = regr_small.predict(np.array(solution_1_bigm[0]).reshape(1, -1))
-    assert y_pred[0] - solution_1_bigm[1] <= 1e-4
+    assert y_pred[0] == approx(solution_1_bigm[1])
 
 
 @pytest.mark.skipif(
@@ -288,7 +289,7 @@ def test_hybrid_bigm_formulation_single_var():
     pe.assert_optimal_termination(status_1_bigm)
     solution_1_bigm = (pe.value(model1.x), pe.value(model1.y))
     y_pred = regr_small.predict(np.array(solution_1_bigm[0]).reshape(1, -1))
-    assert y_pred[0] - solution_1_bigm[1] <= 1e-4
+    assert y_pred[0] == approx(solution_1_bigm[1])
 
 
 @pytest.mark.skipif(not lineartree_available, reason="Need Linear-Tree Package")
@@ -316,8 +317,8 @@ def test_scaling():
     lt_def2 = LinearTreeDefinition(
         regr, unscaled_input_bounds=unscaled_input_bounds, scaling_object=scaler
     )
-    assert lt_def2.scaled_input_bounds[0][0] - scaled_input_bounds[0][0] <= 1e-5
-    assert lt_def2.scaled_input_bounds[0][1] - scaled_input_bounds[0][1] <= 1e-5
+    assert lt_def2.scaled_input_bounds[0][0] == approx(scaled_input_bounds[0][0])
+    assert lt_def2.scaled_input_bounds[0][1] == approx(scaled_input_bounds[0][1])
     with pytest.raises(
         Exception, match="Input Bounds needed to represent linear trees as MIPs"
     ):
@@ -493,7 +494,7 @@ def test_bigm_formulation_multi_var():
     y_pred = regr.predict(
         np.array([pe.value(model1.x0), pe.value(model1.x1)]).reshape(1, -1)
     )
-    assert y_pred[0] - solution_1_bigm <= 1e-4
+    assert y_pred[0] == approx(solution_1_bigm)
 
 
 @pytest.mark.skipif(
@@ -535,7 +536,7 @@ def test_hull_formulation_multi_var():
     y_pred = regr.predict(
         np.array([pe.value(model1.x0), pe.value(model1.x1)]).reshape(1, -1)
     )
-    assert y_pred[0] - solution_1_bigm <= 1e-4
+    assert y_pred[0] == approx(solution_1_bigm)
 
 
 @pytest.mark.skipif(
@@ -577,7 +578,7 @@ def test_mbigm_formulation_multi_var():
     y_pred = regr.predict(
         np.array([pe.value(model1.x0), pe.value(model1.x1)]).reshape(1, -1)
     )
-    assert y_pred[0] - solution_1_bigm <= 1e-4
+    assert y_pred[0] == approx(solution_1_bigm)
 
 
 @pytest.mark.skipif(
@@ -619,7 +620,7 @@ def test_hybrid_bigm_formulation_multi_var():
     y_pred = regr.predict(
         np.array([pe.value(model1.x0), pe.value(model1.x1)]).reshape(1, -1)
     )
-    assert y_pred[0] - solution_1_bigm <= 1e-4
+    assert y_pred[0] == approx(solution_1_bigm)
 
 
 @pytest.mark.skipif(not lineartree_available, reason="Need Linear-Tree Package")
@@ -726,3 +727,39 @@ def test_raise_exception_if_wrong_model_instance():
         ltmodel_small = LinearTreeDefinition(
             wrong_summary_dict, scaled_input_bounds=input_bounds
         )
+
+
+@pytest.mark.skipif(not lineartree_available, reason="Need Linear-Tree Package")
+def test_children_node_finders():
+    # Train a linear model decision tree
+    X = np.linspace(-4, 4).reshape((-1, 1))
+    Y = np.sin(X)
+    regr = linear_model_tree(X=X, y=Y)
+
+    # Create a LinearTreeDefinition Object
+    inBounds = {0: (-4, 4)}
+    model_def = LinearTreeDefinition(regr, unscaled_input_bounds=inBounds)
+
+    # Extract leaf and split information
+    spts = model_def.splits
+    lvs = model_def.leaves
+
+    # Ensure that at the root node, the number of left leaves and the number of
+    # right leaves sum to the total number of leaves in the tree
+    num_left_leaves_at_root = len(spts[0][0]["left_leaves"])
+    num_right_leaves_at_root = len(spts[0][0]["right_leaves"])
+    total_leaves = len(lvs[0])
+
+    assert num_left_leaves_at_root + num_right_leaves_at_root == total_leaves
+
+
+@pytest.mark.skipif(not lineartree_available, reason="Need Linear-Tree Package")
+def test_raise_exception_for_wrong_transformation():
+    regr = linear_model_tree(X=X, y=Y)
+    input_bounds = {0: (min(X[:, 0]), max(X[:, 0])), 1: (min(X[:, 1]), max(X[:, 1]))}
+    model_def = LinearTreeDefinition(regr, unscaled_input_bounds=input_bounds)
+    with pytest.raises(
+        Exception,
+        match="Supported transformations are: bigm, mbigm, hull, and custom",
+    ):
+        formulation = LinearTreeGDPFormulation(model_def, transformation="hello")
