@@ -1,6 +1,6 @@
 import networkx as nx
 
-from omlt.neuralnet.layer import Layer, DenseLayer, GNNLayer
+from omlt.neuralnet.layer import Layer
 
 
 class NetworkDefinition:
@@ -146,57 +146,3 @@ class NetworkDefinition:
 
     def __str__(self):
         return f"NetworkDefinition(num_layers={len(self.__layers_by_id)})"
-
-
-def gnn_layer_definition(net, N, gnn_layers):
-    """
-    Replace dense layers in a NetworkDefinition class with GNN layers
-
-    Parameters
-    ----------
-    net : NetworkDefinition
-        the neural network definition
-    N : int
-        the number of nodes in the graph structure
-    gnn_layers : list
-        the list of indexes for GNN layers
-    """
-    assert isinstance(N, int)
-    assert N > 0
-    assert isinstance(gnn_layers, list)
-
-    # copy unchanged properties from net
-    gnn_net = NetworkDefinition(
-        scaling_object=net.scaling_object,
-        scaled_input_bounds=net.scaled_input_bounds,
-        unscaled_input_bounds=net.unscaled_input_bounds,
-    )
-
-    # map the indexes of layers in net to the indexes of layers in gnn_net
-    layer_id_mapper = {}
-
-    for layer_id, layer in enumerate(net.layers):
-        # these layers are not GNN layers and do not need to be changed
-        if layer_id not in gnn_layers:
-            new_layer = layer
-        else:
-            # only dense layers could be replaced with GNN layers
-            assert isinstance(layer, DenseLayer)
-            # define the corresponding GNN layer
-            new_layer = GNNLayer(
-                input_size=layer.input_size,
-                output_size=layer.output_size,
-                weights=layer.weights,
-                biases=layer.biases,
-                N=N,
-                activation=layer.activation,
-                input_index_mapper=layer.input_index_mapper,
-            )
-        # add new_layer to gnn_net
-        gnn_net.add_layer(new_layer)
-        # map layer (in net) to new_layer (in gnn_net)
-        layer_id_mapper[id(layer)] = id(new_layer)
-        # add edges between new_layer and its predecessors, which could be retrieved from the predecessors of layer
-        for layer_input in net.predecessors(layer):
-            gnn_net.add_edge(gnn_net.layer(layer_id_mapper[id(layer_input)]), new_layer)
-    return gnn_net

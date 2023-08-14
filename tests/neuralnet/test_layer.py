@@ -111,7 +111,7 @@ def test_gnn_layer_with_input_index_mapper():
 
     biases = np.array([-1, 0, 1, -1, 0, 1, -1, 0, 1])
 
-    # input has size [6], but the previous node output is [3, 2]
+    # input has size [6], but the previous node output is [2, 3]
     # use mapper to map between the two
     t = IndexMapper([1, 2, 2, 3], [1, 2, 6])
     layer = GNNLayer([1, 2, 6], [1, 2, 9], weights, biases, N=3, input_index_mapper=t)

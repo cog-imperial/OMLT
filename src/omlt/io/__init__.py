@@ -1,4 +1,9 @@
-from omlt.dependencies import onnx_available, keras_available
+from omlt.dependencies import (
+    onnx_available,
+    keras_available,
+    torch_available,
+    torch_geometric_available,
+)
 
 if onnx_available:
     from omlt.io.onnx import (
@@ -9,3 +14,6 @@ if onnx_available:
 
 if keras_available:
     from omlt.io.keras import load_keras_sequential
+
+if torch_available and torch_geometric_available:
+    from omlt.io.torch_geometric import load_torch_geometric_sequential
