@@ -76,7 +76,6 @@ def test_input_bounds_no_scaler():
 
 
 def test_input_bound_scaling_1D():
-
     xoffset = {i: float(i) for i in range(3)}
     xfactor = {i: 0.5 * (i + 1) for i in range(3)}
     yoffset = {i: -0.25 * i for i in range(2)}

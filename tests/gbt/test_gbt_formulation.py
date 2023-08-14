@@ -1,11 +1,10 @@
 from pathlib import Path
 
-from omlt.dependencies import onnx, onnx_available
-
 import pyomo.environ as pe
 import pytest
 
 from omlt import OmltBlock
+from omlt.dependencies import onnx, onnx_available
 from omlt.gbt.gbt_formulation import GBTBigMFormulation
 from omlt.gbt.model import GradientBoostedTreeModel
 
