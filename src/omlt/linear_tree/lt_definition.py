@@ -283,7 +283,7 @@ def _parse_tree_data(model, input_bounds):
                 left_child = model[entry]["children"][0]
                 right_child = model[entry]["children"][1]
                 num_splits_in_model += 1
-                if (left_child or right_child) not in model.keys():
+                if left_child not in model.keys() or right_child not in model.keys():
                     count += 1
         if count > 0 or num_splits_in_model == 0:
             raise ValueError(
