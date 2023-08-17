@@ -1,5 +1,7 @@
 import pytest
 import numpy as np
+import pyomo.environ as pyo
+from omlt import OmltBlock
 
 from omlt.dependencies import (
     torch,
@@ -13,7 +15,11 @@ if torch_available and torch_geometric_available:
     from torch_geometric.nn import Sequential, GCNConv, SAGEConv
     from torch_geometric.nn import global_mean_pool, global_add_pool
     from torch_geometric.utils import erdos_renyi_graph
-    from omlt.io.torch_geometric import load_torch_geometric_sequential
+    from omlt.io.torch_geometric import (
+        load_torch_geometric_sequential,
+        gnn_with_fixed_graph,
+        gnn_with_non_fixed_graph,
+    )
 
 
 @pytest.mark.skipif(
@@ -72,7 +78,7 @@ def generate_random_inputs(N, F, seed, p):
         u = edges[0, k].numpy()
         v = edges[1, k].numpy()
         A[u, v] = 1
-    x = 2.0 * torch.rand((N, F)) - 1.0
+    x = 1.0 * torch.randint(1, (N, F))
     return x, edges, np.squeeze(x.numpy().reshape(1, -1)), A
 
 
@@ -99,6 +105,60 @@ def _test_torch_geometric_reader(nn):
     not (torch_available and torch_geometric_available),
     reason="Test only valid when torch and torch_geometric are available",
 )
+def _test_gnn_with_fixed_graph(nn):
+    N = 4
+    F = 2
+    nn.eval()
+    for p in range(10):
+        x, edges, x_np, A = generate_random_inputs(N, F, 0, p / 10.0)
+        y = nn(x, edges).detach().numpy()
+        input_size = [N * F]
+        input_bounds = {}
+        for i in range(input_size[0]):
+            input_bounds[(i)] = (0.0, 1.0)
+        m = pyo.ConcreteModel()
+        m.nn = OmltBlock()
+        gnn_with_fixed_graph(m.nn, nn, N, A, scaled_input_bounds=input_bounds)
+        for i in range(N * F):
+            m.nn.inputs[i].fix(x_np[i])
+        m.obj = pyo.Objective(expr=m.nn.outputs[0])
+        status = pyo.SolverFactory("cbc").solve(m, tee=False)
+        assert abs(pyo.value(m.nn.outputs[0]) - y) < 1e-6
+
+
+@pytest.mark.skipif(
+    not (torch_available and torch_geometric_available),
+    reason="Test only valid when torch and torch_geometric are available",
+)
+def _test_gnn_with_non_fixed_graph(nn):
+    N = 4
+    F = 2
+    nn.eval()
+    for p in range(10):
+        x, edges, x_np, A = generate_random_inputs(N, F, 0, p / 10.0)
+        y = nn(x, edges).detach().numpy()
+        input_size = [N * F]
+        input_bounds = {}
+        for i in range(input_size[0]):
+            input_bounds[(i)] = (-1.0, 1.0)
+        m = pyo.ConcreteModel()
+        m.nn = OmltBlock()
+        gnn_with_non_fixed_graph(m.nn, nn, N, scaled_input_bounds=input_bounds)
+        for i in range(N * F):
+            m.nn.inputs[i].fix(x_np[i])
+        for u in range(N):
+            for v in range(N):
+                if u != v:
+                    m.nn.A[u, v].fix(A[u, v])
+        m.obj = pyo.Objective(expr=m.nn.outputs[0])
+        status = pyo.SolverFactory("cbc").solve(m, tee=False)
+        assert abs(pyo.value(m.nn.outputs[0]) - y) < 1e-6
+
+
+@pytest.mark.skipif(
+    not (torch_available and torch_geometric_available),
+    reason="Test only valid when torch and torch_geometric are available",
+)
 def test_torch_geometric_reader():
     for activation in [ReLU, Sigmoid, Tanh]:
         for pooling in [global_mean_pool, global_add_pool]:
@@ -108,3 +168,29 @@ def test_torch_geometric_reader():
                 for root_weight in [False, True]:
                     nn = SAGE_Sequential(activation, pooling, aggr, root_weight)
                     _test_torch_geometric_reader(nn)
+
+
+@pytest.mark.skipif(
+    not (torch_available and torch_geometric_available),
+    reason="Test only valid when torch and torch_geometric are available",
+)
+def test_gnn_with_fixed_graph():
+    for pooling in [global_mean_pool, global_add_pool]:
+        nn = GCN_Sequential(ReLU, pooling)
+        _test_gnn_with_fixed_graph(nn)
+        for aggr in ["sum", "mean"]:
+            for root_weight in [False, True]:
+                nn = SAGE_Sequential(ReLU, pooling, aggr, root_weight)
+                _test_gnn_with_fixed_graph(nn)
+
+
+@pytest.mark.skipif(
+    not (torch_available and torch_geometric_available),
+    reason="Test only valid when torch and torch_geometric are available",
+)
+def test_gnn_with_non_fixed_graph():
+    for pooling in [global_mean_pool, global_add_pool]:
+        for aggr in ["sum"]:
+            for root_weight in [False, True]:
+                nn = SAGE_Sequential(ReLU, pooling, aggr, root_weight)
+                _test_gnn_with_non_fixed_graph(nn)

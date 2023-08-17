@@ -4,7 +4,12 @@ import pytest
 from pyomo.common.fileutils import this_file_dir
 from testbook import testbook
 
-from omlt.dependencies import keras_available, onnx_available
+from omlt.dependencies import (
+    keras_available,
+    onnx_available,
+    torch_available,
+    torch_geometric_available,
+)
 
 
 # TODO: These will be replaced with stronger tests using testbook soon
@@ -52,3 +57,11 @@ def test_mnist_example_dense():
 @pytest.mark.skipif(not keras_available, reason="keras needed for this notebook")
 def test_neural_network_formulations():
     _test_run_notebook("neuralnet", "neural_network_formulations.ipynb", 21)
+
+
+@pytest.mark.skipif(
+    not (torch_available and torch_geometric_available),
+    reason="torch and torch_geometric needed for this notebook",
+)
+def test_graph_neural_network_formulation():
+    _test_run_notebook("neuralnet", "graph_neural_network_formulation.ipynb", 8)
