@@ -12,7 +12,7 @@ from omlt.neuralnet.layer import (
 )
 from omlt.neuralnet.network_definition import NetworkDefinition
 
-_ACTIVATION_OP_TYPES = ["Relu", "Sigmoid", "LogSoftmax"]
+_ACTIVATION_OP_TYPES = ["Relu", "Sigmoid", "LogSoftmax", "Tanh", "Softplus"]
 _POOLING_OP_TYPES = ["MaxPool"]
 
 
@@ -231,13 +231,14 @@ class NetworkParser:
 
         attr = _collect_attributes(node)
         alpha = attr["alpha"]
-        beta = attr["beta"]
-        assert attr["transB"] == 1
+        beta = attr["beta"]        
         [in_0, in_1, in_2] = list(node.input)
         input_layer, transformer = self._node_input_and_transformer(in_0)
         weights = self._initializers[in_1]
         # transpose B
         weights = np.transpose(weights)
+        if attr["transB"] == 1:
+        	weights = np.transpose(weights)
         biases = self._initializers[in_2]
 
         input_output_size = _get_input_output_size(input_layer, transformer)
