@@ -235,8 +235,7 @@ class NetworkParser:
         [in_0, in_1, in_2] = list(node.input)
         input_layer, transformer = self._node_input_and_transformer(in_0)
         weights = self._initializers[in_1]
-        # transpose B
-        weights = np.transpose(weights)
+        # transpose B        
         if attr["transB"] == 1:
             weights = np.transpose(weights)
         biases = self._initializers[in_2]
