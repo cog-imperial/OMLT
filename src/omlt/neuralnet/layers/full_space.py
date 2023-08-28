@@ -62,7 +62,7 @@ def full_space_gnn_layer(net_block, net, layer_block, layer):
         A_{v_i,v_j}&\in \{0,1\}
         \end{align*}
 
-    where :math:`M_{j}` is upper bound of :math:`|z_{j}|`. 
+    where :math:`M_{j}` is upper bound of :math:`|z_{j}|`.
     """
 
     input_layer, input_layer_block = _input_layer_and_block(net_block, net, layer)
