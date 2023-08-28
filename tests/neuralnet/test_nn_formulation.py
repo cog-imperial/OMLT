@@ -218,7 +218,7 @@ def test_invalid_layer_type():
 
 
 def _maxpool_conv_network(inputs):
-    input_size = [1, 8, 6]    
+    input_size = [1, 8, 6]
     input_bounds = {}
     for i in range(input_size[1]):
         for j in range(input_size[2]):

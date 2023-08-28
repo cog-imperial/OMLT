@@ -231,7 +231,7 @@ class NetworkParser:
 
         attr = _collect_attributes(node)
         alpha = attr["alpha"]
-        beta = attr["beta"]        
+        beta = attr["beta"]
         [in_0, in_1, in_2] = list(node.input)
         input_layer, transformer = self._node_input_and_transformer(in_0)
         weights = self._initializers[in_1]
