@@ -16,4 +16,8 @@ if keras_available:
     from omlt.io.keras import load_keras_sequential
 
 if torch_available and torch_geometric_available:
-    from omlt.io.torch_geometric import load_torch_geometric_sequential
+    from omlt.io.torch_geometric import (
+        load_torch_geometric_sequential,
+        gnn_with_fixed_graph,
+        gnn_with_non_fixed_graph,
+    )

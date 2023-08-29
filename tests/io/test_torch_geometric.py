@@ -15,7 +15,7 @@ if torch_available and torch_geometric_available:
     from torch_geometric.nn import Sequential, GCNConv, SAGEConv
     from torch_geometric.nn import global_mean_pool, global_add_pool
     from torch_geometric.utils import erdos_renyi_graph
-    from omlt.io.torch_geometric import (
+    from omlt.io import (
         load_torch_geometric_sequential,
         gnn_with_fixed_graph,
         gnn_with_non_fixed_graph,
