@@ -57,12 +57,12 @@ def full_space_gnn_layer(net_block, net, layer_block, layer):
     .. math::
 
         \begin{align*}
-        z_{j} - M_{j}(1-A_{v_i,v_j}) &\le \bar z_{ij} \le z_{j} + M_{j}(1-A_{v_i,v_j})\\
-        - M_{j}A_{v_i,v_j} &\le \bar z_{ij} \le M_{j}A_{v_i,v_j}\\
+        z_{j} - (U_{j}-L_{j})(1-A_{v_i,v_j}) &\le \bar z_{ij} \le z_{j} + (U_{j}-L_{j})(1-A_{v_i,v_j})\\
+        L_{j}A_{v_i,v_j} &\le \bar z_{ij} \le U_{j}A_{v_i,v_j}\\
         A_{v_i,v_j}&\in \{0,1\}
         \end{align*}
 
-    where :math:`M_{j}` is upper bound of :math:`|z_{j}|`.
+    where :math:`L_{j}` and :math:`U_{j}` are the lower and upper bound of :math:`z_{j}`, respectively.
     """
 
     input_layer, input_layer_block = _input_layer_and_block(net_block, net, layer)
@@ -88,20 +88,22 @@ def full_space_gnn_layer(net_block, net, layer_block, layer):
         pyo.Set(initialize=layer.input_indexes),
         pyo.Set(initialize=range(layer.N)),
     )
-    # set dummy parameters here to avoid warning message from Pyomo
-    input_layer_block._abs_bound_big_m = pyo.Param(
-        layer.input_indexes, default=1e6, mutable=True
-    )
 
     for local_index, input_index in layer.input_indexes_with_input_layer_indexes:
         lb, ub = input_layer_block.z[input_index].bounds
-        input_layer_block._abs_bound_big_m[local_index] = max(abs(lb), abs(ub))
 
         input_node_index = local_index[-1] // layer.gnn_input_size
 
         for output_node_index in range(layer.N):
-            input_layer_block.zbar[local_index, output_node_index].setlb(min(0, lb))
-            input_layer_block.zbar[local_index, output_node_index].setub(max(0, ub))
+            if not net_block.A[input_node_index, output_node_index].fixed:
+                input_layer_block.zbar[input_index, output_node_index].setlb(min(0, lb))
+                input_layer_block.zbar[input_index, output_node_index].setub(max(0, ub))
+            elif pyo.value(net_block.A[input_node_index, output_node_index]) == 1:
+                input_layer_block.zbar[input_index, output_node_index].setlb(lb)
+                input_layer_block.zbar[input_index, output_node_index].setub(ub)
+            elif pyo.value(net_block.A[input_node_index, output_node_index]) == 0:
+                input_layer_block.zbar[input_index, output_node_index].setlb(0)
+                input_layer_block.zbar[input_index, output_node_index].setub(0)
 
             input_layer_block._zbar_lower_bound_z_big_m[
                 local_index, output_node_index
@@ -109,9 +111,9 @@ def full_space_gnn_layer(net_block, net, layer_block, layer):
                 local_index, output_node_index
             ] >= input_layer_block.z[
                 input_index
-            ] - input_layer_block._abs_bound_big_m[
-                local_index
-            ] * (
+            ] - (
+                ub - lb
+            ) * (
                 1.0 - net_block.A[input_node_index, output_node_index]
             )
 
@@ -121,9 +123,9 @@ def full_space_gnn_layer(net_block, net, layer_block, layer):
                 local_index, output_node_index
             ] <= input_layer_block.z[
                 input_index
-            ] + input_layer_block._abs_bound_big_m[
-                local_index
-            ] * (
+            ] + (
+                ub - lb
+            ) * (
                 1.0 - net_block.A[input_node_index, output_node_index]
             )
 
@@ -131,16 +133,14 @@ def full_space_gnn_layer(net_block, net, layer_block, layer):
                 local_index, output_node_index
             ] = (
                 input_layer_block.zbar[local_index, output_node_index]
-                >= -input_layer_block._abs_bound_big_m[local_index]
-                * net_block.A[input_node_index, output_node_index]
+                >= lb * net_block.A[input_node_index, output_node_index]
             )
 
             input_layer_block._zbar_upper_bound_big_m[
                 local_index, output_node_index
             ] = (
                 input_layer_block.zbar[local_index, output_node_index]
-                <= input_layer_block._abs_bound_big_m[local_index]
-                * net_block.A[input_node_index, output_node_index]
+                <= ub * net_block.A[input_node_index, output_node_index]
             )
 
     @layer_block.Constraint(layer.output_indexes)
