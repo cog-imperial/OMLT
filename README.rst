@@ -50,7 +50,6 @@ When utilizing linear model decision trees, please cite the following paper in a
           author= {Bashar L. Ammari and Emma S. Johnson and Georgia Stinchfield and Taehun Kim and Michael Bynum and William E. Hart and Joshua Pulsipher and Carl D. Laird},
           journal={Computers \& Chemical Engineering},
           volume = {178},
-          pages = {108347},
           year = {2023},
           issn = {0098-1354},
           doi = {https://doi.org/10.1016/j.compchemeng.2023.108347}
