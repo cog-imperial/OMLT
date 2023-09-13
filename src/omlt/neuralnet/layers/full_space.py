@@ -57,7 +57,7 @@ def full_space_gnn_layer(net_block, net, layer_block, layer):
     .. math::
 
         \begin{align*}
-        z_{j} - (U_{j}-L_{j})(1-A_{I(j),I(i)}) &\le \bar z_{j,I(i)} \le z_{j} + (U_{j}-L_{j})(1-A_{I(j),I(i)})\\
+        z_{j} - U_{j}(1-A_{I(j),I(i)}) &\le \bar z_{j,I(i)} \le z_{j} - L_{j}(1-A_{I(j),I(i)})\\
         L_{j}A_{I(j),I(i)} &\le \bar z_{j,I(i)} \le U_{j}A_{I(j),I(i)}\\
         A_{I(j),I(i)}&\in \{0,1\}
         \end{align*}
@@ -113,9 +113,7 @@ def full_space_gnn_layer(net_block, net, layer_block, layer):
                 local_index, output_node_index
             ] >= input_layer_block.z[
                 input_index
-            ] - (
-                ub - lb
-            ) * (
+            ] - ub * (
                 1.0 - net_block.A[input_node_index, output_node_index]
             )
 
@@ -125,9 +123,7 @@ def full_space_gnn_layer(net_block, net, layer_block, layer):
                 local_index, output_node_index
             ] <= input_layer_block.z[
                 input_index
-            ] + (
-                ub - lb
-            ) * (
+            ] - lb * (
                 1.0 - net_block.A[input_node_index, output_node_index]
             )
 
