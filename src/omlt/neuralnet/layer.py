@@ -206,13 +206,13 @@ class DenseLayer(Layer):
 
 
 class GNNLayer(DenseLayer):
-    """
+    r"""
     Given the number of nodes :math:`N`, implementing a GNN layer defined by:
 
     .. math::
-        
+
         \begin{align*}
-        y_i = \sigma \left(\sum\limits_{j=0}^{F_{in}-1}A_{u,v}w_{ji}x_j+b_i\right) && \forall 0\le i<F_{out}, 
+        y_i = \sigma \left(\sum\limits_{j=0}^{F_{in}-1}A_{u,v}w_{ji}x_j+b_i\right) && \forall 0\le i<F_{out}
         \end{align*}
 
     where :math:`A` is the adjacency matrix (shared by all GNN layers), :math:`u=\lfloor jN/F_{in}\rfloor` is the node index of :math:`j`-th input feature, :math:`v=\lfloor iN/F_{out}\rfloor` is the node index of :math:`i`-th output feature.
@@ -239,7 +239,7 @@ class GNNLayer(DenseLayer):
         \mathbf{b}\\\mathbf{b}\\\mathbf{b}
         \end{pmatrix}
         \end{align*}
-        
+
     Otherwise, if the input graph structure is not fixed, all weights and biases should be provided. In this case, the GNN layer is defined with parameters:
 
     .. math::
