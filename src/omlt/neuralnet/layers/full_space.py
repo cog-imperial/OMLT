@@ -41,28 +41,30 @@ def full_space_dense_layer(net_block, net, layer_block, layer):
 
 def full_space_gnn_layer(net_block, net, layer_block, layer):
     r"""
-    Add full-space formulation of the gnn layer to the block
+    Add full-space formulation of the gnn layer to the block (assuming :math:`N_G` is the set of graph nodes):
 
     .. math::
 
         \begin{align*}
-        \hat z_i &= \sum_{j{=}1}^{M_i} w_{ij} \bar z_{ij} + b_i  && \forall i \in N \\
-        \bar z_{ij} &= A_{v_i,v_j} z_{j}
+        \hat z_i &= \sum_{j{=}1}^{M_i} w_{ji} \bar z_{j,I(i)} + b_i  && \forall i \in N \\
+        \bar z_{j,I(i)} &= A_{I(j),I(i)} z_{j}
         \end{align*}
 
-    where :math:`A_{v_i,v_j}` is the binary variable controlling the edge between node :math:`v_i` and :math:`v_j`.
+    where :math:`I:N\mapsto N_G` is the mapping from neurons to graph nodes, :math:`A_{I(j),I(i)}` is the binary variable controlling the edge between node :math:`I(j)` and :math:`I(i)`.
 
-    The big-M formulation for :math:`\bar z_{ij}` is given by:
+    The big-M formulation for :math:`\bar z_{j,I(i)}` is given by:
 
     .. math::
 
         \begin{align*}
-        z_{j} - (U_{j}-L_{j})(1-A_{v_i,v_j}) &\le \bar z_{ij} \le z_{j} + (U_{j}-L_{j})(1-A_{v_i,v_j})\\
-        L_{j}A_{v_i,v_j} &\le \bar z_{ij} \le U_{j}A_{v_i,v_j}\\
-        A_{v_i,v_j}&\in \{0,1\}
+        z_{j} - (U_{j}-L_{j})(1-A_{I(j),I(i)}) &\le \bar z_{j,I(i)} \le z_{j} + (U_{j}-L_{j})(1-A_{I(j),I(i)})\\
+        L_{j}A_{I(j),I(i)} &\le \bar z_{j,I(i)} \le U_{j}A_{I(j),I(i)}\\
+        A_{I(j),I(i)}&\in \{0,1\}
         \end{align*}
 
-    where :math:`L_{j}` and :math:`U_{j}` are the lower and upper bound of :math:`z_{j}`, respectively.
+    where :math:`L_{j}` and :math:`U_{j}` are the lower and upper bounds of :math:`z_{j}`, respectively.
+
+    Note that the second dimension of :math:`\bar z_{j,I(i)}` is :math:`|N_G|` instead of :math:`|N|`.
     """
 
     input_layer, input_layer_block = _input_layer_and_block(net_block, net, layer)
