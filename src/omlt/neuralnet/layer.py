@@ -222,7 +222,7 @@ class GNNLayer(DenseLayer):
     .. math::
 
         \begin{align*}
-        \mathbf{y_v} = \sigma\left(\mathbf{w_1^T}\mathbf{x_v}+\mathbf{w_2}^T\sum\limits_{u\in\mathcal N(v)}\mathbf{x_u}+\mathbf{b}\right)
+        \mathbf{y_v} = \sigma\left(\mathbf{w_1}^T\mathbf{x_v}+\mathbf{w_2}^T\sum\limits_{u\in\mathcal N(v)}\mathbf{x_u}+\mathbf{b}\right)
         \end{align*}
 
     If the graph structure is fixed, assume that it is a line graph with :math:`N=3` nodes, i.e., the adjacency matrix :math:`A=\begin{pmatrix}1 & 1 & 0\\1 & 1 & 1\\ 0 & 1 & 1\end{pmatrix}`. Then the corresponding GNN layer is defined with parameters:
