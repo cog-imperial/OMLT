@@ -9,3 +9,4 @@ API Documentation
    omlt.io
    omlt.gbt 
    omlt.neuralnet
+   omlt.linear_tree
