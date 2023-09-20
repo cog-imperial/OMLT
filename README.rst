@@ -27,17 +27,32 @@ OMLT: Optimization and Machine Learning Toolkit
 
 OMLT is a Python package for representing machine learning models (neural networks and gradient-boosted trees) within the Pyomo optimization environment. The package provides various optimization formulations for machine learning models (such as full-space, reduced-space, and MILP) as well as an interface to import sequential Keras and general ONNX models.
 
-Please reference the `preprint <https://arxiv.org/abs/2202.02414>`_ of this software package as:
+Please reference the paper for this software package as:
 
 ::
 
-     @misc{ceccon2022omlt,
+     @article{ceccon2022omlt,
           title={OMLT: Optimization & Machine Learning Toolkit},
-          author={Ceccon, F. and Jalving, J. and Haddad, J. and Thebelt, A. and Tsay, C. and Laird, C. D. and Misener, R.},
-          year={2022},
-          eprint={2202.02414},
-          archivePrefix={arXiv},
-          primaryClass={stat.ML}
+          author={Ceccon, F. and Jalving, J. and Haddad, J. and Thebelt, A. and Tsay, C. and Laird, C. D and Misener, R.},
+          journal={Journal of Machine Learning Research},
+          volume={23},
+          number={349},
+          pages={1--8},
+          year={2022}
+     }
+
+When utilizing linear model decision trees, please cite the following paper in addition:
+
+::
+
+     @article{ammari2023,
+          title={Linear Model Decision Trees as Surrogates in Optimization of Engineering Applications},
+          author= {Bashar L. Ammari and Emma S. Johnson and Georgia Stinchfield and Taehun Kim and Michael Bynum and William E. Hart and Joshua Pulsipher and Carl D. Laird},
+          journal={Computers \& Chemical Engineering},
+          volume = {178},
+          year = {2023},
+          issn = {0098-1354},
+          doi = {https://doi.org/10.1016/j.compchemeng.2023.108347}
      }
 
 Documentation
@@ -152,6 +167,10 @@ Contributors
      - Alexander Thebelt
      - This work was supported by BASF SE, Ludwigshafen am Rhein.
 
+   * - |bammari|_
+     - Bashar L. Ammari
+     - This work was funded by Sandia National Laboratories, Laboratory Directed Research and Development program.
+
 
 .. _jalving: https://github.com/jalving
 .. |jalving| image:: https://avatars1.githubusercontent.com/u/16785413?s=120&v=4
@@ -171,4 +190,8 @@ Contributors
 
 .. _thebtron: https://github.com/ThebTron
 .. |thebtron| image:: https://avatars.githubusercontent.com/u/31448377?s=120&v=4
+   :width: 80px
+
+.. _bammari: https://github.com/bammari
+.. |bammari| image:: https://avatars.githubusercontent.com/u/96192809?v=4
    :width: 80px
