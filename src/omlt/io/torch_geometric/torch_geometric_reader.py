@@ -2,6 +2,7 @@ import numpy as np
 
 from omlt.neuralnet.layer import DenseLayer, InputLayer, GNNLayer
 from omlt.neuralnet.network_definition import NetworkDefinition
+import warnings
 
 
 def _compute_gcn_norm(A):
@@ -172,6 +173,9 @@ def load_torch_geometric_sequential(
                 operations[index]
                 in ["Linear"] + _ACTIVATION_OP_TYPES + _POOLING_OP_TYPES
             ):
+                # nonlinear activation results in a MINLP
+                if operations[index] in ["Sigmoid", "LogSoftmax", "Softplus", "Tanh"]:
+                    warnings.warn("nonlinear activation results in a MINLP")
                 # Linear layers, all activation functions, and all pooling functions are still supported.
                 continue
             if operations[index] not in _LAYER_OP_TYPES_NON_FIXED_GRAPH:
@@ -182,6 +186,7 @@ def load_torch_geometric_sequential(
                 raise ValueError(
                     "this aggregation is not supported when the graph is not fixed"
                 )
+
         A = np.ones((N, N)) - np.eye(N)
 
     for index, l in enumerate(nn):
