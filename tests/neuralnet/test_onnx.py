@@ -52,7 +52,9 @@ def test_onnx_relu(datadir):
     def obj(mdl):
         return 1
 
-    net_regression = ort.InferenceSession(datadir.file("keras_linear_131_relu.onnx"))
+    net_regression = ort.InferenceSession(
+        datadir.file("keras_linear_131_relu.onnx"), providers=["CPUExecutionProvider"]
+    )
 
     for x in [-0.25, 0.0, 0.25, 1.5]:
         model.nn.inputs.fix(x)
@@ -93,7 +95,9 @@ def test_onnx_linear(datadir):
     def obj(mdl):
         return 1
 
-    net_regression = ort.InferenceSession(datadir.file("keras_linear_131.onnx"))
+    net_regression = ort.InferenceSession(
+        datadir.file("keras_linear_131.onnx"), providers=["CPUExecutionProvider"]
+    )
 
     for x in [-0.25, 0.0, 0.25, 1.5]:
         model.nn.inputs.fix(x)
@@ -134,7 +138,10 @@ def test_onnx_sigmoid(datadir):
     def obj(mdl):
         return 1
 
-    net_regression = ort.InferenceSession(datadir.file("keras_linear_131_sigmoid.onnx"))
+    net_regression = ort.InferenceSession(
+        datadir.file("keras_linear_131_sigmoid.onnx"),
+        providers=["CPUExecutionProvider"],
+    )
 
     for x in [-0.25, 0.0, 0.25, 1.5]:
         model.nn.inputs.fix(x)
