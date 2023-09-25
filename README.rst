@@ -14,7 +14,7 @@
 .. image:: https://readthedocs.org/projects/omlt/badge/?version=latest
      :target: https://omlt.readthedocs.io/en/latest/?badge=latest
      :alt: Documentation Status
-     
+
 .. image:: https://user-images.githubusercontent.com/31448377/202018691-dfacb0f8-620d-4d48-b918-2fa8b8da3d26.png
      :target: https://www.coin-or.org/
      :alt: COIN
@@ -88,10 +88,10 @@ Example
      model.nn.build_formulation(formulation)
 
      #query inputs and outputs, as well as scaled inputs and outputs
-     model.nn.inputs
-     model.nn.outputs
-     model.nn.scaled_inputs
-     model.nn.scaled_outputs
+     model.nn.inputs.display()
+     model.nn.outputs.display()
+     model.nn.scaled_inputs.display()
+     model.nn.scaled_outputs.display()
 
      #connect pyomo model input and output to the neural network
      @model.Constraint()
