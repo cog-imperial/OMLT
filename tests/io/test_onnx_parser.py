@@ -54,7 +54,7 @@ def test_gemm(datadir):
     assert layers[1].activation == "relu"
     assert layers[2].activation == "relu"
     assert layers[3].activation == "logsoftmax"
-    
+
 
 @pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
 def test_gemm_transB(datadir):
