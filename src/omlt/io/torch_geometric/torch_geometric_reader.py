@@ -33,10 +33,12 @@ def _compute_sage_norm(A, aggr):
     A : matrix-like
         the adjacency matrix.
     aggr : str
-        the aggregation function.
+        the aggregation function, "sum" (default) or "mean"
     """
     N = A.shape[0]
+    # sum aggregation
     sage_norm = A + np.eye(N)
+    # mean aggregation
     if aggr == "mean":
         degrees = np.sum(A, axis=0)
         for u in range(N):
@@ -175,7 +177,9 @@ def load_torch_geometric_sequential(
             ):
                 # nonlinear activation results in a MINLP
                 if operations[index] in ["Sigmoid", "LogSoftmax", "Softplus", "Tanh"]:
-                    warnings.warn("nonlinear activation results in a MINLP")
+                    warnings.warn(
+                        "nonlinear activation results in a MINLP", stacklevel=2
+                    )
                 # Linear layers, all activation functions, and all pooling functions are still supported.
                 continue
             if operations[index] not in _LAYER_OP_TYPES_NON_FIXED_GRAPH:

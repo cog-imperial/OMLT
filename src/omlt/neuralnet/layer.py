@@ -292,8 +292,14 @@ class GNNLayer(DenseLayer):
             activation=activation,
             input_index_mapper=input_index_mapper,
         )
-        assert input_size[-1] % N == 0
-        assert output_size[-1] % N == 0
+        if input_size[-1] % N != 0:
+            raise ValueError(
+                "Input size must equal to the number of nodes multiply the number of input node features"
+            )
+        if output_size[-1] % N != 0:
+            raise ValueError(
+                "Output size must equal to the number of nodes multiply the number of output node features"
+            )
         self.__N = N
         self.__gnn_input_size = input_size[-1] // N
         self.__gnn_output_size = output_size[-1] // N
