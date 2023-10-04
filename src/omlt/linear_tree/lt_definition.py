@@ -297,8 +297,8 @@ def _parse_tree_data(model, input_bounds):
     # keys in the splits dictionary
     for leaf in leaves:
         del splits[leaf]
-        leaves[leaf]["slope"] = list(leaves[leaf]["models"].coef_)
-        leaves[leaf]["intercept"] = leaves[leaf]["models"].intercept_
+        leaves[leaf]["slope"] = list(leaves[leaf]["models"].coef_.reshape((-1,)))
+        leaves[leaf]["intercept"] = leaves[leaf]["models"].intercept_.reshape((-1,))[0]
 
     # This loop creates an parent node id entry for each node in the tree
     for split in splits:
@@ -375,6 +375,8 @@ def _parse_tree_data(model, input_bounds):
         for leaf in leaves:
             leaves[leaf]["bounds"][feat] = [None, None]
 
+    import pprint
+    pprint.pprint(leaves)
     # Finally, go through each split and assign it's threshold value as the
     # upper bound to all the leaves descending to the left of the split and
     # as the lower bound to all the leaves descending to the right.
