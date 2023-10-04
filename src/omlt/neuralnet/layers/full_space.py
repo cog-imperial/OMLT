@@ -97,13 +97,16 @@ def full_space_gnn_layer(net_block, net, layer_block, layer):
         input_node_index = local_index[-1] // layer.gnn_input_size
 
         for output_node_index in range(layer.N):
+            # this edge is not fixed
             if not net_block.A[input_node_index, output_node_index].fixed:
                 input_layer_block.zbar[input_index, output_node_index].setlb(min(0, lb))
                 input_layer_block.zbar[input_index, output_node_index].setub(max(0, ub))
+            # this edge is fixed to be 1
             elif pyo.value(net_block.A[input_node_index, output_node_index]) == 1:
                 input_layer_block.zbar[input_index, output_node_index].setlb(lb)
                 input_layer_block.zbar[input_index, output_node_index].setub(ub)
-            elif pyo.value(net_block.A[input_node_index, output_node_index]) == 0:
+            # this edge is fixed to be 0
+            else:
                 input_layer_block.zbar[input_index, output_node_index].setlb(0)
                 input_layer_block.zbar[input_index, output_node_index].setub(0)
 

@@ -13,7 +13,7 @@ from omlt.dependencies import (
 if torch_available and torch_geometric_available:
     from torch.nn import Linear, ReLU, Sigmoid, Softplus, Tanh
     from torch_geometric.nn import Sequential, GCNConv, SAGEConv
-    from torch_geometric.nn import global_mean_pool, global_add_pool
+    from torch_geometric.nn import global_mean_pool, global_add_pool, global_max_pool
     from omlt.io.torch_geometric import (
         load_torch_geometric_sequential,
         gnn_with_fixed_graph,
@@ -171,3 +171,55 @@ def test_gnn_with_non_fixed_graph():
             for root_weight in [False, True]:
                 nn = SAGE_Sequential(ReLU, pooling, aggr, root_weight)
                 _test_gnn_with_non_fixed_graph(nn)
+
+
+@pytest.mark.skipif(
+    not (torch_available and torch_geometric_available),
+    reason="Test only valid when torch and torch_geometric are available",
+)
+def _test_gnn_value_error(nn, error_info, error_type="ValueError"):
+    N = 4
+    F = 2
+
+    input_size = [N * F]
+    input_bounds = {}
+    for i in range(input_size[0]):
+        input_bounds[(i)] = (-1.0, 1.0)
+    if error_type == "ValueError":
+        with pytest.raises(ValueError) as excinfo:
+            load_torch_geometric_sequential(
+                nn=nn,
+                N=N,
+                A=None,
+                scaled_input_bounds=input_bounds,
+            )
+        assert str(excinfo.value) == error_info
+    elif error_type == "warns":
+        with pytest.warns() as record:
+            load_torch_geometric_sequential(
+                nn=nn,
+                N=N,
+                A=None,
+                scaled_input_bounds=input_bounds,
+            )
+        assert str(record[0].message) == error_info
+
+
+@pytest.mark.skipif(
+    not (torch_available and torch_geometric_available),
+    reason="Test only valid when torch and torch_geometric are available",
+)
+def test_gnn_value_error():
+    nn = SAGE_Sequential(ReLU, global_max_pool, "mean", True)
+    _test_gnn_value_error(nn, "this operation is not supported")
+
+    nn = SAGE_Sequential(Sigmoid, global_mean_pool, "sum", True)
+    _test_gnn_value_error(nn, "nonlinear activation results in a MINLP", "warns")
+
+    nn = SAGE_Sequential(ReLU, global_mean_pool, "mean", True)
+    _test_gnn_value_error(
+        nn, "this aggregation is not supported when the graph is not fixed"
+    )
+
+    nn = GCN_Sequential(ReLU, global_mean_pool)
+    _test_gnn_value_error(nn, "this layer is not supported when the graph is not fixed")

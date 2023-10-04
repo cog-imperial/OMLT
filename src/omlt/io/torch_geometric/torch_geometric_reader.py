@@ -271,9 +271,11 @@ def load_torch_geometric_sequential(
             for input_index in range(n_layer_inputs):
                 for output_index in range(n_layer_outputs):
                     if input_index % n_layer_outputs == output_index:
+                        # mean pooling
                         if operations[index] == "global_mean_pool":
                             weights[input_index, output_index] = 1.0 / N
-                        elif operations[index] == "global_add_pool":
+                        # add pooling
+                        else:
                             weights[input_index, output_index] = 1.0
             curr_layer = DenseLayer(
                 [n_layer_inputs],
