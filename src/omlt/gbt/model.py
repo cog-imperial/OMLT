@@ -56,14 +56,16 @@ class GradientBoostedTreeModel:
 def _model_num_inputs(model):
     """Returns the number of input variables"""
     graph = model.graph
-    assert len(graph.input) == 1
+    if len(graph.input) != 1:
+        raise ValueError(f"Model graph input field is multi-valued {graph.input}. A single value is required.")
     return _tensor_size(graph.input[0])
 
 
 def _model_num_outputs(model):
     """Returns the number of output variables"""
     graph = model.graph
-    assert len(graph.output) == 1
+    if len(graph.output) != 1:
+        raise ValueError(f"Model graph output field is multi-valued {graph.output}. A single value is required.")
     return _tensor_size(graph.output[0])
 
 
@@ -71,9 +73,11 @@ def _tensor_size(tensor):
     """Returns the size of an input tensor"""
     tensor_type = tensor.type.tensor_type
     size = None
-    for dim in tensor_type.shape.dim:
-        if dim.dim_value is not None and dim.dim_value > 0:
-            assert size is None
-            size = dim.dim_value
-    assert size is not None
+    dim_values = [dim.dim_value for dim in tensor_type.shape.dim if dim.dim_value is not None and dim.dim_value > 0]
+    if len(dim_values) == 1:
+        size = dim_values[0]
+    elif dim_values == []:
+        raise ValueError(f"Tensor {tensor} has no positive dimensions.")
+    else:
+        raise ValueError(f"Tensor {tensor} has multiple positive dimensions.")
     return size

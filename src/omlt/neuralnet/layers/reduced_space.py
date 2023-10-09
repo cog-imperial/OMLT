@@ -11,7 +11,10 @@ def reduced_space_dense_layer(net_block, net, layer_block, layer, activation):
     """
     # not an input layer, process the expressions
     prev_layers = list(net.predecessors(layer))
-    assert len(prev_layers) == 1
+    if len(prev_layers) == 0:
+        raise ValueError(f"Layer {layer} is not an input layer, but has no predecessors.")
+    elif len(prev_layers) > 1:
+        raise ValueError(f"Layer {layer} has multiple predecessors.")
     prev_layer = prev_layers[0]
     prev_layer_block = net_block.layer[id(prev_layer)]
 

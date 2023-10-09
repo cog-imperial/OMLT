@@ -5,9 +5,6 @@ from pyomo.contrib.fbbt.fbbt import compute_bounds_on_expr
 from omlt.neuralnet.activations import NON_INCREASING_ACTIVATIONS
 from omlt.neuralnet.layer import ConvLayer2D, IndexMapper, PoolingLayer2D
 
-
-# TODO: Change asserts to exceptions with messages (or ensure they
-# TODO:      are trapped higher up the call stack)
 def full_space_dense_layer(net_block, net, layer_block, layer):
     r"""
     Add full-space formulation of the dense layer to the block
@@ -58,7 +55,8 @@ def full_space_conv2d_layer(net_block, net, layer_block, layer):
         and layer.activation != "linear"
     ):
         # activation applied after convolution layer, so there shouldn't be an activation after max pooling too
-        assert succ_layer.activation == "linear"
+        if succ_layer.activation != "linear":
+            raise ValueError(f"Activation is applied after convolution layer, but the successor max pooling layer {succ_layer} has an activation function also.")
         succ_layer.activation = layer.activation
         layer.activation = "linear"
 
@@ -116,10 +114,11 @@ def full_space_maxpool2d_layer(net_block, net, layer_block, layer):
 
     """
     input_layer, input_layer_block = _input_layer_and_block(net_block, net, layer)
-    assert isinstance(input_layer, ConvLayer2D)
-    assert (
-        input_layer.activation == "linear"
-    )  # TODO - add support for non-increasing activation functions on preceding convolutional layer
+    if not isinstance(input_layer,ConvLayer2D):
+        raise TypeError("Input layer must be a ConvLayer2D.")
+    if input_layer.activation != "linear":
+        raise ValueError("Non-increasing activation functions on the preceding convolutional layer are not supported.")
+    # TODO - add support for non-increasing activation functions on preceding convolutional layer
 
     # note kernel indexes are the same set of values for any output index, so wlog get kernel indexes for (0, 0, 0)
     layer_block._kernel_indexes = pyo.Set(
@@ -192,7 +191,8 @@ def _calculate_n_plus(out_index, l, k, layer, input_layer_block):
 
 def _input_layer_and_block(net_block, net, layer):
     input_layers = list(net.predecessors(layer))
-    assert len(input_layers) == 1
+    if len(input_layers) != 1:
+        raise ValueError("Multiple input layers are not currently supported.")
     input_layer = input_layers[0]
     input_layer_block = net_block.layer[id(input_layer)]
     return input_layer, input_layer_block

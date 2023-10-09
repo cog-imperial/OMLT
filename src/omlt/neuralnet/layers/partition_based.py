@@ -44,7 +44,10 @@ def partition_based_dense_relu_layer(net_block, net, layer_block, layer, split_f
     """
     # not an input layer, process the expressions
     prev_layers = list(net.predecessors(layer))
-    assert len(prev_layers) == 1
+    if len(prev_layers) == 0:
+        raise ValueError(f"Layer {layer} is not an input layer, but has no predecessors.")
+    elif len(prev_layers) > 1:
+        raise ValueError(f"Layer {layer} has multiple predecessors.")
     prev_layer = prev_layers[0]
     prev_layer_block = net_block.layer[id(prev_layer)]
 
@@ -86,7 +89,10 @@ def partition_based_dense_relu_layer(net_block, net, layer_block, layer, split_f
                 expr += prev_layer_block.z[input_index] * w
 
             lb, ub = compute_bounds_on_expr(expr)
-            assert lb is not None and ub is not None
+            if lb is None:
+                raise ValueError("Expression is unbounded below.")
+            if ub is None:
+                raise ValueError("Expression is unbounded above.")
 
             z2 = b.z2[split_index]
             z2.setlb(min(0, lb))
@@ -106,7 +112,10 @@ def partition_based_dense_relu_layer(net_block, net, layer_block, layer, split_f
         expr += bias
 
         lb, ub = compute_bounds_on_expr(expr)
-        assert lb is not None and ub is not None
+        if lb is None:
+            raise ValueError("Expression is unbounded below.")
+        if ub is None:
+            raise ValueError("Expression is unbounded above.")
 
         layer_block.z[output_index].setlb(0)
         layer_block.z[output_index].setub(max(0, ub))

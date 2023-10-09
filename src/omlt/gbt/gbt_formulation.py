@@ -197,13 +197,17 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars):
         node_mask = (nodes_tree_ids == tree_id) & (nodes_node_ids == branch_node_id)
         feature_id = nodes_feature_ids[node_mask]
         branch_value = nodes_values[node_mask]
-        assert len(feature_id) == 1 and len(branch_value) == 1
+        if len(branch_value) != 1:
+            raise ValueError(f"The given tree_id and branch_node_id do not uniquely identify a branch value.")
+        if len(feature_id) != 1:
+            raise ValueError(f"The given tree_id and branch_node_id do not uniquely identify a feature.")
         feature_id = feature_id[0]
         branch_value = branch_value[0]
         (branch_y_idx,) = np.where(
             branch_value_by_feature_id[feature_id] == branch_value
         )
-        assert len(branch_y_idx) == 1
+        if len(branch_y_idx) != 1:
+            raise ValueError(f"The given tree_id and branch_node_id do not uniquely identify a branch index.")
         return block.y[feature_id, branch_y_idx[0]]
 
     def _sum_of_z_l(tree_id, start_node_id):
