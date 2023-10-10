@@ -1,6 +1,12 @@
-from .linear import linear_activation_constraint, linear_activation_function
-from .relu import ComplementarityReLUActivation, bigm_relu_activation_constraint
-from .smooth import (
+from omlt.neuralnet.activations.linear import (
+    linear_activation_constraint,
+    linear_activation_function,
+)
+from omlt.neuralnet.activations.relu import (
+    ComplementarityReLUActivation,
+    bigm_relu_activation_constraint,
+)
+from omlt.neuralnet.activations.smooth import (
     sigmoid_activation_constraint,
     sigmoid_activation_function,
     softplus_activation_constraint,

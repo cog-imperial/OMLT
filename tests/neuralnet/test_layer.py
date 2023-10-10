@@ -137,12 +137,12 @@ def test_gnn_layer_with_input_index_mapper():
         layer = GNNLayer([5], [9], weights, biases, N=3)
     assert (
         str(excinfo.value)
-        == "Input size must equal to the number of nodes multiply the number of input node features"
+        == "Input size must equal to the number of nodes multiplied by the number of input node features"
     )
 
     with pytest.raises(ValueError) as excinfo:
         layer = GNNLayer([6], [8], weights, biases, N=3)
     assert (
         str(excinfo.value)
-        == "Output size must equal to the number of nodes multiply the number of output node features"
+        == "Output size must equal to the number of nodes multiplied by the number of output node features"
     )
