@@ -294,11 +294,11 @@ class GNNLayer(DenseLayer):
         )
         if input_size[-1] % N != 0:
             raise ValueError(
-                "Input size must equal to the number of nodes multiply the number of input node features"
+                "Input size must equal to the number of nodes multiplied by the number of input node features"
             )
         if output_size[-1] % N != 0:
             raise ValueError(
-                "Output size must equal to the number of nodes multiply the number of output node features"
+                "Output size must equal to the number of nodes multiplied by the number of output node features"
             )
         self.__N = N
         self.__gnn_input_size = input_size[-1] // N
