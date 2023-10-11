@@ -10,9 +10,9 @@ class Layer:
 
     Parameters
     ----------
-    input_size : tuple
+    input_size : list
         size of the layer input
-    output_size : tuple
+    output_size : list
         size of the layer output
     activation : str or None
         activation function name
@@ -27,8 +27,8 @@ class Layer:
             raise TypeError(f"input_size must be a list or tuple, {type(input_size)} was provided.")
         if not isinstance(output_size, (list,tuple)):
             raise TypeError(f"output_size must be a list or tuple, {type(output_size)} was provided.")
-        self.__input_size = tuple(input_size)
-        self.__output_size = tuple(output_size)
+        self.__input_size = list(input_size)
+        self.__output_size = list(output_size)
         self.activation = activation
         if input_index_mapper is None:
             input_index_mapper = IndexMapper(input_size, input_size)
@@ -101,7 +101,7 @@ class Layer:
             if self.__input_index_mapper is not None
             else x[:]
         )
-        if x_reshaped.shape != self.input_size:
+        if x_reshaped.shape != tuple(self.input_size):
             raise ValueError(f"Layer requires an input size {self.input_size}, but the input tensor had size {x_reshaped.shape}.")
         y = self._eval(x_reshaped)
         return self._apply_activation(y)
