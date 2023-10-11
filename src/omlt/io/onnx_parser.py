@@ -314,7 +314,7 @@ class NetworkParser:
         strides = attr["strides"]
         # check only kernel shape and stride are set
         if attr["kernel_shape"] != kernel_shape:
-            raise ValueError(f"Kernel shape attribute {attr["kernel_shape"]} does not match initialized kernel shape {kernel_shape}.")
+            raise ValueError(f"Kernel shape attribute {attr['kernel_shape']} does not match initialized kernel shape {kernel_shape}.")
         if len(kernel_shape) != len(strides):
             raise ValueError(f"Initialized kernel shape {kernel_shape} has {len(kernel_shape)} dimensions. Strides attribute has {len(strides)} dimensions. These must be equal.")
         if len(input_output_size) != len(kernel_shape) + 1:
@@ -418,11 +418,11 @@ class NetworkParser:
         # check only kernel shape, stride, storage order are set
         # everything else is not supported
         if attr["dilations"] != [1, 1]:
-            raise ValueError(f"{node} has non-identity dilations ({attr["dilations"]}). This is not supported.")
+            raise ValueError(f"{node} has non-identity dilations ({attr['dilations']}). This is not supported.")
         if "pads" in attr and np.any(attr["pads"]):
-            raise ValueError(f"{node} has non-zero pads ({attr["pads"]}). This is not supported.")
+            raise ValueError(f"{node} has non-zero pads ({attr['pads']}). This is not supported.")
         if ("auto_pad" in attr) and (attr["auto_pad"] != "NOTSET"):
-            raise ValueError(f"{node} has autopad set ({attr["auto_pad"]}). This is not supported.")
+            raise ValueError(f"{node} has autopad set ({attr['auto_pad']}). This is not supported.")
         if len(kernel_shape) != len(strides):
             raise ValueError(f"Kernel shape {kernel_shape} has {len(kernel_shape)} dimensions. Strides attribute has {len(strides)} dimensions. These must be equal.")
         if len(input_output_size) != len(kernel_shape) + 1:
