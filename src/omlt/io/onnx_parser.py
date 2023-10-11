@@ -328,11 +328,11 @@ class NetworkParser:
 
         # Other attributes are not supported
         if attr["dilations"] != [1, 1]:
-            raise ValueError(f"{node} has non-identity dilations ({attr["dilations"]}). This is not supported.")
+            raise ValueError(f"{node} has non-identity dilations ({attr['dilations']}). This is not supported.")
         if attr["group"] != 1:
-            raise ValueError(f"{node} has multiple groups ({attr["group"]}). This is not supported.")
+            raise ValueError(f"{node} has multiple groups ({attr['group']}). This is not supported.")
         if "pads" in attr and np.any(attr["pads"]):
-            raise ValueError(f"{node} has non-zero pads ({attr["pads"]}). This is not supported.")
+            raise ValueError(f"{node} has non-zero pads ({attr['pads']}). This is not supported.")
 
         # generate new nodes for the node output
         padding = 0
