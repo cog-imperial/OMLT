@@ -1,5 +1,6 @@
 import numpy as np
 import lineartree
+import sklearn
 
 
 class LinearTreeDefinition:
@@ -294,11 +295,24 @@ def _parse_tree_data(model, input_bounds):
         raise TypeError("Model entry must be dict or linear-tree instance")
 
     # This loop adds keys for the slopes and intercept and removes the leaf
-    # keys in the splits dictionary
+    # keys in the splits dictionary. For LinearTreeClassifier, check if
+    # the model in the leaf is a DummyClassifier. If so, use the information
+    # in the prior to determine whether the intercept is 1, or -1. Otherwise
+    # use the slope/intercept information in the RidgeClassifier or 
+    # LinearTreeRegressor classes 
     for leaf in leaves:
         del splits[leaf]
-        leaves[leaf]["slope"] = list(leaves[leaf]["models"].coef_.reshape((-1,)))
-        leaves[leaf]["intercept"] = leaves[leaf]["models"].intercept_.reshape((-1,))[0]
+        model_in_leaf = leaves[leaf]["models"]
+        if isinstance(model_in_leaf, sklearn.dummy.DummyClassifier):
+            prior = model_in_leaf.class_prior_
+            leaves[leaf]["slope"] = list(np.zeros(len(input_bounds.keys())))
+            if prior[0] <= prior[1]:
+                leaves[leaf]["intercept"] = -1
+            else:
+                leaves[leaf]["intercept"] = 1
+        else:
+            leaves[leaf]["slope"] = list(model_in_leaf.coef_.reshape((-1,)))
+            leaves[leaf]["intercept"] = model_in_leaf.intercept_.reshape((-1,))[0]
 
     # This loop creates an parent node id entry for each node in the tree
     for split in splits:
