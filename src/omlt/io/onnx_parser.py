@@ -417,7 +417,7 @@ class NetworkParser:
 
         # check only kernel shape, stride, storage order are set
         # everything else is not supported
-        if attr["dilations"] != [1, 1]:
+        if "dilations" in attr and attr["dilations"] != [1, 1]:
             raise ValueError(f"{node} has non-identity dilations ({attr['dilations']}). This is not supported.")
         if "pads" in attr and np.any(attr["pads"]):
             raise ValueError(f"{node} has non-zero pads ({attr['pads']}). This is not supported.")
