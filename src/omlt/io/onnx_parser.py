@@ -327,7 +327,7 @@ class NetworkParser:
             raise ValueError(f"Input/output size ({input_output_size}) first dimension must match input weights channels ({in_channels}).")
 
         # Other attributes are not supported
-        if attr["dilations"] != [1, 1]:
+        if "dilations" in attr and attr["dilations"] != [1, 1]:
             raise ValueError(f"{node} has non-identity dilations ({attr['dilations']}). This is not supported.")
         if attr["group"] != 1:
             raise ValueError(f"{node} has multiple groups ({attr['group']}). This is not supported.")
