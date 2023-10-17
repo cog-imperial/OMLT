@@ -307,9 +307,9 @@ def _parse_tree_data(model, input_bounds):
             prior = model_in_leaf.class_prior_
             leaves[leaf]["slope"] = list(np.zeros(len(input_bounds.keys())))
             if prior[0] <= prior[1]:
-                leaves[leaf]["intercept"] = -1
-            else:
                 leaves[leaf]["intercept"] = 1
+            else:
+                leaves[leaf]["intercept"] = -1
         else:
             leaves[leaf]["slope"] = list(model_in_leaf.coef_.reshape((-1,)))
             leaves[leaf]["intercept"] = model_in_leaf.intercept_.reshape((-1,))[0]
