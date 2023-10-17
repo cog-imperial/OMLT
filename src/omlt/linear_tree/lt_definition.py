@@ -302,17 +302,36 @@ def _parse_tree_data(model, input_bounds):
     # LinearTreeRegressor classes 
     for leaf in leaves:
         del splits[leaf]
-        model_in_leaf = leaves[leaf]["models"]
-        if isinstance(model_in_leaf, sklearn.dummy.DummyClassifier):
-            prior = model_in_leaf.class_prior_
-            leaves[leaf]["slope"] = list(np.zeros(len(input_bounds.keys())))
-            if prior[0] <= prior[1]:
-                leaves[leaf]["intercept"] = 1
-            else:
-                leaves[leaf]["intercept"] = -1
+        if isinstance(model, lineartree.lineartree.LinearTreeClassifier) is True:
+            num_classes = len(leaves[leaf]['classes'])
         else:
-            leaves[leaf]["slope"] = list(model_in_leaf.coef_.reshape((-1,)))
-            leaves[leaf]["intercept"] = model_in_leaf.intercept_.reshape((-1,))[0]
+            num_classes = 100
+        
+        if num_classes < 2:
+            class_val = int(leaves[leaf]['classes'][0])
+            leaves[leaf]["slope"] = list(np.zeros(len(input_bounds.keys())))
+            if class_val == 0:
+                leaves[leaf]["intercept"] = -1
+            else:
+                leaves[leaf]["intercept"] = 1
+        else:
+            model_in_leaf = leaves[leaf]["models"]
+            if isinstance(model_in_leaf, sklearn.dummy.DummyClassifier):
+                prior = model_in_leaf.class_prior_
+                leaves[leaf]["slope"] = list(np.zeros(len(input_bounds.keys())))
+                if len(prior) < 2:
+                    pred_val = int(model_in_leaf.predict([0])[0])
+                    if pred_val == 0:
+                        leaves[leaf]["intercept"] = -1
+                    else:
+                        leaves[leaf]["intercept"] = 1
+                elif prior[0] <= prior[1]:
+                    leaves[leaf]["intercept"] = 1
+                else:
+                    leaves[leaf]["intercept"] = -1
+            else:
+                leaves[leaf]["slope"] = list(model_in_leaf.coef_.reshape((-1,)))
+                leaves[leaf]["intercept"] = model_in_leaf.intercept_.reshape((-1,))[0]
 
     # This loop creates an parent node id entry for each node in the tree
     for split in splits:
