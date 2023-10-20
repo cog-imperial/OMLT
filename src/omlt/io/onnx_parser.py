@@ -74,14 +74,14 @@ class NetworkParser:
                     size.append(dim.dim_value)
                     dim_value *= dim.dim_value
             if dim_value is None:
-                raise ValueError(f"All dimensions in {graph} input tensor have 0 value.")
+                raise ValueError(f"All dimensions in graph \"{graph.name}\" input tensor have 0 value.")
             assert network_input is None
             network_input = InputLayer(size)
             self._node_map[input.name] = network_input
             network.add_layer(network_input)
 
         if network_input is None:
-            raise ValueError(f"No valid input layer found in {graph}.")
+            raise ValueError(f"No valid input layer found in graph \"{graph.name}\".")
 
         self._nodes = nodes
         self._nodes_by_output = nodes_by_output
@@ -116,7 +116,7 @@ class NetworkParser:
                     value = _parse_constant_value(node)
                     self._constants[output] = value
             else:
-                raise ValueError(f"Nodes must have inputs or have op_type \"Constant\". {node} has no inputs and op_type {node.op_type}")
+                raise ValueError(f"Nodes must have inputs or have op_type \"Constant\". Node \"{node.name}\" has no inputs and op_type \"{node.op_type}\".")
 
         # traverse graph
         self._node_stack = list(inputs)

@@ -4,6 +4,7 @@ from omlt.dependencies import onnx, onnx_available
 
 if onnx_available:
     from omlt.io.onnx import load_onnx_neural_network
+    from omlt.io.onnx_parser import NetworkParser
 
 
 @pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
@@ -105,3 +106,34 @@ def test_maxpool(datadir):
     assert layers[3].output_size == [3, 2, 1]
     for layer in layers[1:]:
         assert layer.kernel_depth == 3
+
+@pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
+def test_input_tensor_invalid_dims(datadir):
+    model = onnx.load(datadir.file("keras_linear_131.onnx"))
+    model.graph.input[0].type.tensor_type.shape.dim[1].dim_value = 0
+    parser = NetworkParser()
+    with pytest.raises(ValueError) as excinfo:
+        parser.parse_network(model.graph,None,None)
+    expected_msg = "All dimensions in graph \"tf2onnx\" input tensor have 0 value."
+    assert str(excinfo.value) == expected_msg
+
+@pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
+def test_no_input_layers(datadir):
+    model = onnx.load(datadir.file("keras_linear_131.onnx"))
+    model.graph.input.remove(model.graph.input[0])
+    parser = NetworkParser()
+    with pytest.raises(ValueError) as excinfo:
+        parser.parse_network(model.graph,None,None)
+    expected_msg = "No valid input layer found in graph \"tf2onnx\"."
+    assert str(excinfo.value) == expected_msg
+
+@pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
+def test_node_no_inputs(datadir):
+    model = onnx.load(datadir.file("keras_linear_131.onnx"))
+    while (len(model.graph.node[0].input) > 0):
+        model.graph.node[0].input.pop()
+    parser = NetworkParser()
+    with pytest.raises(ValueError) as excinfo:
+        parser.parse_network(model.graph,None,None)
+    expected_msg = "Nodes must have inputs or have op_type \"Constant\". Node \"StatefulPartitionedCall/keras_linear_131/dense/MatMul\" has no inputs and op_type \"MatMul\"."
+    assert str(excinfo.value) == expected_msg
