@@ -78,9 +78,9 @@ class NetworkDefinition:
         id_to = id(to_layer)
         id_from = id(from_layer)
         if id_to not in self.__layers_by_id:
-            raise ValueError(f"Inbound layer {id_to} not found in network.")
+            raise ValueError(f"Inbound layer {to_layer} not found in network.")
         if id_from not in self.__layers_by_id:
-            raise ValueError(f"Outbound layer {id_from} not found in network.")
+            raise ValueError(f"Outbound layer {from_layer} not found in network.")
         self.__graph.add_edge(id_from, id_to)
 
     @property

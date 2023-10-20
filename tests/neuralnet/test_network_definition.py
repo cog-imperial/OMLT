@@ -132,3 +132,45 @@ def test_input_bound_scaling_multiD():
         scaler, scaled_input_bounds=None, unscaled_input_bounds=unscaled_input_bounds
     )
     assert net.scaled_input_bounds == scaled_input_bounds
+
+def _test_add_invalid_edge(direction):
+    """
+    direction can be "in" or "out"
+    """
+    net = NetworkDefinition(scaled_input_bounds=[(-10.0, 10.0)])
+
+    input_layer = InputLayer([1])
+    net.add_layer(input_layer)
+
+    dense_layer_0 = DenseLayer(
+        input_layer.output_size,
+        [1, 2],
+        activation="relu",
+        weights=np.array([[1.0, -1.0]]),
+        biases=np.array([0.0, 0.0]),
+    )
+    net.add_layer(dense_layer_0)
+    net.add_edge(input_layer, dense_layer_0)
+   
+    dense_layer_1 = DenseLayer(
+        input_layer.output_size,
+        dense_layer_0.input_size,
+        activation="linear",
+        weights=np.array([[1.0, 0.0], [5.0, 1.0]]),
+        biases=np.array([0.0, 0.0]),
+    )
+
+    if direction == 'in':
+        with pytest.raises(ValueError) as excinfo:
+            net.add_edge(input_layer,dense_layer_1)
+        expected_msg = f"Inbound layer {dense_layer_1} not found in network."
+        assert str(excinfo.value) == expected_msg
+    elif direction == 'out':
+        with pytest.raises(ValueError) as excinfo:
+            net.add_edge(dense_layer_1,dense_layer_0)
+        expected_msg = f"Outbound layer {dense_layer_1} not found in network."
+        assert str(excinfo.value) == expected_msg
+
+def test_add_invalid_edge():
+    _test_add_invalid_edge('in')
+    _test_add_invalid_edge('out')
