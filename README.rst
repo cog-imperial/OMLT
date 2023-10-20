@@ -4,7 +4,7 @@
      :align: center
      :width: 200px
 
-.. image:: https://github.com/cog-imperial/OMLT/workflows/CI/badge.svg?branch=main
+.. image:: https://github.com/cog-imperial/OMLT/actions/workflows/main.yml/badge.svg
      :target: https://github.com/cog-imperial/OMLT/actions?workflow=CI
      :alt: CI Status
 
