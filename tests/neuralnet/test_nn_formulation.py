@@ -9,6 +9,7 @@ from omlt.neuralnet import (
     NetworkDefinition,
     ReducedSpaceNNFormulation,
     ReducedSpaceSmoothNNFormulation,
+    ReluPartitionFormulation,
 )
 from omlt.neuralnet.layer import (
     ConvLayer2D,
@@ -17,6 +18,10 @@ from omlt.neuralnet.layer import (
     InputLayer,
     PoolingLayer2D,
 )
+from omlt.neuralnet.layers.full_space import full_space_dense_layer
+from omlt.neuralnet.layers.partition_based import partition_based_dense_relu_layer
+from omlt.neuralnet.layers.reduced_space import reduced_space_dense_layer
+
 
 
 def two_node_network(activation, input_value):
@@ -325,3 +330,182 @@ def test_maxpool_FullSpaceNNFormulation():
     m.obj1 = pyo.Objective(expr=0)
     status = pyo.SolverFactory("cbc").solve(m, tee=False)
     assert abs(pyo.value(m.neural_net_block.outputs[0, 0, 0]) - y[0, 0, 0]) < 1e-6
+
+def _test_formulation_initialize_extra_input(network_formulation):
+    """
+    network_formulation can be:
+    'FullSpace',
+    'ReducedSpace'
+    """
+    net, y = two_node_network("linear", -2.0)
+    extra_input = InputLayer([1])
+    net.add_layer(extra_input)
+    with pytest.raises(ValueError) as excinfo:
+        if network_formulation == 'FullSpace':
+            formulation = FullSpaceNNFormulation(net)
+        elif network_formulation == 'ReducedSpace':
+            formulation = ReducedSpaceNNFormulation(net)
+    expected_msg = "Multiple input layers are not currently supported."
+    assert str(excinfo.value) == expected_msg
+
+def _test_formulation_added_extra_input(network_formulation):
+    """
+    network_formulation can be:
+    'FullSpace',
+    'ReducedSpace'
+    'relu'
+    """
+    net, y = two_node_network("linear", -2.0)
+    extra_input = InputLayer([1])
+    if network_formulation == 'FullSpace':
+        formulation = FullSpaceNNFormulation(net)
+    elif network_formulation == 'ReducedSpace':
+        formulation = ReducedSpaceNNFormulation(net)
+    elif network_formulation == 'relu':
+        formulation = ReluPartitionFormulation(net)
+    net.add_layer(extra_input)
+    with pytest.raises(ValueError) as excinfo:
+        formulation.input_indexes
+    expected_msg = "Multiple input layers are not currently supported."
+    assert str(excinfo.value) == expected_msg
+
+def _test_formulation_build_extra_input(network_formulation):
+    """
+    network_formulation can be:
+    'FullSpace',
+    'ReducedSpace'
+    'relu'
+    """
+    net, y = two_node_network("linear", -2.0)
+    extra_input = InputLayer([1])
+    if network_formulation == 'FullSpace':
+        formulation = FullSpaceNNFormulation(net)
+    elif network_formulation == 'ReducedSpace':
+        formulation = ReducedSpaceNNFormulation(net)
+    elif network_formulation == 'relu':
+        formulation = ReluPartitionFormulation(net)
+    net.add_layer(extra_input)
+    m = pyo.ConcreteModel()
+    m.neural_net_block = OmltBlock()
+    with pytest.raises(ValueError) as excinfo:
+        m.neural_net_block.build_formulation(formulation)
+    expected_msg = "Multiple input layers are not currently supported."
+    assert str(excinfo.value) == expected_msg
+
+def _test_formulation_added_extra_output(network_formulation):
+    """
+    network_formulation can be:
+    'FullSpace',
+    'ReducedSpace'
+    'relu'
+    """
+    net, y = two_node_network("linear", -2.0)
+    extra_output = DenseLayer(
+        [1, 2],
+        [1, 2],
+        activation="linear",
+        weights=np.array([[1.0, 0.0], [5.0, 1.0]]),
+        biases=np.array([3.0, 4.0]),
+    )
+    if network_formulation == 'FullSpace':
+        formulation = FullSpaceNNFormulation(net) 
+    elif network_formulation == 'ReducedSpace':
+        formulation = ReducedSpaceNNFormulation(net)
+    elif network_formulation == 'relu':
+        formulation = ReluPartitionFormulation(net)
+    net.add_layer(extra_output)
+    net.add_edge(list(net.layers)[-2],extra_output)
+    with pytest.raises(ValueError) as excinfo:
+        formulation.output_indexes
+    expected_msg = "Multiple output layers are not currently supported."
+    assert str(excinfo.value) == expected_msg
+
+def _test_formulation_initialize_extra_output(network_formulation):
+    """
+    network_formulation can be:
+    'FullSpace',
+    'ReducedSpace'
+    """
+    net, y = two_node_network("linear", -2.0)
+    extra_output = DenseLayer(
+        [1, 2],
+        [1, 2],
+        activation="linear",
+        weights=np.array([[1.0, 0.0], [5.0, 1.0]]),
+        biases=np.array([3.0, 4.0]),
+    )
+    net.add_layer(extra_output)
+    net.add_edge(list(net.layers)[-2],extra_output)
+    with pytest.raises(ValueError) as excinfo:
+        if network_formulation == 'FullSpace':
+            formulation = FullSpaceNNFormulation(net)
+        elif network_formulation == 'ReducedSpace':
+            formulation = ReducedSpaceNNFormulation(net)
+    expected_msg = "Multiple output layers are not currently supported."
+    assert str(excinfo.value) == expected_msg
+
+def test_FullSpaceNNFormulation_invalid_network():
+    _test_formulation_initialize_extra_input("FullSpace")
+    _test_formulation_added_extra_input("FullSpace")
+    _test_formulation_build_extra_input("FullSpace")
+    _test_formulation_initialize_extra_output("FullSpace")
+    _test_formulation_added_extra_output("FullSpace")
+
+def test_ReducedSpaceNNFormulation_invalid_network():
+    # _test_formulation_initialize_extra_input("ReducedSpace")
+    _test_formulation_added_extra_input("ReducedSpace")
+    _test_formulation_build_extra_input("ReducedSpace")
+    # _test_formulation_initialize_extra_output("ReducedSpace")
+    _test_formulation_added_extra_output("ReducedSpace")
+
+def test_ReluPartitionFormulation_invalid_network():
+    _test_formulation_added_extra_input("relu")
+    _test_formulation_build_extra_input("relu")
+    _test_formulation_added_extra_output("relu")
+
+def _test_dense_layer_multiple_predecessors(layer_type):
+    m = pyo.ConcreteModel()
+    m.neural_net_block = OmltBlock()
+    net, y = two_node_network(None, -2.0)
+    extra_input = InputLayer([1])
+    test_layer = list(net.layers)[2]
+    net.add_layer(extra_input)
+    net.add_edge(extra_input,test_layer)
+    with pytest.raises(ValueError) as excinfo:
+        if layer_type == 'PartitionBased':
+            partition_based_dense_relu_layer(m,net,m,test_layer,None)
+        elif layer_type == 'ReducedSpace':
+            reduced_space_dense_layer(m,net,m,test_layer,None)
+    expected_msg = f"Layer {test_layer} has multiple predecessors."
+    assert str(excinfo.value) == expected_msg
+
+def _test_dense_layer_no_predecessors(layer_type):
+    """
+    Layer type can be "ReducedSpace", or "PartitionBased".
+    """
+    m = pyo.ConcreteModel()
+    net = NetworkDefinition(scaled_input_bounds=[(-10.0, 10.0)])
+
+    test_layer = DenseLayer(
+        [1],
+        [1, 2],
+        activation=None,
+        weights=np.array([[1.0, -1.0]]),
+        biases=np.array([1.0, 2.0]),
+    )
+    net.add_layer(test_layer)
+    with pytest.raises(ValueError) as excinfo:
+        if layer_type == 'PartitionBased':
+            partition_based_dense_relu_layer(m,net,m,test_layer,None)
+        elif layer_type == 'ReducedSpace':
+            reduced_space_dense_layer(m,net,m,test_layer,None)
+    expected_msg = f"Layer {test_layer} is not an input layer, but has no predecessors."
+    assert str(excinfo.value) == expected_msg
+
+def test_partition_based_dense_layer_predecessors():
+    _test_dense_layer_multiple_predecessors("PartitionBased")
+    _test_dense_layer_no_predecessors("PartitionBased")
+
+def test_reduced_space_dense_layer_predecessors():
+    _test_dense_layer_multiple_predecessors("ReducedSpace")
+    _test_dense_layer_no_predecessors("ReducedSpace")
