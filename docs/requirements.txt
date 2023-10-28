@@ -6,4 +6,5 @@ pyomo
 networkx
 onnx
 tensorflow
+linear-tree
 importlib-metadata
