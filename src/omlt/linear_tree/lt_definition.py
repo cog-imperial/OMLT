@@ -267,7 +267,10 @@ def _parse_tree_data(model, input_bounds):
     # Include checks to ensure that the input dict is the model summary which
     # is obtained by calling the summary() method contained within the
     # linear-tree package (e.g. dict = model.summary())
-    if isinstance(model, lineartree.lineartree.LinearTreeRegressor) is True or isinstance(model, lineartree.lineartree.LinearTreeClassifier) is True:
+    if (
+        isinstance(model, lineartree.lineartree.LinearTreeRegressor) is True
+        or isinstance(model, lineartree.lineartree.LinearTreeClassifier) is True
+    ):
         leaves = model.summary(only_leaves=True)
         splits = model.summary()
     elif isinstance(model, dict) is True:
@@ -298,17 +301,17 @@ def _parse_tree_data(model, input_bounds):
     # keys in the splits dictionary. For LinearTreeClassifier, check if
     # the model in the leaf is a DummyClassifier. If so, use the information
     # in the prior to determine whether the intercept is 1, or -1. Otherwise
-    # use the slope/intercept information in the RidgeClassifier or 
-    # LinearTreeRegressor classes 
+    # use the slope/intercept information in the RidgeClassifier or
+    # LinearTreeRegressor classes
     for leaf in leaves:
         del splits[leaf]
         if isinstance(model, lineartree.lineartree.LinearTreeClassifier) is True:
-            num_classes = len(leaves[leaf]['classes'])
+            num_classes = len(leaves[leaf]["classes"])
         else:
             num_classes = 999
-        
+
         if num_classes < 2:
-            class_val = int(leaves[leaf]['classes'][0])
+            class_val = int(leaves[leaf]["classes"][0])
             leaves[leaf]["slope"] = list(np.zeros(len(input_bounds.keys())))
             if class_val == 0:
                 leaves[leaf]["intercept"] = -1
@@ -407,7 +410,6 @@ def _parse_tree_data(model, input_bounds):
     for feat in features:
         for leaf in leaves:
             leaves[leaf]["bounds"][feat] = [None, None]
-
 
     # Finally, go through each split and assign it's threshold value as the
     # upper bound to all the leaves descending to the left of the split and
