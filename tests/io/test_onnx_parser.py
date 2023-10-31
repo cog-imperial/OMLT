@@ -57,6 +57,22 @@ def test_gemm(datadir):
 
 
 @pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
+def test_gemm_transB(datadir):
+    model = onnx.load(datadir.file("gemm_not_transB.onnx"))
+    model_transB = onnx.load(datadir.file("gemm_transB.onnx"))
+    net = load_onnx_neural_network(model)
+    net_transB = load_onnx_neural_network(model_transB)
+    layers = list(net.layers)
+    layers_transB = list(net_transB.layers)
+    assert len(layers) == len(layers_transB)
+    assert layers[1].weights.shape == layers_transB[1].weights.shape
+    assert abs(layers[1].weights[0][0] - layers_transB[1].weights[0][0]) < 1e-05
+    assert abs(layers[1].weights[0][1] - layers_transB[1].weights[1][0]) < 1e-05
+    assert abs(layers[1].weights[1][0] - layers_transB[1].weights[0][1]) < 1e-05
+    assert abs(layers[1].weights[1][1] - layers_transB[1].weights[1][1]) < 1e-05
+
+
+@pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
 def test_conv(datadir):
     model = onnx.load(datadir.file("convx1_gemmx1.onnx"))
     net = load_onnx_neural_network(model)
