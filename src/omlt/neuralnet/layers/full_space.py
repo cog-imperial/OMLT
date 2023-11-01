@@ -10,12 +10,12 @@ from omlt.neuralnet.layer import ConvLayer2D, IndexMapper, PoolingLayer2D
 # TODO:      are trapped higher up the call stack)
 def full_space_dense_layer(net_block, net, layer_block, layer):
     r"""
-    Add full-space formulation of the dense layer to the block
+    Add full-space formulation of the dense layer to the block:
 
     .. math::
 
         \begin{align*}
-        \hat z_i &= \sum_{j{=}1}^{M_i} w_{ij} z_j + b_i  && \forall i \in N
+            y_j = \sum\limits_{i=0}^{F_{in}-1}w_{ij}x_i+b_j, && \forall 0\le j<F_{out}
         \end{align*}
 
     """

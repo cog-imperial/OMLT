@@ -19,28 +19,46 @@ def partition_based_dense_relu_layer(net_block, net, layer_block, layer, split_f
     r"""
     Partition-based ReLU activation formulation.
 
-    Generates the constraints for the ReLU activation function.
+    Generates the constraints for the ReLU activation function:
 
     .. math::
 
         \begin{align*}
-        z_i &= \text{max}(0, \hat{z_i}) && \forall i \in N
+            y_j = \max\left(0,\sum\limits_{i=0}^{F_{in}-1}w_{ij}x_i+b_j\right), && \forall 0\le j<F_{out}
         \end{align*}
 
-    The partition-based formulation for the i-th node is given by:
+    We additionally introduce the following notations to describe this formulation:
 
     .. math::
 
         \begin{align*}
-        &\sum_{n} \big( \sum_{j \in \mathbb{S}_n} w_{ij} x_j - p_n \big) + \sigma b \leq 0 \\
-        &\sum_{n} p_n + (1-\sigma) b \geq 0 \\
-        &z_i = \sum_{n} p_n + (1-\sigma)b \\
-        &\sigma l_n \leq \sum_{j \in \mathbb{S}_n}w_{ij}x_j - p_n \leq \sigma u_n \\
-        &(1-\sigma) l_n \leq p_n \leq (1-\sigma) u_n \\
-        &\sigma \in \{0, 1\}
+            n       &:= \text{the number of partitions}\\
+            S_k     &:=  \text{indexes of the $k$-th partition satisfying:} \\
+                    & \quad\quad \bigcup\limits_{k=0}^{n-1} S_k=\{0,1,\dots,F_{in}-1\},~S_{k_1}\cap S_{k_2}=\emptyset, ~\forall k_1\neq k_2\\
+            \sigma  &:= \text{if this activation function is activated, i.e.,}\\
+                    & \quad\quad y_j=
+                    \begin{cases}
+                        0, & \sigma=1\\
+                        \sum\limits_{i=0}^{F_{in}-1}w_{ij}x_i+b_j, & \sigma=0
+                    \end{cases}\\
+            p_k     &:=\text{auxiliary variable representing the $k$-th partition, i.e., $\sum\limits_{i\in S_k}w_{ij}x_i$}\\
+            l_k     &:=\text{the lower bound of $\sum\limits_{i\in S_k}w_{ij}x_i$}\\
+            u_k     &:=\text{the upper bound of $\sum\limits_{i\in S_k}w_{ij}x_i$}
         \end{align*}
 
-    where :math:`l_n` and :math:`u_n` are, respectively, lower and upper bounds the n-th partition.
+
+    The partition-based formulation for :math:`y_j` is given by:
+
+    .. math::
+
+        \begin{align*}
+            & y_j=\sum\limits_{k=0}^{n-1}p_k+(1-\sigma)b_j\\
+            & \sum\limits_{k=0}^{n-1}\left(\sum\limits_{i\in S_k}w_{ij}x_i-p_k\right)+\sigma b_j\le 0\\
+            & \sum\limits_{k=0}^{n-1}p_k+(1-\sigma)b_j\ge 0\\
+            & \sigma l_k\le \sum\limits_{i\in S_k}w_{ij}x_i-p_k\le \sigma u_k,~0\le k<n\\
+            & (1-\sigma)l_k\le p_k\le (1-\sigma)u_k,~0\le k<n
+        \end{align*}
+
     """
     # not an input layer, process the expressions
     prev_layers = list(net.predecessors(layer))

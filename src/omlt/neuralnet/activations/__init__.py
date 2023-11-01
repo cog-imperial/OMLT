@@ -1,3 +1,7 @@
+r"""
+Since all activation functions are element-wised, we only consider how to formulate activation functions for a single neuron, where :math:`x` denotes pre-activation variable, and :math:`y` denotes post-activation variable.
+
+"""
 from .linear import linear_activation_constraint, linear_activation_function
 from .relu import ComplementarityReLUActivation, bigm_relu_activation_constraint
 from .smooth import (

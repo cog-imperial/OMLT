@@ -1,4 +1,21 @@
-"""Neural network layer classes."""
+"""
+Neural network layer classes.
+
+We use the following notations to define a layer:
+
+.. math::
+
+    \begin{align*}
+        F_{in}  &:= \text{number of input features}\\
+        F_{out} &:= \text{number of output features}\\
+        x_i     &:= \text{the $i$-th input, $0\le i<F_{in}$}\\
+        y_j     &:= \text{the $j$-th output, $0\le j<F_{out}$}\\
+        w_{ij}  &:= \text{weight from $x_i$ to $y_j$, $0\le i<F_{in}, 0\le j<F_{out}$}\\
+        b_j     &:= \text{bias for $y_j$, $0\le j<F_{out}$}\\
+        \sigma  &:= \text{activation function}
+    \end{align*}
+
+"""
 import itertools
 
 import numpy as np
@@ -146,7 +163,13 @@ class InputLayer(Layer):
 
 class DenseLayer(Layer):
     """
-    Dense layer implementing `output = activation(dot(input, weights) + biases)`.
+    The dense layer is defined by:
+
+    .. math::
+
+        \begin{align*}
+            y_j = \sigma\left(\sum\limits_{i=0}^{F_{in}-1}w_{ij}x_i+b_j\right), && \forall 0\le j<F_{out}
+        \end{align*}
 
     Parameters
     ----------
