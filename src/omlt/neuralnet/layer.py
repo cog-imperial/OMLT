@@ -1,4 +1,4 @@
-"""
+r"""
 Neural network layer classes.
 
 We use the following notations to define a layer:
@@ -162,7 +162,7 @@ class InputLayer(Layer):
 
 
 class DenseLayer(Layer):
-    """
+    r"""
     The dense layer is defined by:
 
     .. math::
