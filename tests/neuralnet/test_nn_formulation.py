@@ -548,7 +548,7 @@ def test_partition_based_unbounded_below():
     with pytest.raises(ValueError) as excinfo:
         partition_based_dense_relu_layer(
             m.neural_net_block, net, m.neural_net_block, test_layer, split_func
-            )
+        )
     expected_msg = "Expression is unbounded below."
     assert str(excinfo.value) == expected_msg
 
@@ -570,7 +570,7 @@ def test_partition_based_unbounded_above():
     with pytest.raises(ValueError) as excinfo:
         partition_based_dense_relu_layer(
             m.neural_net_block, net, m.neural_net_block, test_layer, split_func
-            )
+        )
     expected_msg = "Expression is unbounded above."
     assert str(excinfo.value) == expected_msg
 
@@ -590,7 +590,7 @@ def test_partition_based_bias_unbounded_below():
     with pytest.raises(ValueError) as excinfo:
         partition_based_dense_relu_layer(
             m.neural_net_block, net, m.neural_net_block, test_layer, split_func
-            )
+        )
     expected_msg = "Expression is unbounded below."
     assert str(excinfo.value) == expected_msg
 
@@ -610,7 +610,7 @@ def test_partition_based_bias_unbounded_above():
     with pytest.raises(ValueError) as excinfo:
         partition_based_dense_relu_layer(
             m.neural_net_block, net, m.neural_net_block, test_layer, split_func
-            )
+        )
     expected_msg = "Expression is unbounded above."
     assert str(excinfo.value) == expected_msg
 
@@ -733,7 +733,7 @@ def test_maxpool2d_bad_input_activation():
     with pytest.raises(ValueError) as excinfo:
         full_space_maxpool2d_layer(
             m.neural_net_block, net, m.neural_net_block, maxpool_layer_1
-            )
+        )
     expected_msg = """Non-increasing activation functions on the preceding convolutional layer are not supported."""
     assert str(excinfo.value) == expected_msg
 

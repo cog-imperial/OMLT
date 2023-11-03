@@ -172,6 +172,7 @@ def _test_add_invalid_edge(direction):
         expected_msg = f"Outbound layer {dense_layer_1} not found in network."
         assert str(excinfo.value) == expected_msg
 
+
 def test_add_invalid_edge():
     _test_add_invalid_edge("in")
     _test_add_invalid_edge("out")

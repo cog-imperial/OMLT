@@ -59,7 +59,7 @@ def full_space_conv2d_layer(net_block, net, layer_block, layer):
         if succ_layer.activation != "linear":
             raise ValueError(
                 f"Activation is applied after convolution layer, but the successor max pooling layer {succ_layer} has an activation function also."
-                )
+            )
         succ_layer.activation = layer.activation
         layer.activation = "linear"
 
@@ -122,7 +122,7 @@ def full_space_maxpool2d_layer(net_block, net, layer_block, layer):
     if input_layer.activation != "linear":
         raise ValueError(
             "Non-increasing activation functions on the preceding convolutional layer are not supported."
-            )
+        )
     # TODO - add support for non-increasing activation functions on preceding convolutional layer
 
     # note kernel indexes are the same set of values for any output index, so wlog get kernel indexes for (0, 0, 0)

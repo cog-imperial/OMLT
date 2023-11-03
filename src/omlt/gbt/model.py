@@ -59,7 +59,7 @@ def _model_num_inputs(model):
     if len(graph.input) != 1:
         raise ValueError(
             f"Model graph input field is multi-valued {graph.input}. A single value is required."
-            )
+        )
     return _tensor_size(graph.input[0])
 
 
@@ -69,7 +69,7 @@ def _model_num_outputs(model):
     if len(graph.output) != 1:
         raise ValueError(
             f"Model graph output field is multi-valued {graph.output}. A single value is required."
-            )
+        )
     return _tensor_size(graph.output[0])
 
 

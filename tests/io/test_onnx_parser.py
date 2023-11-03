@@ -150,36 +150,41 @@ def test_consume_wrong_node_type(datadir):
 
     with pytest.raises(ValueError) as excinfo:
         parser._consume_dense_nodes(
-            parser._nodes['StatefulPartitionedCall/keras_linear_131/dense/BiasAdd'][1],
-            parser._nodes['StatefulPartitionedCall/keras_linear_131/dense/BiasAdd'][2])
+            parser._nodes["StatefulPartitionedCall/keras_linear_131/dense/BiasAdd"][1],
+            parser._nodes["StatefulPartitionedCall/keras_linear_131/dense/BiasAdd"][2],
+        )
     expected_msg_dense = "StatefulPartitionedCall/keras_linear_131/dense/BiasAdd is a Add node, only MatMul nodes can be used as starting points for consumption."
     assert str(excinfo.value) == expected_msg_dense
 
     with pytest.raises(ValueError) as excinfo:
         parser._consume_gemm_dense_nodes(
-            parser._nodes['StatefulPartitionedCall/keras_linear_131/dense/BiasAdd'][1],
-            parser._nodes['StatefulPartitionedCall/keras_linear_131/dense/BiasAdd'][2])
+            parser._nodes["StatefulPartitionedCall/keras_linear_131/dense/BiasAdd"][1],
+            parser._nodes["StatefulPartitionedCall/keras_linear_131/dense/BiasAdd"][2],
+        )
     expected_msg_gemm = "StatefulPartitionedCall/keras_linear_131/dense/BiasAdd is a Add node, only Gemm nodes can be used as starting points for consumption."
     assert str(excinfo.value) == expected_msg_gemm
 
     with pytest.raises(ValueError) as excinfo:
         parser._consume_conv_nodes(
-            parser._nodes['StatefulPartitionedCall/keras_linear_131/dense/BiasAdd'][1],
-            parser._nodes['StatefulPartitionedCall/keras_linear_131/dense/BiasAdd'][2])
+            parser._nodes["StatefulPartitionedCall/keras_linear_131/dense/BiasAdd"][1],
+            parser._nodes["StatefulPartitionedCall/keras_linear_131/dense/BiasAdd"][2],
+        )
     expected_msg_conv = "StatefulPartitionedCall/keras_linear_131/dense/BiasAdd is a Add node, only Conv nodes can be used as starting points for consumption."
     assert str(excinfo.value) == expected_msg_conv
 
     with pytest.raises(ValueError) as excinfo:
         parser._consume_reshape_nodes(
-            parser._nodes['StatefulPartitionedCall/keras_linear_131/dense/BiasAdd'][1],
-            parser._nodes['StatefulPartitionedCall/keras_linear_131/dense/BiasAdd'][2])
+            parser._nodes["StatefulPartitionedCall/keras_linear_131/dense/BiasAdd"][1],
+            parser._nodes["StatefulPartitionedCall/keras_linear_131/dense/BiasAdd"][2],
+        )
     expected_msg_reshape = "StatefulPartitionedCall/keras_linear_131/dense/BiasAdd is a Add node, only Reshape nodes can be used as starting points for consumption."
     assert str(excinfo.value) == expected_msg_reshape
 
     with pytest.raises(ValueError) as excinfo:
         parser._consume_pool_nodes(
-            parser._nodes['StatefulPartitionedCall/keras_linear_131/dense/BiasAdd'][1],
-            parser._nodes['StatefulPartitionedCall/keras_linear_131/dense/BiasAdd'][2])
+            parser._nodes["StatefulPartitionedCall/keras_linear_131/dense/BiasAdd"][1],
+            parser._nodes["StatefulPartitionedCall/keras_linear_131/dense/BiasAdd"][2],
+        )
     expected_msg_pool = """StatefulPartitionedCall/keras_linear_131/dense/BiasAdd is a Add node, only MaxPool nodes can be used as starting points for consumption."""
     assert str(excinfo.value) == expected_msg_pool
 
@@ -190,11 +195,12 @@ def test_consume_dense_wrong_dims(datadir):
     parser = NetworkParser()
     parser.parse_network(model.graph, None, None)
 
-    parser._nodes['StatefulPartitionedCall/keras_linear_131/dense/MatMul'][1].input.append('abcd')
+    parser._nodes["StatefulPartitionedCall/keras_linear_131/dense/MatMul"][1].input.append("abcd")
     with pytest.raises(ValueError) as excinfo:
         parser._consume_dense_nodes(
-            parser._nodes['StatefulPartitionedCall/keras_linear_131/dense/MatMul'][1],
-            parser._nodes['StatefulPartitionedCall/keras_linear_131/dense/MatMul'][2])
+            parser._nodes["StatefulPartitionedCall/keras_linear_131/dense/MatMul"][1],
+            parser._nodes["StatefulPartitionedCall/keras_linear_131/dense/MatMul"][2],
+        )
     expected_msg_dense = "StatefulPartitionedCall/keras_linear_131/dense/MatMul input has 3 dimensions, only nodes with 2 input dimensions can be used as starting points for consumption."
     assert str(excinfo.value) == expected_msg_dense
 
@@ -204,11 +210,11 @@ def test_consume_gemm_wrong_dims(datadir):
     model = onnx.load(datadir.file("gemm.onnx"))
     parser = NetworkParser()
     parser.parse_network(model.graph, None, None)
-    parser._nodes['Gemm_0'][1].input.append('abcd')
+    parser._nodes["Gemm_0"][1].input.append("abcd")
     with pytest.raises(ValueError) as excinfo:
         parser._consume_gemm_dense_nodes(
-            parser._nodes['Gemm_0'][1], parser._nodes['Gemm_0'][2]
-            )
+            parser._nodes["Gemm_0"][1], parser._nodes["Gemm_0"][2]
+        )
     expected_msg_gemm = "Gemm_0 input has 4 dimensions, only nodes with 3 input dimensions can be used as starting points for consumption."
     assert str(excinfo.value) == expected_msg_gemm
 
@@ -218,11 +224,11 @@ def test_consume_conv_wrong_dims(datadir):
     model = onnx.load(datadir.file("convx1_gemmx1.onnx"))
     parser = NetworkParser()
     parser.parse_network(model.graph, None, None)
-    parser._nodes['Conv_0'][1].input.append('abcd')
+    parser._nodes["Conv_0"][1].input.append("abcd")
     with pytest.raises(ValueError) as excinfo:
         parser._consume_conv_nodes(
-            parser._nodes['Conv_0'][1], parser._nodes['Conv_0'][2]
-            )
+            parser._nodes["Conv_0"][1], parser._nodes["Conv_0"][2]
+        )
     expected_msg_conv = "Conv_0 input has 4 dimensions, only nodes with 2 or 3 input dimensions can be used as starting points for consumption."
     assert str(excinfo.value) == expected_msg_conv
 
@@ -232,11 +238,11 @@ def test_consume_reshape_wrong_dims(datadir):
     model = onnx.load(datadir.file("convx1_gemmx1.onnx"))
     parser = NetworkParser()
     parser.parse_network(model.graph, None, None)
-    parser._nodes['Reshape_2'][1].input.append('abcd')
+    parser._nodes["Reshape_2"][1].input.append("abcd")
     with pytest.raises(ValueError) as excinfo:
         parser._consume_reshape_nodes(
-            parser._nodes['Reshape_2'][1], parser._nodes['Reshape_2'][2]
-            )
+            parser._nodes["Reshape_2"][1], parser._nodes["Reshape_2"][2]
+        )
     expected_msg_reshape = """Reshape_2 input has 3 dimensions, only nodes with 2 input dimensions can be used as starting points for consumption."""
     assert str(excinfo.value) == expected_msg_reshape
 
@@ -246,10 +252,10 @@ def test_consume_maxpool_wrong_dims(datadir):
     model = onnx.load(datadir.file("maxpool_2d.onnx"))
     parser = NetworkParser()
     parser.parse_network(model.graph, None, None)
-    parser._nodes['node1'][1].input.append('abcd')
+    parser._nodes["node1"][1].input.append("abcd")
     with pytest.raises(ValueError) as excinfo:
         parser._consume_pool_nodes(
-            parser._nodes['node1'][1], parser._nodes['node1'][2]
-            )
+            parser._nodes["node1"][1], parser._nodes["node1"][2]
+        )
     expected_msg_maxpool = """node1 input has 2 dimensions, only nodes with 1 input dimension can be used as starting points for consumption."""
     assert str(excinfo.value) == expected_msg_maxpool
