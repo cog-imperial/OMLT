@@ -670,10 +670,7 @@ def test_conv2d_extra_activation():
     net.add_edge(conv_layer_2, maxpool_layer_1)
     with pytest.raises(ValueError) as excinfo:
         m.neural_net_block.build_formulation(FullSpaceNNFormulation(net))
-    expected_msg = """Activation is applied after convolution layer, but the successor
-    max pooling layer PoolingLayer(input_size=[1, 3, 4], output_size=[1, 1, 2],
-    strides=[2, 2], kernel_shape=[3, 2]), pool_func_name=max has an activation function
-    also."""
+    expected_msg = """Activation is applied after convolution layer, but the successor max pooling layer PoolingLayer(input_size=[1, 3, 4], output_size=[1, 1, 2], strides=[2, 2], kernel_shape=[3, 2]), pool_func_name=max has an activation function also."""
     assert str(excinfo.value) == expected_msg
 
 
@@ -727,8 +724,7 @@ def test_maxpool2d_bad_input_activation():
     with pytest.raises(ValueError) as excinfo:
         full_space_maxpool2d_layer(m.neural_net_block, net, m.neural_net_block,
                                    maxpool_layer_1)
-    expected_msg = """Non-increasing activation functions on the preceding
-    convolutional layer are not supported."""
+    expected_msg = """Non-increasing activation functions on the preceding convolutional layer are not supported."""
     assert str(excinfo.value) == expected_msg
 
 
