@@ -715,7 +715,7 @@ def test_maxpool2d_bad_input_activation():
     # test normal ConvLayer -> MaxPoolLayer structure, with monotonic increasing
     # activation part of ConvLayer
     maxpool_layer_1 = PoolingLayer2D(
-        conv_layer_2.output_size, 
+        conv_layer_2.output_size,
         [1, 1, 2],
         [2, 2],
         "max",
