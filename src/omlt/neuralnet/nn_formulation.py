@@ -308,10 +308,10 @@ class ReducedSpaceNNFormulation(_PyomoFormulation):
         )
         if activation_functions is not None:
             self._activation_functions.update(activation_functions)
-       
+
         # If we want to do network input/output validation at initialize time instead
         # of build time, as it is for FullSpaceNNFormulation:
-        # 
+        #
         # network_inputs = list(self.__network_definition.input_nodes)
         # if len(network_inputs) != 1:
         #     raise ValueError("Multiple input layers are not currently supported.")
@@ -513,10 +513,10 @@ class ReluPartitionFormulation(_PyomoFormulation):
             else:
                 raise ValueError("ReluPartitionFormulation supports only Dense layers")
 
-        # This check is never hit. The formulation._build_formulation() function is 
-        # only ever called by an OmltBlock.build_formulation(), and that runs the 
+        # This check is never hit. The formulation._build_formulation() function is
+        # only ever called by an OmltBlock.build_formulation(), and that runs the
         # input_indexes and output_indexes first, which will catch any formulations
-        # with multiple input or output layers. 
+        # with multiple input or output layers.
 
         # setup input variables constraints
         # currently only support a single input layer
