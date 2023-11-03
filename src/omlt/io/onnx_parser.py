@@ -199,7 +199,7 @@ class NetworkParser:
             node_biases = self._initializers[in_0]
         elif in_1 in self._initializers:
             node_biases = self._initializers[in_1]
-        else: 
+        else:
             raise ValueError(f"Node inputs were not found in graph initializers.")
 
         if len(node_weights.shape) != 2:

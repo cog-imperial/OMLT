@@ -151,7 +151,7 @@ def _test_add_invalid_edge(direction):
     )
     net.add_layer(dense_layer_0)
     net.add_edge(input_layer, dense_layer_0)
-   
+
     dense_layer_1 = DenseLayer(
         input_layer.output_size,
         dense_layer_0.input_size,
