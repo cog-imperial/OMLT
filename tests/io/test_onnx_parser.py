@@ -138,9 +138,7 @@ def test_node_no_inputs(datadir):
     parser = NetworkParser()
     with pytest.raises(ValueError) as excinfo:
         parser.parse_network(model.graph, None, None)
-    expected_msg = """Nodes must have inputs or have op_type \"Constant\".
-      Node \"StatefulPartitionedCall/keras_linear_131/dense/MatMul\" has
-        no inputs and op_type \"MatMul\"."""
+    expected_msg = """Nodes must have inputs or have op_type \"Constant\". Node \"StatefulPartitionedCall/keras_linear_131/dense/MatMul\" has no inputs and op_type \"MatMul\"."""
     assert str(excinfo.value) == expected_msg
 
 
@@ -182,9 +180,7 @@ def test_consume_wrong_node_type(datadir):
         parser._consume_pool_nodes(parser._nodes[
             'StatefulPartitionedCall/keras_linear_131/dense/BiasAdd'][1],
             parser._nodes['StatefulPartitionedCall/keras_linear_131/dense/BiasAdd'][2])
-    expected_msg_pool = """StatefulPartitionedCall/keras_linear_131/dense/BiasAdd
-      is a Add node, only MaxPool nodes can be used as starting points
-        for consumption."""
+    expected_msg_pool = """StatefulPartitionedCall/keras_linear_131/dense/BiasAdd is a Add node, only MaxPool nodes can be used as starting points for consumption."""
     assert str(excinfo.value) == expected_msg_pool
 
 
@@ -238,8 +234,7 @@ def test_consume_reshape_wrong_dims(datadir):
     with pytest.raises(ValueError) as excinfo:
         parser._consume_reshape_nodes(parser._nodes['Reshape_2'][1],
                                       parser._nodes['Reshape_2'][2])
-    expected_msg_reshape = """Reshape_2 input has 3 dimensions, only nodes with 2 input
-      dimensions can be used as starting points for consumption."""
+    expected_msg_reshape = """Reshape_2 input has 3 dimensions, only nodes with 2 input dimensions can be used as starting points for consumption."""
     assert str(excinfo.value) == expected_msg_reshape
 
 
@@ -251,6 +246,5 @@ def test_consume_maxpool_wrong_dims(datadir):
     parser._nodes['node1'][1].input.append('abcd')
     with pytest.raises(ValueError) as excinfo:
         parser._consume_pool_nodes(parser._nodes['node1'][1], parser._nodes['node1'][2])
-    expected_msg_maxpool = """node1 input has 2 dimensions, only nodes with 1 input
-    dimension can be used as starting points for consumption."""
+    expected_msg_maxpool = """node1 input has 2 dimensions, only nodes with 1 input dimension can be used as starting points for consumption."""
     assert str(excinfo.value) == expected_msg_maxpool
