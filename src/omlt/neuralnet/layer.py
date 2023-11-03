@@ -24,9 +24,13 @@ class Layer:
         self, input_size, output_size, *, activation=None, input_index_mapper=None
     ):
         if not isinstance(input_size, (list,tuple)):
-            raise TypeError(f"input_size must be a list or tuple, {type(input_size)} was provided.")
+            raise TypeError(
+                f"input_size must be a list or tuple, {type(input_size)} was provided."
+                )
         if not isinstance(output_size, (list,tuple)):
-            raise TypeError(f"output_size must be a list or tuple, {type(output_size)} was provided.")
+            raise TypeError(
+                f"output_size must be a list or tuple, {type(output_size)} was provided."
+                )
         self.__input_size = list(input_size)
         self.__output_size = list(output_size)
         self.activation = activation
@@ -102,7 +106,9 @@ class Layer:
             else x[:]
         )
         if x_reshaped.shape != tuple(self.input_size):
-            raise ValueError(f"Layer requires an input size {self.input_size}, but the input tensor had size {x_reshaped.shape}.")
+            raise ValueError(
+                f"Layer requires an input size {self.input_size}, but the input tensor had size {x_reshaped.shape}."
+                )
         y = self._eval(x_reshaped)
         return self._apply_activation(y)
 
@@ -313,7 +319,9 @@ class Layer2D(Layer):
     def _eval(self, x):
         y = np.empty(shape=self.output_size)
         if len(self.output_size) != 3:
-            raise ValueError(f"Output should have 3 dimensions but instead has {len(self.output_size)}")
+            raise ValueError(
+                f"Output should have 3 dimensions but instead has {len(self.output_size)}"
+                )
         [depth, rows, cols] = list(self.output_size)
         for out_d in range(depth):
             for out_r in range(rows):
@@ -370,7 +378,9 @@ class PoolingLayer2D(Layer2D):
             input_index_mapper=input_index_mapper,
         )
         if pool_func_name not in  PoolingLayer2D._POOL_FUNCTIONS:
-            raise ValueError(f"Allowable pool functions are {PoolingLayer2D._POOL_FUNCTIONS}, {pool_func_name} was provided.")
+            raise ValueError(
+                f"Allowable pool functions are {PoolingLayer2D._POOL_FUNCTIONS}, {pool_func_name} was provided."
+                )
         self._pool_func_name = pool_func_name
         self._kernel_shape = kernel_shape
         self._kernel_depth = kernel_depth

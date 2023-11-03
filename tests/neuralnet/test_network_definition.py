@@ -133,6 +133,7 @@ def test_input_bound_scaling_multiD():
     )
     assert net.scaled_input_bounds == scaled_input_bounds
 
+
 def _test_add_invalid_edge(direction):
     """
     direction can be "in" or "out"
@@ -160,17 +161,17 @@ def _test_add_invalid_edge(direction):
         biases=np.array([0.0, 0.0]),
     )
 
-    if direction == 'in':
+    if direction == "in":
         with pytest.raises(ValueError) as excinfo:
-            net.add_edge(input_layer,dense_layer_1)
+            net.add_edge(input_layer, dense_layer_1)
         expected_msg = f"Inbound layer {dense_layer_1} not found in network."
         assert str(excinfo.value) == expected_msg
-    elif direction == 'out':
+    elif direction == "out":
         with pytest.raises(ValueError) as excinfo:
-            net.add_edge(dense_layer_1,dense_layer_0)
+            net.add_edge(dense_layer_1, dense_layer_0)
         expected_msg = f"Outbound layer {dense_layer_1} not found in network."
         assert str(excinfo.value) == expected_msg
 
 def test_add_invalid_edge():
-    _test_add_invalid_edge('in')
-    _test_add_invalid_edge('out')
+    _test_add_invalid_edge("in")
+    _test_add_invalid_edge("out")

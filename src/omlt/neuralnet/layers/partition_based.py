@@ -45,7 +45,9 @@ def partition_based_dense_relu_layer(net_block, net, layer_block, layer, split_f
     # not an input layer, process the expressions
     prev_layers = list(net.predecessors(layer))
     if len(prev_layers) == 0:
-        raise ValueError(f"Layer {layer} is not an input layer, but has no predecessors.")
+        raise ValueError(
+            f"Layer {layer} is not an input layer, but has no predecessors."
+            )
     elif len(prev_layers) > 1:
         raise ValueError(f"Layer {layer} has multiple predecessors.")
     prev_layer = prev_layers[0]

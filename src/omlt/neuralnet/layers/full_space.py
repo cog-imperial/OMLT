@@ -5,6 +5,7 @@ from pyomo.contrib.fbbt.fbbt import compute_bounds_on_expr
 from omlt.neuralnet.activations import NON_INCREASING_ACTIVATIONS
 from omlt.neuralnet.layer import ConvLayer2D, IndexMapper, PoolingLayer2D
 
+
 def full_space_dense_layer(net_block, net, layer_block, layer):
     r"""
     Add full-space formulation of the dense layer to the block
@@ -56,7 +57,9 @@ def full_space_conv2d_layer(net_block, net, layer_block, layer):
     ):
         # activation applied after convolution layer, so there shouldn't be an activation after max pooling too
         if succ_layer.activation != "linear":
-            raise ValueError(f"Activation is applied after convolution layer, but the successor max pooling layer {succ_layer} has an activation function also.")
+            raise ValueError(
+                f"Activation is applied after convolution layer, but the successor max pooling layer {succ_layer} has an activation function also."
+                )
         succ_layer.activation = layer.activation
         layer.activation = "linear"
 
@@ -114,10 +117,12 @@ def full_space_maxpool2d_layer(net_block, net, layer_block, layer):
 
     """
     input_layer, input_layer_block = _input_layer_and_block(net_block, net, layer)
-    if not isinstance(input_layer,ConvLayer2D):
+    if not isinstance(input_layer, ConvLayer2D):
         raise TypeError("Input layer must be a ConvLayer2D.")
     if input_layer.activation != "linear":
-        raise ValueError("Non-increasing activation functions on the preceding convolutional layer are not supported.")
+        raise ValueError(
+            "Non-increasing activation functions on the preceding convolutional layer are not supported."
+            )
     # TODO - add support for non-increasing activation functions on preceding convolutional layer
 
     # note kernel indexes are the same set of values for any output index, so wlog get kernel indexes for (0, 0, 0)

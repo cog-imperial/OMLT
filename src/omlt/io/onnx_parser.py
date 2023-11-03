@@ -74,14 +74,16 @@ class NetworkParser:
                     size.append(dim.dim_value)
                     dim_value *= dim.dim_value
             if dim_value is None:
-                raise ValueError(f"All dimensions in graph \"{graph.name}\" input tensor have 0 value.")
+                raise ValueError(
+                    f'All dimensions in graph "{graph.name}" input tensor have 0 value.'
+                    )
             assert network_input is None
             network_input = InputLayer(size)
             self._node_map[input.name] = network_input
             network.add_layer(network_input)
 
         if network_input is None:
-            raise ValueError(f"No valid input layer found in graph \"{graph.name}\".")
+            raise ValueError(f'No valid input layer found in graph "{graph.name}".')
 
         self._nodes = nodes
         self._nodes_by_output = nodes_by_output
@@ -116,7 +118,9 @@ class NetworkParser:
                     value = _parse_constant_value(node)
                     self._constants[output] = value
             else:
-                raise ValueError(f"Nodes must have inputs or have op_type \"Constant\". Node \"{node.name}\" has no inputs and op_type \"{node.op_type}\".")
+                raise ValueError(
+                    f'Nodes must have inputs or have op_type "Constant". Node "{node.name}" has no inputs and op_type "{node.op_type}".'
+                    )
 
         # traverse graph
         self._node_stack = list(inputs)
@@ -173,23 +177,31 @@ class NetworkParser:
     def _consume_dense_nodes(self, node, next_nodes):
         """Starting from a MatMul node, consume nodes to form a dense Ax + b node."""
         if node.op_type != "MatMul":
-            raise ValueError(f"{node.name} is a {node.op_type} node, only MatMul nodes can be used as starting points for consumption.")
+            raise ValueError(
+                f"{node.name} is a {node.op_type} node, only MatMul nodes can be used as starting points for consumption."
+                )
         if len(node.input) != 2:
-            raise ValueError(f"{node.name} input has {len(node.input)} dimensions, only nodes with 2 input dimensions can be used as starting points for consumption.")
+            raise ValueError(
+                f"{node.name} input has {len(node.input)} dimensions, only nodes with 2 input dimensions can be used as starting points for consumption."
+                )
 
         [in_0, in_1] = list(node.input)
         input_layer, transformer = self._node_input_and_transformer(in_0)
         node_weights = self._initializers[in_1]
 
         if len(next_nodes) != 1:
-            raise ValueError(f"Next nodes must have length 1, {next_nodes} has length {len(next_nodes)}")
+            raise ValueError(
+                f"Next nodes must have length 1, {next_nodes} has length {len(next_nodes)}"
+                )
 
         # expect 'Add' node ahead
         type_, node, maybe_next_nodes = self._nodes[next_nodes[0]]
         if type_ != "node":
             raise TypeError(f"Expected a node next, got a {type_} instead.")
         if node.op_type != "Add":
-            raise ValueError(f"The first node to be consumed, {node.name}, is a {node.op_type} node. Only Add nodes are supported.")
+            raise ValueError(
+                f"The first node to be consumed, {node.name}, is a {node.op_type} node. Only Add nodes are supported."
+                )
 
         # extract biases
         next_nodes = maybe_next_nodes
@@ -205,9 +217,13 @@ class NetworkParser:
         if len(node_weights.shape) != 2:
             raise ValueError(f"Node weights must be a 2-dimensional matrix.")
         if node_weights.shape[1] != node_biases.shape[0]:
-            raise ValueError(f"Node weights has {node_weights.shape[1]} columns; node biases has {node_biases.shape[0]} rows. These must be equal.")
+            raise ValueError(
+                f"Node weights has {node_weights.shape[1]} columns; node biases has {node_biases.shape[0]} rows. These must be equal."
+                )
         if len(node.output) != 1:
-            raise ValueError(f"Node output is {node.output} but should be a single value.")
+            raise ValueError(
+                f"Node output is {node.output} but should be a single value."
+                )
 
 
         input_output_size = _get_input_output_size(input_layer, transformer)
@@ -239,9 +255,13 @@ class NetworkParser:
     def _consume_gemm_dense_nodes(self, node, next_nodes):
         """Starting from a Gemm node, consume nodes to form a dense aAB + bC node."""
         if node.op_type != "Gemm":
-            raise ValueError(f"{node.name} is a {node.op_type} node, only Gemm nodes can be used as starting points for consumption.")
+            raise ValueError(
+                f"{node.name} is a {node.op_type} node, only Gemm nodes can be used as starting points for consumption."
+                )
         if len(node.input) != 3:
-            raise ValueError(f"{node.name} input has {len(node.input)} dimensions, only nodes with 3 input dimensions can be used as starting points for consumption.")
+            raise ValueError(
+                f"{node.name} input has {len(node.input)} dimensions, only nodes with 3 input dimensions can be used as starting points for consumption."
+                )
 
         attr = _collect_attributes(node)
         alpha = attr["alpha"]
@@ -290,9 +310,13 @@ class NetworkParser:
         (optional) activation function.
         """
         if node.op_type != "Conv":
-            raise ValueError(f"{node.name} is a {node.op_type} node, only Conv nodes can be used as starting points for consumption.")
+            raise ValueError(
+                f"{node.name} is a {node.op_type} node, only Conv nodes can be used as starting points for consumption."
+                )
         if len(node.input) not in [2,3]:
-            raise ValueError(f"{node.name} input has {len(node.input)} dimensions, only nodes with 2 or 3 input dimensions can be used as starting points for consumption.")
+            raise ValueError(
+                f"{node.name} input has {len(node.input)} dimensions, only nodes with 2 or 3 input dimensions can be used as starting points for consumption."
+                )
 
         if len(node.input) == 2:
             [in_0, in_1] = list(node.input)
@@ -314,25 +338,41 @@ class NetworkParser:
         strides = attr["strides"]
         # check only kernel shape and stride are set
         if attr["kernel_shape"] != kernel_shape:
-            raise ValueError(f"Kernel shape attribute {attr['kernel_shape']} does not match initialized kernel shape {kernel_shape}.")
+            raise ValueError(
+                f"Kernel shape attribute {attr['kernel_shape']} does not match initialized kernel shape {kernel_shape}."
+                )
         if len(kernel_shape) != len(strides):
-            raise ValueError(f"Initialized kernel shape {kernel_shape} has {len(kernel_shape)} dimensions. Strides attribute has {len(strides)} dimensions. These must be equal.")
+            raise ValueError(
+                f"Initialized kernel shape {kernel_shape} has {len(kernel_shape)} dimensions. Strides attribute has {len(strides)} dimensions. These must be equal."
+                )
         if len(input_output_size) != len(kernel_shape) + 1:
-            raise ValueError(f"Input/output size ({input_output_size}) must have one more dimension than initialized kernel shape ({kernel_shape}).")
+            raise ValueError(
+                f"Input/output size ({input_output_size}) must have one more dimension than initialized kernel shape ({kernel_shape})."
+                )
 
         # Check input, output have correct dimensions
         if biases.shape != (out_channels,):
-            raise ValueError(f"Biases shape {biases.shape} must match output weights channels {(out_channels,)}.")
+            raise ValueError(
+                f"Biases shape {biases.shape} must match output weights channels {(out_channels,)}."
+                )
         if in_channels != input_output_size[0]:
-            raise ValueError(f"Input/output size ({input_output_size}) first dimension must match input weights channels ({in_channels}).")
+            raise ValueError(
+                f"Input/output size ({input_output_size}) first dimension must match input weights channels ({in_channels})."
+                )
 
         # Other attributes are not supported
         if "dilations" in attr and attr["dilations"] != [1, 1]:
-            raise ValueError(f"{node} has non-identity dilations ({attr['dilations']}). This is not supported.")
+            raise ValueError(
+                f"{node} has non-identity dilations ({attr['dilations']}). This is not supported."
+                )
         if attr["group"] != 1:
-            raise ValueError(f"{node} has multiple groups ({attr['group']}). This is not supported.")
+            raise ValueError(
+                f"{node} has multiple groups ({attr['group']}). This is not supported."
+                )
         if "pads" in attr and np.any(attr["pads"]):
-            raise ValueError(f"{node} has non-zero pads ({attr['pads']}). This is not supported.")
+            raise ValueError(
+                f"{node} has non-zero pads ({attr['pads']}). This is not supported."
+                )
 
         # generate new nodes for the node output
         padding = 0
@@ -353,7 +393,9 @@ class NetworkParser:
         # convolute image one channel at the time
         # expect 2d image with channels
         if len(input_output_size) != 3:
-            raise ValueError(f"Expected a 2D image with channels, got {input_output_size}.")
+            raise ValueError(
+                f"Expected a 2D image with channels, got {input_output_size}."
+                )
 
         conv_layer = ConvLayer2D(
             input_output_size,
@@ -371,9 +413,13 @@ class NetworkParser:
     def _consume_reshape_nodes(self, node, next_nodes):
         """Parse a Reshape node."""
         if node.op_type != "Reshape":
-            raise ValueError(f"{node.name} is a {node.op_type} node, only Reshape nodes can be used as starting points for consumption.")
+            raise ValueError(
+                f"{node.name} is a {node.op_type} node, only Reshape nodes can be used as starting points for consumption."
+                )
         if len(node.input) != 2:
-            raise ValueError(f"{node.name} input has {len(node.input)} dimensions, only nodes with 2 input dimensions can be used as starting points for consumption.")
+            raise ValueError(
+                f"{node.name} input has {len(node.input)} dimensions, only nodes with 2 input dimensions can be used as starting points for consumption."
+                )
         [in_0, in_1] = list(node.input)
         input_layer = self._node_map[in_0]
         new_shape = self._constants[in_1]
@@ -388,14 +434,20 @@ class NetworkParser:
         (optional) activation function.
         """
         if node.op_type not in _POOLING_OP_TYPES:
-            raise ValueError(f"{node.name} is a {node.op_type} node, only MaxPool nodes can be used as starting points for consumption.")
+            raise ValueError(
+                f"{node.name} is a {node.op_type} node, only MaxPool nodes can be used as starting points for consumption."
+                )
         pool_func_name = "max"
 
         # ONNX network should not contain indices output from MaxPool - not supported by OMLT
         if len(node.output) != 1:
-            raise ValueError(f"The ONNX contains indices output from MaxPool. This is not supported by OMLT.")
+            raise ValueError(
+                f"The ONNX contains indices output from MaxPool. This is not supported by OMLT."
+                )
         if len(node.input) != 1:
-            raise ValueError(f"{node.name} input has {len(node.input)} dimensions, only nodes with 1 input dimension can be used as starting points for consumption.")
+            raise ValueError(
+                f"{node.name} input has {len(node.input)} dimensions, only nodes with 1 input dimension can be used as starting points for consumption."
+                )
 
         input_layer, transformer = self._node_input_and_transformer(node.input[0])
         input_output_size = _get_input_output_size(input_layer, transformer)
@@ -405,7 +457,9 @@ class NetworkParser:
             # this means there is an extra dimension for number of batches
             # batches not supported, so only accept if they're not there or there is only 1 batch
             if input_output_size[0] != 1:
-                raise ValueError(f"{node.name} has {input_output_size[0]} batches, only a single batch is supported.")
+                raise ValueError(
+                    f"{node.name} has {input_output_size[0]} batches, only a single batch is supported."
+                    )
             input_output_size = input_output_size[1:]
 
         in_channels = input_output_size[0]
@@ -418,15 +472,25 @@ class NetworkParser:
         # check only kernel shape, stride, storage order are set
         # everything else is not supported
         if "dilations" in attr and attr["dilations"] != [1, 1]:
-            raise ValueError(f"{node.name} has non-identity dilations ({attr['dilations']}). This is not supported.")
+            raise ValueError(
+                f"{node.name} has non-identity dilations ({attr['dilations']}). This is not supported."
+                )
         if "pads" in attr and np.any(attr["pads"]):
-            raise ValueError(f"{node.name} has non-zero pads ({attr['pads']}). This is not supported.")
+            raise ValueError(
+                f"{node.name} has non-zero pads ({attr['pads']}). This is not supported."
+                )
         if ("auto_pad" in attr) and (attr["auto_pad"] != "NOTSET"):
-            raise ValueError(f"{node.name} has autopad set ({attr['auto_pad']}). This is not supported.")
+            raise ValueError(
+                f"{node.name} has autopad set ({attr['auto_pad']}). This is not supported."
+                )
         if len(kernel_shape) != len(strides):
-            raise ValueError(f"Kernel shape {kernel_shape} has {len(kernel_shape)} dimensions. Strides attribute has {len(strides)} dimensions. These must be equal.")
+            raise ValueError(
+                f"Kernel shape {kernel_shape} has {len(kernel_shape)} dimensions. Strides attribute has {len(strides)} dimensions. These must be equal."
+                )
         if len(input_output_size) != len(kernel_shape) + 1:
-            raise ValueError(f"Input/output size ({input_output_size}) must have one more dimension than kernel shape ({kernel_shape}).")
+            raise ValueError(
+                f"Input/output size ({input_output_size}) must have one more dimension than kernel shape ({kernel_shape})."
+                )
 
         output_shape_wrapper = math.floor
         if "ceil_mode" in attr and attr["ceil_mode"] == 1:
