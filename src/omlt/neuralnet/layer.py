@@ -377,7 +377,7 @@ class PoolingLayer2D(Layer2D):
             activation=activation,
             input_index_mapper=input_index_mapper,
         )
-        if pool_func_name not in  PoolingLayer2D._POOL_FUNCTIONS:
+        if pool_func_name not in PoolingLayer2D._POOL_FUNCTIONS:
             raise ValueError(
                 f"Allowable pool functions are {PoolingLayer2D._POOL_FUNCTIONS}, {pool_func_name} was provided."
             )

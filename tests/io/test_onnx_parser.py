@@ -195,7 +195,9 @@ def test_consume_dense_wrong_dims(datadir):
     parser = NetworkParser()
     parser.parse_network(model.graph, None, None)
 
-    parser._nodes["StatefulPartitionedCall/keras_linear_131/dense/MatMul"][1].input.append("abcd")
+    parser._nodes["StatefulPartitionedCall/keras_linear_131/dense/MatMul"][
+        1
+    ].input.append("abcd")
     with pytest.raises(ValueError) as excinfo:
         parser._consume_dense_nodes(
             parser._nodes["StatefulPartitionedCall/keras_linear_131/dense/MatMul"][1],
@@ -254,8 +256,6 @@ def test_consume_maxpool_wrong_dims(datadir):
     parser.parse_network(model.graph, None, None)
     parser._nodes["node1"][1].input.append("abcd")
     with pytest.raises(ValueError) as excinfo:
-        parser._consume_pool_nodes(
-            parser._nodes["node1"][1], parser._nodes["node1"][2]
-        )
+        parser._consume_pool_nodes(parser._nodes["node1"][1], parser._nodes["node1"][2])
     expected_msg_maxpool = """node1 input has 2 dimensions, only nodes with 1 input dimension can be used as starting points for consumption."""
     assert str(excinfo.value) == expected_msg_maxpool
