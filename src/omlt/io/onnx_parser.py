@@ -368,16 +368,17 @@ class NetworkParser:
             raise ValueError(
                 f"{node} has multiple groups ({attr['group']}). This is not supported."
             )
-        if "pads" in attr and np.any(attr["pads"]):
-            raise ValueError(
-                f"{node} has non-zero pads ({attr['pads']}). This is not supported."
-            )
+        if "pads" in attr:
+            pads = attr["pads"]
+        else:
+            pads = None
 
         # generate new nodes for the node output
-        padding = 0
+
+        padding = [pads[i] + pads[i + len(node.input)] for i in range(len(node.input))]
         output_size = [out_channels]
-        for w, k, s in zip(input_output_size[1:], kernel_shape, strides):
-            new_w = int((w - k + 2 * padding) / s) + 1
+        for w, k, s, p in zip(input_output_size[1:], kernel_shape, strides, padding):
+            new_w = int((w - k + p) / s) + 1
             output_size.append(new_w)
 
         activation = "linear"
@@ -401,6 +402,7 @@ class NetworkParser:
             output_size,
             strides,
             weights,
+            pads=pads,
             activation=activation,
             input_index_mapper=transformer,
         )
@@ -467,16 +469,13 @@ class NetworkParser:
         kernel_depth = attr["kernel_shape"][0]
         kernel_shape = attr["kernel_shape"][1:]
         strides = attr["strides"] if "strides" in attr else [1] * len(kernel_shape)
+        pads = attr["pads"] if "pads" in attr else None
 
         # check only kernel shape, stride, storage order are set
         # everything else is not supported
         if "dilations" in attr and attr["dilations"] != [1, 1]:
             raise ValueError(
                 f"{node.name} has non-identity dilations ({attr['dilations']}). This is not supported."
-            )
-        if "pads" in attr and np.any(attr["pads"]):
-            raise ValueError(
-                f"{node.name} has non-zero pads ({attr['pads']}). This is not supported."
             )
         if ("auto_pad" in attr) and (attr["auto_pad"] != "NOTSET"):
             raise ValueError(
@@ -519,6 +518,7 @@ class NetworkParser:
             pool_func_name,
             tuple(kernel_shape),
             kernel_depth,
+            pads=pads,
             activation=activation,
             input_index_mapper=transformer,
         )

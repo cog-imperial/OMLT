@@ -225,6 +225,8 @@ class Layer2D(Layer):
         the size of the output.
     strides : matrix-like
         stride of the kernel.
+    pads : matrix-like
+        Padding for the kernel. Given as [left, bottom, right, top]
     activation : str or None
         activation function name
     input_index_mapper : IndexMapper or None
@@ -237,6 +239,7 @@ class Layer2D(Layer):
         output_size,
         strides,
         *,
+        pads=None,
         activation=None,
         input_index_mapper=None,
     ):
@@ -247,11 +250,20 @@ class Layer2D(Layer):
             input_index_mapper=input_index_mapper,
         )
         self.__strides = strides
+        if pads is None:
+            self.__pads = [0, 0, 0, 0]
+        else:
+            self.__pads = pads
 
     @property
     def strides(self):
         """Return the stride of the layer"""
         return self.__strides
+
+    @property
+    def pads(self):
+        """Return the padding of the layer"""
+        return self.__pads
 
     @property
     def kernel_shape(self):
@@ -280,12 +292,14 @@ class Layer2D(Layer):
         kernel_d = self.kernel_depth
         [kernel_r, kernel_c] = self.kernel_shape
         [rows_stride, cols_stride] = self.__strides
+        [pads_row, pads_col] = self.__pads[:1]
         start_in_d = 0
-        start_in_r = out_r * rows_stride
-        start_in_c = out_c * cols_stride
-        mapper = lambda x: x
-        if self.input_index_mapper is not None:
-            mapper = self.input_index_mapper
+        start_in_r = out_r * rows_stride - pads_row
+        start_in_c = out_c * cols_stride - pads_col
+        # Defined but never used:
+        # mapper = lambda x: x
+        # if self.input_index_mapper is not None:
+        #     mapper = self.input_index_mapper
 
         for k_d in range(kernel_d):
             for k_r in range(kernel_r):
@@ -299,6 +313,7 @@ class Layer2D(Layer):
                     # even though we loop over ALL kernel indexes.
                     if not all(
                         input_index[i] < self.input_size[i]
+                        and input_index[i] >= 0
                         for i in range(len(input_index))
                     ):
                         continue
@@ -345,6 +360,8 @@ class PoolingLayer2D(Layer2D):
         the size of the output.
     strides : matrix-like
         stride of the kernel.
+    pads : matrix-like
+        Padding for the kernel. Given as [left, bottom, right, top]
     pool_func : str
         name of function used to pool values in a kernel to a single value.
     transpose : bool
@@ -367,6 +384,7 @@ class PoolingLayer2D(Layer2D):
         kernel_shape,
         kernel_depth,
         *,
+        pads=None,
         activation=None,
         input_index_mapper=None,
     ):
@@ -374,6 +392,7 @@ class PoolingLayer2D(Layer2D):
             input_size,
             output_size,
             strides,
+            pads=pads,
             activation=activation,
             input_index_mapper=input_index_mapper,
         )
@@ -421,6 +440,8 @@ class ConvLayer2D(Layer2D):
         stride of the cross-correlation kernel.
     kernel : matrix-like
         the cross-correlation kernel.
+    pads : matrix-like
+        Padding for the kernel. Given as [left, bottom, right, top]
     activation : str or None
         activation function name
     input_index_mapper : IndexMapper or None
@@ -434,6 +455,7 @@ class ConvLayer2D(Layer2D):
         strides,
         kernel,
         *,
+        pads=None,
         activation=None,
         input_index_mapper=None,
     ):
@@ -441,6 +463,7 @@ class ConvLayer2D(Layer2D):
             input_size,
             output_size,
             strides,
+            pads=pads,
             activation=activation,
             input_index_mapper=input_index_mapper,
         )
