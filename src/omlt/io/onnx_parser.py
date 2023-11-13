@@ -371,11 +371,12 @@ class NetworkParser:
         if "pads" in attr:
             pads = attr["pads"]
         else:
-            pads = None
+            pads = 2*(len(input_output_size)-1)*[0]
 
         # generate new nodes for the node output
-
-        padding = [pads[i] + pads[i + len(node.input)] for i in range(len(node.input))]
+        padding = [
+            pads[i] + pads[i + len(input_output_size)-1]
+            for i in range(len(input_output_size)-1)]
         output_size = [out_channels]
         for w, k, s, p in zip(input_output_size[1:], kernel_shape, strides, padding):
             new_w = int((w - k + p) / s) + 1
