@@ -508,7 +508,7 @@ class ConvLayer2D(Layer2D):
                                             kernel.shape[0],
                                             kernel.shape[1],
                                             1,
-                                            kernel.shape[3]
+                                            kernel.shape[3],
                                         )
                                     ),
                                     np.zeros(
@@ -516,9 +516,9 @@ class ConvLayer2D(Layer2D):
                                             kernel.shape[0],
                                             kernel.shape[1],
                                             self.dilations[0] - 1,
-                                            kernel.shape[3]
+                                            kernel.shape[3],
                                         )
-                                    )
+                                    ),
                                 ]
                             )
                             for i in range(kernel.shape[2] - 1)
@@ -540,7 +540,7 @@ class ConvLayer2D(Layer2D):
                                             dilate_rows.shape[0],
                                             dilate_rows.shape[1],
                                             dilate_rows.shape[2],
-                                            1
+                                            1,
                                         )
                                     ),
                                     np.zeros(
@@ -548,16 +548,21 @@ class ConvLayer2D(Layer2D):
                                             dilate_rows.shape[0],
                                             dilate_rows.shape[1],
                                             dilate_rows.shape[2],
-                                            self.dilations[1] - 1
+                                            self.dilations[1] - 1,
                                         )
-                                    )
+                                    ),
                                 ]
                             )
-                            for i in range(dilate_rows.shape[3]-1)
+                            for i in range(dilate_rows.shape[3] - 1)
                         ]
                     ),
                     dilate_rows[:, :, :, -1].reshape(
-                        (dilate_rows.shape[0], dilate_rows.shape[1], dilate_rows.shape[2], 1)
+                        (
+                            dilate_rows.shape[0],
+                            dilate_rows.shape[1],
+                            dilate_rows.shape[2],
+                            1,
+                        )
                     ),
                 ]
             )
