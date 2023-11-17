@@ -291,7 +291,7 @@ class Layer2D(Layer):
     def dilated_kernel_shape(self):
         """Return the shape of the kernel after dilation"""
         dilated_dims = [
-            self.dilations[i]*(self.kernel_shape[i]-1) + 1
+            self.dilations[i] * (self.kernel_shape[i] - 1) + 1
             for i in range(len(self.kernel_shape))
         ]
         return tuple(dilated_dims)
@@ -333,8 +333,7 @@ class Layer2D(Layer):
                     # as this could require using a partial kernel
                     # even though we loop over ALL kernel indexes.
                     if not all(
-                        input_index[i] < self.input_size[i]
-                        and input_index[i] >= 0
+                        input_index[i] < self.input_size[i] and input_index[i] >= 0
                         for i in range(len(input_index))
                     ):
                         continue
@@ -498,25 +497,70 @@ class ConvLayer2D(Layer2D):
         )
         self.__kernel = kernel
         if self.dilations != [1, 1]:
-            dilate_rows = np.hstack([
-                np.hstack([
-                    np.hstack([
-                        kernel[:, :, i, :].reshape((
-                            kernel.shape[0], kernel.shape[1], 1, kernel.shape[3])),
-                        np.zeros((
-                            kernel.shape[0], kernel.shape[1], self.dilations[0] - 1, kernel.shape[3]))])
-                    for i in range(kernel.shape[2]-1)]),
-                kernel[:, :, -1, :].reshape((kernel.shape[0], kernel.shape[1], 1, kernel.shape[3]))
-            ])
-            dilate_kernel = np.dstack([
-                np.dstack([
-                    np.dstack([
-                        dilate_rows[:, :, :, i].reshape((
-                            dilate_rows.shape[0], dilate_rows.shape[1], dilate_rows.shape[2], 1)),
-                        np.zeros((dilate_rows.shape[0], dilate_rows.shape[1], dilate_rows.shape[2], self.dilations[1] - 1))])
-                    for i in range(dilate_rows.shape[3]-1)]),
-                dilate_rows[:, :, :, -1].reshape((dilate_rows.shape[0], dilate_rows.shape[1], dilate_rows.shape[2], 1))
-            ])
+            dilate_rows = np.hstack(
+                [
+                    np.hstack(
+                        [
+                            np.hstack(
+                                [
+                                    kernel[:, :, i, :].reshape(
+                                        (
+                                            kernel.shape[0],
+                                            kernel.shape[1],
+                                            1,
+                                            kernel.shape[3]
+                                        )
+                                    ),
+                                    np.zeros(
+                                        (
+                                            kernel.shape[0],
+                                            kernel.shape[1],
+                                            self.dilations[0] - 1,
+                                            kernel.shape[3]
+                                        )
+                                    )
+                                ]
+                            )
+                            for i in range(kernel.shape[2] - 1)
+                        ]
+                    ),
+                    kernel[:, :, -1, :].reshape(
+                        (kernel.shape[0], kernel.shape[1], 1, kernel.shape[3])
+                    ),
+                ]
+            )
+            dilate_kernel = np.dstack(
+                [
+                    np.dstack(
+                        [
+                            np.dstack(
+                                [
+                                    dilate_rows[:, :, :, i].reshape(
+                                        (
+                                            dilate_rows.shape[0],
+                                            dilate_rows.shape[1],
+                                            dilate_rows.shape[2],
+                                            1
+                                        )
+                                    ),
+                                    np.zeros(
+                                        (
+                                            dilate_rows.shape[0],
+                                            dilate_rows.shape[1],
+                                            dilate_rows.shape[2],
+                                            self.dilations[1] - 1
+                                        )
+                                    )
+                                ]
+                            )
+                            for i in range(dilate_rows.shape[3]-1)
+                        ]
+                    ),
+                    dilate_rows[:, :, :, -1].reshape(
+                        (dilate_rows.shape[0], dilate_rows.shape[1], dilate_rows.shape[2], 1)
+                    ),
+                ]
+            )
             self.__dilated_kernel = dilate_kernel
         else:
             self.__dilated_kernel = kernel

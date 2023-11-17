@@ -364,12 +364,12 @@ class NetworkParser:
         if "pads" in attr:
             pads = attr["pads"]
         else:
-            pads = 2*(len(input_output_size)-1)*[0]
+            pads = 2 * (len(input_output_size) - 1) * [0]
 
         if "dilations" in attr:
             dilations = attr["dilations"]
         else:
-            dilations = (len(input_output_size)-1)*[1]
+            dilations = (len(input_output_size) - 1) * [1]
 
         # Other attributes are not supported
         if attr["group"] != 1:
@@ -379,8 +379,8 @@ class NetworkParser:
 
         # generate new nodes for the node output
         padding = [
-            pads[i] + pads[i + len(input_output_size)-1]
-            for i in range(len(input_output_size)-1)
+            pads[i] + pads[i + len(input_output_size) - 1]
+            for i in range(len(input_output_size) - 1)
         ]
         output_size = [out_channels]
         for w, k, s, p in zip(input_output_size[1:], kernel_shape, strides, padding):
