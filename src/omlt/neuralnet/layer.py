@@ -227,6 +227,8 @@ class Layer2D(Layer):
         stride of the kernel.
     pads : matrix-like
         Padding for the kernel. Given as [left, bottom, right, top]
+    dilations : matrix-like
+        Dilations of the kernel
     activation : str or None
         activation function name
     input_index_mapper : IndexMapper or None
@@ -240,6 +242,7 @@ class Layer2D(Layer):
         strides,
         *,
         pads=None,
+        dilations=None,
         activation=None,
         input_index_mapper=None,
     ):
@@ -254,6 +257,10 @@ class Layer2D(Layer):
             self.__pads = [0, 0, 0, 0]
         else:
             self.__pads = pads
+        if dilations is None:
+            self.__dilations = [1, 1]
+        else:
+            self.__dilations = dilations
 
     @property
     def strides(self):
@@ -275,6 +282,20 @@ class Layer2D(Layer):
         """Return the depth of the kernel"""
         raise NotImplementedError()
 
+    @property
+    def dilations(self):
+        """Return the kernel dilation of the layer"""
+        return self.__dilations
+
+    @property
+    def dilated_kernel_shape(self):
+        """Return the shape of the kernel after dilation"""
+        dilated_dims = [
+            self.dilations[i] * (self.kernel_shape[i] - 1) + 1
+            for i in range(len(self.kernel_shape))
+        ]
+        return tuple(dilated_dims)
+
     def kernel_index_with_input_indexes(self, out_d, out_r, out_c):
         """
         Returns an iterator over the index within the kernel and input index
@@ -290,9 +311,9 @@ class Layer2D(Layer):
             the output column.
         """
         kernel_d = self.kernel_depth
-        [kernel_r, kernel_c] = self.kernel_shape
+        [kernel_r, kernel_c] = self.dilated_kernel_shape
         [rows_stride, cols_stride] = self.__strides
-        [pads_row, pads_col] = self.__pads[:1]
+        [pads_row, pads_col] = self.__pads[:2]
         start_in_d = 0
         start_in_r = out_r * rows_stride - pads_row
         start_in_c = out_c * cols_stride - pads_col
@@ -312,8 +333,7 @@ class Layer2D(Layer):
                     # as this could require using a partial kernel
                     # even though we loop over ALL kernel indexes.
                     if not all(
-                        input_index[i] < self.input_size[i]
-                        and input_index[i] >= 0
+                        input_index[i] < self.input_size[i] and input_index[i] >= 0
                         for i in range(len(input_index))
                     ):
                         continue
@@ -362,6 +382,8 @@ class PoolingLayer2D(Layer2D):
         stride of the kernel.
     pads : matrix-like
         Padding for the kernel. Given as [left, bottom, right, top]
+    dilations : matrix-like
+        Dilations of the kernel
     pool_func : str
         name of function used to pool values in a kernel to a single value.
     transpose : bool
@@ -385,6 +407,7 @@ class PoolingLayer2D(Layer2D):
         kernel_depth,
         *,
         pads=None,
+        dilations=None,
         activation=None,
         input_index_mapper=None,
     ):
@@ -393,6 +416,7 @@ class PoolingLayer2D(Layer2D):
             output_size,
             strides,
             pads=pads,
+            dilations=dilations,
             activation=activation,
             input_index_mapper=input_index_mapper,
         )
@@ -442,6 +466,8 @@ class ConvLayer2D(Layer2D):
         the cross-correlation kernel.
     pads : matrix-like
         Padding for the kernel. Given as [left, bottom, right, top]
+    dilations : matrix-like
+        Dilations of the kernel
     activation : str or None
         activation function name
     input_index_mapper : IndexMapper or None
@@ -456,6 +482,7 @@ class ConvLayer2D(Layer2D):
         kernel,
         *,
         pads=None,
+        dilations=None,
         activation=None,
         input_index_mapper=None,
     ):
@@ -464,10 +491,84 @@ class ConvLayer2D(Layer2D):
             output_size,
             strides,
             pads=pads,
+            dilations=dilations,
             activation=activation,
             input_index_mapper=input_index_mapper,
         )
         self.__kernel = kernel
+        if self.dilations != [1, 1]:
+            dilate_rows = np.hstack(
+                [
+                    np.hstack(
+                        [
+                            np.hstack(
+                                [
+                                    kernel[:, :, i, :].reshape(
+                                        (
+                                            kernel.shape[0],
+                                            kernel.shape[1],
+                                            1,
+                                            kernel.shape[3],
+                                        )
+                                    ),
+                                    np.zeros(
+                                        (
+                                            kernel.shape[0],
+                                            kernel.shape[1],
+                                            self.dilations[0] - 1,
+                                            kernel.shape[3],
+                                        )
+                                    ),
+                                ]
+                            )
+                            for i in range(kernel.shape[2] - 1)
+                        ]
+                    ),
+                    kernel[:, :, -1, :].reshape(
+                        (kernel.shape[0], kernel.shape[1], 1, kernel.shape[3])
+                    ),
+                ]
+            )
+            dilate_kernel = np.dstack(
+                [
+                    np.dstack(
+                        [
+                            np.dstack(
+                                [
+                                    dilate_rows[:, :, :, i].reshape(
+                                        (
+                                            dilate_rows.shape[0],
+                                            dilate_rows.shape[1],
+                                            dilate_rows.shape[2],
+                                            1,
+                                        )
+                                    ),
+                                    np.zeros(
+                                        (
+                                            dilate_rows.shape[0],
+                                            dilate_rows.shape[1],
+                                            dilate_rows.shape[2],
+                                            self.dilations[1] - 1,
+                                        )
+                                    ),
+                                ]
+                            )
+                            for i in range(dilate_rows.shape[3] - 1)
+                        ]
+                    ),
+                    dilate_rows[:, :, :, -1].reshape(
+                        (
+                            dilate_rows.shape[0],
+                            dilate_rows.shape[1],
+                            dilate_rows.shape[2],
+                            1,
+                        )
+                    ),
+                ]
+            )
+            self.__dilated_kernel = dilate_kernel
+        else:
+            self.__dilated_kernel = kernel
 
     def kernel_with_input_indexes(self, out_d, out_r, out_c):
         """
@@ -503,6 +604,11 @@ class ConvLayer2D(Layer2D):
     def kernel(self):
         """Return the cross-correlation kernel"""
         return self.__kernel
+
+    @property
+    def dilated_kernel(self):
+        """Return the dilated cross-correlation kernel"""
+        return self.__dilated_kernel
 
     def __str__(self):
         return f"ConvLayer(input_size={self.input_size}, output_size={self.output_size}, strides={self.strides}, kernel_shape={self.kernel_shape})"
