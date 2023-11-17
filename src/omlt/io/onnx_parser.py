@@ -359,24 +359,29 @@ class NetworkParser:
                 f"Input/output size ({input_output_size}) first dimension must match input weights channels ({in_channels})."
             )
 
-        # Other attributes are not supported
-        if "dilations" in attr and attr["dilations"] != [1, 1]:
-            raise ValueError(
-                f"{node} has non-identity dilations ({attr['dilations']}). This is not supported."
-            )
-        if attr["group"] != 1:
-            raise ValueError(
-                f"{node} has multiple groups ({attr['group']}). This is not supported."
-            )
+        # TODO: need to check pads and dilations also have correct dimensions. Also should
+        # add support for autopad.
         if "pads" in attr:
             pads = attr["pads"]
         else:
             pads = 2*(len(input_output_size)-1)*[0]
 
+        if "dilations" in attr:
+            dilations = attr["dilations"]
+        else:
+            dilations = (len(input_output_size)-1)*[1]
+
+        # Other attributes are not supported
+        if attr["group"] != 1:
+            raise ValueError(
+                f"{node} has multiple groups ({attr['group']}). This is not supported."
+            )
+
         # generate new nodes for the node output
         padding = [
             pads[i] + pads[i + len(input_output_size)-1]
-            for i in range(len(input_output_size)-1)]
+            for i in range(len(input_output_size)-1)
+        ]
         output_size = [out_channels]
         for w, k, s, p in zip(input_output_size[1:], kernel_shape, strides, padding):
             new_w = int((w - k + p) / s) + 1
@@ -404,6 +409,7 @@ class NetworkParser:
             strides,
             weights,
             pads=pads,
+            dilations=dilations,
             activation=activation,
             input_index_mapper=transformer,
         )
@@ -471,13 +477,10 @@ class NetworkParser:
         kernel_shape = attr["kernel_shape"][1:]
         strides = attr["strides"] if "strides" in attr else [1] * len(kernel_shape)
         pads = attr["pads"] if "pads" in attr else None
+        dilations = attr["dilations"] if "dilations" in attr else None
 
         # check only kernel shape, stride, storage order are set
         # everything else is not supported
-        if "dilations" in attr and attr["dilations"] != [1, 1]:
-            raise ValueError(
-                f"{node.name} has non-identity dilations ({attr['dilations']}). This is not supported."
-            )
         if ("auto_pad" in attr) and (attr["auto_pad"] != "NOTSET"):
             raise ValueError(
                 f"{node.name} has autopad set ({attr['auto_pad']}). This is not supported."
@@ -520,6 +523,7 @@ class NetworkParser:
             tuple(kernel_shape),
             kernel_depth,
             pads=pads,
+            dilations=dilations,
             activation=activation,
             input_index_mapper=transformer,
         )
