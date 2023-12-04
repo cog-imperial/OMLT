@@ -86,15 +86,12 @@ class FullSpaceNNFormulation(_PyomoFormulation):
         if activation_constraints is not None:
             self._activation_constraints.update(activation_constraints)
 
-        # TODO: Change these to exceptions.
         network_inputs = list(self.__network_definition.input_nodes)
-        assert (
-            len(network_inputs) == 1
-        ), "Multiple input layers are not currently supported."
+        if len(network_inputs) != 1:
+            raise ValueError("Multiple input layers are not currently supported.")
         network_outputs = list(self.__network_definition.output_nodes)
-        assert (
-            len(network_outputs) == 1
-        ), "Multiple output layers are not currently supported."
+        if len(network_outputs) != 1:
+            raise ValueError("Multiple output layers are not currently supported.")
 
     def _supported_default_layer_constraints(self):
         return _DEFAULT_LAYER_CONSTRAINTS
@@ -118,18 +115,16 @@ class FullSpaceNNFormulation(_PyomoFormulation):
     def input_indexes(self):
         """The indexes of the formulation inputs."""
         network_inputs = list(self.__network_definition.input_nodes)
-        assert (
-            len(network_inputs) == 1
-        ), "Multiple input layers are not currently supported."
+        if len(network_inputs) != 1:
+            raise ValueError("Multiple input layers are not currently supported.")
         return network_inputs[0].input_indexes
 
     @property
     def output_indexes(self):
         """The indexes of the formulation output."""
         network_outputs = list(self.__network_definition.output_nodes)
-        assert (
-            len(network_outputs) == 1
-        ), "Multiple output layers are not currently supported."
+        if len(network_outputs) != 1:
+            raise ValueError("Multiple output layers are not currently supported.")
         return network_outputs[0].output_indexes
 
 
@@ -199,7 +194,8 @@ def _build_neural_network_formulation(
     # setup input variables constraints
     # currently only support a single input layer
     input_layers = list(net.input_layers)
-    assert len(input_layers) == 1
+    if len(input_layers) != 1:
+        raise ValueError("Multiple input layers are not currently supported.")
     input_layer = input_layers[0]
 
     @block.Constraint(input_layer.output_indexes)
@@ -209,7 +205,8 @@ def _build_neural_network_formulation(
     # setup output variables constraints
     # currently only support a single output layer
     output_layers = list(net.output_layers)
-    assert len(output_layers) == 1
+    if len(output_layers) != 1:
+        raise ValueError("Multiple output layers are not currently supported.")
     output_layer = output_layers[0]
 
     @block.Constraint(output_layer.output_indexes)
@@ -312,6 +309,16 @@ class ReducedSpaceNNFormulation(_PyomoFormulation):
         if activation_functions is not None:
             self._activation_functions.update(activation_functions)
 
+        # If we want to do network input/output validation at initialize time instead
+        # of build time, as it is for FullSpaceNNFormulation:
+        #
+        # network_inputs = list(self.__network_definition.input_nodes)
+        # if len(network_inputs) != 1:
+        #     raise ValueError("Multiple input layers are not currently supported.")
+        # network_outputs = list(self.__network_definition.output_nodes)
+        # if len(network_outputs) != 1:
+        #     raise ValueError("Multiple output layers are not currently supported.")
+
     def _supported_default_activation_functions(self):
         return dict(_DEFAULT_ACTIVATION_FUNCTIONS)
 
@@ -397,16 +404,16 @@ class ReducedSpaceNNFormulation(_PyomoFormulation):
     def input_indexes(self):
         """The indexes of the formulation inputs."""
         network_inputs = list(self.__network_definition.input_nodes)
-        assert len(network_inputs) == 1, "Unsupported multiple network input variables"
+        if len(network_inputs) != 1:
+            raise ValueError("Multiple input layers are not currently supported.")
         return network_inputs[0].input_indexes
 
     @property
     def output_indexes(self):
         """The indexes of the formulation output."""
         network_outputs = list(self.__network_definition.output_nodes)
-        assert (
-            len(network_outputs) == 1
-        ), "Unsupported multiple network output variables"
+        if len(network_outputs) != 1:
+            raise ValueError("Multiple output layers are not currently supported.")
         return network_outputs[0].output_indexes
 
 
@@ -506,10 +513,16 @@ class ReluPartitionFormulation(_PyomoFormulation):
             else:
                 raise ValueError("ReluPartitionFormulation supports only Dense layers")
 
+        # This check is never hit. The formulation._build_formulation() function is
+        # only ever called by an OmltBlock.build_formulation(), and that runs the
+        # input_indexes and output_indexes first, which will catch any formulations
+        # with multiple input or output layers.
+
         # setup input variables constraints
         # currently only support a single input layer
         input_layers = list(net.input_layers)
-        assert len(input_layers) == 1
+        if len(input_layers) != 1:
+            raise ValueError("Multiple input layers are not currently supported.")
         input_layer = input_layers[0]
 
         @block.Constraint(input_layer.output_indexes)
@@ -522,7 +535,8 @@ class ReluPartitionFormulation(_PyomoFormulation):
         # setup output variables constraints
         # currently only support a single output layer
         output_layers = list(net.output_layers)
-        assert len(output_layers) == 1
+        if len(output_layers) != 1:
+            raise ValueError("Multiple output layers are not currently supported.")
         output_layer = output_layers[0]
 
         @block.Constraint(output_layer.output_indexes)
@@ -536,14 +550,14 @@ class ReluPartitionFormulation(_PyomoFormulation):
     def input_indexes(self):
         """The indexes of the formulation inputs."""
         network_inputs = list(self.__network_definition.input_nodes)
-        assert len(network_inputs) == 1, "Unsupported multiple network input variables"
+        if len(network_inputs) != 1:
+            raise ValueError("Multiple input layers are not currently supported.")
         return network_inputs[0].input_indexes
 
     @property
     def output_indexes(self):
         """The indexes of the formulation output."""
         network_outputs = list(self.__network_definition.output_nodes)
-        assert (
-            len(network_outputs) == 1
-        ), "Unsupported multiple network output variables"
+        if len(network_outputs) != 1:
+            raise ValueError("Multiple output layers are not currently supported.")
         return network_outputs[0].output_indexes

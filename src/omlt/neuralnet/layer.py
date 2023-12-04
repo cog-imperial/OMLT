@@ -10,9 +10,9 @@ class Layer:
 
     Parameters
     ----------
-    input_size : tuple
+    input_size : list
         size of the layer input
-    output_size : tuple
+    output_size : list
         size of the layer output
     activation : str or None
         activation function name
@@ -23,10 +23,16 @@ class Layer:
     def __init__(
         self, input_size, output_size, *, activation=None, input_index_mapper=None
     ):
-        assert isinstance(input_size, list)
-        assert isinstance(output_size, list)
-        self.__input_size = input_size
-        self.__output_size = output_size
+        if not isinstance(input_size, (list, tuple)):
+            raise TypeError(
+                f"input_size must be a list or tuple, {type(input_size)} was provided."
+            )
+        if not isinstance(output_size, (list, tuple)):
+            raise TypeError(
+                f"output_size must be a list or tuple, {type(output_size)} was provided."
+            )
+        self.__input_size = list(input_size)
+        self.__output_size = list(output_size)
         self.activation = activation
         if input_index_mapper is None:
             input_index_mapper = IndexMapper(input_size, input_size)
@@ -99,7 +105,10 @@ class Layer:
             if self.__input_index_mapper is not None
             else x[:]
         )
-        assert x_reshaped.shape == tuple(self.input_size)
+        if x_reshaped.shape != tuple(self.input_size):
+            raise ValueError(
+                f"Layer requires an input size {self.input_size}, but the input tensor had size {x_reshaped.shape}."
+            )
         y = self._eval(x_reshaped)
         return self._apply_activation(y)
 
@@ -201,7 +210,6 @@ class DenseLayer(Layer):
     def _eval(self, x):
         y = np.dot(x, self.__weights) + self.__biases
         y = np.reshape(y, tuple(self.output_size))
-        assert y.shape == tuple(self.output_size)
         return y
 
 
@@ -283,6 +291,7 @@ class Layer2D(Layer):
             for k_r in range(kernel_r):
                 for k_c in range(kernel_c):
                     input_index = (start_in_d + k_d, start_in_r + k_r, start_in_c + k_c)
+
                     assert len(input_index) == len(self.input_size)
                     # don't yield an out-of-bounds input index;
                     # can happen if ceil mode is enabled for pooling layers
@@ -309,8 +318,11 @@ class Layer2D(Layer):
 
     def _eval(self, x):
         y = np.empty(shape=self.output_size)
-        assert len(self.output_size) == 3
-        [depth, rows, cols] = self.output_size
+        if len(self.output_size) != 3:
+            raise ValueError(
+                f"Output should have 3 dimensions but instead has {len(self.output_size)}"
+            )
+        [depth, rows, cols] = list(self.output_size)
         for out_d in range(depth):
             for out_r in range(rows):
                 for out_c in range(cols):
@@ -365,6 +377,10 @@ class PoolingLayer2D(Layer2D):
             activation=activation,
             input_index_mapper=input_index_mapper,
         )
+        if pool_func_name not in PoolingLayer2D._POOL_FUNCTIONS:
+            raise ValueError(
+                f"Allowable pool functions are {PoolingLayer2D._POOL_FUNCTIONS}, {pool_func_name} was provided."
+            )
         self._pool_func_name = pool_func_name
         self._kernel_shape = kernel_shape
         self._kernel_depth = kernel_depth
@@ -387,7 +403,6 @@ class PoolingLayer2D(Layer2D):
             x[index]
             for (_, index) in self.kernel_index_with_input_indexes(out_d, out_r, out_c)
         ]
-        assert self._pool_func_name in PoolingLayer2D._POOL_FUNCTIONS
         pool_func = PoolingLayer2D._POOL_FUNCTIONS[self._pool_func_name]
         return pool_func(vals)
 
