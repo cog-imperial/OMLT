@@ -8,12 +8,12 @@ def linear_activation_constraint(
     r"""
     Linear activation constraint generator
 
-    Generates the constraints for the linear activation function.
+    Generates the constraints for the linear activation function:
 
     .. math::
 
         \begin{align*}
-        z_i &= \hat{z_i} && \forall i \in N
+            y=x
         \end{align*}
 
     """
