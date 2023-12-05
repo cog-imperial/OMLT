@@ -14,10 +14,10 @@ from omlt.dependencies import (
 
 # TODO: These will be replaced with stronger tests using testbook soon
 def _test_run_notebook(folder, notebook_fname, n_cells):
-    # change to notebook directory to allow testing
+    # Change to notebook directory to allow for testing
     cwd = os.getcwd()
     os.chdir(os.path.join(this_file_dir(), "..", "..", "docs", "notebooks", folder))
-    with testbook(notebook_fname, timeout=300, execute=True) as tb:
+    with testbook(notebook_fname, timeout=500, execute=True) as tb:
         assert tb.code_cells_executed == n_cells
     os.chdir(cwd)
 

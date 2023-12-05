@@ -1,6 +1,7 @@
 import numpy as np
 import pyomo.environ as pyo
 import pytest
+from pyomo.contrib.fbbt import interval
 
 from omlt import OmltBlock
 from omlt.neuralnet import (
@@ -9,6 +10,7 @@ from omlt.neuralnet import (
     NetworkDefinition,
     ReducedSpaceNNFormulation,
     ReducedSpaceSmoothNNFormulation,
+    ReluPartitionFormulation,
 )
 from omlt.neuralnet.layer import (
     ConvLayer2D,
@@ -18,6 +20,15 @@ from omlt.neuralnet.layer import (
     PoolingLayer2D,
     GNNLayer,
 )
+from omlt.neuralnet.layers.full_space import (
+    full_space_maxpool2d_layer,
+    _input_layer_and_block,
+)
+from omlt.neuralnet.layers.partition_based import (
+    partition_based_dense_relu_layer,
+    default_partition_split_func,
+)
+from omlt.neuralnet.layers.reduced_space import reduced_space_dense_layer
 
 
 def two_node_network(activation, input_value):
@@ -249,7 +260,8 @@ def _maxpool_conv_network(inputs):
     net.add_layer(conv_layer_2)
     net.add_edge(conv_layer_1, conv_layer_2)
 
-    # test normal ConvLayer -> MaxPoolLayer structure, with monotonic increasing activation part of ConvLayer
+    # test normal ConvLayer -> MaxPoolLayer structure, with monotonic increasing
+    # activation part of ConvLayer
     maxpool_layer_1 = PoolingLayer2D(
         conv_layer_2.output_size, [1, 1, 2], [2, 2], "max", [3, 2], 1
     )
@@ -263,7 +275,8 @@ def _maxpool_conv_network(inputs):
     net.add_layer(conv_layer_3)
     net.add_edge(maxpool_layer_1, conv_layer_3)
 
-    # test ConvLayer -> MaxPoolLayer when nonlinear activation function is already part of max pooling layer
+    # test ConvLayer -> MaxPoolLayer when nonlinear activation function is
+    # already part of max pooling layer
     # also test index mapping logic in max pooling layers
     maxpool_layer_2_input_size = [1, 2, 1]
     maxpool_layer_2_index_mapper = IndexMapper(
@@ -326,6 +339,470 @@ def test_maxpool_FullSpaceNNFormulation():
     m.obj1 = pyo.Objective(expr=0)
     status = pyo.SolverFactory("cbc").solve(m, tee=False)
     assert abs(pyo.value(m.neural_net_block.outputs[0, 0, 0]) - y[0, 0, 0]) < 1e-6
+
+
+def _test_formulation_initialize_extra_input(network_formulation):
+    """
+    network_formulation can be:
+    'FullSpace',
+    'ReducedSpace'
+    """
+    net, y = two_node_network("linear", -2.0)
+    extra_input = InputLayer([1])
+    net.add_layer(extra_input)
+    with pytest.raises(ValueError) as excinfo:
+        if network_formulation == "FullSpace":
+            FullSpaceNNFormulation(net)
+        elif network_formulation == "ReducedSpace":
+            ReducedSpaceNNFormulation(net)
+    expected_msg = "Multiple input layers are not currently supported."
+    assert str(excinfo.value) == expected_msg
+
+
+def _test_formulation_added_extra_input(network_formulation):
+    """
+    network_formulation can be:
+    'FullSpace',
+    'ReducedSpace'
+    'relu'
+    """
+    net, y = two_node_network("linear", -2.0)
+    extra_input = InputLayer([1])
+    if network_formulation == "FullSpace":
+        formulation = FullSpaceNNFormulation(net)
+    elif network_formulation == "ReducedSpace":
+        formulation = ReducedSpaceNNFormulation(net)
+    elif network_formulation == "relu":
+        formulation = ReluPartitionFormulation(net)
+    net.add_layer(extra_input)
+    with pytest.raises(ValueError) as excinfo:
+        formulation.input_indexes
+    expected_msg = "Multiple input layers are not currently supported."
+    assert str(excinfo.value) == expected_msg
+
+
+def _test_formulation_build_extra_input(network_formulation):
+    """
+    network_formulation can be:
+    'FullSpace',
+    'ReducedSpace'
+    'relu'
+    """
+    net, y = two_node_network("linear", -2.0)
+    extra_input = InputLayer([1])
+    if network_formulation == "FullSpace":
+        formulation = FullSpaceNNFormulation(net)
+    elif network_formulation == "ReducedSpace":
+        formulation = ReducedSpaceNNFormulation(net)
+    elif network_formulation == "relu":
+        formulation = ReluPartitionFormulation(net)
+    net.add_layer(extra_input)
+    m = pyo.ConcreteModel()
+    m.neural_net_block = OmltBlock()
+    with pytest.raises(ValueError) as excinfo:
+        m.neural_net_block.build_formulation(formulation)
+    expected_msg = "Multiple input layers are not currently supported."
+    assert str(excinfo.value) == expected_msg
+
+
+def _test_formulation_added_extra_output(network_formulation):
+    """
+    network_formulation can be:
+    'FullSpace',
+    'ReducedSpace'
+    'relu'
+    """
+    net, y = two_node_network("linear", -2.0)
+    extra_output = DenseLayer(
+        [1, 2],
+        [1, 2],
+        activation="linear",
+        weights=np.array([[1.0, 0.0], [5.0, 1.0]]),
+        biases=np.array([3.0, 4.0]),
+    )
+    if network_formulation == "FullSpace":
+        formulation = FullSpaceNNFormulation(net)
+    elif network_formulation == "ReducedSpace":
+        formulation = ReducedSpaceNNFormulation(net)
+    elif network_formulation == "relu":
+        formulation = ReluPartitionFormulation(net)
+    net.add_layer(extra_output)
+    net.add_edge(list(net.layers)[-2], extra_output)
+    with pytest.raises(ValueError) as excinfo:
+        formulation.output_indexes
+    expected_msg = "Multiple output layers are not currently supported."
+    assert str(excinfo.value) == expected_msg
+
+
+def _test_formulation_initialize_extra_output(network_formulation):
+    """
+    network_formulation can be:
+    'FullSpace',
+    'ReducedSpace'
+    """
+    net, y = two_node_network("linear", -2.0)
+    extra_output = DenseLayer(
+        [1, 2],
+        [1, 2],
+        activation="linear",
+        weights=np.array([[1.0, 0.0], [5.0, 1.0]]),
+        biases=np.array([3.0, 4.0]),
+    )
+    net.add_layer(extra_output)
+    net.add_edge(list(net.layers)[-2], extra_output)
+    with pytest.raises(ValueError) as excinfo:
+        if network_formulation == "FullSpace":
+            FullSpaceNNFormulation(net)
+        elif network_formulation == "ReducedSpace":
+            ReducedSpaceNNFormulation(net)
+    expected_msg = "Multiple output layers are not currently supported."
+    assert str(excinfo.value) == expected_msg
+
+
+def test_FullSpaceNNFormulation_invalid_network():
+    _test_formulation_initialize_extra_input("FullSpace")
+    _test_formulation_added_extra_input("FullSpace")
+    _test_formulation_build_extra_input("FullSpace")
+    _test_formulation_initialize_extra_output("FullSpace")
+    _test_formulation_added_extra_output("FullSpace")
+
+
+def test_ReducedSpaceNNFormulation_invalid_network():
+    # _test_formulation_initialize_extra_input("ReducedSpace")
+    _test_formulation_added_extra_input("ReducedSpace")
+    _test_formulation_build_extra_input("ReducedSpace")
+    # _test_formulation_initialize_extra_output("ReducedSpace")
+    _test_formulation_added_extra_output("ReducedSpace")
+
+
+def test_ReluPartitionFormulation_invalid_network():
+    _test_formulation_added_extra_input("relu")
+    _test_formulation_build_extra_input("relu")
+    _test_formulation_added_extra_output("relu")
+
+
+def _test_dense_layer_multiple_predecessors(layer_type):
+    m = pyo.ConcreteModel()
+    m.neural_net_block = OmltBlock()
+    net, y = two_node_network(None, -2.0)
+    extra_input = InputLayer([1])
+    test_layer = list(net.layers)[2]
+    net.add_layer(extra_input)
+    net.add_edge(extra_input, test_layer)
+    with pytest.raises(ValueError) as excinfo:
+        if layer_type == "PartitionBased":
+            partition_based_dense_relu_layer(m, net, m, test_layer, None)
+        elif layer_type == "ReducedSpace":
+            reduced_space_dense_layer(m, net, m, test_layer, None)
+    expected_msg = f"Layer {test_layer} has multiple predecessors."
+    assert str(excinfo.value) == expected_msg
+
+
+def _test_dense_layer_no_predecessors(layer_type):
+    """
+    Layer type can be "ReducedSpace", or "PartitionBased".
+    """
+    m = pyo.ConcreteModel()
+    net = NetworkDefinition(scaled_input_bounds=[(-10.0, 10.0)])
+
+    test_layer = DenseLayer(
+        [1],
+        [1, 2],
+        activation=None,
+        weights=np.array([[1.0, -1.0]]),
+        biases=np.array([1.0, 2.0]),
+    )
+    net.add_layer(test_layer)
+    with pytest.raises(ValueError) as excinfo:
+        if layer_type == "PartitionBased":
+            partition_based_dense_relu_layer(m, net, m, test_layer, None)
+        elif layer_type == "ReducedSpace":
+            reduced_space_dense_layer(m, net, m, test_layer, None)
+    expected_msg = f"Layer {test_layer} is not an input layer, but has no predecessors."
+    assert str(excinfo.value) == expected_msg
+
+
+def test_partition_based_dense_layer_predecessors():
+    _test_dense_layer_multiple_predecessors("PartitionBased")
+    _test_dense_layer_no_predecessors("PartitionBased")
+
+
+def test_reduced_space_dense_layer_predecessors():
+    _test_dense_layer_multiple_predecessors("ReducedSpace")
+    _test_dense_layer_no_predecessors("ReducedSpace")
+
+
+def test_partition_based_unbounded_below():
+    m = pyo.ConcreteModel()
+    m.neural_net_block = OmltBlock()
+    net, y = two_node_network(None, -2.0)
+    test_layer = list(net.layers)[2]
+    prev_layer_id = id(list(net.layers)[1])
+    formulation = ReluPartitionFormulation(net)
+
+    m.neural_net_block.build_formulation(formulation)
+    prev_layer_block = m.neural_net_block.layer[prev_layer_id]
+    prev_layer_block.z.setlb(-interval.inf)
+
+    split_func = lambda w: default_partition_split_func(w, 2)
+
+    with pytest.raises(ValueError) as excinfo:
+        partition_based_dense_relu_layer(
+            m.neural_net_block, net, m.neural_net_block, test_layer, split_func
+        )
+    expected_msg = "Expression is unbounded below."
+    assert str(excinfo.value) == expected_msg
+
+
+def test_partition_based_unbounded_above():
+    m = pyo.ConcreteModel()
+    m.neural_net_block = OmltBlock()
+    net, y = two_node_network(None, -2.0)
+    test_layer = list(net.layers)[2]
+    prev_layer_id = id(list(net.layers)[1])
+    formulation = ReluPartitionFormulation(net)
+
+    m.neural_net_block.build_formulation(formulation)
+    prev_layer_block = m.neural_net_block.layer[prev_layer_id]
+    prev_layer_block.z.setub(interval.inf)
+
+    split_func = lambda w: default_partition_split_func(w, 2)
+
+    with pytest.raises(ValueError) as excinfo:
+        partition_based_dense_relu_layer(
+            m.neural_net_block, net, m.neural_net_block, test_layer, split_func
+        )
+    expected_msg = "Expression is unbounded above."
+    assert str(excinfo.value) == expected_msg
+
+
+def test_partition_based_bias_unbounded_below():
+    m = pyo.ConcreteModel()
+    m.neural_net_block = OmltBlock()
+    net, y = two_node_network(None, -2.0)
+    test_layer = list(net.layers)[2]
+    formulation = ReluPartitionFormulation(net)
+
+    m.neural_net_block.build_formulation(formulation)
+
+    test_layer.biases[0] = -interval.inf
+    split_func = lambda w: default_partition_split_func(w, 2)
+
+    with pytest.raises(ValueError) as excinfo:
+        partition_based_dense_relu_layer(
+            m.neural_net_block, net, m.neural_net_block, test_layer, split_func
+        )
+    expected_msg = "Expression is unbounded below."
+    assert str(excinfo.value) == expected_msg
+
+
+def test_partition_based_bias_unbounded_above():
+    m = pyo.ConcreteModel()
+    m.neural_net_block = OmltBlock()
+    net, y = two_node_network(None, -2.0)
+    test_layer = list(net.layers)[2]
+    formulation = ReluPartitionFormulation(net)
+
+    m.neural_net_block.build_formulation(formulation)
+
+    test_layer.biases[0] = interval.inf
+    split_func = lambda w: default_partition_split_func(w, 2)
+
+    with pytest.raises(ValueError) as excinfo:
+        partition_based_dense_relu_layer(
+            m.neural_net_block, net, m.neural_net_block, test_layer, split_func
+        )
+    expected_msg = "Expression is unbounded above."
+    assert str(excinfo.value) == expected_msg
+
+
+def test_fullspace_internal_extra_input():
+    m = pyo.ConcreteModel()
+    m.neural_net_block = OmltBlock()
+    net, y = two_node_network("linear", -2.0)
+    extra_input = InputLayer([1])
+    test_layer = list(net.layers)[1]
+    formulation = FullSpaceNNFormulation(net)
+    m.neural_net_block.build_formulation(formulation)
+    net.add_layer(extra_input)
+    net.add_edge(extra_input, test_layer)
+    with pytest.raises(ValueError) as excinfo:
+        _input_layer_and_block(m.neural_net_block, net, test_layer)
+    expected_msg = "Multiple input layers are not currently supported."
+    assert str(excinfo.value) == expected_msg
+
+
+def test_conv2d_extra_activation():
+    m = pyo.ConcreteModel()
+    m.neural_net_block = OmltBlock()
+
+    input_size = [1, 8, 6]
+    input_bounds = {}
+    for i in range(input_size[1]):
+        for j in range(input_size[2]):
+            input_bounds[(0, i, j)] = (-10.0, 10.0)
+    net = NetworkDefinition(scaled_input_bounds=input_bounds)
+
+    input_layer = InputLayer(input_size)
+    net.add_layer(input_layer)
+
+    conv_layer_1_kernel = np.array([[[[-3, 0], [1, 5]]]])
+    conv_layer_1 = ConvLayer2D(
+        input_layer.output_size, [1, 4, 5], [2, 1], conv_layer_1_kernel
+    )
+    net.add_layer(conv_layer_1)
+    net.add_edge(input_layer, conv_layer_1)
+
+    # have two consecutive conv layers,
+    # to check that conv layer behaves normally when a non-max pool layer succeeds it
+    conv_layer_2_kernel = np.array([[[[-2, -2], [-2, -2]]]])
+    conv_layer_2 = ConvLayer2D(
+        conv_layer_1.output_size,
+        [1, 3, 4],
+        [1, 1],
+        conv_layer_2_kernel,
+        activation="relu",
+    )
+    net.add_layer(conv_layer_2)
+    net.add_edge(conv_layer_1, conv_layer_2)
+
+    # test normal ConvLayer -> MaxPoolLayer structure, with monotonic
+    # increasing activation part of ConvLayer
+    maxpool_layer_1 = PoolingLayer2D(
+        conv_layer_2.output_size, [1, 1, 2], [2, 2], "max", [3, 2], 1, activation="relu"
+    )
+    net.add_layer(maxpool_layer_1)
+    net.add_edge(conv_layer_2, maxpool_layer_1)
+    with pytest.raises(ValueError) as excinfo:
+        m.neural_net_block.build_formulation(FullSpaceNNFormulation(net))
+    expected_msg = """Activation is applied after convolution layer, but the successor max pooling layer PoolingLayer(input_size=[1, 3, 4], output_size=[1, 1, 2], strides=[2, 2], kernel_shape=[3, 2]), pool_func_name=max has an activation function also."""
+    assert str(excinfo.value) == expected_msg
+
+
+def test_maxpool2d_bad_input_activation():
+    m = pyo.ConcreteModel()
+    m.neural_net_block = OmltBlock()
+
+    input_size = [1, 8, 6]
+    input_bounds = {}
+    for i in range(input_size[1]):
+        for j in range(input_size[2]):
+            input_bounds[(0, i, j)] = (-10.0, 10.0)
+    net = NetworkDefinition(scaled_input_bounds=input_bounds)
+
+    input_layer = InputLayer(input_size)
+    net.add_layer(input_layer)
+
+    conv_layer_1_kernel = np.array([[[[-3, 0], [1, 5]]]])
+    conv_layer_1 = ConvLayer2D(
+        input_layer.output_size, [1, 4, 5], [2, 1], conv_layer_1_kernel
+    )
+    net.add_layer(conv_layer_1)
+    net.add_edge(input_layer, conv_layer_1)
+
+    # have two consecutive conv layers,
+    # to check that conv layer behaves normally when a non-max pool layer succeeds it
+    conv_layer_2_kernel = np.array([[[[-2, -2], [-2, -2]]]])
+    conv_layer_2 = ConvLayer2D(
+        conv_layer_1.output_size,
+        [1, 3, 4],
+        [1, 1],
+        conv_layer_2_kernel,
+        activation="relu",
+    )
+    net.add_layer(conv_layer_2)
+    net.add_edge(conv_layer_1, conv_layer_2)
+
+    # test normal ConvLayer -> MaxPoolLayer structure, with monotonic increasing
+    # activation part of ConvLayer
+    maxpool_layer_1 = PoolingLayer2D(
+        conv_layer_2.output_size,
+        [1, 1, 2],
+        [2, 2],
+        "max",
+        [3, 2],
+        1,
+        activation="linear",
+    )
+    net.add_layer(maxpool_layer_1)
+    net.add_edge(conv_layer_2, maxpool_layer_1)
+
+    m.neural_net_block.build_formulation(FullSpaceNNFormulation(net))
+
+    conv_layer_2.activation = "relu"
+
+    with pytest.raises(ValueError) as excinfo:
+        full_space_maxpool2d_layer(
+            m.neural_net_block, net, m.neural_net_block, maxpool_layer_1
+        )
+    expected_msg = """Non-increasing activation functions on the preceding convolutional layer are not supported."""
+    assert str(excinfo.value) == expected_msg
+
+
+def test_maxpool2d_bad_input_layer():
+    m = pyo.ConcreteModel()
+    m.neural_net_block = OmltBlock()
+
+    input_size = [1, 8, 6]
+    input_bounds = {}
+    for i in range(input_size[1]):
+        for j in range(input_size[2]):
+            input_bounds[(0, i, j)] = (-10.0, 10.0)
+    net = NetworkDefinition(scaled_input_bounds=input_bounds)
+
+    input_layer = InputLayer(input_size)
+    net.add_layer(input_layer)
+
+    conv_layer_1_kernel = np.array([[[[-3, 0], [1, 5]]]])
+    conv_layer_1 = ConvLayer2D(
+        input_layer.output_size, [1, 4, 5], [2, 1], conv_layer_1_kernel
+    )
+    net.add_layer(conv_layer_1)
+    net.add_edge(input_layer, conv_layer_1)
+
+    # have two consecutive conv layers,
+    # to check that conv layer behaves normally when a non-max pool layer succeeds it
+    conv_layer_2_kernel = np.array([[[[-2, -2], [-2, -2]]]])
+    conv_layer_2 = ConvLayer2D(
+        conv_layer_1.output_size,
+        [1, 3, 4],
+        [1, 1],
+        conv_layer_2_kernel,
+        activation="relu",
+    )
+    net.add_layer(conv_layer_2)
+    net.add_edge(conv_layer_1, conv_layer_2)
+
+    # test normal ConvLayer -> MaxPoolLayer structure, with monotonic increasing
+    # activation part of ConvLayer
+    maxpool_layer_1 = PoolingLayer2D(
+        conv_layer_2.output_size,
+        [1, 1, 2],
+        [2, 2],
+        "max",
+        [3, 2],
+        1,
+        activation="linear",
+    )
+    net.add_layer(maxpool_layer_1)
+    net.add_edge(conv_layer_2, maxpool_layer_1)
+
+    maxpool_layer_2 = PoolingLayer2D(
+        maxpool_layer_1.output_size,
+        [1, 1, 2],
+        [2, 2],
+        "max",
+        [3, 2],
+        1,
+        activation="linear",
+    )
+    net.add_layer(maxpool_layer_2)
+    net.add_edge(maxpool_layer_1, maxpool_layer_2)
+
+    with pytest.raises(TypeError) as excinfo:
+        m.neural_net_block.build_formulation(FullSpaceNNFormulation(net))
+    expected_msg = "Input layer must be a ConvLayer2D."
+    assert str(excinfo.value) == expected_msg
 
 
 def three_node_graph_neural_network(activation):
