@@ -6,6 +6,8 @@ Layer and Activation Functions
 Layer Functions
 ----------------
 
+.. automodule:: omlt.neuralnet.layers.__init__
+
 .. automodule:: omlt.neuralnet.layers.full_space
    :members:
    :undoc-members:
@@ -25,6 +27,8 @@ Layer Functions
 
 Activation Functions
 ---------------------
+
+.. automodule:: omlt.neuralnet.activations.__init__
 
 .. automodule:: omlt.neuralnet.activations.linear
    :members:

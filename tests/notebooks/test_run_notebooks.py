@@ -65,3 +65,7 @@ def test_neural_network_formulations():
 )
 def test_graph_neural_network_formulation():
     _test_run_notebook("neuralnet", "graph_neural_network_formulation.ipynb", 8)
+
+
+def test_index_handling():
+    _test_run_notebook("neuralnet", "index_handling.ipynb", 6)
