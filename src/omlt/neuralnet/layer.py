@@ -238,37 +238,47 @@ class DenseLayer(Layer):
 
 class GNNLayer(DenseLayer):
     r"""
-    Given the number of nodes :math:`N`, implementing a GNN layer defined by:
+    We additionally introduce the following notations to describe the gnn layer:
 
     .. math::
 
         \begin{align*}
-        y_i = \sigma \left(\sum\limits_{j=0}^{F_{in}-1}A_{u,v}w_{ji}x_j+b_i\right) && \forall 0\le i<F_{out}
+            N       &:= \text{the number of node in the graph}\\
+            u       &:= \text{the node index of $x_i$, $u=\lfloor iN/F_{in}\rfloor$}\\
+            v       &:= \text{the node index of $y_j$, $v=\lfloor jN/F_{out}\rfloor$}\\
+            A_{u,v} &:= \text{the edge between node $u$ and $v$}\\
         \end{align*}
 
-    where :math:`A` is the adjacency matrix (shared by all GNN layers), :math:`u=\lfloor jN/F_{in}\rfloor` is the node index of :math:`j`-th input feature, :math:`v=\lfloor iN/F_{out}\rfloor` is the node index of :math:`i`-th output feature.
+    The gnn layer is defined by:
+
+    .. math::
+
+        \begin{align*}
+            y_j = \sigma \left(\sum\limits_{i=0}^{F_{in}-1}A_{u,v}w_{ij}x_i+b_j\right), && \forall 0\le j<F_{out}, 
+        \end{align*}
+
 
     For example, given a GraphSAGE layer with sum aggregation:
 
     .. math::
 
         \begin{align*}
-        \mathbf{y_v} = \sigma\left(\mathbf{w_1}^T\mathbf{x_v}+\mathbf{w_2}^T\sum\limits_{u\in\mathcal N(v)}\mathbf{x_u}+\mathbf{b}\right)
+            \mathbf{y_v} =\sigma\left(\mathbf{w_1^T}\mathbf{x_v}+\mathbf{w_2}^T\sum\limits_{u\in\mathcal N(v)}\mathbf{x_u}+\mathbf{b}\right)
         \end{align*}
 
     If the graph structure is fixed, assume that it is a line graph with :math:`N=3` nodes, i.e., the adjacency matrix :math:`A=\begin{pmatrix}1 & 1 & 0\\1 & 1 & 1\\ 0 & 1 & 1\end{pmatrix}`. Then the corresponding GNN layer is defined with parameters:
 
     .. math::
 
-        \begin{align*}
-        \mathbf{W}=\begin{pmatrix}
-            \mathbf{w_1} & \mathbf{w_2} & \mathbf{0} \\
-            \mathbf{w_2} & \mathbf{w_1} & \mathbf{w_2} \\
-            \mathbf{0} & \mathbf{w_2} & \mathbf{w_1} \\
-        \end{pmatrix},
-        \mathbf{B}=\begin{pmatrix}
-        \mathbf{b}\\\mathbf{b}\\\mathbf{b}
-        \end{pmatrix}
+    \begin{align*}
+            \mathbf{W}=\begin{pmatrix}
+                \mathbf{w_1} & \mathbf{w_2} & \mathbf{0} \\
+                \mathbf{w_2} & \mathbf{w_1} & \mathbf{w_2} \\
+                \mathbf{0} & \mathbf{w_2} & \mathbf{w_1} \\
+            \end{pmatrix},
+            \mathbf{B}=\begin{pmatrix}
+            \mathbf{b}\\\mathbf{b}\\\mathbf{b}
+            \end{pmatrix}
         \end{align*}
 
     Otherwise, if the input graph structure is not fixed, all weights and biases should be provided. In this case, the GNN layer is defined with parameters:
@@ -276,15 +286,17 @@ class GNNLayer(DenseLayer):
     .. math::
 
         \begin{align*}
-        \mathbf{W}=\begin{pmatrix}
-            \mathbf{w_1} & \mathbf{w_2} & \mathbf{w_2} \\
-            \mathbf{w_2} & \mathbf{w_1} & \mathbf{w_2} \\
-            \mathbf{w_2} & \mathbf{w_2} & \mathbf{w_1} \\
-        \end{pmatrix},
-        \mathbf{B}=\begin{pmatrix}
-        \mathbf{b}\\\mathbf{b}\\\mathbf{b}
-        \end{pmatrix}
+            \mathbf{W}=\begin{pmatrix}
+                \mathbf{w_1} & \mathbf{w_2} & \mathbf{w_2} \\
+                \mathbf{w_2} & \mathbf{w_1} & \mathbf{w_2} \\
+                \mathbf{w_2} & \mathbf{w_2} & \mathbf{w_1} \\
+            \end{pmatrix},
+            \mathbf{B}=\begin{pmatrix}
+            \mathbf{b}\\\mathbf{b}\\\mathbf{b}
+            \end{pmatrix}
         \end{align*}
+
+    In this case, all elements :math:`A_{u,v},u\neq v` are binary variables.
 
     Parameters
     ----------

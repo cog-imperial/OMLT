@@ -39,30 +39,49 @@ def full_space_dense_layer(net_block, net, layer_block, layer):
 
 def full_space_gnn_layer(net_block, net, layer_block, layer):
     r"""
-    Add full-space formulation of the gnn layer to the block (assuming :math:`N_G` is the set of graph nodes):
+    We additionally introduce the following notations to describe the gnn layer:
 
     .. math::
 
         \begin{align*}
-        \hat z_i &= \sum_{j{=}1}^{M_i} w_{ji} \bar z_{j,I(i)} + b_i  && \forall i \in N \\
-        \bar z_{j,I(i)} &= A_{I(j),I(i)} z_{j}
+            N       &:= \text{the number of node in the graph}\\
+            u       &:= \text{the node index of $x_i$, $u=\lfloor iN/F_{in}\rfloor$}\\
+            v       &:= \text{the node index of $y_j$, $v=\lfloor jN/F_{out}\rfloor$}\\
+            A_{u,v} &:= \text{the edge between node $u$ and $v$}\\
+            l_i     &:= \text{the lower bound of $x_i$}\\
+            u_i     &:= \text{the upper bound of $x_i$}\\
         \end{align*}
 
-    where :math:`I:N\mapsto N_G` is the mapping from neurons to graph nodes, :math:`A_{I(j),I(i)}` is the binary variable controlling the edge between node :math:`I(j)` and :math:`I(i)`.
-
-    The big-M formulation for :math:`\bar z_{j,I(i)}` is given by:
+    Add full-space formulation of the gnn layer to the block:
 
     .. math::
 
         \begin{align*}
-        z_{j} - U_{j}(1-A_{I(j),I(i)}) &\le \bar z_{j,I(i)} \le z_{j} - L_{j}(1-A_{I(j),I(i)})\\
-        L_{j}A_{I(j),I(i)} &\le \bar z_{j,I(i)} \le U_{j}A_{I(j),I(i)}\\
-        A_{I(j),I(i)}&\in \{0,1\}
+            y_j &= \sum_{i=0}^{F_{in}-1} w_{ij} \bar x_{i,v} + b_j,  && \forall 0\le j<F_{out} \\
+            \bar x_{i,v} &= A_{u,v} x_{i}, && \forall 0\le i<F_{in},~ 0\le v<N
         \end{align*}
 
-    where :math:`L_{j}` and :math:`U_{j}` are the lower and upper bounds of :math:`z_{j}`, respectively.
+    The big-M formulation for :math:`\bar x_{i,v}` is given by:
 
-    Note that the second dimension of :math:`\bar z_{j,I(i)}` is :math:`|N_G|` instead of :math:`|N|`.
+    .. math::
+
+        \begin{align*}
+            x_i-u_i(1-A_{u,v})\le &~ \bar x_{i,v} \le x_i-l_i(1-A_{u,v})\\
+            l_iA_{u,v}\le & ~\bar x_{i,v}\le u_iA_{u,v}\\
+        \end{align*}
+
+    The bounds of :math:`\bar x_{i,v}` is defined by:
+
+    .. math::
+
+        \begin{align*}
+            \left[\bar l_{i,v},\bar u_{i,v}\right]=
+            \begin{cases}
+                [0,0], & \text{$A_{u,v}$ is fixed to $0$}\\
+                [l_i,u_i], & \text{$A_{u,v}$ is fixed to $1$}\\
+                [\min(0,l_i),\max(0,u_i)], & \text{$A_{u,v}$ is not fixed}
+            \end{cases}
+        \end{align*}
     """
 
     input_layer, input_layer_block = _input_layer_and_block(net_block, net, layer)
