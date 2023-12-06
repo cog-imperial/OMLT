@@ -270,7 +270,7 @@ class GNNLayer(DenseLayer):
 
     .. math::
 
-    \begin{align*}
+        \begin{align*}
             \mathbf{W}=\begin{pmatrix}
                 \mathbf{w_1} & \mathbf{w_2} & \mathbf{0} \\
                 \mathbf{w_2} & \mathbf{w_1} & \mathbf{w_2} \\
