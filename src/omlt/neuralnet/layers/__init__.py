@@ -1,11 +1,3 @@
-<<<<<<< HEAD
-from omlt.neuralnet.layers.full_space import (
-    full_space_conv2d_layer,
-    full_space_dense_layer,
-    full_space_gnn_layer,
-)
-from omlt.neuralnet.layers.reduced_space import reduced_space_dense_layer
-=======
 r"""
 Since OMLT builds layer and activation functions in layer level, we ignore the layer index and use the following notations to describe the :math:`l`-th layer:
 
@@ -23,4 +15,3 @@ Since OMLT builds layer and activation functions in layer level, we ignore the l
 """
 from .full_space import full_space_conv2d_layer, full_space_dense_layer
 from .reduced_space import reduced_space_dense_layer
->>>>>>> a3d128d569b9b7cbf13315ea6be813f076d56b22
