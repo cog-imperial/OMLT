@@ -55,6 +55,17 @@ When utilizing linear model decision trees, please cite the following paper in a
           doi = {https://doi.org/10.1016/j.compchemeng.2023.108347}
      }
 
+When utilizing graph neural networks, please cite the following paper in addition:
+
+::
+
+     @article{zhang2023,
+          title={Augmenting optimization-based molecular design with graph neural networks},
+          author= {Shiqiang Zhang and Juan S. Campos and Christian Feldmann and Frederik Sandfort and Miriam Mathea and Ruth Misener},
+          journal={arXiv preprint arXiv:2312.03613},
+          year = {2023},
+     }
+
 Documentation
 ==============
 The latest OMLT documentation can be found at the `readthedocs page <https://omlt.readthedocs.io/en/latest/index.html#>`_. Additionally, much of the current functionality is demonstrated using Jupyter notebooks available in the  `notebooks folder <https://github.com/cog-imperial/OMLT/tree/main/docs/notebooks>`_.
