@@ -1,6 +1,8 @@
+from pathlib import Path
 import pytest
 
 from omlt.dependencies import onnx, onnx_available
+from tests.conftest import _Datadir
 
 if onnx_available:
     from omlt.io.onnx import load_onnx_neural_network
@@ -8,7 +10,7 @@ if onnx_available:
 
 
 @pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
-def test_linear_131(datadir):
+def test_linear_131(datadir: _Datadir):
     model = onnx.load(datadir.file("keras_linear_131.onnx"))
     net = load_onnx_neural_network(model)
     layers = list(net.layers)
@@ -20,7 +22,7 @@ def test_linear_131(datadir):
 
 
 @pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
-def test_linear_131_relu(datadir):
+def test_linear_131_relu(datadir: _Datadir):
     model = onnx.load(datadir.file("keras_linear_131_relu.onnx"))
     net = load_onnx_neural_network(model)
     layers = list(net.layers)
@@ -32,7 +34,7 @@ def test_linear_131_relu(datadir):
 
 
 @pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
-def test_linear_131_sigmoid(datadir):
+def test_linear_131_sigmoid(datadir: _Datadir):
     model = onnx.load(datadir.file("keras_linear_131_sigmoid.onnx"))
     net = load_onnx_neural_network(model)
     layers = list(net.layers)
@@ -44,7 +46,7 @@ def test_linear_131_sigmoid(datadir):
 
 
 @pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
-def test_gemm(datadir):
+def test_gemm(datadir: _Datadir):
     model = onnx.load(datadir.file("gemm.onnx"))
     net = load_onnx_neural_network(model)
     layers = list(net.layers)
@@ -58,7 +60,7 @@ def test_gemm(datadir):
 
 
 @pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
-def test_gemm_transB(datadir):
+def test_gemm_transB(datadir: _Datadir):
     model = onnx.load(datadir.file("gemm_not_transB.onnx"))
     model_transB = onnx.load(datadir.file("gemm_transB.onnx"))
     net = load_onnx_neural_network(model)
@@ -74,7 +76,7 @@ def test_gemm_transB(datadir):
 
 
 @pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
-def test_conv(datadir):
+def test_conv(datadir: _Datadir):
     model = onnx.load(datadir.file("convx1_gemmx1.onnx"))
     net = load_onnx_neural_network(model)
     layers = list(net.layers)
@@ -85,9 +87,24 @@ def test_conv(datadir):
     assert layers[1].strides == [1, 1]
     assert layers[1].kernel_shape == (2, 2)
 
+@pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
+def test_conv_dilations(datadir: _Datadir):
+    model = onnx.load(datadir.file("convx1_gemmx1.onnx"))
+    for attr in model.graph.node[0].attribute:
+        if attr.name == "dilations":
+            attr.ints.clear()
+            attr.ints.extend([2,2])
+        if attr.name == "pads":
+            attr.ints.clear()
+            attr.ints.extend([1,2,1,0])
+    model.graph.node[1].attribute[0].t.raw_data = numpy_helper.from_array(np.array([-1,128])).raw_data
+    net = load_onnx_neural_network(model)
+    layers = list(net.layers)
+    assert layers[1].dilations == [2,2]
+    assert layers[1].pads == [1,2,1,0]
 
 @pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
-def test_maxpool(datadir):
+def test_maxpool(datadir: _Datadir):
     model = onnx.load(datadir.file("maxpool_2d.onnx"))
     net = load_onnx_neural_network(model)
     layers = list(net.layers)
@@ -109,7 +126,7 @@ def test_maxpool(datadir):
 
 
 @pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
-def test_input_tensor_invalid_dims(datadir):
+def test_input_tensor_invalid_dims(datadir: _Datadir):
     model = onnx.load(datadir.file("keras_linear_131.onnx"))
     model.graph.input[0].type.tensor_type.shape.dim[1].dim_value = 0
     parser = NetworkParser()
@@ -120,7 +137,7 @@ def test_input_tensor_invalid_dims(datadir):
 
 
 @pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
-def test_no_input_layers(datadir):
+def test_no_input_layers(datadir: _Datadir):
     model = onnx.load(datadir.file("keras_linear_131.onnx"))
     model.graph.input.remove(model.graph.input[0])
     parser = NetworkParser()
@@ -131,7 +148,7 @@ def test_no_input_layers(datadir):
 
 
 @pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
-def test_node_no_inputs(datadir):
+def test_node_no_inputs(datadir: _Datadir):
     model = onnx.load(datadir.file("keras_linear_131.onnx"))
     while len(model.graph.node[0].input) > 0:
         model.graph.node[0].input.pop()
@@ -143,7 +160,7 @@ def test_node_no_inputs(datadir):
 
 
 @pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
-def test_consume_wrong_node_type(datadir):
+def test_consume_wrong_node_type(datadir: _Datadir):
     model = onnx.load(datadir.file("keras_linear_131.onnx"))
     parser = NetworkParser()
     parser.parse_network(model.graph, None, None)
@@ -190,7 +207,7 @@ def test_consume_wrong_node_type(datadir):
 
 
 @pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
-def test_consume_dense_wrong_dims(datadir):
+def test_consume_dense_wrong_dims(datadir: _Datadir):
     model = onnx.load(datadir.file("keras_linear_131.onnx"))
     parser = NetworkParser()
     parser.parse_network(model.graph, None, None)
@@ -208,7 +225,7 @@ def test_consume_dense_wrong_dims(datadir):
 
 
 @pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
-def test_consume_gemm_wrong_dims(datadir):
+def test_consume_gemm_wrong_dims(datadir: _Datadir):
     model = onnx.load(datadir.file("gemm.onnx"))
     parser = NetworkParser()
     parser.parse_network(model.graph, None, None)
@@ -222,7 +239,7 @@ def test_consume_gemm_wrong_dims(datadir):
 
 
 @pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
-def test_consume_conv_wrong_dims(datadir):
+def test_consume_conv_wrong_dims(datadir: _Datadir):
     model = onnx.load(datadir.file("convx1_gemmx1.onnx"))
     parser = NetworkParser()
     parser.parse_network(model.graph, None, None)
@@ -236,7 +253,7 @@ def test_consume_conv_wrong_dims(datadir):
 
 
 @pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
-def test_consume_reshape_wrong_dims(datadir):
+def test_consume_reshape_wrong_dims(datadir: _Datadir):
     model = onnx.load(datadir.file("convx1_gemmx1.onnx"))
     parser = NetworkParser()
     parser.parse_network(model.graph, None, None)
@@ -250,7 +267,7 @@ def test_consume_reshape_wrong_dims(datadir):
 
 
 @pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
-def test_consume_maxpool_wrong_dims(datadir):
+def test_consume_maxpool_wrong_dims(datadir: _Datadir):
     model = onnx.load(datadir.file("maxpool_2d.onnx"))
     parser = NetworkParser()
     parser.parse_network(model.graph, None, None)
