@@ -78,9 +78,8 @@ def test_gemm_transB(datadir):
 @pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
 def test_conv(datadir):
     model = onnx.load(datadir.file("convx1_gemmx1.onnx"))
-    for attr in model.graph.node[0].attribute:
-        if attr.name == "dilations":
-            del attr
+    del model.graph.node[0].attribute[0]
+    del model.graph.node[0].attribute[2]
     net = load_onnx_neural_network(model)
     layers = list(net.layers)
     assert len(layers) == 4
