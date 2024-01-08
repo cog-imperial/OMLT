@@ -569,7 +569,7 @@ class ConvLayer2D(Layer2D):
                 kernel.shape[0],
                 kernel.shape[1],
                 kernel.shape[2] + self.dilations[1] - 1,
-                kernel.shape[3] + self.dilations[1] - 1
+                kernel.shape[3] + self.dilations[1] - 1,
             )
             self.__dilated_kernel = dilate_kernel
         else:
