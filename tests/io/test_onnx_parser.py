@@ -78,6 +78,9 @@ def test_gemm_transB(datadir):
 @pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
 def test_conv(datadir):
     model = onnx.load(datadir.file("convx1_gemmx1.onnx"))
+    for attr in model.graph.node[0].attribute:
+        if attr.name == "dilations":
+            del attr
     net = load_onnx_neural_network(model)
     layers = list(net.layers)
     assert len(layers) == 4
@@ -86,6 +89,8 @@ def test_conv(datadir):
     assert layers[3].activation == "relu"
     assert layers[1].strides == [1, 1]
     assert layers[1].kernel_shape == (2, 2)
+    assert layers[1].dilations == [1, 1]
+    assert layers[1].pads == [0, 0, 0, 0]
 
 
 @pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
@@ -104,6 +109,16 @@ def test_conv_dilations(datadir):
     net = load_onnx_neural_network(model)
     layers = list(net.layers)
     assert layers[1].dilations == [2, 2]
+    assert layers[1].dilated_kernel[0][0] == array(
+        [[-0.00886667, 0, 0.18750042],
+         [0, 0, 0],
+         [-0.11404419, 0, -0.02588665]]
+    )
+    assert layers[1].dilated_kernel[1][0] == array(
+        [[-0.07554907, 0, -0.05939162],
+         [0, 0, 0],
+         [0.2217437, 0, 0.14637864]]
+    )
     assert layers[1].pads == [1, 2, 1, 0]
 
 
