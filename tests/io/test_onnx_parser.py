@@ -109,16 +109,16 @@ def test_conv_dilations(datadir):
     net = load_onnx_neural_network(model)
     layers = list(net.layers)
     assert layers[1].dilations == [2, 2]
-    assert layers[1].dilated_kernel[0][0] == array(
+    assert (layers[1].dilated_kernel[0][0].round(8) == array(
         [[-0.00886667, 0, 0.18750042],
          [0, 0, 0],
          [-0.11404419, 0, -0.02588665]]
-    )
-    assert layers[1].dilated_kernel[1][0] == array(
+    )).all()
+    assert (layers[1].dilated_kernel[1][0].round(8) == array(
         [[-0.07554907, 0, -0.05939162],
          [0, 0, 0],
          [0.2217437, 0, 0.14637864]]
-    )
+    )).all()
     assert layers[1].pads == [1, 2, 1, 0]
 
 
