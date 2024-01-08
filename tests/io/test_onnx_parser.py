@@ -6,7 +6,7 @@ if onnx_available:
     from omlt.io.onnx import load_onnx_neural_network
     from omlt.io.onnx_parser import NetworkParser
     from onnx import numpy_helper
-    from numpy import ndarray
+    from numpy import array
 
 
 @pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
@@ -93,13 +93,14 @@ def test_conv_dilations(datadir):
     model = onnx.load(datadir.file("convx1_gemmx1.onnx"))
     for attr in model.graph.node[0].attribute:
         if attr.name == "dilations":
-            attr.ints.clear()
+            del attr.ints[:]
             attr.ints.extend([2, 2])
         if attr.name == "pads":
-            attr.ints.clear()
+            del attr.ints[:]
             attr.ints.extend([1, 2, 1, 0])
-    model.graph.node[1].attribute[0].t.raw_data = \
-        numpy_helper.from_array(ndarray([-1, 128])).raw_data
+    model.graph.node[1].attribute[0].t.raw_data = numpy_helper.from_array(
+        array([-1, 128])
+    ).raw_data
     net = load_onnx_neural_network(model)
     layers = list(net.layers)
     assert layers[1].dilations == [2, 2]
