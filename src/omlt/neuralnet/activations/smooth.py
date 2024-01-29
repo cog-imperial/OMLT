@@ -3,12 +3,12 @@ from pyomo.environ import exp, log, tanh
 
 def softplus_activation_function(x):
     r"""
-    Applies the softplus function.
+    Applies the softplus function:
 
     .. math::
 
         \begin{align*}
-        y &= log(exp(\hat x) + 1)
+            y=\log(\exp(x)+1)
         \end{align*}
 
     """
@@ -17,12 +17,12 @@ def softplus_activation_function(x):
 
 def sigmoid_activation_function(x):
     r"""
-    Applies the sigmoid function.
+    Applies the sigmoid function:
 
     .. math::
 
         \begin{align*}
-        y &= \frac{1}{1 + exp(-\hat x)}
+            y=\frac{1}{1+\exp(-x)}
         \end{align*}
 
     """
@@ -31,12 +31,12 @@ def sigmoid_activation_function(x):
 
 def tanh_activation_function(x):
     r"""
-    Applies the tanh function.
+    Applies the tanh function:
 
     .. math::
 
         \begin{align*}
-        y &= tanh(x)
+            y=\tanh(x)
         \end{align*}
 
     """
@@ -45,15 +45,7 @@ def tanh_activation_function(x):
 
 def softplus_activation_constraint(net_block, net, layer_block, layer):
     r"""
-    Softplus activation constraint generator
-
-    Generates the constraints for the softplus activation function.
-
-    .. math::
-
-        \begin{align*}
-        z_i &= log(exp(\hat z_i) + 1) && \forall i \in N
-        \end{align*}
+    Softplus activation constraint generator.
 
     """
     return smooth_monotonic_activation_constraint(
@@ -63,15 +55,7 @@ def softplus_activation_constraint(net_block, net, layer_block, layer):
 
 def sigmoid_activation_constraint(net_block, net, layer_block, layer):
     r"""
-    Sigmoid activation constraint generator
-
-    Generates the constraints for the sigmoid activation function.
-
-    .. math::
-
-        \begin{align*}
-        z_i &= \frac{1}{1 + exp(-\hat z_i)} && \forall i \in N
-        \end{align*}
+    Sigmoid activation constraint generator.
 
     """
     return smooth_monotonic_activation_constraint(
@@ -81,15 +65,7 @@ def sigmoid_activation_constraint(net_block, net, layer_block, layer):
 
 def tanh_activation_constraint(net_block, net, layer_block, layer):
     r"""
-    tanh activation constraint generator
-
-    Generates the constraints for the tanh activation function.
-
-    .. math::
-
-        \begin{align*}
-        z_i &= tanh(\hat z_i) && \forall i \in N
-        \end{align*}
+    tanh activation constraint generator.
 
     """
     return smooth_monotonic_activation_constraint(
@@ -99,15 +75,14 @@ def tanh_activation_constraint(net_block, net, layer_block, layer):
 
 def smooth_monotonic_activation_constraint(net_block, net, layer_block, layer, fcn):
     r"""
-    Activation constraint generator for a smooth monotonic function
+    Activation constraint generator for a smooth monotonic function.
 
-    Generates the constraints for the activation function fcn if it
-    is smooth and monotonic
+    Generates the constraints for the activation function :math:`f` if it is smooth and monotonic:
 
     .. math::
 
         \begin{align*}
-        z_i &= fcn(\hat z_i) && \forall i \in N
+            y=f(x)
         \end{align*}
 
     """

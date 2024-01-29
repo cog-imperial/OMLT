@@ -1,0 +1,10 @@
+# Required dependencies for Sphinx documentation
+sphinx
+sphinx-rtd-theme
+numpy
+pyomo
+networkx
+onnx
+tensorflow
+linear-tree
+importlib-metadata

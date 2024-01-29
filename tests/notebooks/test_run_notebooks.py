@@ -52,3 +52,7 @@ def test_mnist_example_dense():
 @pytest.mark.skipif(not keras_available, reason="keras needed for this notebook")
 def test_neural_network_formulations():
     _test_run_notebook("neuralnet", "neural_network_formulations.ipynb", 21)
+
+
+def test_index_handling():
+    _test_run_notebook("neuralnet", "index_handling.ipynb", 6)

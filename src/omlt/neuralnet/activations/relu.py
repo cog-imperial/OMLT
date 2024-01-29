@@ -6,26 +6,37 @@ def bigm_relu_activation_constraint(net_block, net, layer_block, layer):
     r"""
     Big-M ReLU activation formulation.
 
-    Generates the constraints for the ReLU activation function.
+    Generates the constraints for the ReLU activation function:
 
     .. math::
 
         \begin{align*}
-        z_i &= \text{max}(0, \hat{z_i}) && \forall i \in N
+            y=\max(0,x)
         \end{align*}
 
-    The Big-M formulation for the i-th node is given by:
+    We additionally introduce the following notations to describe this formulation:
 
     .. math::
 
         \begin{align*}
-        z_i &\geq \hat{z_i} \\
-        z_i &\leq \hat{z_i} - l(1-\sigma) \\
-        z_i &\leq u(\sigma) \\
-        \sigma &\in \{0, 1\}
+            \sigma &:= \text{denote if $y=x$, $\sigma\in\{0,1\}$}\\
+            l      &:= \text{the lower bound of $x$}\\
+            u      &:= \text{the upper bound of $x$}\\
         \end{align*}
 
-    where :math:`l` and :math:`u` are, respectively, lower and upper bounds of :math:`\hat{z_i}`.
+    The big-M formulation is given by:
+
+    .. math::
+
+        \begin{align*}
+            y&\ge 0\\
+            y&\ge x\\
+            y&\le x-(1-\sigma)l\\
+            y&\le \sigma u
+        \end{align*}
+
+    The lower bound of :math:`y` is :math:`\max(0,l)`, and the upper bound of :math:`y` is :math:`\max(0,u)`.
+
     """
     layer_block.q_relu = pyo.Var(layer.output_indexes, within=pyo.Binary)
 
@@ -45,7 +56,7 @@ def bigm_relu_activation_constraint(net_block, net, layer_block, layer):
     for output_index in layer.output_indexes:
         lb, ub = layer_block.zhat[output_index].bounds
         layer_block._big_m_lb_relu[output_index] = lb
-        layer_block.z[output_index].setlb(0)
+        layer_block.z[output_index].setlb(max(0, lb))
 
         layer_block._big_m_ub_relu[output_index] = ub
         layer_block.z[output_index].setub(max(0, ub))
@@ -73,22 +84,32 @@ def bigm_relu_activation_constraint(net_block, net, layer_block, layer):
 
 class ComplementarityReLUActivation:
     r"""
-    Complementarity-based ReLU activation forumlation.
+    Complementarity-based ReLU activation formulation.
 
-    Generates the constraints for the ReLU activation function.
+    Generates the constraints for the ReLU activation function:
 
     .. math::
 
         \begin{align*}
-        z_i &= \text{max}(0, \hat{z_i}) && \forall i \in N
+            y=\max(0,x)
         \end{align*}
 
-    The complementarity-based formulation for the i-th node is given by:
+    The complementarity-based formulation is given by:
 
     .. math::
 
         \begin{align*}
-        0 &\leq z_i \perp (z-\hat{z_i}) \geq 0
+            0\le y \perp (y-x)\ge 0
+        \end{align*}
+
+    which denotes that:
+
+    .. math::
+
+        \begin{align*}
+            y\ge 0\\
+            y(y-x)=0\\
+            y-x\ge 0
         \end{align*}
 
     """
