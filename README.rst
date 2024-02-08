@@ -55,6 +55,17 @@ When utilizing linear model decision trees, please cite the following paper in a
           doi = {https://doi.org/10.1016/j.compchemeng.2023.108347}
      }
 
+When utilizing graph neural networks, please cite the following paper in addition:
+
+::
+
+     @article{zhang2023,
+          title={Augmenting optimization-based molecular design with graph neural networks},
+          author= {Shiqiang Zhang and Juan S. Campos and Christian Feldmann and Frederik Sandfort and Miriam Mathea and Ruth Misener},
+          journal={arXiv preprint arXiv:2312.03613},
+          year = {2023},
+     }
+
 Documentation
 ==============
 The latest OMLT documentation can be found at the `readthedocs page <https://omlt.readthedocs.io/en/latest/index.html#>`_. Additionally, much of the current functionality is demonstrated using Jupyter notebooks available in the  `notebooks folder <https://github.com/cog-imperial/OMLT/tree/main/docs/notebooks>`_.
@@ -149,11 +160,11 @@ Contributors
 
    * - |jalving|_
      - Jordan Jalving
-     - This work was funded by Sandia National Laboratories, Laboratory Directed Research and Development program
+     - This work was funded by Sandia National Laboratories, Laboratory Directed Research and Development program.
 
    * - |fracek|_
      - Francesco Ceccon
-     - This work was funded by an Engineering & Physical Sciences Research Council Research Fellowship [GrantNumber EP/P016871/1]
+     - This work was funded by an Engineering & Physical Sciences Research Council Research Fellowship [GrantNumber EP/P016871/1].
 
    * - |carldlaird|_
      - Carl D. Laird
@@ -171,6 +182,13 @@ Contributors
      - Bashar L. Ammari
      - This work was funded by Sandia National Laboratories, Laboratory Directed Research and Development program.
 
+   * - |juan-campos|_
+     - Juan S. Campos
+     - This work was funded by an Engineering & Physical Sciences Research Council Research Fellowship [GrantNumber EP/W003317/1].
+
+   * - |zshiqiang|_
+     - Shiqiang Zhang
+     - This work was funded by an Imperial College Hans Rausing PhD Scholarship.
 
 .. _jalving: https://github.com/jalving
 .. |jalving| image:: https://avatars1.githubusercontent.com/u/16785413?s=120&v=4
@@ -195,3 +213,11 @@ Contributors
 .. _bammari: https://github.com/bammari
 .. |bammari| image:: https://avatars.githubusercontent.com/u/96192809?v=4
    :width: 80px
+
+.. _juan-campos: https://github.com/juan-campos
+.. |juan-campos| image:: https://avatars.githubusercontent.com/u/65016230?v=4
+   :width: 80px
+
+.. _zshiqiang: https://github.com/zshiqiang
+.. |zshiqiang| image:: https://avatars.githubusercontent.com/u/91337036?v=4
+   :width: 80px 

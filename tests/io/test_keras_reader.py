@@ -7,7 +7,7 @@ if keras_available:
 
 
 @pytest.mark.skipif(
-    not keras_available, reason="Test only valid when keras not available"
+    not keras_available, reason="Test only valid when keras is available"
 )
 def test_keras_reader(datadir):
     nn = keras.models.load_model(datadir.file("keras_linear_131"), compile=False)
