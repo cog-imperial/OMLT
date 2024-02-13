@@ -176,13 +176,15 @@ class NetworkParser:
 
     def _consume_dense_nodes(self, node, next_nodes):
         """Starting from a MatMul node, consume nodes to form a dense Ax + b node."""
+        # This should only be called when we know we have a starting MatMul node. This
+        # error indicates a bug in the function calling this one.
         if node.op_type != "MatMul":
             raise ValueError(
-                f"{node.name} is a {node.op_type} node, only MatMul nodes can be used as starting points for consumption."
+                f"{node.name} is a {node.op_type} node, but the method for parsing MatMul nodes was invoked."
             )
         if len(node.input) != 2:
             raise ValueError(
-                f"{node.name} input has {len(node.input)} dimensions, only nodes with 2 input dimensions can be used as starting points for consumption."
+                f"{node.name} input has {len(node.input)} dimensions, but the parser requires the starting node to have 2 input dimensions."
             )
 
         [in_0, in_1] = list(node.input)
@@ -200,7 +202,7 @@ class NetworkParser:
             raise TypeError(f"Expected a node next, got a {type_} instead.")
         if node.op_type != "Add":
             raise ValueError(
-                f"The first node to be consumed, {node.name}, is a {node.op_type} node. Only Add nodes are supported."
+                f"The next node to be parsed, {node.name}, is a {node.op_type} node. Only Add nodes are supported."
             )
 
         # extract biases
@@ -255,11 +257,11 @@ class NetworkParser:
         """Starting from a Gemm node, consume nodes to form a dense aAB + bC node."""
         if node.op_type != "Gemm":
             raise ValueError(
-                f"{node.name} is a {node.op_type} node, only Gemm nodes can be used as starting points for consumption."
+                f"{node.name} is a {node.op_type} node, but the method for parsing Gemm nodes was invoked."
             )
         if len(node.input) != 3:
             raise ValueError(
-                f"{node.name} input has {len(node.input)} dimensions, only nodes with 3 input dimensions can be used as starting points for consumption."
+                f"{node.name} input has {len(node.input)} dimensions, but the parser requires the starting node to have 3 input dimensions."
             )
 
         attr = _collect_attributes(node)
@@ -310,11 +312,11 @@ class NetworkParser:
         """
         if node.op_type != "Conv":
             raise ValueError(
-                f"{node.name} is a {node.op_type} node, only Conv nodes can be used as starting points for consumption."
+                f"{node.name} is a {node.op_type} node, but the method for parsing Conv nodes was invoked."
             )
         if len(node.input) not in [2, 3]:
             raise ValueError(
-                f"{node.name} input has {len(node.input)} dimensions, only nodes with 2 or 3 input dimensions can be used as starting points for consumption."
+                f"{node.name} input has {len(node.input)} dimensions, but the parser requires the starting node to have 2 or 3 input dimensions."
             )
 
         if len(node.input) == 2:
@@ -359,25 +361,32 @@ class NetworkParser:
                 f"Input/output size ({input_output_size}) first dimension must match input weights channels ({in_channels})."
             )
 
+        # TODO: need to check pads and dilations also have correct dimensions. Also should
+        # add support for autopad.
+        if "pads" in attr:
+            pads = attr["pads"]
+        else:
+            pads = 2 * (len(input_output_size) - 1) * [0]
+
+        if "dilations" in attr:
+            dilations = attr["dilations"]
+        else:
+            dilations = (len(input_output_size) - 1) * [1]
+
         # Other attributes are not supported
-        if "dilations" in attr and attr["dilations"] != [1, 1]:
-            raise ValueError(
-                f"{node} has non-identity dilations ({attr['dilations']}). This is not supported."
-            )
         if attr["group"] != 1:
             raise ValueError(
                 f"{node} has multiple groups ({attr['group']}). This is not supported."
             )
-        if "pads" in attr and np.any(attr["pads"]):
-            raise ValueError(
-                f"{node} has non-zero pads ({attr['pads']}). This is not supported."
-            )
 
         # generate new nodes for the node output
-        padding = 0
+        padding = [
+            pads[i] + pads[i + len(input_output_size) - 1]
+            for i in range(len(input_output_size) - 1)
+        ]
         output_size = [out_channels]
-        for w, k, s in zip(input_output_size[1:], kernel_shape, strides):
-            new_w = int((w - k + 2 * padding) / s) + 1
+        for w, k, s, p in zip(input_output_size[1:], kernel_shape, strides, padding):
+            new_w = int((w - k + p) / s) + 1
             output_size.append(new_w)
 
         activation = "linear"
@@ -401,6 +410,8 @@ class NetworkParser:
             output_size,
             strides,
             weights,
+            pads=pads,
+            dilations=dilations,
             activation=activation,
             input_index_mapper=transformer,
         )
@@ -413,11 +424,11 @@ class NetworkParser:
         """Parse a Reshape node."""
         if node.op_type != "Reshape":
             raise ValueError(
-                f"{node.name} is a {node.op_type} node, only Reshape nodes can be used as starting points for consumption."
+                f"{node.name} is a {node.op_type} node, but the method for parsing Reshape nodes was invoked."
             )
         if len(node.input) != 2:
             raise ValueError(
-                f"{node.name} input has {len(node.input)} dimensions, only nodes with 2 input dimensions can be used as starting points for consumption."
+                f"{node.name} input has {len(node.input)} dimensions, but the parser requires the starting node to have 2 input dimensions."
             )
         [in_0, in_1] = list(node.input)
         input_layer = self._node_map[in_0]
@@ -434,7 +445,7 @@ class NetworkParser:
         """
         if node.op_type not in _POOLING_OP_TYPES:
             raise ValueError(
-                f"{node.name} is a {node.op_type} node, only MaxPool nodes can be used as starting points for consumption."
+                f"{node.name} is a {node.op_type} node, but the method for parsing MaxPool nodes was invoked."
             )
         pool_func_name = "max"
 
@@ -445,7 +456,7 @@ class NetworkParser:
             )
         if len(node.input) != 1:
             raise ValueError(
-                f"{node.name} input has {len(node.input)} dimensions, only nodes with 1 input dimension can be used as starting points for consumption."
+                f"{node.name} input has {len(node.input)} dimensions, but the parser requires the starting node to have 1 input dimension."
             )
 
         input_layer, transformer = self._node_input_and_transformer(node.input[0])
@@ -467,17 +478,11 @@ class NetworkParser:
         kernel_depth = attr["kernel_shape"][0]
         kernel_shape = attr["kernel_shape"][1:]
         strides = attr["strides"] if "strides" in attr else [1] * len(kernel_shape)
+        pads = attr["pads"] if "pads" in attr else None
+        dilations = attr["dilations"] if "dilations" in attr else None
 
         # check only kernel shape, stride, storage order are set
         # everything else is not supported
-        if "dilations" in attr and attr["dilations"] != [1, 1]:
-            raise ValueError(
-                f"{node.name} has non-identity dilations ({attr['dilations']}). This is not supported."
-            )
-        if "pads" in attr and np.any(attr["pads"]):
-            raise ValueError(
-                f"{node.name} has non-zero pads ({attr['pads']}). This is not supported."
-            )
         if ("auto_pad" in attr) and (attr["auto_pad"] != "NOTSET"):
             raise ValueError(
                 f"{node.name} has autopad set ({attr['auto_pad']}). This is not supported."
@@ -519,6 +524,8 @@ class NetworkParser:
             pool_func_name,
             tuple(kernel_shape),
             kernel_depth,
+            pads=pads,
+            dilations=dilations,
             activation=activation,
             input_index_mapper=transformer,
         )
