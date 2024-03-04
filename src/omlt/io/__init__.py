@@ -1,4 +1,9 @@
-from omlt.dependencies import keras_available, onnx_available
+from omlt.dependencies import (
+    onnx_available,
+    keras_available,
+    torch_available,
+    torch_geometric_available,
+)
 
 if onnx_available:
     from omlt.io.onnx import (

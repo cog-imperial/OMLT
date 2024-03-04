@@ -236,6 +236,159 @@ class DenseLayer(Layer):
         return y
 
 
+class GNNLayer(DenseLayer):
+    r"""
+    We additionally introduce the following notations to describe the gnn layer:
+
+    .. math::
+
+        \begin{align*}
+            N       &:= \text{the number of node in the graph}\\
+            u       &:= \text{the node index of $x_i$, $u=\lfloor iN/F_{in}\rfloor$}\\
+            v       &:= \text{the node index of $y_j$, $v=\lfloor jN/F_{out}\rfloor$}\\
+            A_{u,v} &:= \text{the edge between node $u$ and $v$}\\
+        \end{align*}
+
+    The gnn layer is defined by:
+
+    .. math::
+
+        \begin{align*}
+            y_j = \sigma \left(\sum\limits_{i=0}^{F_{in}-1}A_{u,v}w_{ij}x_i+b_j\right), && \forall 0\le j<F_{out}, 
+        \end{align*}
+
+
+    For example, given a GraphSAGE layer with sum aggregation:
+
+    .. math::
+
+        \begin{align*}
+            \mathbf{y_v} =\sigma\left(\mathbf{w_1^T}\mathbf{x_v}+\mathbf{w_2}^T\sum\limits_{u\in\mathcal N(v)}\mathbf{x_u}+\mathbf{b}\right)
+        \end{align*}
+
+    If the graph structure is fixed, assume that it is a line graph with :math:`N=3` nodes, i.e., the adjacency matrix :math:`A=\begin{pmatrix}1 & 1 & 0\\1 & 1 & 1\\ 0 & 1 & 1\end{pmatrix}`. Then the corresponding GNN layer is defined with parameters:
+
+    .. math::
+
+        \begin{align*}
+            \mathbf{W}=\begin{pmatrix}
+                \mathbf{w_1} & \mathbf{w_2} & \mathbf{0} \\
+                \mathbf{w_2} & \mathbf{w_1} & \mathbf{w_2} \\
+                \mathbf{0} & \mathbf{w_2} & \mathbf{w_1} \\
+            \end{pmatrix},
+            \mathbf{B}=\begin{pmatrix}
+            \mathbf{b}\\\mathbf{b}\\\mathbf{b}
+            \end{pmatrix}
+        \end{align*}
+
+    Otherwise, if the input graph structure is not fixed, all weights and biases should be provided. In this case, the GNN layer is defined with parameters:
+
+    .. math::
+
+        \begin{align*}
+            \mathbf{W}=\begin{pmatrix}
+                \mathbf{w_1} & \mathbf{w_2} & \mathbf{w_2} \\
+                \mathbf{w_2} & \mathbf{w_1} & \mathbf{w_2} \\
+                \mathbf{w_2} & \mathbf{w_2} & \mathbf{w_1} \\
+            \end{pmatrix},
+            \mathbf{B}=\begin{pmatrix}
+            \mathbf{b}\\\mathbf{b}\\\mathbf{b}
+            \end{pmatrix}
+        \end{align*}
+
+    In this case, all elements :math:`A_{u,v},u\neq v` are binary variables.
+
+    Parameters
+    ----------
+    input_size : tuple
+        the size of the input.
+    output_size : tuple
+        the size of the output.
+    weight : matrix-like
+        the weight matrix.
+    biases : array-like
+        the biases.
+    N : int
+        number of nodes in the graph
+    activation : str or None
+        activation function name
+    input_index_mapper : IndexMapper or None
+        map indexes from this layer index to the input layer index size
+    """
+
+    def __init__(
+        self,
+        input_size,
+        output_size,
+        weights,
+        biases,
+        N,
+        *,
+        activation=None,
+        input_index_mapper=None,
+    ):
+        super().__init__(
+            input_size,
+            output_size,
+            weights=weights,
+            biases=biases,
+            activation=activation,
+            input_index_mapper=input_index_mapper,
+        )
+        if input_size[-1] % N != 0:
+            raise ValueError(
+                "Input size must equal to the number of nodes multiplied by the number of input node features"
+            )
+        if output_size[-1] % N != 0:
+            raise ValueError(
+                "Output size must equal to the number of nodes multiplied by the number of output node features"
+            )
+        self.__N = N
+        self.__gnn_input_size = input_size[-1] // N
+        self.__gnn_output_size = output_size[-1] // N
+
+    @property
+    def N(self):
+        """Return the number of nodes in the graphs"""
+        return self.__N
+
+    @property
+    def gnn_input_size(self):
+        """Return the size of the input tensor in original GNN"""
+        return self.__gnn_input_size
+
+    @property
+    def gnn_output_size(self):
+        """Return the size of the output tensor in original GNN"""
+        return self.__gnn_output_size
+
+    def __str__(self):
+        return f"GNNLayer(input_size={self.input_size}, output_size={self.output_size})"
+
+    def _eval_with_adjacency(self, x, A):
+        x_reshaped = (
+            np.reshape(x, self.input_index_mapper.output_size)
+            if self.input_index_mapper is not None
+            else x[:]
+        )
+        assert x_reshaped.shape == tuple(self.input_size)
+        y = np.zeros(shape=self.output_size)
+        for output_index in self.output_indexes:
+            for input_index in self.input_indexes:
+                if input_index[:-1] == output_index[:-1]:
+                    y[output_index] += (
+                        x_reshaped[input_index]
+                        * self.weights[input_index[-1], output_index[-1]]
+                        * A[
+                            input_index[-1] // self.gnn_input_size,
+                            output_index[-1] // self.gnn_output_size,
+                        ]
+                    )
+            y[output_index] += self.biases[output_index[-1]]
+
+        return y
+
+
 class Layer2D(Layer):
     """
     Abstract two-dimensional layer that downsamples values in a kernel to a single value.
