@@ -111,12 +111,7 @@ def partition_based_dense_relu_layer(net_block, net, layer_block, layer, split_f
                 expr += prev_layer_block.z[input_index] * w
 
             lb, ub = compute_bounds_on_expr(expr)
-            print("inside function")
-            print(expr)
-            print(w)
-            print(prev_layer_block.z[input_index])
-            print(prev_layer_block.z[input_index].lb)
-            print(prev_layer_block.z[input_index].ub)
+
             if lb is None:
                 msg = "Expression is unbounded below."
                 raise ValueError(msg)
