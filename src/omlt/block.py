@@ -24,6 +24,10 @@ Example:
         pyo.assert_optimal_termination(status)
 """
 
+import warnings
+
+from omlt.base import OmltVar
+
 import pyomo.environ as pyo
 from pyomo.core.base.block import BlockData, declare_custom_block
 
@@ -54,9 +58,9 @@ class OmltBlockData(BlockData):
         self.__output_indexes = output_indexes
 
         self.inputs_set = pyo.Set(initialize=input_indexes)
-        self.inputs = pyo.Var(self.inputs_set, initialize=0)
+        self.inputs = OmltVar(self.inputs_set, initialize=0)
         self.outputs_set = pyo.Set(initialize=output_indexes)
-        self.outputs = pyo.Var(self.outputs_set, initialize=0)
+        self.outputs = OmltVar(self.outputs_set, initialize=0)
 
     def build_formulation(self, formulation):
         """Build formulation.

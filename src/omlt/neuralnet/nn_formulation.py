@@ -2,6 +2,7 @@ from functools import partial
 
 import pyomo.environ as pyo
 
+from omlt.base import OmltVar
 from omlt.formulation import _PyomoFormulation, _setup_scaled_inputs_outputs
 from omlt.neuralnet.activations import (
     ACTIVATION_FUNCTION_MAP as _DEFAULT_ACTIVATION_FUNCTIONS,
@@ -163,7 +164,7 @@ def _build_neural_network_formulation(  # noqa: C901
     @block.Block(block.layers)
     def layer(b, layer_id):
         net_layer = net.layer(layer_id)
-        b.z = pyo.Var(net_layer.output_indexes, initialize=0)
+        b.z = OmltVar(net_layer.output_indexes, initialize=0)
         if isinstance(net_layer, InputLayer):
             for index in net_layer.output_indexes:
                 input_var = block.scaled_inputs[index]
@@ -172,7 +173,7 @@ def _build_neural_network_formulation(  # noqa: C901
                 z_var.setub(input_var.ub)
         else:
             # add zhat only to non input layers
-            b.zhat = pyo.Var(net_layer.output_indexes, initialize=0)
+            b.zhat = OmltVar(net_layer.output_indexes, initialize=0)
 
         return b
 
@@ -484,7 +485,7 @@ class ReluPartitionFormulation(_PyomoFormulation):
         @block.Block(block.layers)
         def layer(b, layer_id):
             net_layer = net.layer(layer_id)
-            b.z = pyo.Var(net_layer.output_indexes, initialize=0)
+            b.z = OmltVar(net_layer.output_indexes, initialize=0)
             if isinstance(net_layer, InputLayer):
                 for index in net_layer.output_indexes:
                     input_var = block.scaled_inputs[index]
@@ -493,7 +494,7 @@ class ReluPartitionFormulation(_PyomoFormulation):
                     z_var.setub(input_var.ub)
             else:
                 # add zhat only to non input layers
-                b.zhat = pyo.Var(net_layer.output_indexes, initialize=0)
+                b.zhat = OmltVar(net_layer.output_indexes, initialize=0)
 
             return b
 

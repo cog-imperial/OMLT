@@ -2,6 +2,7 @@ import numpy as np
 import pyomo.environ as pe
 from pyomo.gdp import Disjunct
 
+from omlt.base import OmltVar
 from omlt.formulation import _PyomoFormulation, _setup_scaled_inputs_outputs
 
 
@@ -266,7 +267,7 @@ def _add_gdp_formulation_to_block(  # noqa: PLR0913
     block.scaled_outputs.setub(output_bounds[1])
     block.scaled_outputs.setlb(output_bounds[0])
 
-    block.intermediate_output = pe.Var(
+    block.intermediate_output = OmltVar(
         tree_ids, bounds=(output_bounds[0], output_bounds[1])
     )
 

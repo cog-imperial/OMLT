@@ -1,6 +1,7 @@
 import pyomo.environ as pyo
 from pyomo import mpec
 
+from omlt.base import OmltVar
 
 def bigm_relu_activation_constraint(net_block, net, layer_block, layer):
     r"""Big-M ReLU activation formulation.
@@ -38,7 +39,7 @@ def bigm_relu_activation_constraint(net_block, net, layer_block, layer):
     is :math:`\max(0,u)`.
 
     """
-    layer_block.q_relu = pyo.Var(layer.output_indexes, within=pyo.Binary)
+    layer_block.q_relu = OmltVar(layer.output_indexes, within=pyo.Binary)
 
     layer_block._z_lower_bound_relu = pyo.Constraint(layer.output_indexes)
     layer_block._z_lower_bound_zhat_relu = pyo.Constraint(layer.output_indexes)

@@ -2,7 +2,7 @@ import abc
 import weakref
 
 import pyomo.environ as pyo
-
+from omlt.base import OmltVar
 
 class _PyomoFormulationInterface(abc.ABC):
     """Pyomo Formulation Interface.
@@ -92,11 +92,11 @@ def _setup_scaled_inputs_outputs(block, scaler=None, scaled_input_bounds=None):
             k: (float(scaled_input_bounds[k][0]), float(scaled_input_bounds[k][1]))
             for k in block.inputs_set
         }
-        block.scaled_inputs = pyo.Var(block.inputs_set, initialize=0, bounds=bnds)
+        block.scaled_inputs = OmltVar(block.inputs_set, initialize=0, bounds=bnds)
     else:
-        block.scaled_inputs = pyo.Var(block.inputs_set, initialize=0)
+        block.scaled_inputs = OmltVar(block.inputs_set, initialize=0)
 
-    block.scaled_outputs = pyo.Var(block.outputs_set, initialize=0)
+    block.scaled_outputs = OmltVar(block.outputs_set, initialize=0)
 
     if scaled_input_bounds is not None and scaler is None:
         # set the bounds on the inputs to be the same as the scaled inputs

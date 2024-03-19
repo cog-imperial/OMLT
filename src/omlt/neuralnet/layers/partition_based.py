@@ -2,6 +2,8 @@ import numpy as np
 import pyomo.environ as pyo
 from pyomo.contrib.fbbt.fbbt import compute_bounds_on_expr
 
+from omlt.base import OmltVar
+
 
 def default_partition_split_func(w, n):
     r"""Default function to partition weights in :math:`w` into :math:`n` partitions.
@@ -84,8 +86,8 @@ def partition_based_dense_relu_layer(net_block, net, layer_block, layer, split_f
         splits = split_func(weights)
         num_splits = len(splits)
 
-        b.sig = pyo.Var(domain=pyo.Binary)
-        b.z2 = pyo.Var(range(num_splits))
+        b.sig = OmltVar(domain=pyo.Binary)
+        b.z2 = OmltVar(range(num_splits))
 
         mapper = layer.input_index_mapper
 
@@ -109,6 +111,12 @@ def partition_based_dense_relu_layer(net_block, net, layer_block, layer, split_f
                 expr += prev_layer_block.z[input_index] * w
 
             lb, ub = compute_bounds_on_expr(expr)
+            print("inside function")
+            print(expr)
+            print(w)
+            print(prev_layer_block.z[input_index])
+            print(prev_layer_block.z[input_index].lb)
+            print(prev_layer_block.z[input_index].ub)
             if lb is None:
                 msg = "Expression is unbounded below."
                 raise ValueError(msg)
