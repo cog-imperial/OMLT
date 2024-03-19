@@ -537,18 +537,19 @@ def test_partition_based_unbounded_below():
     m.neural_net_block = OmltBlock()
     net, y = two_node_network(None, -2.0)
     test_layer = list(net.layers)[2]
+    test_layer_id = id(test_layer)
     prev_layer_id = id(list(net.layers)[1])
     formulation = ReluPartitionFormulation(net)
 
     m.neural_net_block.build_formulation(formulation)
     prev_layer_block = m.neural_net_block.layer[prev_layer_id]
     prev_layer_block.z.setlb(-interval.inf)
-
+    
     split_func = lambda w: default_partition_split_func(w, 2)
 
     with pytest.raises(ValueError) as excinfo:
         partition_based_dense_relu_layer(
-            m.neural_net_block, net, m.neural_net_block, test_layer, split_func
+            m.neural_net_block, net, m.neural_net_block.layer[test_layer_id], test_layer, split_func
         )
     expected_msg = "Expression is unbounded below."
     assert str(excinfo.value) == expected_msg
@@ -559,6 +560,7 @@ def test_partition_based_unbounded_above():
     m.neural_net_block = OmltBlock()
     net, y = two_node_network(None, -2.0)
     test_layer = list(net.layers)[2]
+    test_layer_id = id(test_layer)
     prev_layer_id = id(list(net.layers)[1])
     formulation = ReluPartitionFormulation(net)
 
@@ -566,11 +568,12 @@ def test_partition_based_unbounded_above():
     prev_layer_block = m.neural_net_block.layer[prev_layer_id]
     prev_layer_block.z.setub(interval.inf)
 
+
     split_func = lambda w: default_partition_split_func(w, 2)
 
     with pytest.raises(ValueError) as excinfo:
         partition_based_dense_relu_layer(
-            m.neural_net_block, net, m.neural_net_block, test_layer, split_func
+            m.neural_net_block, net, m.neural_net_block.layer[test_layer_id], test_layer, split_func
         )
     expected_msg = "Expression is unbounded above."
     assert str(excinfo.value) == expected_msg
