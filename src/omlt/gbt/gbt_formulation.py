@@ -3,6 +3,7 @@ import collections
 import numpy as np
 import pyomo.environ as pe
 
+from omlt.base import OmltVar
 from omlt.formulation import _PyomoFormulation, _setup_scaled_inputs_outputs
 from omlt.gbt.model import GradientBoostedTreeModel
 
@@ -148,7 +149,7 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars):
         var = input_vars[var_idx]
         continuous_vars[var_idx] = var
 
-    block.z_l = pe.Var(
+    block.z_l = OmltVar(
         list(zip(nodes_tree_ids[nodes_leaf_mask], nodes_node_ids[nodes_leaf_mask])),
         bounds=(0, None),
         domain=pe.Reals,
@@ -167,7 +168,7 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars):
         for f in continuous_vars.keys()
         for bi, _ in enumerate(branch_value_by_feature_id[f])
     ]
-    block.y = pe.Var(y_index, domain=pe.Binary)
+    block.y = OmltVar(y_index, domain=pe.Binary)
 
     @block.Constraint(tree_ids)
     def single_leaf(b, tree_id):

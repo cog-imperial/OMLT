@@ -2,6 +2,7 @@ import numpy as np
 import pyomo.environ as pyo
 from pyomo.contrib.fbbt.fbbt import compute_bounds_on_expr
 
+from omlt.base import OmltVar
 from omlt.neuralnet.activations import NON_INCREASING_ACTIVATIONS
 from omlt.neuralnet.layer import ConvLayer2D, IndexMapper, PoolingLayer2D
 
@@ -86,7 +87,7 @@ def full_space_gnn_layer(net_block, net, layer_block, layer):
 
     input_layer, input_layer_block = _input_layer_and_block(net_block, net, layer)
 
-    input_layer_block.zbar = pyo.Var(
+    input_layer_block.zbar = OmltVar(
         pyo.Set(initialize=layer.input_indexes),
         pyo.Set(initialize=range(layer.N)),
         initialize=0,
@@ -276,7 +277,7 @@ def full_space_maxpool2d_layer(net_block, net, layer_block, layer):
             for kernel_index, _ in layer.kernel_index_with_input_indexes(0, 0, 0)
         )
     )
-    layer_block.q_maxpool = pyo.Var(
+    layer_block.q_maxpool = OmltVar(
         layer.output_indexes, layer_block._kernel_indexes, within=pyo.Binary
     )
     layer_block._q_sum_maxpool = pyo.Constraint(layer.output_indexes)
