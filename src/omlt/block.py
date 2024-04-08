@@ -39,6 +39,7 @@ class OmltBlockData(BlockData):
         self.__formulation = None
         self.__input_indexes = None
         self.__output_indexes = None
+        self.__format = "pyomo"
 
     def _setup_inputs_outputs(self, *, input_indexes, output_indexes):
         """Setup inputs and outputs.
@@ -58,9 +59,9 @@ class OmltBlockData(BlockData):
         self.__output_indexes = output_indexes
 
         self.inputs_set = pyo.Set(initialize=input_indexes)
-        self.inputs = OmltVar(self.inputs_set, initialize=0)
+        self.inputs = OmltVar(self.inputs_set, initialize=0, format=self.__format)
         self.outputs_set = pyo.Set(initialize=output_indexes)
-        self.outputs = OmltVar(self.outputs_set, initialize=0)
+        self.outputs = OmltVar(self.outputs_set, initialize=0, format=self.__format)
 
     def build_formulation(self, formulation):
         """Build formulation.
@@ -74,6 +75,10 @@ class OmltBlockData(BlockData):
         ----------
         formulation : instance of _PyomoFormulation
             see, for example, FullSpaceNNFormulation
+        format : str
+            Which modelling language to build the formulation in.
+            Currently supported are "pyomo" (default) and "jump".
+
         """
         if not formulation.input_indexes:
             msg = (

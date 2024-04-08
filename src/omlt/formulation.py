@@ -4,6 +4,7 @@ import weakref
 import pyomo.environ as pyo
 from omlt.base import OmltVar
 
+
 class _PyomoFormulationInterface(abc.ABC):
     """Pyomo Formulation Interface.
 
@@ -70,14 +71,9 @@ class _PyomoFormulation(_PyomoFormulationInterface):
 
     @property
     def block(self):
-        """Block.
-
-        The underlying block containing the constraints / variables for this
-        formulation.
-        """
-        if self.__block is not None:
-            return self.__block()
-        return None
+        """The underlying block containing the constraints / variables for this
+        formulation."""
+        return self.__block()
 
 
 def scalar_or_tuple(x):
