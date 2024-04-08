@@ -38,6 +38,7 @@ class OmltBlockData(_BlockData):
         self.__formulation = None
         self.__input_indexes = None
         self.__output_indexes = None
+        self.__format = "pyomo"
 
     def _setup_inputs_outputs(self, *, input_indexes, output_indexes):
         """
@@ -54,18 +55,20 @@ class OmltBlockData(_BlockData):
         """
         self.__input_indexes = input_indexes
         self.__output_indexes = output_indexes
+
         if not input_indexes or not output_indexes:
-            # TODO: implement this check higher up in the class hierarchy to provide more contextual error msg
+            # TODO: implement this check higher up in the class hierarchy to
+            # provide more contextual error msg
             raise ValueError(
                 "OmltBlock must have at least one input and at least one output."
             )
 
         self.inputs_set = pyo.Set(initialize=input_indexes)
-        self.inputs = OmltVar(self.inputs_set, initialize=0)
+        self.inputs = OmltVar(self.inputs_set, initialize=0, format=self.__format)
         self.outputs_set = pyo.Set(initialize=output_indexes)
-        self.outputs = OmltVar(self.outputs_set, initialize=0)
+        self.outputs = OmltVar(self.outputs_set, initialize=0, format=self.__format)
 
-    def build_formulation(self, formulation):
+    def build_formulation(self, formulation, format=None):
         """
         Call this method to construct the constraints (and possibly
         intermediate variables) necessary for the particular neural network
@@ -76,7 +79,15 @@ class OmltBlockData(_BlockData):
         ----------
         formulation : instance of _PyomoFormulation
             see, for example, FullSpaceNNFormulation
+        format : str
+            Which modelling language to build the formulation in.
+            Currently supported are "pyomo" (default) and "jump".
+
         """
+
+        if format is not None:
+            self.__format = format
+
         self._setup_inputs_outputs(
             input_indexes=list(formulation.input_indexes),
             output_indexes=list(formulation.output_indexes),

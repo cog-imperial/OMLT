@@ -35,7 +35,18 @@ def test_block():
     m.b = OmltBlock()
     formulation = dummy_formulation()
     m.b.build_formulation(formulation)
-    print(dir(m.b))
+    assert m.b._OmltBlockData__formulation is formulation
+    assert [k for k in m.b.inputs] == ["A", "C", "D"]
+    assert [k for k in m.b.outputs] == [(0, 0), (0, 1), (1, 0), (1, 1)]
+
+
+def test_jump_block():
+    m = pyo.ConcreteModel()
+    m.b = OmltBlock()
+    formulation = dummy_formulation()
+
+    m.b.build_formulation(formulation, format="jump")
+
     assert m.b._OmltBlockData__formulation is formulation
     assert [k for k in m.b.inputs] == ["A", "C", "D"]
     assert [k for k in m.b.outputs] == [(0, 0), (0, 1), (1, 0), (1, 1)]

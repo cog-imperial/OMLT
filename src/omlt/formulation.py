@@ -4,6 +4,7 @@ import weakref
 import pyomo.environ as pyo
 from omlt.base import OmltVar
 
+
 class _PyomoFormulationInterface(abc.ABC):
     """
     Base class interface for a Pyomo formulation object. This class
@@ -54,7 +55,8 @@ class _PyomoFormulationInterface(abc.ABC):
 class _PyomoFormulation(_PyomoFormulationInterface):
     """
     This is a base class for different Pyomo formulations. To create a new
-    formulation, inherit from this class and implement the abstract methods and properties.
+    formulation, inherit from this class and implement the abstract methods
+    and properties.
     """
 
     def __init__(self):
@@ -66,7 +68,8 @@ class _PyomoFormulation(_PyomoFormulationInterface):
 
     @property
     def block(self):
-        """The underlying block containing the constraints / variables for this formulation."""
+        """The underlying block containing the constraints / variables for this
+        formulation."""
         return self.__block()
 
 
