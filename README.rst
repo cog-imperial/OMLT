@@ -48,7 +48,7 @@ When utilizing linear model decision trees, please cite the following paper in a
      @article{ammari2023,
           title={Linear Model Decision Trees as Surrogates in Optimization of Engineering Applications},
           author= {Bashar L. Ammari and Emma S. Johnson and Georgia Stinchfield and Taehun Kim and Michael Bynum and William E. Hart and Joshua Pulsipher and Carl D. Laird},
-          journal={Computers \& Chemical Engineering},
+          journal={Computers & Chemical Engineering},
           volume = {178},
           year = {2023},
           issn = {0098-1354},
@@ -59,11 +59,15 @@ When utilizing graph neural networks, please cite the following paper in additio
 
 ::
 
-     @article{zhang2023,
-          title={Augmenting optimization-based molecular design with graph neural networks},
+     @article{zhang2024,
+          title = {Augmenting optimization-based molecular design with graph neural networks},
           author= {Shiqiang Zhang and Juan S. Campos and Christian Feldmann and Frederik Sandfort and Miriam Mathea and Ruth Misener},
-          journal={arXiv preprint arXiv:2312.03613},
-          year = {2023},
+          journal = {Computers & Chemical Engineering},
+          volume = {186},
+          pages = {108684},
+          year = {2024},
+          issn = {0098-1354},
+          doi = {https://doi.org/10.1016/j.compchemeng.2024.108684},
      }
 
 Documentation
