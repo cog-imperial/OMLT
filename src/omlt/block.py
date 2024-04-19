@@ -25,7 +25,8 @@ Example:
 
 import warnings
 
-from omlt.base import OmltVar
+from omlt.base import OmltVar, DEFAULT_MODELING_LANGUAGE
+
 
 import pyomo.environ as pyo
 from pyomo.core.base.block import _BlockData, declare_custom_block
@@ -38,7 +39,7 @@ class OmltBlockData(_BlockData):
         self.__formulation = None
         self.__input_indexes = None
         self.__output_indexes = None
-        self.__format = "pyomo"
+        self.__format = DEFAULT_MODELING_LANGUAGE
 
     def _setup_inputs_outputs(self, *, input_indexes, output_indexes):
         """

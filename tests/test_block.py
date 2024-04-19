@@ -2,6 +2,7 @@ import pyomo.environ as pyo
 import pytest
 
 from omlt import OmltBlock
+from omlt.base import OmltVar
 
 
 class dummy_formulation(object):
@@ -43,6 +44,11 @@ def test_block():
 def test_jump_block():
     m = pyo.ConcreteModel()
     m.b = OmltBlock()
+
+    m.b.x = OmltVar(initialize=(2, 7), format="jump")
+
+    assert m.b.x.value == (2, 7)
+
     formulation = dummy_formulation()
 
     m.b.build_formulation(formulation, format="jump")
