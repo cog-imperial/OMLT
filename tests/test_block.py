@@ -1,6 +1,7 @@
 import pyomo.environ as pyo
 import pytest
 from omlt import OmltBlock
+from omlt.base import OmltVar
 
 INPUTS_LENGTH = 3
 OUTPUTS_LENGTH = 2
