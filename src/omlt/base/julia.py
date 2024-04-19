@@ -2,7 +2,6 @@ from omlt.dependencies import julia_available
 #  from omlt.base.expression import OmltExpression
 
 if julia_available:
-if julia_available:
     from juliacall import Main as jl
     from juliacall import Base
 
