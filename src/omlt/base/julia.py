@@ -1,13 +1,11 @@
-from omlt.dependencies import julia_available, moi_available
+from omlt.dependencies import julia_available
 from omlt.base.expression import OmltExpression
 
-if julia_available and moi_available:
+if julia_available:
     from juliacall import Main as jl
     from juliacall import Base
 
     jl_err = Base.error
-    jl.seval("import MathOptInterface")
-    moi = jl.MathOptInterface
     jl.seval("import JuMP")
     jump = jl.JuMP
 

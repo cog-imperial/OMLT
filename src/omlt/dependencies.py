@@ -10,11 +10,3 @@ torch_geometric, torch_geometric_available = attempt_import("torch_geometric")
 lineartree, lineartree_available = attempt_import("lineartree")
 
 julia, julia_available = attempt_import("juliacall")
-
-if julia_available:
-    from juliacall import Main as jl
-    try:
-        jl.seval("import MathOptInterface")
-        moi_available = True
-    except jl.ArgumentError:
-        moi_available = False
