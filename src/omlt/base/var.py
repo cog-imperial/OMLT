@@ -11,8 +11,9 @@ import pyomo.environ as pyo
 
 from omlt.dependencies import julia_available
 
+from omlt.base import DEFAULT_MODELING_LANGUAGE
 if julia_available:
-    from omlt.base import jump, DEFAULT_MODELING_LANGUAGE
+    from omlt.base import jump
 from omlt.base.julia import JuMPVarInfo, JumpVar
 
 
