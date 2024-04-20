@@ -3,6 +3,8 @@ import pytest
 
 from omlt import OmltBlock
 from omlt.base import OmltVar
+from omlt.dependencies import julia_available
+
 
 
 class dummy_formulation(object):
@@ -40,7 +42,9 @@ def test_block():
     assert [k for k in m.b.inputs] == ["A", "C", "D"]
     assert [k for k in m.b.outputs] == [(0, 0), (0, 1), (1, 0), (1, 1)]
 
-
+@pytest.mark.skipif(
+    not julia_available, reason="Test only valid when Julia is available"
+)
 def test_jump_block():
     m = pyo.ConcreteModel()
     m.b = OmltBlock()
