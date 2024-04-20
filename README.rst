@@ -59,11 +59,15 @@ When utilizing graph neural networks, please cite the following paper in additio
 
 ::
 
-     @article{zhang2023,
-          title={Augmenting optimization-based molecular design with graph neural networks},
+     @article{zhang2024,
+          title = {Augmenting optimization-based molecular design with graph neural networks},
           author= {Shiqiang Zhang and Juan S. Campos and Christian Feldmann and Frederik Sandfort and Miriam Mathea and Ruth Misener},
-          journal={arXiv preprint arXiv:2312.03613},
-          year = {2023},
+          journal = {Computers \& Chemical Engineering},
+          volume = {186},
+          pages = {108684},
+          year = {2024},
+          issn = {0098-1354},
+          doi = {https://doi.org/10.1016/j.compchemeng.2024.108684},
      }
 
 Documentation
