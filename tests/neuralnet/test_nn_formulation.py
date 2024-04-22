@@ -532,7 +532,11 @@ def test_partition_based_unbounded_below():
     expected_msg = "Expression is unbounded below."
     with pytest.raises(ValueError, match=expected_msg):
         partition_based_dense_relu_layer(
-            m.neural_net_block, net, m.neural_net_block.layer[test_layer_id], test_layer, split_func
+            m.neural_net_block,
+            net,
+            m.neural_net_block.layer[test_layer_id],
+            test_layer,
+            split_func,
         )
 
 
@@ -554,7 +558,11 @@ def test_partition_based_unbounded_above():
     expected_msg = "Expression is unbounded above."
     with pytest.raises(ValueError, match=expected_msg):
         partition_based_dense_relu_layer(
-            m.neural_net_block, net, m.neural_net_block.layer[test_layer_id], test_layer, split_func
+            m.neural_net_block,
+            net,
+            m.neural_net_block.layer[test_layer_id],
+            test_layer,
+            split_func,
         )
 
 
