@@ -14,7 +14,7 @@ The first set of notebooks demonstrates the basic mechanics of OMLT and shows ho
 
 * `index_handling.ipynb <https://github.com/cog-imperial/OMLT/blob/main/docs/notebooks/neuralnet/index_handling.ipynb>`_ shows how to use `IndexMapper` to handle the mappings between indexes.
 
-* `bo_with_trees.ipynb <https://github.com/cog-imperial/OMLT/blob/main/docs/notebooks/bo_with_trees.ipynb>`_ incorporates gradient-boosted trees into a Bayesian optimization loop to optimize the Rosenbrock function.
+* `bo_with_trees.ipynb <https://github.com/cog-imperial/OMLT/blob/main/docs/notebooks/trees/bo_with_trees.ipynb>`_ incorporates gradient-boosted trees into a Bayesian optimization loop to optimize the Rosenbrock function.
 
 * `linear_tree_formulations.ipynb <https://github.com/cog-imperial/OMLT/blob/main/docs/notebooks/trees/linear_tree_formulations.ipynb>`_ showcases the different linear model decision tree formulations available in OMLT.
 
