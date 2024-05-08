@@ -1,7 +1,7 @@
 import numpy as np
 import pyomo.environ as pyo
 
-from omlt.io.torch_geometric import load_torch_geometric_sequential
+from omlt.io.torch_geometric.torch_geometric_reader import load_torch_geometric_sequential
 from omlt.neuralnet import FullSpaceNNFormulation
 
 
