@@ -15,6 +15,7 @@ The basic pipeline in source code of OMLT is:
 where :math:`\mathbf z^{(0)}` is the output of `InputLayer`, :math:`\hat{\mathbf z}^{(l)}` is the pre-activation output of :math:`l`-th layer, :math:`\mathbf z^{(l)}` is the post-activation output of :math:`l`-th layer.
 
 """
+
 from omlt.neuralnet.network_definition import NetworkDefinition
 from omlt.neuralnet.nn_formulation import (
     FullSpaceNNFormulation,

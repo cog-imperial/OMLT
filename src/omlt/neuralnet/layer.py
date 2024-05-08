@@ -16,6 +16,7 @@ We use the following notations to define a layer:
     \end{align*}
 
 """
+
 import itertools
 
 import numpy as np
@@ -254,7 +255,7 @@ class GNNLayer(DenseLayer):
     .. math::
 
         \begin{align*}
-            y_j = \sigma \left(\sum\limits_{i=0}^{F_{in}-1}A_{u,v}w_{ij}x_i+b_j\right), && \forall 0\le j<F_{out}, 
+            y_j = \sigma \left(\sum\limits_{i=0}^{F_{in}-1}A_{u,v}w_{ij}x_i+b_j\right), && \forall 0\le j<F_{out},
         \end{align*}
 
 

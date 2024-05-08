@@ -1,7 +1,8 @@
 import numpy as np
 import pyomo.environ as pyo
-from omlt.neuralnet import FullSpaceNNFormulation
+
 from omlt.io.torch_geometric import load_torch_geometric_sequential
+from omlt.neuralnet import FullSpaceNNFormulation
 
 
 def gnn_with_non_fixed_graph(
