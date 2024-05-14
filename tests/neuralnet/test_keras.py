@@ -110,7 +110,9 @@ def _test_keras_linear_big(keras_fname, reduced_space=False):
 def test_keras_linear_131_full(datadir):
     _test_keras_linear_131(datadir.file("keras_linear_131.keras"))
     _test_keras_linear_131(datadir.file("keras_linear_131_sigmoid.keras"))
-    _test_keras_linear_131(datadir.file("keras_linear_131_sigmoid_output_activation.keras"))
+    _test_keras_linear_131(
+        datadir.file("keras_linear_131_sigmoid_output_activation.keras")
+    )
     _test_keras_linear_131(
         datadir.file("keras_linear_131_sigmoid_softplus_output_activation.keras")
     )

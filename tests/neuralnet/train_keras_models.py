@@ -105,7 +105,9 @@ def train_models():
     history = nn.fit(
         x=x, y=y, validation_split=0.2, batch_size=16, verbose=1, epochs=15
     )
-    nn.save(this_file_dir() + "/models/keras_linear_131_sigmoid_output_activation.keras")
+    nn.save(
+        this_file_dir() + "/models/keras_linear_131_sigmoid_output_activation.keras"
+    )
 
     x, y, x_test = get_neural_network_data("131")
     nn = Sequential(name="keras_linear_131_relu")
@@ -204,7 +206,8 @@ def train_models():
         x=x, y=y, validation_split=0.2, batch_size=16, verbose=1, epochs=15
     )
     nn.save(
-        this_file_dir() + "/models/keras_linear_131_sigmoid_softplus_output_activation.keras"
+        this_file_dir()
+        + "/models/keras_linear_131_sigmoid_softplus_output_activation.keras"
     )
 
     x, y, x_test = get_neural_network_data("131")
