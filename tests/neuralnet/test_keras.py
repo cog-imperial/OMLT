@@ -188,7 +188,7 @@ def test_scaling_NN_block(datadir):
         result = pyo.SolverFactory("cbc").solve(model, tee=False)
 
         x_s = (x - scale_x[0]) / scale_x[1]
-        y_s = NN.predict(x=[x_s])
+        y_s = NN.predict([np.array((x_s,))])
         y = y_s * scale_y[1] + scale_y[0]
 
         assert y - pyo.value(model.nn.outputs[0]) <= 1e-3
