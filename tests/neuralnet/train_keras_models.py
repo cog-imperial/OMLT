@@ -1,11 +1,11 @@
 import pytest
-import tensorflow.keras as keras
+import keras
 
 # from conftest import get_neural_network_data
 from keras.layers import Conv2D, Dense
 from keras.models import Model, Sequential
 from pyomo.common.fileutils import this_file_dir
-from tensorflow.keras.optimizers import Adamax
+from keras.optimizers import Adamax
 
 from omlt.io import write_onnx_model_with_bounds
 
@@ -40,7 +40,7 @@ def train_models():
     history = nn.fit(
         x=x, y=y, validation_split=0.2, batch_size=16, verbose=1, epochs=15
     )
-    nn.save(this_file_dir() + "/models/keras_linear_131")
+    nn.save(this_file_dir() + "/models/keras_linear_131.keras")
 
     x, y, x_test = get_neural_network_data("131")
     nn = Sequential(name="keras_linear_131_sigmoid")
@@ -72,7 +72,7 @@ def train_models():
     history = nn.fit(
         x=x, y=y, validation_split=0.2, batch_size=16, verbose=1, epochs=15
     )
-    nn.save(this_file_dir() + "/models/keras_linear_131_sigmoid")
+    nn.save(this_file_dir() + "/models/keras_linear_131_sigmoid.keras")
 
     x, y, x_test = get_neural_network_data("131")
     nn = Sequential(name="keras_linear_131_sigmoid_output_activation")
@@ -105,7 +105,7 @@ def train_models():
     history = nn.fit(
         x=x, y=y, validation_split=0.2, batch_size=16, verbose=1, epochs=15
     )
-    nn.save(this_file_dir() + "/models/keras_linear_131_sigmoid_output_activation")
+    nn.save(this_file_dir() + "/models/keras_linear_131_sigmoid_output_activation.keras")
 
     x, y, x_test = get_neural_network_data("131")
     nn = Sequential(name="keras_linear_131_relu")
@@ -137,7 +137,7 @@ def train_models():
     history = nn.fit(
         x=x, y=y, validation_split=0.2, batch_size=16, verbose=1, epochs=15
     )
-    nn.save(this_file_dir() + "/models/keras_linear_131_relu")
+    nn.save(this_file_dir() + "/models/keras_linear_131_relu.keras")
 
     x, y, x_test = get_neural_network_data("131")
     nn = Sequential(name="keras_linear_131_relu_output_activation")
@@ -170,7 +170,7 @@ def train_models():
     history = nn.fit(
         x=x, y=y, validation_split=0.2, batch_size=16, verbose=1, epochs=15
     )
-    nn.save(this_file_dir() + "/models/keras_linear_131_relu_output_activation")
+    nn.save(this_file_dir() + "/models/keras_linear_131_relu_output_activation.keras")
 
     x, y, x_test = get_neural_network_data("131")
     nn = Sequential(name="keras_linear_131_sigmoid_softplus_output_activation")
@@ -204,7 +204,7 @@ def train_models():
         x=x, y=y, validation_split=0.2, batch_size=16, verbose=1, epochs=15
     )
     nn.save(
-        this_file_dir() + "/models/keras_linear_131_sigmoid_softplus_output_activation"
+        this_file_dir() + "/models/keras_linear_131_sigmoid_softplus_output_activation.keras"
     )
 
     x, y, x_test = get_neural_network_data("131")
@@ -263,7 +263,7 @@ def train_models():
     history = nn.fit(
         x=x, y=y, validation_split=0.2, batch_size=16, verbose=1, epochs=15
     )
-    nn.save(this_file_dir() + "/models/big")
+    nn.save(this_file_dir() + "/models/big.keras")
 
     x, y, x_test = get_neural_network_data("2353")
     nn = Sequential(name="keras_linear_2353")
@@ -306,7 +306,7 @@ def train_models():
         x=x, y=y, validation_split=0.2, batch_size=16, verbose=1, epochs=15
     )
 
-    nn.save(this_file_dir() + "/models/keras_linear_2353")
+    nn.save(this_file_dir() + "/models/keras_linear_2353.keras")
 
 
 def train_conv():

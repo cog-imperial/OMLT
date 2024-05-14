@@ -108,27 +108,27 @@ def _test_keras_linear_big(keras_fname, reduced_space=False):
 
 @pytest.mark.skipif(not keras_available, reason="Need keras for this test")
 def test_keras_linear_131_full(datadir):
-    _test_keras_linear_131(datadir.file("keras_linear_131"))
-    _test_keras_linear_131(datadir.file("keras_linear_131_sigmoid"))
-    _test_keras_linear_131(datadir.file("keras_linear_131_sigmoid_output_activation"))
+    _test_keras_linear_131(datadir.file("keras_linear_131.keras"))
+    _test_keras_linear_131(datadir.file("keras_linear_131_sigmoid.keras"))
+    _test_keras_linear_131(datadir.file("keras_linear_131_sigmoid_output_activation.keras"))
     _test_keras_linear_131(
-        datadir.file("keras_linear_131_sigmoid_softplus_output_activation")
+        datadir.file("keras_linear_131_sigmoid_softplus_output_activation.keras")
     )
 
 
 @pytest.mark.skipif(not keras_available, reason="Need keras for this test")
 def test_keras_linear_131_reduced(datadir):
-    _test_keras_linear_131(datadir.file("keras_linear_131"), reduced_space=True)
+    _test_keras_linear_131(datadir.file("keras_linear_131.keras"), reduced_space=True)
     _test_keras_linear_131(
-        datadir.file("keras_linear_131_sigmoid"),
+        datadir.file("keras_linear_131_sigmoid.keras"),
         reduced_space=True,
     )
     _test_keras_linear_131(
-        datadir.file("keras_linear_131_sigmoid_output_activation"),
+        datadir.file("keras_linear_131_sigmoid_output_activation.keras"),
         reduced_space=True,
     )
     _test_keras_linear_131(
-        datadir.file("keras_linear_131_sigmoid_softplus_output_activation"),
+        datadir.file("keras_linear_131_sigmoid_softplus_output_activation.keras"),
         reduced_space=True,
     )
 
@@ -136,26 +136,26 @@ def test_keras_linear_131_reduced(datadir):
 @pytest.mark.skipif(not keras_available, reason="Need keras for this test")
 def test_keras_linear_131_relu(datadir):
     _test_keras_mip_relu_131(
-        datadir.file("keras_linear_131_relu"),
+        datadir.file("keras_linear_131_relu.keras"),
     )
     _test_keras_complementarity_relu_131(
-        datadir.file("keras_linear_131_relu"),
+        datadir.file("keras_linear_131_relu.keras"),
     )
 
 
 @pytest.mark.skipif(not keras_available, reason="Need keras for this test")
 def test_keras_linear_big(datadir):
-    _test_keras_linear_big(datadir.file("big"), reduced_space=False)
+    _test_keras_linear_big(datadir.file("big.keras"), reduced_space=False)
 
 
 @pytest.mark.skip("Skip - this test is too big for now")
 def test_keras_linear_big_reduced_space(datadir):
-    _test_keras_linear_big("./models/big", reduced_space=True)
+    _test_keras_linear_big("./models/big.keras", reduced_space=True)
 
 
 @pytest.mark.skipif(not keras_available, reason="Need keras for this test")
 def test_scaling_NN_block(datadir):
-    NN = keras.models.load_model(datadir.file("keras_linear_131_relu"))
+    NN = keras.models.load_model(datadir.file("keras_linear_131_relu.keras"))
 
     model = pyo.ConcreteModel()
 
