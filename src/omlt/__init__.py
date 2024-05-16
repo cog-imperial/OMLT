@@ -8,6 +8,7 @@ The package provides various optimization formulations for machine learning mode
 sequential Keras and general ONNX models.
 
 """
+
 import sys
 
 if sys.version_info[:2] >= (3, 8):
