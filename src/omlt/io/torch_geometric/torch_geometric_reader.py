@@ -1,8 +1,9 @@
+import warnings
+
 import numpy as np
 
-from omlt.neuralnet.layer import DenseLayer, InputLayer, GNNLayer
+from omlt.neuralnet.layer import DenseLayer, GNNLayer, InputLayer
 from omlt.neuralnet.network_definition import NetworkDefinition
-import warnings
 
 
 def _compute_gcn_norm(A):

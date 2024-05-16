@@ -17,8 +17,9 @@ We utilize the following common nomenclature in the formulations:
         b_{\ell} &:= \text{Bias term learned by the tree for leaf } \ell \in L\\
     \end{align*}
 """
+
+from omlt.linear_tree.lt_definition import LinearTreeDefinition
 from omlt.linear_tree.lt_formulation import (
     LinearTreeGDPFormulation,
     LinearTreeHybridBigMFormulation,
 )
-from omlt.linear_tree.lt_definition import LinearTreeDefinition
