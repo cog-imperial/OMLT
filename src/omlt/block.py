@@ -26,11 +26,11 @@ Example:
 import warnings
 
 import pyomo.environ as pyo
-from pyomo.core.base.block import _BlockData, declare_custom_block
+from pyomo.core.base.block import BlockData, declare_custom_block
 
 
 @declare_custom_block(name="OmltBlock")
-class OmltBlockData(_BlockData):
+class OmltBlockData(BlockData):
     def __init__(self, component):
         super(OmltBlockData, self).__init__(component)
         self.__formulation = None
