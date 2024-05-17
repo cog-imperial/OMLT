@@ -1,9 +1,9 @@
 import numpy as np
 import pyomo.environ as pe
 import pytest
+from pytest import approx
 
 from omlt.dependencies import lineartree_available
-from pytest import approx
 
 if lineartree_available:
     from lineartree import LinearTreeRegressor
@@ -14,8 +14,8 @@ if lineartree_available:
         LinearTreeDefinition,
     )
 
-from omlt import OmltBlock
 import omlt
+from omlt import OmltBlock
 
 scip_available = pe.SolverFactory("scip").available()
 cbc_available = pe.SolverFactory("cbc").available()

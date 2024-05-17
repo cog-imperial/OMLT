@@ -1,6 +1,6 @@
 from omlt.dependencies import (
-    onnx_available,
     keras_available,
+    onnx_available,
     torch_available,
     torch_geometric_available,
 )

@@ -15,18 +15,18 @@ from omlt.neuralnet import (
 from omlt.neuralnet.layer import (
     ConvLayer2D,
     DenseLayer,
+    GNNLayer,
     IndexMapper,
     InputLayer,
     PoolingLayer2D,
-    GNNLayer,
 )
 from omlt.neuralnet.layers.full_space import (
-    full_space_maxpool2d_layer,
     _input_layer_and_block,
+    full_space_maxpool2d_layer,
 )
 from omlt.neuralnet.layers.partition_based import (
-    partition_based_dense_relu_layer,
     default_partition_split_func,
+    partition_based_dense_relu_layer,
 )
 from omlt.neuralnet.layers.reduced_space import reduced_space_dense_layer
 

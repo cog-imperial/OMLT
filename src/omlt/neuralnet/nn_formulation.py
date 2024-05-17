@@ -21,15 +21,15 @@ from omlt.neuralnet.activations import (
 from omlt.neuralnet.layer import (
     ConvLayer2D,
     DenseLayer,
+    GNNLayer,
     InputLayer,
     PoolingLayer2D,
-    GNNLayer,
 )
 from omlt.neuralnet.layers.full_space import (
     full_space_conv2d_layer,
     full_space_dense_layer,
-    full_space_maxpool2d_layer,
     full_space_gnn_layer,
+    full_space_maxpool2d_layer,
 )
 from omlt.neuralnet.layers.partition_based import (
     default_partition_split_func,
