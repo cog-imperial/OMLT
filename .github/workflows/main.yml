@@ -36,16 +36,12 @@ jobs:
           python -m pip install --upgrade coverage[toml] virtualenv tox tox-gh-actions          
           conda install -c conda-forge ipopt
           conda install -c conda-forge pyscipopt
+          
       - name: "Run tox targets with lean testing environment for ${{ matrix.python-version }}"
         run: "tox -re leanenv"
 
       - name: "Run tox targets for ${{ matrix.python-version }}"
         run: "tox"
-
-      # - name: "Run tox notebooks targets for ${{ matrix.python-version }}"
-      #   run: |
-      #     shopt -s globstar
-      #     tox -e notebooks docs/**/*.ipynb
 
       - name: "Convert coverage"
         run: "python -m coverage xml"
