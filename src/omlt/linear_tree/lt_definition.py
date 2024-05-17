@@ -1,5 +1,5 @@
-import numpy as np
 import lineartree
+import numpy as np
 
 
 class LinearTreeDefinition:

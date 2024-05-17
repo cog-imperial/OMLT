@@ -4,10 +4,10 @@ import pytest
 from omlt.neuralnet.layer import (
     ConvLayer2D,
     DenseLayer,
+    GNNLayer,
     IndexMapper,
     InputLayer,
     PoolingLayer2D,
-    GNNLayer,
 )
 
 
