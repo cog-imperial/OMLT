@@ -18,7 +18,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
       - run: pip install -e '.[dev]'
-      - run: ruff check src/ tests/ docs/source/ examples/
+      - run: ruff check src/ tests/ docs/
   mypy:
     strategy:
       matrix:
@@ -31,7 +31,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
       - run: pip install -e '.[dev]'
-      - run: mypy src/ tests/ docs/source/ examples/
+      - run: mypy src/ tests/ docs/
   ruff-format:
     strategy:
       matrix:
@@ -44,7 +44,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
       - run: pip install -e '.[dev]'
-      - run: ruff format --check src/ tests/ docs/source/ examples/
+      - run: ruff format --check src/ tests/ docs/
   pytest:
     strategy:
       matrix:

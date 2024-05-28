@@ -32,13 +32,13 @@ check:
   trap error=1 ERR
 
   echo
-  (set -x; ruff check src/ tests/ docs/source/ examples/ )
+  (set -x; ruff check src/ tests/ docs/ )
 
   echo
-  ( set -x; ruff format --check src/ tests/ docs/source/ examples/ )
+  ( set -x; ruff format --check src/ tests/ docs/ )
 
   echo
-  ( set -x; mypy src/ tests/ docs/source/ examples/ )
+  ( set -x; mypy src/ tests/ docs/ )
 
   echo
   ( set -x; pytest )
@@ -50,8 +50,8 @@ check:
 
 # Auto-fix code issues.
 fix:
-  ruff format src/ tests/ docs/source/ examples/
-  ruff check --fix src/ tests/ docs/source/ examples/
+  ruff format src/ tests/ docs/
+  ruff check --fix src/ tests/ docs/
 
 # Build a release.
 build:
