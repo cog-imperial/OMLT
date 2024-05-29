@@ -4,9 +4,9 @@ default:
 
 # Build docs.
 docs:
-  rm -rf docs/build docs/source/_autosummary
+  rm -rf docs/_build docs/_autosummary
   make -C docs html
-  echo Docs are in $PWD/docs/build/html/index.html
+  echo Docs are in $PWD/docs/_build/html/index.html
 
 # Do a dev install.
 dev:

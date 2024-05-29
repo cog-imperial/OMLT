@@ -92,7 +92,7 @@ convention = "google"
 "examples/*" = [
   "INP001",
 ]
-"docs/source/conf.py" = ["D100", "INP001"]
+"docs/conf.py" = ["D100", "INP001"]
 
 [tool.mypy]
 show_error_codes = true
