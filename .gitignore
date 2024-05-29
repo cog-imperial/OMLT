@@ -50,6 +50,8 @@ coverage.xml
 *.py,cover
 .hypothesis/
 .pytest_cache/
+docs/notebooks/data/MNIST
+docs/notebooks/neuralnet/*.keras
 
 # Translations
 *.mo

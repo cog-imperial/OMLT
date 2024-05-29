@@ -8,21 +8,15 @@ docs:
   make -C docs html
   echo Docs are in $PWD/docs/build/html/index.html
 
-conda-deps := " \
-  conda-forge::ipopt \
-  conda-forge::pyscipopt \
-  conda-forge::coin-or-cbc \
-"
-
 # Do a dev install.
 dev:
   pip install -e '.[dev]'
-  conda install {{conda-deps}}
+  conda env update --file environment.yml
 
 # Do a dev install with GPU support.
 dev-gpu:
   pip install -e '.[dev-gpu]'
-  conda install {{conda-deps}}
+  conda env update --file environment.yml
 
 # Run code checks.
 check:

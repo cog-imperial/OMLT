@@ -11,7 +11,8 @@ authors = [
 dependencies = [
   "networkx",
   "numpy",
-  "pyomo",
+  # TODO: Remove constraint when fix to https://github.com/Pyomo/pyomo/issues/3262 is released
+  "pyomo==6.6.2",
   "onnx",
   "onnxruntime",
 ]
@@ -49,6 +50,12 @@ dev = [
 ]
 dev-gpu = [
   "omlt[dev-tools,keras-gpu,torch,linear-tree]",
+]
+docs = [
+  "sphinx",
+  "sphinx-rtd-theme",
+  "tensorflow",
+  "linear-tree",
 ]
 
 
