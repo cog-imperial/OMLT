@@ -1,4 +1,4 @@
-import sys
+import omlt
 
 # -- General configuration ---------------------------------------------------
 
@@ -30,19 +30,10 @@ project_copyright = (
     "Imperial College London, Sandia National Laboratories"
 )
 
-# The version info for the project you're documenting, acts as replacement for
-# |version| and |release|, also used in various other places throughout the
-# built documents.
-#
-# The short X.Y version.
-version = ""  # Is set by calling `setup.py docs`
-# The full version, including alpha/beta/rc tags.
-release = ""  # Is set by calling `setup.py docs`
-
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", ".venv", "notebooks"]
+exclude_patterns = ["_build"]
 
 
 # The name of the Pygments (syntax highlighting) style to use.
@@ -55,29 +46,8 @@ pygments_style = "sphinx"
 # a list of builtin themes.
 html_theme = "sphinx_rtd_theme"
 
-# Theme options are theme-specific and customize the look and feel of a theme
-# further.  For a list of options available for each theme, see the
-# documentation.
-html_theme_options = {
-    "light_css_variables": {
-        "color-brand-primary": "#003E74",
-        "color-brand-content": "#002147",
-    },
-    "dark_css_variables": {
-        "color-brand-primary": "#0091D4",
-        "color-brand-content": "#D4EFFC",
-    },
-}
-
-
-# The name for this set of Sphinx documents.  If None, it defaults to
-# "<project> v<release> documentation".
-try:
-    from omlt import __version__ as version
-except ImportError:
-    pass
-else:
-    release = version
+version = omlt.__version__
+release = omlt.__version__
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
@@ -94,15 +64,6 @@ htmlhelp_basename = "omlt-doc"
 
 
 # -- Options for LaTeX output ------------------------------------------------
-
-latex_elements = {
-    # The paper size ("letterpaper" or "a4paper").
-    # "papersize": "letterpaper",
-    # The font size ("10pt", "11pt" or "12pt").
-    # "pointsize": "10pt",
-    # Additional stuff for the LaTeX preamble.
-    # "preamble": "",
-}
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
