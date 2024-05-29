@@ -16,7 +16,7 @@ dependencies = [
   "onnx",
   "onnxruntime",
 ]
-requires-python = ">=3.7"
+requires-python = ">=3.9"
 dynamic = ["version"]
 readme = "README.rst"
 license = { file = "LICENSE.rst" }
@@ -45,17 +45,17 @@ dev-tools = [
   "torchvision",
   "tf2onnx",
 ]
-dev = [
-  "omlt[dev-tools,keras,torch,linear-tree]",
-]
-dev-gpu = [
-  "omlt[dev-tools,keras-gpu,torch,linear-tree]",
-]
 docs = [
   "sphinx",
   "sphinx-rtd-theme",
   "tensorflow",
   "linear-tree",
+]
+dev = [
+  "omlt[dev-tools,keras,torch,linear-tree,docs]",
+]
+dev-gpu = [
+  "omlt[dev-tools,keras-gpu,torch,linear-tree,docs]",
 ]
 
 
@@ -65,6 +65,7 @@ x = "https://x.com/cogimperial"
 documentation = "https://omlt.readthedocs.io"
 
 [tool.setuptools_scm]
+write_to = "src/omlt/_version.py"
 
 [tool.ruff]
 line-length = 88
