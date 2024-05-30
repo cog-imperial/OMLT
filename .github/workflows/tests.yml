@@ -17,12 +17,15 @@ jobs:
       - run: pip install '.[dev]'
       - run: ruff check src/ tests/ docs/
   mypy:
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: ${{ matrix.python-version }}
           cache: "pip"
       - run: pip install '.[dev]'
       - run: mypy src/ tests/ docs/
