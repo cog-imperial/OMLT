@@ -67,6 +67,11 @@ jobs:
           use-only-tar-bz2: true
       - run: pip install -e '.[dev]'
       - run: pytest
+      - run: python -m coverage xml
+      - uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
   doctest:
     strategy:
       matrix:
