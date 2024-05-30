@@ -78,7 +78,7 @@ ignore = [
   "ANN401",
   "COM812",
   "ISC001",
-  # Remove these eventually
+  # TODO: Remove these eventually
   "ANN001",
   "ANN002",
   "ANN201",
@@ -112,7 +112,8 @@ show_error_codes = true
 implicit_optional = false
 warn_no_return = true
 strict_optional = true
-disallow_untyped_defs = true
+# TODO: Enable eventually
+# disallow_untyped_defs = true
 disallow_incomplete_defs = true
 check_untyped_defs = true
 disallow_untyped_decorators = true
@@ -120,7 +121,19 @@ warn_unreachable = true
 disallow_any_generics = true
 
 [[tool.mypy.overrides]]
-module = []
+module = [
+  "pandas.*",
+  "networkx.*",
+  "tf2onnx.*",
+  "onnxruntime.*",
+  "lineartree.*",
+  "sklearn.*",
+  "testbook.*",
+  "pyomo.*",
+  "keras.*",
+  "tensorflow.*",
+  "torch_geometric.*",
+]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
