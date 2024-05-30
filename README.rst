@@ -142,7 +142,7 @@ Example
 Development
 ===========
 
-OMLT uses ``just`` to manage development tasks:
+OMLT uses [just](https://github.com/casey/just) to manage development tasks:
 
 * ``just`` to list available tasks
 * ``just check`` to run all checks
