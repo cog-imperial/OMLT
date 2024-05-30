@@ -148,7 +148,7 @@ OMLT uses `just <https://github.com/casey/just>`_ to manage development tasks:
 * ``just check`` to run all checks
 * ``just fix`` to apply any auto-fixes
 * ``just dev`` to install development dependencies in your current Python environment
-* ``just dev-gpu`` same as ``dev`` but with GPU support
+* ``just dev-gpu`` to install development dependencies in your current Python environment but with GPU support
 * ``just docs`` to build the documentation
 
 Contributors
