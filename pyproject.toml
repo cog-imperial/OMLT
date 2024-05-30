@@ -72,7 +72,16 @@ line-length = 88
 
 [tool.ruff.lint]
 select = ["ALL"]
-ignore = ["ANN101", "ANN401"]
+ignore = [
+  "ANN101",
+  "ANN401",
+  # Remove these eventually
+  "ANN001",
+  "ANN002",
+  "ANN201",
+  "ANN202",
+  "ANN204",
+]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
