@@ -56,6 +56,15 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
+      - uses: actions/cache@v3
+        with:
+          path: ~/conda_pkgs_dir
+          key: ${{ runner.os }}-conda-${{ hashFiles('environment.yml') }}
+      - uses: conda-incubator/setup-miniconda@v3
+        with:
+          channel-priority: strict
+          environment-file: environment.yml
+          use-only-tar-bz2: true
       - run: pip install -e '.[dev]'
       - run: pytest
   doctest:
