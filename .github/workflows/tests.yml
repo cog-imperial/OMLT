@@ -17,7 +17,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
-      - run: pip install -e '.[dev]'
+      - run: pip install '.[dev]'
       - run: ruff check src/ tests/ docs/
   mypy:
     strategy:
@@ -30,7 +30,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
-      - run: pip install -e '.[dev]'
+      - run: pip install '.[dev]'
       - run: mypy src/ tests/ docs/
   ruff-format:
     strategy:
@@ -43,7 +43,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
-      - run: pip install -e '.[dev]'
+      - run: pip install '.[dev]'
       - run: ruff format --check src/ tests/ docs/
   pytest:
     strategy:
@@ -65,7 +65,7 @@ jobs:
           channel-priority: strict
           environment-file: environment.yml
           use-only-tar-bz2: true
-      - run: pip install -e '.[dev]'
+      - run: pip install '.[dev]'
       - run: pytest
       - run: python -m coverage xml
       - uses: codecov/codecov-action@v4
@@ -83,5 +83,5 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
-      - run: pip install -e '.[dev]'
+      - run: pip install '.[dev]'
       - run: make -C docs doctest
