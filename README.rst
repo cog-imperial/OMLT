@@ -142,14 +142,14 @@ Example
 Development
 ===========
 
-OMLT uses `tox` to manage development tasks:
+OMLT uses ``just`` to manage development tasks:
 
-* `tox -av` to list available tasks
-* `tox` to run tests
-* `tox -e lint` to check formatting and code styles
-* `tox -e format` to automatically format files
-* `tox -e docs` to build the documentation
-* `tox -e publish` to publish the package to PyPi
+* ``just`` to list available tasks
+* ``just check`` to run all checks
+* ``just fix`` to apply any auto-fixes
+* ``just dev`` to install development dependencies
+* ``just dev-gpu`` to install development dependencies but with GPU support
+* ``just docs`` to build the documentation
 
 Contributors
 ============
@@ -224,4 +224,4 @@ Contributors
 
 .. _zshiqiang: https://github.com/zshiqiang
 .. |zshiqiang| image:: https://avatars.githubusercontent.com/u/91337036?v=4
-   :width: 80px 
+   :width: 80px
