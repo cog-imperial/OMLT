@@ -26,7 +26,9 @@ Example:
 import warnings
 
 from omlt.base import OmltVar, DEFAULT_MODELING_LANGUAGE
-
+from omlt.dependencies import julia_available
+if julia_available:
+    from omlt.base import jump
 
 import pyomo.environ as pyo
 from pyomo.core.base.block import _BlockData, declare_custom_block
@@ -39,7 +41,16 @@ class OmltBlockData(_BlockData):
         self.__formulation = None
         self.__input_indexes = None
         self.__output_indexes = None
-        self.__format = DEFAULT_MODELING_LANGUAGE
+        self._format = DEFAULT_MODELING_LANGUAGE
+        if self._format == "jump":
+            self._jumpmodel = jump.Model()
+        else:
+            self._jumpmodel = None
+
+    def set_format(self, format):
+        self._format = format
+        if self._format == "jump" and self._jumpmodel is None:
+            self._jumpmodel = jump.Model()
 
     def _setup_inputs_outputs(self, *, input_indexes, output_indexes):
         """
@@ -65,9 +76,9 @@ class OmltBlockData(_BlockData):
             )
 
         self.inputs_set = pyo.Set(initialize=input_indexes)
-        self.inputs = OmltVar(self.inputs_set, initialize=0, format=self.__format)
+        self.inputs = OmltVar(self.inputs_set, initialize=0, format=self._format)
         self.outputs_set = pyo.Set(initialize=output_indexes)
-        self.outputs = OmltVar(self.outputs_set, initialize=0, format=self.__format)
+        self.outputs = OmltVar(self.outputs_set, initialize=0, format=self._format)
 
     def build_formulation(self, formulation, format=None):
         """
@@ -87,7 +98,10 @@ class OmltBlockData(_BlockData):
         """
 
         if format is not None:
-            self.__format = format
+            self._format = format
+
+        if self._format == "jump":
+            self._jumpmodel = jump.Model()
 
         self._setup_inputs_outputs(
             input_indexes=list(formulation.input_indexes),

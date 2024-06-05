@@ -6,7 +6,6 @@ from omlt.base import OmltVar
 from omlt.dependencies import julia_available
 
 
-
 class dummy_formulation(object):
     def __init__(self):
         self.input_indexes = ["A", "C", "D"]
@@ -48,10 +47,21 @@ def test_block():
 def test_jump_block():
     m = pyo.ConcreteModel()
     m.b = OmltBlock()
+    m.b.set_format("jump")
 
-    m.b.x = OmltVar(initialize=(2, 7), format="jump")
+    with pytest.raises(ValueError) as excinfo:
+        m.b.x = OmltVar(initialize=(2, 7), format="jump")
+    expected_msg = "Initial value for JuMP variables must be an int or float, but <class 'tuple'> was provided."
 
-    assert m.b.x.value == (2, 7)
+    assert str(excinfo.value) == expected_msg
+
+    m.b.y = OmltVar(initialize=2, format="jump")
+    assert m.b.y.value == 2
+    assert m.b.y.name == 'y'
+    m.b.y.lb = 0
+    m.b.y.ub = 5
+    assert m.b.y.lb == 0
+    assert m.b.y.ub == 5
 
     formulation = dummy_formulation()
 
