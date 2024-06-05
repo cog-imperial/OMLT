@@ -12,9 +12,12 @@ import pyomo.environ as pyo
 from omlt.dependencies import julia_available
 
 from omlt.base import DEFAULT_MODELING_LANGUAGE
+
 if julia_available:
     from omlt.base import jump
 from omlt.base.julia import JuMPVarInfo, JumpVar
+from omlt.base.expression import OmltExpr, OmltExprIndexed, OmltExprScalar
+from omlt.base.constraint import OmltRelation, OmltRelScalar
 
 
 class OmltVar(ABC):
@@ -63,7 +66,7 @@ class OmltScalar(OmltVar):
         subclass_map = {subclass.format: subclass for subclass in cls.__subclasses__()}
         if format not in subclass_map:
             raise ValueError(
-                f"Variable format %s not recognized. Supported formats "
+                "Variable format %s not recognized. Supported formats "
                 "are 'pyomo' or 'jump'.",
                 format,
             )
@@ -108,6 +111,16 @@ class OmltScalar(OmltVar):
     def ub(self, val):
         pass
 
+    @property
+    @abstractmethod
+    def domain(self):
+        pass
+
+    @domain.setter
+    @abstractmethod
+    def domain(self, val):
+        pass
+
     # Interface for getting/setting value
     @property
     @abstractmethod
@@ -121,91 +134,149 @@ class OmltScalar(OmltVar):
 
     # Interface governing how variables behave in expressions.
 
-    # def __lt__(self, other):
-    #     return pyo.NumericValue.__lt__(self, other)
+    def __lt__(self, other):
+        return OmltRelScalar(expr=(self, "<", other))
 
-    # def __gt__(self, other):
-    #     return pyo.NumericValue.__gt__(self, other)
+    def __gt__(self, other):
+        return OmltRelScalar(expr=(self, ">", other))
 
-    # def __le__(self, other):
-    #     return pyo.NumericValue.__le__(self, other)
+    def __le__(self, other):
+        return OmltRelScalar(expr=(self, "<=", other))
 
-    # def __ge__(self, other):
-    #     return pyo.NumericValue.__ge__(self, other)
+    def __ge__(self, other):
+        return OmltRelScalar(expr=(self, ">=", other))
 
-    # def __eq__(self, other):
-    #     return pyo.NumericValue.__eq__(self, other)
+    def __eq__(self, other):
+        return OmltRelScalar(expr=(self, "==", other))
 
-    # def __add__(self, other):
-    #     return pyo.NumericValue.__add__(self, other)
+    def __add__(self, other):
+        return OmltExprScalar(format=self._format, expr=(self, "+", other))
 
-    # def __sub__(self, other):
-    #     return pyo.NumericValue.__sub__(self, other)
+    def __sub__(self, other):
+        return OmltExprScalar(format=self._format, expr=(self, "-", other))
 
-    # # def __mul__(self,other):
-    # #     return pyo.NumericValue.__mul__(self,other)
+    def __mul__(self, other):
+        return OmltExprScalar(format=self._format, expr=(self, "*", other))
 
-    # def __div__(self, other):
-    #     return pyo.NumericValue.__div__(self, other)
+    def __div__(self, other):
+        return OmltExprScalar(format=self._format, expr=(self, "//", other))
 
-    # def __truediv__(self, other):
-    #     return pyo.NumericValue.__truediv__(self, other)
+    def __truediv__(self, other):
+        return OmltExprScalar(format=self._format, expr=(self, "/", other))
 
-    # def __pow__(self, other):
-    #     return pyo.NumericValue.__pow__(self, other)
+    def __pow__(self, other):
+        return OmltExprScalar(format=self._format, expr=(self, "**", other))
 
-    # def __radd__(self, other):
-    #     return pyo.NumericValue.__radd__(self, other)
+    def __radd__(self, other):
+        return OmltExprScalar(format=self._format, expr=(other, "+", self))
 
-    # def __rsub__(self, other):
-    #     return pyo.NumericValue.__rsub__(self, other)
+    def __rsub__(self, other):
+        return OmltExprScalar(format=self._format, expr=(other, "-", self))
 
-    # # def __rmul__(self,other):
-    # #     return self._ComponentDataClass.__rmul__(self,other)
+    def __rmul__(self, other):
+        return OmltExprScalar(format=self._format, expr=(other, "*", self))
 
-    # def __rdiv__(self, other):
-    #     return pyo.NumericValue.__rdiv__(self, other)
+    def __rdiv__(self, other):
+        return OmltExprScalar(format=self._format, expr=(other, "//", self))
 
-    # def __rtruediv__(self, other):
-    #     return pyo.NumericValue.__rtruediv__(self, other)
+    def __rtruediv__(self, other):
+        return OmltExprScalar(format=self._format, expr=(other, "/", self))
 
-    # def __rpow__(self, other):
-    #     return pyo.NumericValue.__rpow__(self, other)
+    def __rpow__(self, other):
+        return OmltExprScalar(format=self._format, expr=(other, "**", self))
 
-    # def __iadd__(self, other):
-    #     return pyo.NumericValue.__iadd__(self, other)
+    def __iadd__(self, other):
+        return pyo.NumericValue.__iadd__(self, other)
 
-    # def __isub__(self, other):
-    #     return pyo.NumericValue.__isub__(self, other)
+    def __isub__(self, other):
+        return pyo.NumericValue.__isub__(self, other)
 
-    # def __imul__(self, other):
-    #     return pyo.NumericValue.__imul__(self, other)
+    def __imul__(self, other):
+        return pyo.NumericValue.__imul__(self, other)
 
-    # def __idiv__(self, other):
-    #     return pyo.NumericValue.__idiv__(self, other)
+    def __idiv__(self, other):
+        return pyo.NumericValue.__idiv__(self, other)
 
-    # def __itruediv__(self, other):
-    #     return pyo.NumericValue.__itruediv__(self, other)
+    def __itruediv__(self, other):
+        return pyo.NumericValue.__itruediv__(self, other)
 
-    # def __ipow__(self, other):
-    #     return pyo.NumericValue.__ipow__(self, other)
+    def __ipow__(self, other):
+        return pyo.NumericValue.__ipow__(self, other)
 
-    # def __neg__(self):
-    #     return pyo.NumericValue.__neg__(self)
+    def __neg__(self):
+        return pyo.NumericValue.__neg__(self)
 
-    # def __pos__(self):
-    #     return pyo.NumericValue.__pos__(self)
+    def __pos__(self):
+        return pyo.NumericValue.__pos__(self)
 
-    # def __abs__(self):
-    #     return pyo.NumericValue.__abs__(self)
+    def __abs__(self):
+        return pyo.NumericValue.__abs__(self)
 
 
-class OmltScalarPyomo(pyo.ScalarVar, OmltScalar):
+class OmltScalarPyomo(OmltScalar, pyo.ScalarVar):
     format = "pyomo"
 
     def __init__(self, *args, **kwargs):
         kwargs.pop("format", None)
-        pyo.ScalarVar.__init__(self, *args, **kwargs)
+        # pyo.ScalarVar.__init__(self, *args, **kwargs)
+        self._pyovar = pyo.ScalarVar(*args, **kwargs)
+
+    def construct(self, data=None):
+        return self._pyovar.construct(data)
+
+    def fix(self, value, skip_validation):
+        return self._pyovar.fix(value, skip_validation)
+
+    @property
+    def ctype(self):
+        return pyo.ScalarVar
+
+    @property
+    def name(self):
+        self._pyovar._name = self._name
+        return self._pyovar._name
+
+    @property
+    def bounds(self):
+        return (self._pyovar._lb, self._pyovar._ub)
+
+    @bounds.setter
+    def bounds(self, val):
+        self._pyovar.lb = val[0]
+        self._pyovar.ub = val[1]
+
+    @property
+    def lb(self):
+        return self._pyovar._lb
+
+    @lb.setter
+    def lb(self, val):
+        self._pyovar.setlb(val)
+
+    @property
+    def ub(self):
+        return self._pyovar._ub
+
+    @ub.setter
+    def ub(self, val):
+        self._pyovar.setub(val)
+
+    @property
+    def domain(self):
+        return self._pyovar._domain
+
+    @domain.setter
+    def domain(self, val):
+        self._pyovar._domain = val
+
+    # Interface for getting/setting value
+    @property
+    def value(self):
+        return self._pyovar.value
+
+    @value.setter
+    def value(self, val):
+        self._pyovar.value = val
 
 
 class OmltScalarJuMP(OmltScalar):
@@ -261,7 +332,18 @@ class OmltScalarJuMP(OmltScalar):
         _initialize = kwargs.pop("initialize", None)
 
         if _initialize:
-            self._value = _initialize
+            if isinstance(_initialize, (int, float)):
+                self._value = _initialize
+            elif len(_initialize) == 1 and isinstance(_initialize[0], (int, float)):
+                self._value = _initialize[0]
+            else:
+                # Pyomo's "scalar" variables can be multidimensional, they're
+                # just not indexed. JuMP scalar variables can only be a single
+                # dimension. Rewrite this error to be more helpful.
+                raise ValueError(
+                    "Initial value for JuMP variables must be an int"
+                    f" or float, but {type(_initialize)} was provided."
+                )
         else:
             self._value = None
 
@@ -280,9 +362,12 @@ class OmltScalarJuMP(OmltScalar):
 
     def construct(self, data=None):
         self._var = JumpVar(self._varinfo, self._name)
+        self._var.omltvar = self
         self._constructed = True
-        if self._block:
-            self._blockvar = jump.add_variable(self._block, self._var)
+        if self._parent:
+            self._blockvar = jump.add_variable(
+                self._parent()._jumpmodel, self.to_jumpvar()
+            )
 
     def fix(self, value, skip_validation):
         self.fixed = True
@@ -311,7 +396,7 @@ class OmltScalarJuMP(OmltScalar):
 
     @lb.setter
     def lb(self, val):
-        self._varinfo.lower_bound = val
+        self._varinfo.setlb(val)
         if self._constructed:
             self.construct()
 
@@ -321,7 +406,7 @@ class OmltScalarJuMP(OmltScalar):
 
     @ub.setter
     def ub(self, val):
-        self._varinfo.upper_bound = val
+        self._varinfo.setub(val)
         if self._constructed:
             self.construct()
 
@@ -352,11 +437,14 @@ class OmltScalarJuMP(OmltScalar):
     def name(self, value):
         self._name = value
 
-    def to_jump(self):
+    def to_jumpvar(self):
         if self._constructed:
             return self._var.to_jump()
         else:
             return self._varinfo.to_jump()
+
+    def to_jumpexpr(self):
+        return jump.AffExpr(0, jump.OrderedDict([(self._blockvar, 1)]))
 
 
 """
@@ -387,7 +475,7 @@ class OmltIndexed(OmltVar):
         subclass_map = {subclass.format: subclass for subclass in cls.__subclasses__()}
         if format not in subclass_map:
             raise ValueError(
-                f"Variable format %s not recognized. Supported formats are 'pyomo'"
+                "Variable format %s not recognized. Supported formats are 'pyomo'"
                 " or 'jump'.",
                 format,
             )
@@ -447,86 +535,85 @@ class OmltIndexed(OmltVar):
     def __iter__(self):
         pass
 
+    # Interface governing how variables behave in expressions.
 
-# Interface governing how variables behave in expressions.
+    def __lt__(self, other):
+        return OmltRelation(self.index_set(), expr=(self, "<", other))
 
-# def __lt__(self, other):
-#     return pyo.NumericValue.__lt__(self, other)
+    def __gt__(self, other):
+        return OmltRelation(self.index_set(), expr=(self, ">", other))
 
-# def __gt__(self, other):
-#     return pyo.NumericValue.__gt__(self, other)
+    def __le__(self, other):
+        return OmltRelation(self.index_set(), expr=(self, "<=", other))
 
-# def __le__(self, other):
-#     return pyo.NumericValue.__le__(self, other)
+    def __ge__(self, other):
+        return OmltRelation(self.index_set(), expr=(self, ">=", other))
 
-# def __ge__(self, other):
-#     return pyo.NumericValue.__ge__(self, other)
+    def __eq__(self, other):
+        return OmltRelation(self.index_set(), expr=(self, "==", other))
 
-# def __eq__(self, other):
-#     return pyo.NumericValue.__eq__(self, other)
+    def __add__(self, other):
+        return OmltExprIndexed(self.index_set(), expr=(self, "+", other))
 
-# def __add__(self, other):
-#     return pyo.NumericValue.__add__(self, other)
+    def __sub__(self, other):
+        return OmltExprIndexed(self.index_set(), expr=(self, "-", other))
 
-# def __sub__(self, other):
-#     return pyo.NumericValue.__sub__(self, other)
+    def __mul__(self, other):
+        return OmltExprIndexed(self.index_set(), expr=(self, "*", other))
 
-# # def __mul__(self,other):
-# #     return pyo.NumericValue.__mul__(self,other)
+    def __div__(self, other):
+        return OmltExprIndexed(self.index_set(), expr=(self, "//", other))
 
-# def __div__(self, other):
-#     return pyo.NumericValue.__div__(self, other)
+    def __truediv__(self, other):
+        return OmltExprIndexed(self.index_set(), expr=(self, "/", other))
 
-# def __truediv__(self, other):
-#     return pyo.NumericValue.__truediv__(self, other)
+    def __pow__(self, other):
+        return OmltExprIndexed(self.index_set(), expr=(self, "**", other))
 
-# def __pow__(self, other):
-#     return pyo.NumericValue.__pow__(self, other)
+    def __radd__(self, other):
+        return OmltExprIndexed(self.index_set(), expr=(other, "+", self))
 
-# def __radd__(self, other):
-#     return pyo.NumericValue.__radd__(self, other)
+    def __rsub__(self, other):
+        return OmltExprIndexed(self.index_set(), expr=(other, "-", self))
 
-# def __rsub__(self, other):
-#     return pyo.NumericValue.__rsub__(self, other)
+    def __rmul__(self, other):
+        return OmltExprIndexed(self.index_set(), expr=(other, "*", self))
 
-# # def __rmul__(self,other):
-# #     return self._ComponentDataClass.__rmul__(self,other)
+    def __rdiv__(self, other):
+        return OmltExprIndexed(self.index_set(), expr=(other, "//", self))
 
-# def __rdiv__(self, other):
-#     return pyo.NumericValue.__rdiv__(self, other)
+    def __rtruediv__(self, other):
+        return OmltExprIndexed(self.index_set(), expr=(other, "/", self))
 
-# def __rtruediv__(self, other):
-#     return pyo.NumericValue.__rtruediv__(self, other)
+    def __rpow__(self, other):
+        return OmltExprIndexed(self.index_set(), expr=(other, "**", self))
 
-# def __rpow__(self, other):
-#     return pyo.NumericValue.__rpow__(self, other)
+    def __iadd__(self, other):
+        return pyo.NumericValue.__iadd__(self, other)
 
-# def __iadd__(self, other):
-#     return pyo.NumericValue.__iadd__(self, other)
+    def __isub__(self, other):
+        return pyo.NumericValue.__isub__(self, other)
 
-# def __isub__(self, other):
-#     return pyo.NumericValue.__isub__(self, other)
+    def __imul__(self, other):
+        return pyo.NumericValue.__imul__(self, other)
 
-# def __imul__(self, other):
-#     return pyo.NumericValue.__imul__(self, other)
+    def __idiv__(self, other):
+        return pyo.NumericValue.__idiv__(self, other)
 
-# def __idiv__(self, other):
-#     return pyo.NumericValue.__idiv__(self, other)
+    def __itruediv__(self, other):
+        return pyo.NumericValue.__itruediv__(self, other)
 
-# def __itruediv__(self, other):
-#     return pyo.NumericValue.__itruediv__(self, other)
+    def __ipow__(self, other):
+        return pyo.NumericValue.__ipow__(self, other)
 
-# def __ipow__(self, other):
-#     return pyo.NumericValue.__ipow__(self, other)
+    def __neg__(self):
+        return pyo.NumericValue.__neg__(self)
 
-# def __neg__(self):
-#     return pyo.NumericValue.__neg__(self)
+    def __pos__(self):
+        return pyo.NumericValue.__pos__(self)
 
-# def __pos__(self):
-#     return pyo.NumericValue.__pos__(self)
-
-# def __abs__(self):
-#     return pyo.NumericValue.__abs__(self)
+    def __abs__(self):
+        return pyo.NumericValue.__abs__(self)
 
 
 class OmltIndexedPyomo(pyo.Var, OmltIndexed):
@@ -588,7 +675,7 @@ class OmltIndexedJuMP(OmltIndexed):
             _ub = {i: None for i in self._index_set}
         else:
             raise ValueError(
-                f"Bounds must be given as a tuple," " but %s was given.", self._bounds
+                "Bounds must be given as a tuple," " but %s was given.", self._bounds
             )
 
         _domain = kwargs.pop("domain", None)
@@ -630,7 +717,7 @@ class OmltIndexedJuMP(OmltIndexed):
                 self._value = {i: _initialize[0] for i in self._index_set}
             else:
                 raise ValueError(
-                    f"Index set has length %s, but" " initializer has length %s.",
+                    "Index set has length %s, but initializer has length %s.",
                     len(self._index_set),
                     len(_initialize),
                 )
@@ -648,6 +735,7 @@ class OmltIndexedJuMP(OmltIndexed):
                 self.integer,
             )
         self._vars = {}
+        self._varrefs = {}
         self._constructed = False
         self._ctype = pyo.Var
         self._parent = None
@@ -664,13 +752,22 @@ class OmltIndexedJuMP(OmltIndexed):
             self.construct()
 
     def keys(self):
-        return self._vars.keys()
+        if self._parent is not None:
+            return self._varrefs.keys()
+        else:
+            return self._vars.keys()
 
     def values(self):
-        return self._vars.values()
+        if self._parent is not None:
+            return self._varrefs.values()
+        else:
+            return self._vars.values()
 
     def items(self):
-        return self._vars.items()
+        if self._parent is not None:
+            return self._varrefs.items()
+        else:
+            return self._vars.items()
 
     def fix(self, value=None):
         self.fixed = True
@@ -708,6 +805,13 @@ class OmltIndexedJuMP(OmltIndexed):
             else:
                 name = str(self.name) + str(list(idx)).replace(" ", "")
             self._vars[idx] = JumpVar(self._varinfo[idx], name)
+            self._vars[idx].omltvar = self
+            self._vars[idx].index = idx
+            if self._parent is not None:
+                block = self._parent()
+                if block._format == "jump" and block._jumpmodel is not None:
+                    self._varrefs[idx] = self._vars[idx].add_to_model(block._jumpmodel)
+
         self._constructed = True
 
     def setub(self, value):
@@ -735,11 +839,12 @@ class OmltIndexedJuMP(OmltIndexed):
     def name(self):
         return self._name
 
-    def to_jump(self):
+    def to_jumpvar(self):
         if self._constructed:
-            return jump.Containers.DenseAxisArray(
-                list(self._vars.values()), self.index_set()
-            )
+            return jump.Containers.DenseAxisArray(list(self.values()), self.index_set())
+
+    def to_jumpexpr(self):
+        return {k: jump.AffExpr(0, jump.OrderedDict([(v, 1)])) for k, v in self.items()}
 
 
 """
@@ -763,13 +868,3 @@ class OmltIndexedGurobi(OmltIndexed):
         raise ValueError(
             "Storing variables in Gurobi format is not currently implemented."
         )
-
-
-class OmltSet:
-    def __init__(self):
-        pass
-
-
-class OmltExpression:
-    def __init__(self):
-        pass

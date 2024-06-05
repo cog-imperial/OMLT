@@ -1,5 +1,4 @@
 from omlt.dependencies import julia_available
-#  from omlt.base.expression import OmltExpression
 
 if julia_available:
     from juliacall import Main as jl
@@ -74,6 +73,8 @@ class JumpVar:
     def __init__(self, varinfo: JuMPVarInfo, name):
         self.info = varinfo
         self.name = name
+        self.omltvar = None
+        self.index = None
         self.construct()
 
     def __str__(self):
@@ -96,17 +97,21 @@ class JumpVar:
 
     def add_to_model(self, model, name=None):
         if name is None:
-            name = self._name
-        jump.add_variable(model, self.var, name)
+            name = self.name
+        variable_ref = jump.add_variable(model, self.var, name)
+        return variable_ref
 
     def to_jump(self):
         return self.var
 
-    # def __sub__(self, other):
-    #     return OmltExpression(expr=(self, "-", other), format="jump")
+    def __add__(self, other):
+        return (self.omltvar + other)[self.index]
 
-    # def __mul__(self, other):
-    #     return OmltExpression(expr=(self, "*", other), format="jump")
+    def __sub__(self, other):
+        return (self.omltvar - other)[self.index]
 
-    # def __eq__(self, other):
-    #     return OmltExpression(expr=(self, "==", other), format="jump")
+    def __mul__(self, other):
+        return (self.omltvar * other)[self.index]
+
+    def __eq__(self, other):
+        return (self.omltvar == other)[self.index]
