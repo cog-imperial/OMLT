@@ -5,6 +5,7 @@ import pyomo.environ as pyo
 
 from omlt.base import DEFAULT_MODELING_LANGUAGE
 import omlt.base.var as var
+
 # from omlt.dependencies import julia_available
 
 # if julia_available:
@@ -104,13 +105,13 @@ class OmltExprScalarPyomo(OmltExprScalar, pyo.Expression):
             return term._expression
         elif isinstance(term, var.OmltVar):
             return term._pyovar
-        elif isinstance(term, (
-            pyo.Expression, pyo.Var, int, float
-        )):
+        elif isinstance(term, (pyo.Expression, pyo.Var, int, float)):
             return term
         else:
-            raise TypeError("Term of expression is an unsupported type. "
-                            "Write a better error message.")
+            raise TypeError(
+                "Term of expression is an unsupported type. "
+                "Write a better error message."
+            )
 
     def _parse_expression_tuple(self, expr):
         lhs = self._parse_expression_tuple_term(expr[0])
@@ -214,7 +215,7 @@ class OmltExprScalarPyomo(OmltExprScalar, pyo.Expression):
         # return constraint.OmltRelScalar(format=self._format, expr_tuple=expr)
 
     def __le__(self, other):
-        expr = (self._expression <= other)
+        expr = self._expression <= other
         return expr
         # return constraint.OmltRelScalar(format=self._format, expr_tuple=expr)
 
