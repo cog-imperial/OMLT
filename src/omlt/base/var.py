@@ -220,6 +220,7 @@ class OmltScalarPyomo(OmltScalar, pyo.ScalarVar):
         kwargs.pop("format", None)
         # pyo.ScalarVar.__init__(self, *args, **kwargs)
         self._pyovar = pyo.ScalarVar(*args, **kwargs)
+        self._parent = None
 
     def construct(self, data=None):
         return self._pyovar.construct(data)
