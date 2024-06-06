@@ -1,4 +1,4 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 import pyomo.environ as pyo
 
 # from pyomo.core.expr import RelationalExpression
@@ -39,12 +39,26 @@ class OmltExpr(ABC):
     def is_expression_type(self):
         return True
 
+    @abstractmethod
     def is_indexed(self):
         pass
 
     def valid_model_component(self):
         """Return True if this can be used as a model component."""
         return True
+
+    @property
+    @abstractmethod
+    def args(self):
+        pass
+
+    @abstractmethod
+    def arg(self, index):
+        pass
+
+    @abstractmethod
+    def nargs(self):
+        pass
 
 
 class OmltExprScalar(OmltExpr):

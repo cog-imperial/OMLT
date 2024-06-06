@@ -16,7 +16,7 @@ from omlt.base import DEFAULT_MODELING_LANGUAGE
 if julia_available:
     from omlt.base import jump
 from omlt.base.julia import JuMPVarInfo, JumpVar
-from omlt.base.expression import OmltExpr, OmltExprIndexed, OmltExprScalar
+from omlt.base.expression import OmltExprIndexed, OmltExprScalar
 # from omlt.base.constraint import OmltRelation, OmltRelScalar
 
 
