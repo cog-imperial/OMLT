@@ -17,7 +17,7 @@ if julia_available:
     from omlt.base import jump
 from omlt.base.julia import JuMPVarInfo, JumpVar
 from omlt.base.expression import OmltExpr, OmltExprIndexed, OmltExprScalar
-from omlt.base.constraint import OmltRelation, OmltRelScalar
+# from omlt.base.constraint import OmltRelation, OmltRelScalar
 
 
 class OmltVar(ABC):
@@ -134,20 +134,20 @@ class OmltScalar(OmltVar):
 
     # Interface governing how variables behave in expressions.
 
-    def __lt__(self, other):
-        return OmltRelScalar(expr=(self, "<", other))
+    # def __lt__(self, other):
+    #     return OmltRelScalar(expr=(self, "<", other))
 
-    def __gt__(self, other):
-        return OmltRelScalar(expr=(self, ">", other))
+    # def __gt__(self, other):
+    #     return OmltRelScalar(expr=(self, ">", other))
 
-    def __le__(self, other):
-        return OmltRelScalar(expr=(self, "<=", other))
+    # def __le__(self, other):
+    #     return OmltRelScalar(expr=(self, "<=", other))
 
-    def __ge__(self, other):
-        return OmltRelScalar(expr=(self, ">=", other))
+    # def __ge__(self, other):
+    #     return OmltRelScalar(expr=(self, ">=", other))
 
-    def __eq__(self, other):
-        return OmltRelScalar(expr=(self, "==", other))
+    # def __eq__(self, other):
+    #     return OmltRelScalar(expr=(self, "==", other))
 
     def __add__(self, other):
         return OmltExprScalar(format=self._format, expr=(self, "+", other))
@@ -537,20 +537,20 @@ class OmltIndexed(OmltVar):
 
     # Interface governing how variables behave in expressions.
 
-    def __lt__(self, other):
-        return OmltRelation(self.index_set(), expr=(self, "<", other))
+    # def __lt__(self, other):
+    #     return OmltRelation(self.index_set(), expr=(self, "<", other))
 
-    def __gt__(self, other):
-        return OmltRelation(self.index_set(), expr=(self, ">", other))
+    # def __gt__(self, other):
+    #     return OmltRelation(self.index_set(), expr=(self, ">", other))
 
-    def __le__(self, other):
-        return OmltRelation(self.index_set(), expr=(self, "<=", other))
+    # def __le__(self, other):
+    #     return OmltRelation(self.index_set(), expr=(self, "<=", other))
 
-    def __ge__(self, other):
-        return OmltRelation(self.index_set(), expr=(self, ">=", other))
+    # def __ge__(self, other):
+    #     return OmltRelation(self.index_set(), expr=(self, ">=", other))
 
-    def __eq__(self, other):
-        return OmltRelation(self.index_set(), expr=(self, "==", other))
+    # def __eq__(self, other):
+    #     return OmltRelation(self.index_set(), expr=(self, "==", other))
 
     def __add__(self, other):
         return OmltExprIndexed(self.index_set(), expr=(self, "+", other))
