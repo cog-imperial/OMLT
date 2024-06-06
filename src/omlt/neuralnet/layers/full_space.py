@@ -131,9 +131,7 @@ def full_space_gnn_layer(net_block, net, layer_block, layer):
                 local_index, output_node_index
             ] = input_layer_block.zbar[
                 local_index, output_node_index
-            ] >= input_layer_block.z[
-                input_index
-            ] - ub * (
+            ] >= input_layer_block.z[input_index] - ub * (
                 1.0 - net_block.A[input_node_index, output_node_index]
             )
 
@@ -141,9 +139,7 @@ def full_space_gnn_layer(net_block, net, layer_block, layer):
                 local_index, output_node_index
             ] = input_layer_block.zbar[
                 local_index, output_node_index
-            ] <= input_layer_block.z[
-                input_index
-            ] - lb * (
+            ] <= input_layer_block.z[input_index] - lb * (
                 1.0 - net_block.A[input_node_index, output_node_index]
             )
 

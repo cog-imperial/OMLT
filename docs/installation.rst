@@ -1,5 +1,5 @@
 Installation
-==============
+============
 
 OMLT requires Python >= 3.6. The most stable OMLT version can be installed using the PyPI package index. This will also install the required depencies. Simply run: ::
 
@@ -13,7 +13,7 @@ If using the latest un-released version, install from the github repository and 
 
 
 Optional Requirements
--------------
+---------------------
 
 OMLT can import sequential Keras models which requires a working installation of tensorflow: ::
 
