@@ -3,6 +3,7 @@ from pyomo import mpec
 
 from omlt.base import OmltVar
 
+
 def bigm_relu_activation_constraint(net_block, net, layer_block, layer):
     r"""Big-M ReLU activation formulation.
 
