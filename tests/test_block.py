@@ -41,6 +41,7 @@ def test_block():
     assert [k for k in m.b.inputs] == ["A", "C", "D"]
     assert [k for k in m.b.outputs] == [(0, 0), (0, 1), (1, 0), (1, 1)]
 
+
 @pytest.mark.skipif(
     not julia_available, reason="Test only valid when Julia is available"
 )
@@ -57,7 +58,7 @@ def test_jump_block():
 
     m.b.y = OmltVar(initialize=2, format="jump")
     assert m.b.y.value == 2
-    assert m.b.y.name == 'y'
+    assert m.b.y.name == "y"
     m.b.y.lb = 0
     m.b.y.ub = 5
     assert m.b.y.lb == 0
