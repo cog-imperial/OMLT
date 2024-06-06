@@ -27,6 +27,7 @@ import warnings
 
 from omlt.base import OmltVar, DEFAULT_MODELING_LANGUAGE
 from omlt.dependencies import julia_available
+
 if julia_available:
     from omlt.base import jump
 

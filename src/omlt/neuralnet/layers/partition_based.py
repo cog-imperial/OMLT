@@ -167,7 +167,5 @@ def partition_based_dense_relu_layer(net_block, net, layer_block, layer, split_f
         )
         b.eq_15 = pyo.Constraint(
             expr=layer_block.z[output_index]
-            == sum(b.z2[s] for s in range(num_splits))
-            + bias
-            * (1 - b.sig)._expression
+            == sum(b.z2[s] for s in range(num_splits)) + bias * (1 - b.sig)._expression
         )
