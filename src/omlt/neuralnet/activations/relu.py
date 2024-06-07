@@ -77,9 +77,7 @@ def bigm_relu_activation_constraint(net_block, net, layer_block, layer):
             output_index
         ] <= layer_block.zhat[output_index] - layer_block._big_m_lb_relu[
             output_index
-        ] * (
-            1.0 - layer_block.q_relu[output_index]
-        )
+        ] * (1.0 - layer_block.q_relu[output_index])
 
 
 class ComplementarityReLUActivation:
