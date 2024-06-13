@@ -1,9 +1,8 @@
 import pytest
-from pyomo.environ import ConcreteModel, Objective, SolverFactory, Var, value
-
 from omlt.block import OmltBlock
 from omlt.formulation import _setup_scaled_inputs_outputs
 from omlt.scaling import OffsetScaling
+from pyomo.environ import ConcreteModel, Objective, SolverFactory, value
 
 
 def test_scaled_inputs_outputs():
@@ -32,7 +31,7 @@ def test_scaled_inputs_outputs():
     m.obj = Objective(expr=1)
     m.b1.inputs.fix(2)
     m.b1.outputs.fix(1)
-    status = SolverFactory("ipopt").solve(m)
+    SolverFactory("ipopt").solve(m)
 
     assert value(m.b1.scaled_inputs[(0, 0)]) == pytest.approx(4.0)
     assert value(m.b1.scaled_inputs[(0, 1)]) == pytest.approx(1.0)
@@ -68,7 +67,7 @@ def test_scaled_inputs_outputs():
     m.obj = Objective(expr=1)
     m.b1.inputs.fix(2)
     m.b1.outputs.fix(1)
-    status = SolverFactory("ipopt").solve(m)
+    SolverFactory("ipopt").solve(m)
     assert value(m.b1.scaled_inputs[0]) == pytest.approx(4.0)
     assert value(m.b1.scaled_inputs[1]) == pytest.approx(1.0)
     assert value(m.b1.scaled_inputs[2]) == pytest.approx(0.0)

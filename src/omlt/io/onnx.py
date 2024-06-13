@@ -1,4 +1,3 @@
-import json
 from pathlib import Path
 
 import onnx
@@ -8,8 +7,7 @@ from omlt.io.onnx_parser import NetworkParser
 
 
 def write_onnx_model_with_bounds(filename, onnx_model=None, input_bounds=None):
-    """
-    Write the ONNX model to the given file.
+    """Write the ONNX model to the given file.
 
     If `input_bounds` is not None, write it alongside the ONNX model.
 
@@ -23,7 +21,7 @@ def write_onnx_model_with_bounds(filename, onnx_model=None, input_bounds=None):
         bounds on the input variables
     """
     if onnx_model is not None:
-        with open(filename, "wb") as f:
+        with Path.open(filename, "wb") as f:
             f.write(onnx_model.SerializeToString())
 
     if input_bounds is not None:
@@ -31,15 +29,14 @@ def write_onnx_model_with_bounds(filename, onnx_model=None, input_bounds=None):
 
 
 def load_onnx_neural_network_with_bounds(filename):
-    """
-    Load a NetworkDefinition with input bounds from an onnx object.
+    """Load a NetworkDefinition with input bounds from an onnx object.
 
     Parameters
     ----------
     filename : str
         the path where the ONNX model and input bounds file are written
 
-    Returns
+    Returns:
     -------
     NetworkDefinition
     """
@@ -53,8 +50,7 @@ def load_onnx_neural_network_with_bounds(filename):
 
 
 def load_onnx_neural_network(onnx, scaling_object=None, input_bounds=None):
-    """
-    Load a NetworkDefinition from an onnx object.
+    """Load a NetworkDefinition from an onnx object.
 
     Parameters
     ----------
@@ -63,7 +59,7 @@ def load_onnx_neural_network(onnx, scaling_object=None, input_bounds=None):
     scaling_object : instance of object supporting ScalingInterface
     input_bounds : list of tuples
 
-    Returns
+    Returns:
     -------
     NetworkDefinition
     """

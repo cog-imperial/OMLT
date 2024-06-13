@@ -1,18 +1,20 @@
 import numpy as np
 import pyomo.environ as pyo
 import pytest
-
 from omlt.block import OmltBlock
 from omlt.neuralnet.layer import DenseLayer, InputLayer
 from omlt.neuralnet.network_definition import NetworkDefinition
 from omlt.neuralnet.nn_formulation import FullSpaceNNFormulation
 from omlt.scaling import OffsetScaling
 
+ALMOST_EXACTLY_EQUAL = 1e-8
+
 
 # TODO: Build more tests with different activations and edge cases
 def test_two_node_full_space():
-    """
-            1           1
+    """Two node full space network.
+
+    1           1
     x0 -------- (1) --------- (3)
      |                   /
      |                  /
@@ -57,14 +59,16 @@ def test_two_node_full_space():
     m.obj1 = pyo.Objective(expr=0)
     status = pyo.SolverFactory("cbc").solve(m, tee=True)
     pyo.assert_optimal_termination(status)
-    assert abs(pyo.value(m.neural_net_block.outputs[0, 0]) - 10.0) < 1e-8
-    assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - 2.0) < 1e-8
+    assert (
+        abs(pyo.value(m.neural_net_block.outputs[0, 0]) - 10.0) < ALMOST_EXACTLY_EQUAL
+    )
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - 2.0) < ALMOST_EXACTLY_EQUAL
 
     m.neural_net_block.inputs[0].fix(1)
     status = pyo.SolverFactory("cbc").solve(m, tee=False)
     pyo.assert_optimal_termination(status)
-    assert abs(pyo.value(m.neural_net_block.outputs[0, 0]) - 1.0) < 1e-8
-    assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - 0.0) < 1e-8
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 0]) - 1.0) < ALMOST_EXACTLY_EQUAL
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - 0.0) < ALMOST_EXACTLY_EQUAL
 
 
 def test_input_bounds_no_scaler():
@@ -91,7 +95,7 @@ def test_input_bound_scaling_1D():
     scaled_input_bounds = {0: (0, 5), 1: (-2, 2), 2: (0, 1)}
     unscaled_input_bounds = {}
 
-    for k in scaled_input_bounds.keys():
+    for k in scaled_input_bounds:
         lb, ub = scaled_input_bounds[k]
         unscaled_input_bounds[k] = (
             (lb * xfactor[k]) + xoffset[k],
@@ -121,7 +125,7 @@ def test_input_bound_scaling_multiD():
     scaled_input_bounds = {(0, 0): (0, 5), (0, 1): (-2, 2), (0, 2): (0, 1)}
     unscaled_input_bounds = {}
 
-    for k in scaled_input_bounds.keys():
+    for k in scaled_input_bounds:
         lb, ub = scaled_input_bounds[k]
         unscaled_input_bounds[k] = (
             (lb * xfactor[k]) + xoffset[k],
@@ -135,9 +139,7 @@ def test_input_bound_scaling_multiD():
 
 
 def _test_add_invalid_edge(direction):
-    """
-    direction can be "in" or "out"
-    """
+    """Direction can be "in" or "out"."""
     net = NetworkDefinition(scaled_input_bounds=[(-10.0, 10.0)])
 
     input_layer = InputLayer([1])
@@ -162,15 +164,13 @@ def _test_add_invalid_edge(direction):
     )
 
     if direction == "in":
-        with pytest.raises(ValueError) as excinfo:
-            net.add_edge(input_layer, dense_layer_1)
         expected_msg = f"Inbound layer {dense_layer_1} not found in network."
-        assert str(excinfo.value) == expected_msg
+        with pytest.raises(ValueError, match=expected_msg):
+            net.add_edge(input_layer, dense_layer_1)
     elif direction == "out":
-        with pytest.raises(ValueError) as excinfo:
-            net.add_edge(dense_layer_1, dense_layer_0)
         expected_msg = f"Outbound layer {dense_layer_1} not found in network."
-        assert str(excinfo.value) == expected_msg
+        with pytest.raises(ValueError, match=expected_msg):
+            net.add_edge(dense_layer_1, dense_layer_0)
 
 
 def test_add_invalid_edge():

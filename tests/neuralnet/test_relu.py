@@ -1,7 +1,6 @@
 import numpy as np
 import pyomo.environ as pyo
 import pytest
-
 from omlt.block import OmltBlock
 from omlt.dependencies import onnx_available
 from omlt.neuralnet import (
@@ -14,6 +13,7 @@ from omlt.neuralnet.activations import ComplementarityReLUActivation
 
 # TODO: Add tests for single dimensional outputs as well
 
+NEAR_EQUAL = 1e-3
 
 def test_two_node_bigm(two_node_network_relu):
     m = pyo.ConcreteModel()
@@ -24,14 +24,14 @@ def test_two_node_bigm(two_node_network_relu):
 
     m.neural_net_block.inputs[0].fix(-2)
     m.obj1 = pyo.Objective(expr=0)
-    status = pyo.SolverFactory("cbc").solve(m, tee=False)
-    assert abs(pyo.value(m.neural_net_block.outputs[0, 0]) - 10) < 1e-3
-    assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - 2) < 1e-3
+    pyo.SolverFactory("cbc").solve(m, tee=False)
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 0]) - 10) < NEAR_EQUAL
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - 2) < NEAR_EQUAL
 
     m.neural_net_block.inputs[0].fix(1)
-    status = pyo.SolverFactory("cbc").solve(m, tee=False)
-    assert abs(pyo.value(m.neural_net_block.outputs[0, 0]) - 1) < 1e-3
-    assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - 0) < 1e-3
+    pyo.SolverFactory("cbc").solve(m, tee=False)
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 0]) - 1) < NEAR_EQUAL
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - 0) < NEAR_EQUAL
 
 
 def test_two_node_ReluBigMFormulation(two_node_network_relu):
@@ -43,14 +43,14 @@ def test_two_node_ReluBigMFormulation(two_node_network_relu):
 
     m.neural_net_block.inputs[0].fix(-2)
     m.obj1 = pyo.Objective(expr=0)
-    status = pyo.SolverFactory("cbc").solve(m, tee=False)
-    assert abs(pyo.value(m.neural_net_block.outputs[0, 0]) - 10) < 1e-3
-    assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - 2) < 1e-3
+    pyo.SolverFactory("cbc").solve(m, tee=False)
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 0]) - 10) < NEAR_EQUAL
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - 2) < NEAR_EQUAL
 
     m.neural_net_block.inputs[0].fix(1)
-    status = pyo.SolverFactory("cbc").solve(m, tee=False)
-    assert abs(pyo.value(m.neural_net_block.outputs[0, 0]) - 1) < 1e-3
-    assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - 0) < 1e-3
+    pyo.SolverFactory("cbc").solve(m, tee=False)
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 0]) - 1) < NEAR_EQUAL
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - 0) < NEAR_EQUAL
 
 
 def test_two_node_complementarity(two_node_network_relu):
@@ -64,14 +64,14 @@ def test_two_node_complementarity(two_node_network_relu):
 
     m.neural_net_block.inputs[0].fix(-2)
     m.obj1 = pyo.Objective(expr=0)
-    status = pyo.SolverFactory("ipopt").solve(m, tee=False)
-    assert abs(pyo.value(m.neural_net_block.outputs[0, 0]) - 10) < 1e-3
-    assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - 2) < 1e-3
+    pyo.SolverFactory("ipopt").solve(m, tee=False)
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 0]) - 10) < NEAR_EQUAL
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - 2) < NEAR_EQUAL
 
     m.neural_net_block.inputs[0].fix(1)
-    status = pyo.SolverFactory("ipopt").solve(m, tee=False)
-    assert abs(pyo.value(m.neural_net_block.outputs[0, 0]) - 1) < 1e-3
-    assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - 0) < 1e-3
+    pyo.SolverFactory("ipopt").solve(m, tee=False)
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 0]) - 1) < NEAR_EQUAL
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - 0) < NEAR_EQUAL
 
 
 def test_two_node_ReluComplementarityFormulation(two_node_network_relu):
@@ -82,14 +82,14 @@ def test_two_node_ReluComplementarityFormulation(two_node_network_relu):
 
     m.neural_net_block.inputs[0].fix(-2)
     m.obj1 = pyo.Objective(expr=0)
-    status = pyo.SolverFactory("ipopt").solve(m, tee=False)
-    assert abs(pyo.value(m.neural_net_block.outputs[0, 0]) - 10) < 1e-3
-    assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - 2) < 1e-3
+    pyo.SolverFactory("ipopt").solve(m, tee=False)
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 0]) - 10) < NEAR_EQUAL
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - 2) < NEAR_EQUAL
 
     m.neural_net_block.inputs[0].fix(1)
-    status = pyo.SolverFactory("ipopt").solve(m, tee=False)
-    assert abs(pyo.value(m.neural_net_block.outputs[0, 0]) - 1) < 1e-3
-    assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - 0) < 1e-3
+    pyo.SolverFactory("ipopt").solve(m, tee=False)
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 0]) - 1) < NEAR_EQUAL
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - 0) < NEAR_EQUAL
 
 
 def test_two_node_ReluPartitionFormulation(two_node_network_relu):
@@ -101,14 +101,14 @@ def test_two_node_ReluPartitionFormulation(two_node_network_relu):
     m.obj1 = pyo.Objective(expr=0)
 
     m.neural_net_block.inputs[0].fix(-2)
-    status = pyo.SolverFactory("cbc").solve(m, tee=False)
-    assert abs(pyo.value(m.neural_net_block.outputs[0, 0]) - 10) < 1e-3
-    assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - 2) < 1e-3
+    pyo.SolverFactory("cbc").solve(m, tee=False)
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 0]) - 10) < NEAR_EQUAL
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - 2) < NEAR_EQUAL
 
     m.neural_net_block.inputs[0].fix(1)
-    status = pyo.SolverFactory("cbc").solve(m, tee=False)
-    assert abs(pyo.value(m.neural_net_block.outputs[0, 0]) - 1) < 1e-3
-    assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - 0) < 1e-3
+    pyo.SolverFactory("cbc").solve(m, tee=False)
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 0]) - 1) < NEAR_EQUAL
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - 0) < NEAR_EQUAL
 
 
 @pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
@@ -124,8 +124,7 @@ def test_conv_ReluBigMFormulation(datadir):
     m.obj1 = pyo.Objective(expr=0)
 
     # compute expected output for this input
-    input = np.eye(7, 7).reshape(1, 7, 7)
-    x = input
+    x = np.eye(7, 7).reshape(1, 7, 7)
     for layer in net.layers:
         x = layer.eval_single_layer(x)
     output = x
@@ -133,7 +132,7 @@ def test_conv_ReluBigMFormulation(datadir):
     for i in range(7):
         for j in range(7):
             m.neural_net_block.inputs[0, i, j].fix(input[0, i, j])
-    status = pyo.SolverFactory("cbc").solve(m, tee=False)
+    pyo.SolverFactory("cbc").solve(m, tee=False)
 
     d, r, c = output.shape
     for i in range(d):
@@ -141,4 +140,4 @@ def test_conv_ReluBigMFormulation(datadir):
             for k in range(c):
                 expected = output[i, j, k]
                 actual = pyo.value(m.neural_net_block.outputs[i, j, k])
-                assert abs(actual - expected) < 1e-3
+                assert abs(actual - expected) < NEAR_EQUAL

@@ -2,9 +2,8 @@ import tempfile
 
 import numpy as np
 import pytest
-from pyomo.common.dependencies import DeferredImportError
-
 from omlt.dependencies import onnx, onnx_available
+from pyomo.common.dependencies import DeferredImportError
 
 if onnx_available:
     import onnxruntime as ort
@@ -14,16 +13,15 @@ if onnx_available:
         write_onnx_model_with_bounds,
     )
 
-from pyomo.environ import *
-
 from omlt import OffsetScaling, OmltBlock
 from omlt.neuralnet import FullSpaceNNFormulation
+from pyomo.environ import ConcreteModel, SolverFactory, value
 
 
 @pytest.mark.skipif(onnx_available, reason="Test only valid when onnx not available")
 def test_onnx_not_available_exception(datadir):
     with pytest.raises(DeferredImportError):
-        neural_net = onnx.load(datadir.file("keras_linear_131_relu.onnx"))
+        onnx.load(datadir.file("keras_linear_131_relu.onnx"))
 
 
 @pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
@@ -58,7 +56,7 @@ def test_onnx_relu(datadir):
 
     for x in [-0.25, 0.0, 0.25, 1.5]:
         model.nn.inputs.fix(x)
-        result = SolverFactory("cbc").solve(model, tee=False)
+        SolverFactory("cbc").solve(model, tee=False)
 
         x_s = (x - scale_x[0]) / scale_x[1]
         x_s = np.array([[x_s]], dtype=np.float32)
@@ -101,7 +99,7 @@ def test_onnx_linear(datadir):
 
     for x in [-0.25, 0.0, 0.25, 1.5]:
         model.nn.inputs.fix(x)
-        result = SolverFactory("cbc").solve(model, tee=False)
+        SolverFactory("cbc").solve(model, tee=False)
 
         x_s = (x - scale_x[0]) / scale_x[1]
         x_s = np.array([[x_s]], dtype=np.float32)
@@ -145,7 +143,7 @@ def test_onnx_sigmoid(datadir):
 
     for x in [-0.25, 0.0, 0.25, 1.5]:
         model.nn.inputs.fix(x)
-        result = SolverFactory("ipopt").solve(model, tee=False)
+        SolverFactory("ipopt").solve(model, tee=False)
 
         x_s = (x - scale_x[0]) / scale_x[1]
         x_s = np.array([[x_s]], dtype=np.float32)
@@ -159,12 +157,12 @@ def test_onnx_sigmoid(datadir):
 @pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
 def test_onnx_bounds_loader_writer(datadir):
     onnx_model = onnx.load(datadir.file("keras_conv_7x7_relu.onnx"))
-    scaled_input_bounds = dict()
+    scaled_input_bounds = {}
     for i in range(7):
         for j in range(7):
             scaled_input_bounds[0, i, j] = (0.0, 1.0)
     with tempfile.NamedTemporaryFile(suffix=".onnx") as f:
         write_onnx_model_with_bounds(f.name, onnx_model, scaled_input_bounds)
         net = load_onnx_neural_network_with_bounds(f.name)
-    for key, value in net.scaled_input_bounds.items():
-        assert scaled_input_bounds[key] == value
+    for key, val in net.scaled_input_bounds.items():
+        assert scaled_input_bounds[key] == val

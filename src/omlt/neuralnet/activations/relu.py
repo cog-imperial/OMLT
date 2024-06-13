@@ -1,10 +1,9 @@
 import pyomo.environ as pyo
-import pyomo.mpec as mpec
+from pyomo import mpec
 
 
 def bigm_relu_activation_constraint(net_block, net, layer_block, layer):
-    r"""
-    Big-M ReLU activation formulation.
+    r"""Big-M ReLU activation formulation.
 
     Generates the constraints for the ReLU activation function:
 
@@ -35,7 +34,8 @@ def bigm_relu_activation_constraint(net_block, net, layer_block, layer):
             y&\le \sigma u
         \end{align*}
 
-    The lower bound of :math:`y` is :math:`\max(0,l)`, and the upper bound of :math:`y` is :math:`\max(0,u)`.
+    The lower bound of :math:`y` is :math:`\max(0,l)`, and the upper bound of :math:`y`
+    is :math:`\max(0,u)`.
 
     """
     layer_block.q_relu = pyo.Var(layer.output_indexes, within=pyo.Binary)
@@ -81,8 +81,7 @@ def bigm_relu_activation_constraint(net_block, net, layer_block, layer):
 
 
 class ComplementarityReLUActivation:
-    r"""
-    Complementarity-based ReLU activation formulation.
+    r"""Complementarity-based ReLU activation formulation.
 
     Generates the constraints for the ReLU activation function:
 

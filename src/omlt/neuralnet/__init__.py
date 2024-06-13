@@ -1,4 +1,5 @@
-r"""
+r"""omlt.neuralnet.
+
 The basic pipeline in source code of OMLT is:
 
 .. math::
@@ -12,7 +13,10 @@ The basic pipeline in source code of OMLT is:
         \xrightarrow[\text{Constraints}]{\text{Layer 3}}\cdots
     \end{align*}
 
-where :math:`\mathbf z^{(0)}` is the output of `InputLayer`, :math:`\hat{\mathbf z}^{(l)}` is the pre-activation output of :math:`l`-th layer, :math:`\mathbf z^{(l)}` is the post-activation output of :math:`l`-th layer.
+where 
+:math:`\mathbf z^{(0)}` is the output of `InputLayer`,
+:math:`\hat{\mathbf z}^{(l)}` is the pre-activation output of :math:`l`-th layer, 
+:math:`\mathbf z^{(l)}` is the post-activation output of :math:`l`-th layer.
 
 """
 
@@ -26,3 +30,14 @@ from omlt.neuralnet.nn_formulation import (
     ReluComplementarityFormulation,
     ReluPartitionFormulation,
 )
+
+__all__ = [
+    "NetworkDefinition",
+    "FullSpaceNNFormulation",
+    "FullSpaceSmoothNNFormulation",
+    "ReducedSpaceNNFormulation",
+    "ReducedSpaceSmoothNNFormulation",
+    "ReluBigMFormulation",
+    "ReluComplementarityFormulation",
+    "ReluPartitionFormulation",
+]

@@ -1,5 +1,8 @@
-r"""
-Since all activation functions are element-wised, we only consider how to formulate activation functions for a single neuron, where :math:`x` denotes pre-activation variable, and :math:`y` denotes post-activation variable.
+r"""Activation functions.
+
+Since all activation functions are element-wised, we only consider how to formulate
+activation functions for a single neuron, where :math:`x` denotes pre-activation
+variable, and :math:`y` denotes post-activation variable.
 
 """
 
@@ -23,3 +26,18 @@ ACTIVATION_FUNCTION_MAP = {
 }
 
 NON_INCREASING_ACTIVATIONS = []
+
+__all__ = [
+    "linear_activation_constraint",
+    "linear_activation_function",
+    "ComplementarityReLUActivation",
+    "bigm_relu_activation_constraint",
+    "sigmoid_activation_constraint",
+    "sigmoid_activation_function",
+    "softplus_activation_constraint",
+    "softplus_activation_function",
+    "tanh_activation_constraint",
+    "tanh_activation_function",
+    "ACTIVATION_FUNCTION_MAP",
+    "NON_INCREASING_ACTIVATIONS",
+]
