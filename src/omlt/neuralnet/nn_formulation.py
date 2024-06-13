@@ -61,7 +61,6 @@ _DEFAULT_ACTIVATION_CONSTRAINTS = {
 MULTI_INPUTS_UNSUPPORTED = "Multiple input layers are not currently supported."
 MULTI_OUTPUTS_UNSUPPORTED = "Multiple output layers are not currently supported."
 
-
 class FullSpaceNNFormulation(_PyomoFormulation):
     """This class is the entry-point to build neural network formulations.
 

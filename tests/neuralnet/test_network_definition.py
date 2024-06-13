@@ -3,8 +3,7 @@ import re
 import numpy as np
 import pyomo.environ as pyo
 import pytest
-
-from omlt import OmltBlock
+from omlt.block import OmltBlock
 from omlt.neuralnet.layer import DenseLayer, InputLayer
 from omlt.neuralnet.network_definition import NetworkDefinition
 from omlt.neuralnet.nn_formulation import FullSpaceNNFormulation
@@ -166,17 +165,11 @@ def _test_add_invalid_edge(direction):
     )
 
     if direction == "in":
-        expected_msg = re.escape(
-            "Inbound layer DenseLayer(input_size=[1], output_size=[1]) not"
-            " found in network."
-        )
+        expected_msg = f"Inbound layer {dense_layer_1} not found in network."
         with pytest.raises(ValueError, match=expected_msg):
             net.add_edge(input_layer, dense_layer_1)
     elif direction == "out":
-        expected_msg = re.escape(
-            "Outbound layer DenseLayer(input_size=[1], output_size=[1]) not"
-            " found in network."
-        )
+        expected_msg = f"Outbound layer {dense_layer_1} not found in network."
         with pytest.raises(ValueError, match=expected_msg):
             net.add_edge(dense_layer_1, dense_layer_0)
 

@@ -15,11 +15,12 @@ class GBTBigMFormulation(_PyomoFormulation):
     constraints to enforce splitting rules according to:
 
     References:
-         * Misic, V. "Optimization of tree ensembles."
-           Operations Research 68.5 (2020): 1605-1624.
-         * Mistry, M., et al. "Mixed-integer convex nonlinear optimization with
-           gradient-boosted trees embedded."
-           INFORMS Journal on Computing (2020).
+    ----------
+     * Misic, V. "Optimization of tree ensembles."
+       Operations Research 68.5 (2020): 1605-1624.
+     * Mistry, M., et al. "Mixed-integer convex nonlinear optimization with
+        gradient-boosted trees embedded."
+       INFORMS Journal on Computing (2020).
 
     Parameters:
         tree_ensemble_structure (GradientBoostedTreeModel):
@@ -87,11 +88,12 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars): 
 
 
     References:
-         * Misic, V. "Optimization of tree ensembles."
-           Operations Research 68.5 (2020): 1605-1624.
-         * Mistry, M., et al. "Mixed-integer convex nonlinear optimization with
-           gradient-boosted trees embedded."
-           INFORMS Journal on Computing (2020).
+    ----------
+     * Misic, V. "Optimization of tree ensembles."
+       Operations Research 68.5 (2020): 1605-1624.
+     * Mistry, M., et al. "Mixed-integer convex nonlinear optimization with
+        gradient-boosted trees embedded."
+       INFORMS Journal on Computing (2020).
 
     Parameters:
         block (Block):

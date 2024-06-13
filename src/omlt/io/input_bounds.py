@@ -5,13 +5,13 @@ from pathlib import Path
 def write_input_bounds(input_bounds_filename, input_bounds):
     """Write the specified input bounds to the given file."""
     input_bounds = _prepare_input_bounds(input_bounds)
-    with Path(input_bounds_filename).open("w") as f:
+    with Path.open(input_bounds_filename, "w") as f:
         json.dump(input_bounds, f)
 
 
 def load_input_bounds(input_bounds_filename):
     """Read the input bounds from the given file."""
-    with Path(input_bounds_filename).open() as f:
+    with Path.open(input_bounds_filename) as f:
         raw_input_bounds = json.load(f)
 
     return dict(_parse_raw_input_bounds(d) for d in raw_input_bounds)

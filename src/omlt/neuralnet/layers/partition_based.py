@@ -14,7 +14,7 @@ def default_partition_split_func(w, n):
     return np.array_split(sorted_indexes, n)
 
 
-def partition_based_dense_relu_layer(net_block, net, layer_block, layer, split_func):  # noqa: C901, PLR0915
+def partition_based_dense_relu_layer(net_block, net, layer_block, layer, split_func):
     r"""Partition-based ReLU activation formulation.
 
     Generates the constraints for the ReLU activation function:

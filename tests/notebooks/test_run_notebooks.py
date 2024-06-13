@@ -2,15 +2,14 @@ import os
 from pathlib import Path
 
 import pytest
-from pyomo.common.fileutils import this_file_dir
-from testbook import testbook
-
 from omlt.dependencies import (
     keras_available,
     onnx_available,
     torch_available,
     torch_geometric_available,
 )
+from pyomo.common.fileutils import this_file_dir
+from testbook import testbook
 
 
 def _test_run_notebook(folder, notebook_fname, n_cells):

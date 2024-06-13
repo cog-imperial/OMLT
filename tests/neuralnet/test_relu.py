@@ -1,8 +1,7 @@
 import numpy as np
 import pyomo.environ as pyo
 import pytest
-
-from omlt import OmltBlock
+from omlt.block import OmltBlock
 from omlt.dependencies import onnx_available
 from omlt.neuralnet import (
     FullSpaceNNFormulation,
@@ -14,6 +13,7 @@ from omlt.neuralnet.activations import ComplementarityReLUActivation
 
 NEAR_EQUAL = 1e-3
 
+NEAR_EQUAL = 1e-3
 
 def test_two_node_bigm(two_node_network_relu):
     m = pyo.ConcreteModel()

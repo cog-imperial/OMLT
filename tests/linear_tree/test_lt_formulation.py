@@ -1,7 +1,6 @@
 import numpy as np
 import pyomo.environ as pe
 import pytest
-
 from omlt.dependencies import lineartree_available
 
 if lineartree_available:
@@ -13,6 +12,7 @@ if lineartree_available:
         LinearTreeGDPFormulation,
         LinearTreeHybridBigMFormulation,
     )
+    from sklearn.linear_model import LinearRegression
 
 import omlt
 from omlt import OmltBlock

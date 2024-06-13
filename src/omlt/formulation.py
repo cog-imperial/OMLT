@@ -63,6 +63,7 @@ class _PyomoFormulation(_PyomoFormulationInterface):
     """
 
     def __init__(self):
+        super().__init__()
         self.__block = None
 
     def _set_block(self, block):
@@ -75,9 +76,7 @@ class _PyomoFormulation(_PyomoFormulationInterface):
         The underlying block containing the constraints / variables for this
         formulation.
         """
-        if self.__block is not None:
-            return self.__block()
-        return None
+        return self.__block()
 
 
 def scalar_or_tuple(x):

@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-
 from omlt.neuralnet.layer import (
     ConvLayer2D,
     DenseLayer,

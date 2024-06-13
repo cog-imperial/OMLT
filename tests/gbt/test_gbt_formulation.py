@@ -2,7 +2,6 @@ from pathlib import Path
 
 import pyomo.environ as pe
 import pytest
-
 from omlt import OmltBlock
 from omlt.dependencies import onnx, onnx_available
 from omlt.gbt.gbt_formulation import GBTBigMFormulation
@@ -13,7 +12,6 @@ Y_VARS = 42
 Z_L_VARS = 160
 SINGLE_LEAVES = 20
 SPLITS = 140
-
 
 @pytest.mark.skip("Francesco and Alex need to check this test")
 def test_formulation_with_continuous_variables():

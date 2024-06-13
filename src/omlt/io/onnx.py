@@ -21,7 +21,7 @@ def write_onnx_model_with_bounds(filename, onnx_model=None, input_bounds=None):
         bounds on the input variables
     """
     if onnx_model is not None:
-        with Path(filename).open("wb") as f:
+        with Path.open(filename, "wb") as f:
             f.write(onnx_model.SerializeToString())
 
     if input_bounds is not None:
