@@ -23,3 +23,4 @@ from omlt.linear_tree.lt_formulation import (
     LinearTreeGDPFormulation,
     LinearTreeHybridBigMFormulation,
 )
+from omlt.linear_tree.gblt_model import EnsembleDefinition
