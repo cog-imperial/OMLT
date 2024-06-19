@@ -229,7 +229,8 @@ def _add_gdp_formulation_to_block(
 
     """
     leaves = model_definition.leaves
-    input_bounds = model_definition.scaled_input_bounds
+    scaled_input_bounds = model_definition.scaled_input_bounds
+    unscaled_input_bounds = model_definition.unscaled_input_bounds
     n_inputs = model_definition.n_inputs
 
     # The set of leaves and the set of features
@@ -242,17 +243,25 @@ def _add_gdp_formulation_to_block(
 
     # Use the input_bounds and the linear models in the leaves to calculate
     # the lower and upper bounds on the output variable. Required for Pyomo.GDP
-    output_bounds = _build_output_bounds(model_definition, input_bounds)
+    scaled_output_bounds = _build_output_bounds(model_definition, scaled_input_bounds)
+    unscaled_output_bounds = _build_output_bounds(
+        model_definition, unscaled_input_bounds
+    )
 
     # Ouptuts are automatically scaled based on whether inputs are scaled
-    block.outputs.setub(output_bounds[1])
-    block.outputs.setlb(output_bounds[0])
-    block.scaled_outputs.setub(output_bounds[1])
-    block.scaled_outputs.setlb(output_bounds[0])
+    block.outputs.setub(unscaled_output_bounds[1])
+    block.outputs.setlb(unscaled_output_bounds[0])
+    block.scaled_outputs.setub(scaled_output_bounds[1])
+    block.scaled_outputs.setlb(scaled_output_bounds[0])
 
-    block.intermediate_output = pe.Var(
-        tree_ids, bounds=(output_bounds[0], output_bounds[1])
-    )
+    if model_definition.is_scaled is True:
+        block.intermediate_output = pe.Var(
+            tree_ids, bounds=(scaled_output_bounds[0], scaled_output_bounds[1])
+        )
+    else:
+        block.intermediate_output = pe.Var(
+            tree_ids, bounds=(unscaled_output_bounds[0], unscaled_output_bounds[1])
+        )
 
     # Create a disjunct for each leaf containing the bound constraints
     # and the linear model expression.
@@ -302,7 +311,8 @@ def _add_hybrid_formulation_to_block(block, model_definition, input_vars, output
         output_vars -- output variable of the linear tree model
     """
     leaves = model_definition.leaves
-    input_bounds = model_definition.scaled_input_bounds
+    scaled_input_bounds = model_definition.scaled_input_bounds
+    unscaled_input_bounds = model_definition.unscaled_input_bounds
     n_inputs = model_definition.n_inputs
 
     # The set of trees
@@ -318,13 +328,16 @@ def _add_hybrid_formulation_to_block(block, model_definition, input_vars, output
 
     # Use the input_bounds and the linear models in the leaves to calculate
     # the lower and upper bounds on the output variable. Required for Pyomo.GDP
-    output_bounds = _build_output_bounds(model_definition, input_bounds)
+    scaled_output_bounds = _build_output_bounds(model_definition, scaled_input_bounds)
+    unscaled_output_bounds = _build_output_bounds(
+        model_definition, unscaled_input_bounds
+    )
 
     # Ouptuts are automatically scaled based on whether inputs are scaled
-    block.outputs.setub(output_bounds[1])
-    block.outputs.setlb(output_bounds[0])
-    block.scaled_outputs.setub(output_bounds[1])
-    block.scaled_outputs.setlb(output_bounds[0])
+    block.outputs.setub(scaled_output_bounds[1])
+    block.outputs.setlb(scaled_output_bounds[0])
+    block.scaled_outputs.setub(unscaled_output_bounds[1])
+    block.scaled_outputs.setlb(unscaled_output_bounds[0])
 
     # Create the intermeditate variables. z is binary that indicates which leaf
     # in tree t is returned. intermediate_output is the output of tree t and
