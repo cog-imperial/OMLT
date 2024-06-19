@@ -3,7 +3,13 @@ import numpy as np
 
 
 class EnsembleDefinition:
-    def __init__(self, gblt_model, scaling_object=None, scaled_input_bounds=None):
+    def __init__(
+            self,
+            gblt_model,
+            scaling_object=None,
+            unscaled_input_bounds=None,
+            scaled_input_bounds=None
+        ):
         """
         Create a network definition object used to create the gradient-boosted trees
         formulation in Pyomo
@@ -21,17 +27,78 @@ class EnsembleDefinition:
               direct inputs to the tree ensemble). If None, then no bounds
               are specified or they are generated using unscaled bounds.
         """
-        self._model = gblt_model
-        n_inputs = find_n_inputs(gblt_model)
-        self.n_inputs = n_inputs
-        self.n_outputs = 1
-        self.splits, self.leaves, self.thresholds =\
-            parse_model(gblt_model, scaled_input_bounds, n_inputs)
-        self.scaling_object = scaling_object
-        self.scaled_input_bounds = scaled_input_bounds
+        self.__model = gblt_model
+        self.__scaling_object = scaling_object
+
+        # Process input bounds to insure scaled input bounds exist for formulations
+        if scaled_input_bounds is None:
+            if unscaled_input_bounds is not None and scaling_object is not None:
+                lbs = scaling_object.get_scaled_input_expressions(
+                    {k: t[0] for k, t in unscaled_input_bounds.items()}
+                )
+                ubs = scaling_object.get_scaled_input_expressions(
+                    {k: t[1] for k, t in unscaled_input_bounds.items()}
+                )
+
+                scaled_input_bounds = {
+                    k: (lbs[k], ubs[k]) for k in unscaled_input_bounds.keys()
+                }
+
+            # If unscaled input bounds provided and no scaler provided, scaled
+            # input bounds = unscaled input bounds
+            elif unscaled_input_bounds is not None and scaling_object is None:
+                scaled_input_bounds = unscaled_input_bounds
+            elif unscaled_input_bounds is None:
+                raise ValueError(
+                    "Input Bounds needed to represent linear trees as MIPs"
+                )
+
+        self.__unscaled_input_bounds = unscaled_input_bounds
+        self.__scaled_input_bounds = scaled_input_bounds
+
+        n_inputs = _find_n_inputs(gblt_model)
+        self.__n_inputs = n_inputs
+        self.__n_outputs = 1
+        self.__splits, self.__leaves, self.__thresholds =\
+            _parse_model(gblt_model, scaled_input_bounds, n_inputs)
+    
+    @property
+    def scaling_object(self):
+        """Returns scaling object"""
+        return self.__scaling_object
+
+    @property
+    def scaled_input_bounds(self):
+        """Returns dict containing scaled input bounds"""
+        return self.__scaled_input_bounds
+
+    @property
+    def splits(self):
+        """Returns dict containing split information"""
+        return self.__splits
+
+    @property
+    def leaves(self):
+        """Returns dict containing leaf information"""
+        return self.__leaves
+
+    @property
+    def thresholds(self):
+        """Returns dict containing threshold information"""
+        return self.__thresholds
+
+    @property
+    def n_inputs(self):
+        """Returns number of inputs to the linear tree"""
+        return self.__n_inputs
+
+    @property
+    def n_outputs(self):
+        """Returns number of outputs to the linear tree"""
+        return self.__n_outputs
 
 
-def find_all_children_splits(split, splits_dict):
+def _find_all_children_splits(split, splits_dict):
     """
     This helper function finds all multigeneration children splits for an 
     argument split.
@@ -50,13 +117,13 @@ def find_all_children_splits(split, splits_dict):
     left_child = splits_dict[split]['children'][0]
     if left_child in splits_dict:
         all_splits.append(left_child)
-        all_splits.extend(find_all_children_splits(left_child, splits_dict))
+        all_splits.extend(_find_all_children_splits(left_child, splits_dict))
 
     # Same as above but with right child
     right_child = splits_dict[split]['children'][1]
     if right_child in splits_dict:
         all_splits.append(right_child)
-        all_splits.extend(find_all_children_splits(right_child, splits_dict))
+        all_splits.extend(_find_all_children_splits(right_child, splits_dict))
 
     return all_splits
 
@@ -88,7 +155,7 @@ def _reassign_none_bounds(leaves, input_bounds, n_inputs):
 
     return leaves
 
-def find_all_children_leaves(split, splits_dict, leaves_dict):
+def _find_all_children_leaves(split, splits_dict, leaves_dict):
     """
     This helper function finds all multigeneration children leaves for an 
     argument split.
@@ -104,7 +171,7 @@ def find_all_children_leaves(split, splits_dict, leaves_dict):
     all_leaves = []
 
     # Find all the splits that are children of the relevant split
-    all_splits = find_all_children_splits(split, splits_dict)
+    all_splits = _find_all_children_splits(split, splits_dict)
 
     # Ensure the current split is included
     if split not in all_splits:
@@ -119,7 +186,7 @@ def find_all_children_leaves(split, splits_dict, leaves_dict):
     return all_leaves
 
 
-def find_n_inputs(model):
+def _find_n_inputs(model):
     if str(type(model)) == "<class 'lightgbm.basic.Booster'>":
         n_inputs = model.num_feature()
     else:
@@ -127,7 +194,7 @@ def find_n_inputs(model):
 
     return n_inputs
 
-def parse_model(model, input_bounds, n_inputs):
+def _parse_model(model, input_bounds, n_inputs):
     if str(type(model)) == "<class 'lightgbm.basic.Booster'>":
         whole_model = model.dump_model()
         # import pprint as pp
@@ -227,7 +294,7 @@ def parse_model(model, input_bounds, n_inputs):
             
             if left_child in splits:
                 # means left_child is split
-                splits[split]['left_leaves'] = find_all_children_leaves(
+                splits[split]['left_leaves'] = _find_all_children_leaves(
                     left_child, splits, leaves
                     )
             else:
@@ -236,7 +303,7 @@ def parse_model(model, input_bounds, n_inputs):
                 # print("left_child" + str(left_child))
             
             if right_child in splits:
-                splits[split]['right_leaves'] = find_all_children_leaves(
+                splits[split]['right_leaves'] = _find_all_children_leaves(
                     right_child, splits, leaves
                     )
             else:
