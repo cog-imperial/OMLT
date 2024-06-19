@@ -197,8 +197,6 @@ def _find_n_inputs(model):
 def _parse_model(model, input_bounds, n_inputs):
     if str(type(model)) == "<class 'lightgbm.basic.Booster'>":
         whole_model = model.dump_model()
-        # import pprint as pp
-        # pp.pprint(whole_model)
     else:
         whole_model=model
 
