@@ -17,6 +17,11 @@ class DummyFormulation:
     def _build_formulation(self):
         pass
 
+    def _clear_inputs(self):
+        self.input_indexes = []
+
+    def _clear_outputs(self):
+        self.output_indexes = []
 
 def test_block():
     m = pyo.ConcreteModel()
@@ -61,9 +66,20 @@ def test_input_output_auto_creation():
     assert len(m.b2.outputs) == 1
 
     m.b3 = OmltBlock()
-    expected_msg = "OmltBlock must have at least one input and at least one output."
+    formulation1 = DummyFormulation()
+    formulation1._clear_inputs()
+    expected_msg = (
+                "OmltBlock must have at least one input to build a formulation. "
+                f"{formulation1} has no inputs."
+            )
     with pytest.raises(ValueError, match=expected_msg):
-        m.b3._setup_inputs_outputs(
-            input_indexes=[],
-            output_indexes=[],
-        )
+        m.b3.build_formulation(formulation1)
+
+    formulation2 = DummyFormulation()
+    formulation2._clear_outputs()
+    expected_msg = (
+                "OmltBlock must have at least one output to build a formulation. "
+                f"{formulation2} has no outputs."
+            )
+    with pytest.raises(ValueError, match=expected_msg):
+        m.b3.build_formulation(formulation2)

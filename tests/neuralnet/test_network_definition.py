@@ -1,3 +1,5 @@
+import re
+
 import numpy as np
 import pyomo.environ as pyo
 import pytest
@@ -10,7 +12,8 @@ from omlt.scaling import OffsetScaling
 ALMOST_EXACTLY_EQUAL = 1e-8
 
 
-# TODO: Build more tests with different activations and edge cases
+# TODO @cog-imperial: Build more tests with different activations and edge cases
+# https://github.com/cog-imperial/OMLT/issues/158
 def test_two_node_full_space():
     """Two node full space network.
 
@@ -79,7 +82,7 @@ def test_input_bounds_no_scaler():
     assert net.scaled_input_bounds == scaled_input_bounds
 
 
-def test_input_bound_scaling_1D():
+def test_input_bound_scaling_1d():
     xoffset = {i: float(i) for i in range(3)}
     xfactor = {i: 0.5 * (i + 1) for i in range(3)}
     yoffset = {i: -0.25 * i for i in range(2)}
@@ -108,7 +111,7 @@ def test_input_bound_scaling_1D():
     assert net.scaled_input_bounds == scaled_input_bounds
 
 
-def test_input_bound_scaling_multiD():
+def test_input_bound_scaling_multi_d():
     # Multidimensional test
     xoffset = {(0, i): float(i) for i in range(3)}
     xfactor = {(0, i): 0.5 * (i + 1) for i in range(3)}
@@ -164,11 +167,17 @@ def _test_add_invalid_edge(direction):
     )
 
     if direction == "in":
-        expected_msg = f"Inbound layer {dense_layer_1} not found in network."
+        expected_msg = re.escape(
+            "Inbound layer DenseLayer(input_size=[1], output_size=[1]) not"
+            " found in network."
+        )
         with pytest.raises(ValueError, match=expected_msg):
             net.add_edge(input_layer, dense_layer_1)
     elif direction == "out":
-        expected_msg = f"Outbound layer {dense_layer_1} not found in network."
+        expected_msg = re.escape(
+            "Outbound layer DenseLayer(input_size=[1], output_size=[1]) not"
+            " found in network."
+        )
         with pytest.raises(ValueError, match=expected_msg):
             net.add_edge(dense_layer_1, dense_layer_0)
 

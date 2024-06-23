@@ -306,23 +306,18 @@ class ReducedSpaceNNFormulation(_PyomoFormulation):
         self.__scaling_object = network_structure.scaling_object
         self.__scaled_input_bounds = network_structure.scaled_input_bounds
 
-        # TODO: look into increasing support for other layers / activations
-        # self._layer_constraints = {**_DEFAULT_LAYER_CONSTRAINTS, **layer_constraints}
         self._activation_functions = dict(
             self._supported_default_activation_functions()
         )
         if activation_functions is not None:
             self._activation_functions.update(activation_functions)
 
-        # If we want to do network input/output validation at initialize time instead
-        # of build time, as it is for FullSpaceNNFormulation:
-        #
-        # network_inputs = list(self.__network_definition.input_nodes)
-        # if len(network_inputs) != 1:
-        #     raise ValueError(MULTI_INPUTS_UNSUPPORTED)
-        # network_outputs = list(self.__network_definition.output_nodes)
-        # if len(network_outputs) != 1:
-        #     raise ValueError(MULTI_OUTPUTS_UNSUPPORTED)
+        network_inputs = list(self.__network_definition.input_nodes)
+        if len(network_inputs) != 1:
+            raise ValueError(MULTI_INPUTS_UNSUPPORTED)
+        network_outputs = list(self.__network_definition.output_nodes)
+        if len(network_outputs) != 1:
+            raise ValueError(MULTI_OUTPUTS_UNSUPPORTED)
 
     def _supported_default_activation_functions(self):
         return dict(_DEFAULT_ACTIVATION_FUNCTIONS)
@@ -365,7 +360,13 @@ class ReducedSpaceNNFormulation(_PyomoFormulation):
                 # skip the InputLayer
                 continue
 
-            # TODO: Add error checking on layer type
+            if not isinstance(layer, DenseLayer):
+                msg = (
+                    f"ReducedSpaceNNFormulation only supports Dense layers. {net}"
+                    f" contains {layer} which is a {type(layer)}."
+                )
+                raise TypeError(msg)
+
             # build the linear expressions and the activation function
             layer_id = id(layer)
             layer_block = block.layer[layer_id]

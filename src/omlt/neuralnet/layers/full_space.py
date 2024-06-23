@@ -205,8 +205,6 @@ def full_space_conv2d_layer(net_block, net, layer_block, layer):
 
     input_layer, input_layer_block = _input_layer_and_block(net_block, net, layer)
 
-    # for out_d, out_r, out_c in layer.output_indexes:
-    #   output_index = (out_d, out_r, out_c)
     @layer_block.Constraint(layer.output_indexes)
     def convolutional_layer(b, *output_index):
         out_d, out_r, out_c = output_index
@@ -217,7 +215,6 @@ def full_space_conv2d_layer(net_block, net, layer_block, layer):
         lb, ub = compute_bounds_on_expr(expr)
         layer_block.zhat[output_index].setlb(lb)
         layer_block.zhat[output_index].setub(ub)
-        # layer_block.constraints.add(layer_block.zhat[output_index] == expr)
         return layer_block.zhat[output_index] == expr
 
 
@@ -273,8 +270,9 @@ def full_space_maxpool2d_layer(net_block, net, layer_block, layer):
             " are not supported."
         )
         raise ValueError(msg)
-    # TODO - add support for non-increasing activation functions on preceding
-    # convolutional layer
+    # TODO @cog-imperial: add support for non-increasing activation functions on
+    # preceding convolutional layer
+    # https://github.com/cog-imperial/OMLT/issues/154
 
     # note kernel indexes are the same set of values for any output index, so wlog get
     # kernel indexes for (0, 0, 0)

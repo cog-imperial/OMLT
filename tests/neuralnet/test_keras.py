@@ -170,7 +170,7 @@ def test_keras_linear_big_reduced_space(datadir):
 
 
 @pytest.mark.skipif(not keras_available, reason="Need keras for this test")
-def test_scaling_NN_block(datadir):
+def test_scaling_nn_block(datadir):
     NN = keras.models.load_model(datadir.file("keras_linear_131_relu.keras"))
 
     model = pyo.ConcreteModel()

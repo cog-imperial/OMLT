@@ -35,7 +35,6 @@ def load_keras_sequential(
     -------
     NetworkDefinition
     """
-    # TODO: Add exceptions for unsupported layer types
     n_inputs = len(nn.layers[0].get_weights()[0])
 
     net = NetworkDefinition(

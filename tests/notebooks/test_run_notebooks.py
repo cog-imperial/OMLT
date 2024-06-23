@@ -11,8 +11,9 @@ from omlt.dependencies import (
 from pyomo.common.fileutils import this_file_dir
 from testbook import testbook
 
+# TODO @cog-imperial: These will be replaced with stronger tests using testbook soon
+# https://github.com/cog-imperial/OMLT/issues/159
 
-# TODO: These will be replaced with stronger tests using testbook soon
 def _test_run_notebook(folder, notebook_fname, n_cells):
     # Change to notebook directory to allow for testing
     cwd = Path.cwd()

@@ -53,11 +53,6 @@ class OmltBlockData(_BlockData):
         """
         self.__input_indexes = input_indexes
         self.__output_indexes = output_indexes
-        if not input_indexes or not output_indexes:
-            # TODO: implement this check higher up in the class hierarchy to provide
-            # more contextual error msg
-            msg = "OmltBlock must have at least one input and at least one output."
-            raise ValueError(msg)
 
         self.inputs_set = pyo.Set(initialize=input_indexes)
         self.inputs = pyo.Var(self.inputs_set, initialize=0)
@@ -77,6 +72,20 @@ class OmltBlockData(_BlockData):
         formulation : instance of _PyomoFormulation
             see, for example, FullSpaceNNFormulation
         """
+        if not formulation.input_indexes:
+            msg = (
+                "OmltBlock must have at least one input to build a formulation. "
+                f"{formulation} has no inputs."
+            )
+            raise ValueError(msg)
+
+        if not formulation.output_indexes:
+            msg = (
+                "OmltBlock must have at least one output to build a formulation. "
+                f"{formulation} has no outputs."
+            )
+            raise ValueError(msg)
+
         self._setup_inputs_outputs(
             input_indexes=list(formulation.input_indexes),
             output_indexes=list(formulation.output_indexes),

@@ -224,10 +224,10 @@ def load_torch_geometric_sequential(
                 biases=biases,
             )
         elif operations[index] == "GCNConv":
-            assert l.improved == False
-            assert l.cached == False
-            assert l.add_self_loops == True
-            assert l.normalize == True
+            assert not l.improved
+            assert not l.cached
+            assert l.add_self_loops
+            assert l.normalize
             gnn_weights = l.lin.weight.detach().numpy()
             gnn_biases = l.bias.detach().numpy()
             gnn_norm = _compute_gcn_norm(A)
@@ -244,8 +244,8 @@ def load_torch_geometric_sequential(
                 N=N,
             )
         elif operations[index] == "SAGEConv":
-            assert l.normalize == False
-            assert l.project == False
+            assert not l.normalize
+            assert not l.project
             assert l.aggr in _AGGREGATION_OP_TYPES
             gnn_weights_uv = l.lin_l.weight.detach().numpy()
             gnn_biases = l.lin_l.bias.detach().numpy()

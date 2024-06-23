@@ -66,7 +66,7 @@ def test_gemm(datadir):
 
 
 @pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
-def test_gemm_transB(datadir):
+def test_gemm_trans_b(datadir):
     model = onnx.load(datadir.file("gemm_not_transB.onnx"))
     model_transB = onnx.load(datadir.file("gemm_transB.onnx"))
     net = load_onnx_neural_network(model)

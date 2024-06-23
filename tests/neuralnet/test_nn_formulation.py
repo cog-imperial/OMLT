@@ -32,8 +32,8 @@ from omlt.neuralnet.layers.reduced_space import reduced_space_dense_layer
 from pyomo.contrib.fbbt import interval
 
 NEAR_EQUAL = 1e-6
-FULLSPACE_SMOOTH_VARS = 14
-FULLSPACE_SMOOTH_CONSTRAINTS = 15
+FULLSPACE_SMOOTH_VARS = 15
+FULLSPACE_SMOOTH_CONSTRAINTS = 14
 FULLSPACE_RELU_VARS = 19
 FULLSPACE_RELU_CONSTRAINTS = 26
 REDUCED_VARS = 6
@@ -86,7 +86,7 @@ def two_node_network(activation, input_value):
     return net, y
 
 
-def _test_two_node_FullSpaceNNFormulation_smooth(activation):
+def _test_two_node_full_space_nn_formulation_smooth(activation):
     m = pyo.ConcreteModel()
     m.neural_net_block = OmltBlock()
     net, y = two_node_network(activation, -2.0)
@@ -108,7 +108,7 @@ def _test_two_node_FullSpaceNNFormulation_smooth(activation):
     assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - y[0, 1]) < NEAR_EQUAL
 
 
-def _test_two_node_FullSpaceNNFormulation_relu():
+def _test_two_node_full_space_nn_formulation_relu():
     m = pyo.ConcreteModel()
     m.neural_net_block = OmltBlock()
     net, y = two_node_network("relu", -2.0)
@@ -130,7 +130,7 @@ def _test_two_node_FullSpaceNNFormulation_relu():
     assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - y[0, 1]) < NEAR_EQUAL
 
 
-def _test_two_node_FullSpaceSmoothNNFormulation(activation):
+def _test_two_node_full_space_smooth_nn_formulation(activation):
     m = pyo.ConcreteModel()
     m.neural_net_block = OmltBlock()
     net, y = two_node_network(activation, -2.0)
@@ -152,7 +152,7 @@ def _test_two_node_FullSpaceSmoothNNFormulation(activation):
     assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - y[0, 1]) < NEAR_EQUAL
 
 
-def _test_two_node_ReducedSpaceNNFormulation(activation):
+def _test_two_node_reduced_space_nn_formulation(activation):
     m = pyo.ConcreteModel()
     m.neural_net_block = OmltBlock()
     net, y = two_node_network(activation, -2.0)
@@ -174,7 +174,7 @@ def _test_two_node_ReducedSpaceNNFormulation(activation):
     assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - y[0, 1]) < NEAR_EQUAL
 
 
-def _test_two_node_ReducedSpaceSmoothNNFormulation(activation):
+def _test_two_node_reduced_space_smooth_nn_formulation(activation):
     m = pyo.ConcreteModel()
     m.neural_net_block = OmltBlock()
     net, y = two_node_network(activation, -2.0)
@@ -196,41 +196,41 @@ def _test_two_node_ReducedSpaceSmoothNNFormulation(activation):
     assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - y[0, 1]) < NEAR_EQUAL
 
 
-def test_two_node_ReducedSpaceNNFormulation():
-    _test_two_node_ReducedSpaceNNFormulation("linear")
-    _test_two_node_ReducedSpaceNNFormulation("sigmoid")
-    _test_two_node_ReducedSpaceNNFormulation("tanh")
+def test_two_node_reduced_space_nn_formulation():
+    _test_two_node_reduced_space_nn_formulation("linear")
+    _test_two_node_reduced_space_nn_formulation("sigmoid")
+    _test_two_node_reduced_space_nn_formulation("tanh")
 
 
-def test_two_node_ReducedSpaceSmoothNNFormulation():
-    _test_two_node_ReducedSpaceSmoothNNFormulation("linear")
-    _test_two_node_ReducedSpaceSmoothNNFormulation("sigmoid")
-    _test_two_node_ReducedSpaceSmoothNNFormulation("tanh")
+def test_two_node_reduced_space_smooth_nn_formulation():
+    _test_two_node_reduced_space_smooth_nn_formulation("linear")
+    _test_two_node_reduced_space_smooth_nn_formulation("sigmoid")
+    _test_two_node_reduced_space_smooth_nn_formulation("tanh")
 
 
-def test_two_node_ReducedSpaceSmoothNNFormulation_invalid_activation():
+def test_two_node_reduced_space_smooth_nn_formulation_invalid_activation():
     expected_msg = "Activation relu is not supported by this formulation."
     with pytest.raises(ValueError, match=expected_msg):
-        _test_two_node_ReducedSpaceSmoothNNFormulation("relu")
+        _test_two_node_reduced_space_smooth_nn_formulation("relu")
 
 
-def test_two_node_FullSpaceNNFormulation():
-    _test_two_node_FullSpaceNNFormulation_smooth("linear")
-    _test_two_node_FullSpaceNNFormulation_smooth("sigmoid")
-    _test_two_node_FullSpaceNNFormulation_smooth("tanh")
-    _test_two_node_FullSpaceNNFormulation_relu()
+def test_two_node_full_space_nn_formulation():
+    _test_two_node_full_space_nn_formulation_smooth("linear")
+    _test_two_node_full_space_nn_formulation_smooth("sigmoid")
+    _test_two_node_full_space_nn_formulation_smooth("tanh")
+    _test_two_node_full_space_nn_formulation_relu()
 
 
-def test_two_node_FullSpaceSmoothNNFormulation():
-    _test_two_node_FullSpaceSmoothNNFormulation("linear")
-    _test_two_node_FullSpaceSmoothNNFormulation("sigmoid")
-    _test_two_node_FullSpaceSmoothNNFormulation("tanh")
+def test_two_node_full_space_smooth_nn_formulation():
+    _test_two_node_full_space_smooth_nn_formulation("linear")
+    _test_two_node_full_space_smooth_nn_formulation("sigmoid")
+    _test_two_node_full_space_smooth_nn_formulation("tanh")
 
 
-def test_two_node_FullSpaceSmoothNNFormulation_invalid_activation():
+def test_two_node_full_space_smooth_nn_formulation_invalid_activation():
     expected_msg = "Activation relu is not supported by this formulation."
     with pytest.raises(ValueError, match=expected_msg):
-        _test_two_node_FullSpaceSmoothNNFormulation("relu")
+        _test_two_node_full_space_smooth_nn_formulation("relu")
 
 
 @pytest.mark.skip(reason="Need to add checks on layer types")
@@ -315,7 +315,7 @@ def _maxpool_conv_network(inputs):
     return net, y
 
 
-def test_maxpool_FullSpaceNNFormulation():
+def test_maxpool_full_space_nn_formulation():
     m = pyo.ConcreteModel()
     m.neural_net_block = OmltBlock()
 
@@ -445,7 +445,7 @@ def _test_formulation_initialize_extra_output(network_formulation):
             ReducedSpaceNNFormulation(net)
 
 
-def test_FullSpaceNNFormulation_invalid_network():
+def test_full_space_nn_formulation_invalid_network():
     _test_formulation_initialize_extra_input("FullSpace")
     _test_formulation_added_extra_input("FullSpace")
     _test_formulation_build_extra_input("FullSpace")
@@ -453,15 +453,13 @@ def test_FullSpaceNNFormulation_invalid_network():
     _test_formulation_added_extra_output("FullSpace")
 
 
-def test_ReducedSpaceNNFormulation_invalid_network():
-    # _test_formulation_initialize_extra_input("ReducedSpace")
+def test_reduced_space_nn_formulation_invalid_network():
     _test_formulation_added_extra_input("ReducedSpace")
     _test_formulation_build_extra_input("ReducedSpace")
-    # _test_formulation_initialize_extra_output("ReducedSpace")
     _test_formulation_added_extra_output("ReducedSpace")
 
 
-def test_ReluPartitionFormulation_invalid_network():
+def test_relu_partition_formulation_invalid_network():
     _test_formulation_added_extra_input("relu")
     _test_formulation_build_extra_input("relu")
     _test_formulation_added_extra_output("relu")

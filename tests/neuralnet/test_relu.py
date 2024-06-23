@@ -11,7 +11,8 @@ from omlt.neuralnet import (
 )
 from omlt.neuralnet.activations import ComplementarityReLUActivation
 
-# TODO: Add tests for single dimensional outputs as well
+# TODO @cog-imperial: Add tests for single dimensional outputs as well
+# https://github.com/cog-imperial/OMLT/issues/158
 
 NEAR_EQUAL = 1e-3
 
@@ -34,7 +35,7 @@ def test_two_node_bigm(two_node_network_relu):
     assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - 0) < NEAR_EQUAL
 
 
-def test_two_node_ReluBigMFormulation(two_node_network_relu):
+def test_two_node_relu_big_m_formulation(two_node_network_relu):
     m = pyo.ConcreteModel()
     m.neural_net_block = OmltBlock()
     formulation = ReluBigMFormulation(two_node_network_relu)
@@ -74,7 +75,7 @@ def test_two_node_complementarity(two_node_network_relu):
     assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - 0) < NEAR_EQUAL
 
 
-def test_two_node_ReluComplementarityFormulation(two_node_network_relu):
+def test_two_node_relu_complementarity_formulation(two_node_network_relu):
     m = pyo.ConcreteModel()
     m.neural_net_block = OmltBlock()
     formulation = ReluComplementarityFormulation(two_node_network_relu)
@@ -92,7 +93,7 @@ def test_two_node_ReluComplementarityFormulation(two_node_network_relu):
     assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - 0) < NEAR_EQUAL
 
 
-def test_two_node_ReluPartitionFormulation(two_node_network_relu):
+def test_two_node_relu_partition_formulation(two_node_network_relu):
     m = pyo.ConcreteModel()
 
     m.neural_net_block = OmltBlock()
@@ -112,7 +113,7 @@ def test_two_node_ReluPartitionFormulation(two_node_network_relu):
 
 
 @pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
-def test_conv_ReluBigMFormulation(datadir):
+def test_conv_relu_big_m_formulation(datadir):
     from omlt.io.onnx import load_onnx_neural_network_with_bounds
 
     net = load_onnx_neural_network_with_bounds(datadir.file("keras_conv_7x7_relu.onnx"))
@@ -124,14 +125,15 @@ def test_conv_ReluBigMFormulation(datadir):
     m.obj1 = pyo.Objective(expr=0)
 
     # compute expected output for this input
-    x = np.eye(7, 7).reshape(1, 7, 7)
+    x_start = np.eye(7, 7).reshape(1, 7, 7)
+    x = x_start
     for layer in net.layers:
         x = layer.eval_single_layer(x)
     output = x
 
     for i in range(7):
         for j in range(7):
-            m.neural_net_block.inputs[0, i, j].fix(input[0, i, j])
+            m.neural_net_block.inputs[0, i, j].fix(x_start[0, i, j])
     pyo.SolverFactory("cbc").solve(m, tee=False)
 
     d, r, c = output.shape

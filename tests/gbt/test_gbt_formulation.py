@@ -31,7 +31,7 @@ def test_formulation_with_continuous_variables():
     assert (
         len(list(m.gbt.component_data_objects(pe.Var))) == 202 + 10
     )  # our auto-created variables
-    # TODO: fix below?:
+
     assert len(list(m.gbt.component_data_objects(pe.Constraint))) == TOTAL_CONSTRAINTS
 
     assert len(m.gbt.z_l) == Z_L_VARS
@@ -43,39 +43,6 @@ def test_formulation_with_continuous_variables():
     assert len(m.gbt.categorical) == 0
     assert len(m.gbt.var_lower) == Y_VARS
     assert len(m.gbt.var_upper) == Y_VARS
-
-
-# TODO: did we remove categorical variables intentionally?
-# def test_formulation_with_categorical_variables():
-#     model = onnx.load(Path(__file__).parent / "categorical_model.onnx")
-
-#     m = pe.ConcreteModel()
-
-#     m.x = pe.Var(range(3), bounds=(-2.0, 2.0))
-#     # categorical variable
-#     m.y = pe.Var(bounds=(0, 1), domain=pe.Integers)
-
-#     m.z = pe.Var()
-
-#     m.gbt = pe.Block()
-#     add_formulation_to_block(
-#         m.gbt, model, input_vars=[m.x[0], m.x[1], m.x[2], m.y], output_vars=[m.z]
-#     )
-
-#     assert len(list(m.gbt.component_data_objects(pe.Var))) == 193
-#     # there are 28 * 2 constraints missing
-#     # related to categorical variables
-#     assert len(list(m.gbt.component_data_objects(pe.Constraint))) == 391
-
-#     assert len(m.gbt.z_l) == 160
-#     assert len(m.gbt.y) == 31
-
-#     assert len(m.gbt.single_leaf) == 20
-#     assert len(m.gbt.left_split) == 140
-#     assert len(m.gbt.right_split) == 140
-#     assert len(m.gbt.categorical) == 1
-#     assert len(m.gbt.var_lower) == 31
-#     assert len(m.gbt.var_upper) == 31
 
 
 @pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")

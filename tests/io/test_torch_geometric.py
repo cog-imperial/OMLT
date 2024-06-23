@@ -28,7 +28,7 @@ if torch_available and torch_geometric_available:
     not (torch_available and torch_geometric_available),
     reason="Test only valid when torch and torch_geometric are available",
 )
-def GCN_Sequential(activation, pooling):
+def gcn_sequential(activation, pooling):
     return Sequential(
         "x, edge_index",
         [
@@ -49,7 +49,7 @@ def GCN_Sequential(activation, pooling):
     not (torch_available and torch_geometric_available),
     reason="Test only valid when torch and torch_geometric are available",
 )
-def SAGE_Sequential(activation, pooling, aggr, root_weight):
+def sage_sequential(activation, pooling, aggr, root_weight):
     return Sequential(
         "x, edge_index",
         [
@@ -142,11 +142,11 @@ def _test_gnn_with_non_fixed_graph(nn):
 def test_torch_geometric_reader():
     for activation in [ReLU, Sigmoid, Tanh]:
         for pooling in [global_mean_pool, global_add_pool]:
-            nn = GCN_Sequential(activation, pooling)
+            nn = gcn_sequential(activation, pooling)
             _test_torch_geometric_reader(nn, activation, pooling)
             for aggr in ["sum", "mean"]:
                 for root_weight in [False, True]:
-                    nn = SAGE_Sequential(activation, pooling, aggr, root_weight)
+                    nn = sage_sequential(activation, pooling, aggr, root_weight)
                     _test_torch_geometric_reader(nn, activation, pooling)
 
 
@@ -156,11 +156,11 @@ def test_torch_geometric_reader():
 )
 def test_gnn_with_fixed_graph():
     for pooling in [global_mean_pool, global_add_pool]:
-        nn = GCN_Sequential(ReLU, pooling)
+        nn = gcn_sequential(ReLU, pooling)
         _test_gnn_with_fixed_graph(nn)
         for aggr in ["sum", "mean"]:
             for root_weight in [False, True]:
-                nn = SAGE_Sequential(ReLU, pooling, aggr, root_weight)
+                nn = sage_sequential(ReLU, pooling, aggr, root_weight)
                 _test_gnn_with_fixed_graph(nn)
 
 
@@ -172,7 +172,7 @@ def test_gnn_with_non_fixed_graph():
     for pooling in [global_mean_pool, global_add_pool]:
         for aggr in ["sum"]:
             for root_weight in [False, True]:
-                nn = SAGE_Sequential(ReLU, pooling, aggr, root_weight)
+                nn = sage_sequential(ReLU, pooling, aggr, root_weight)
                 _test_gnn_with_non_fixed_graph(nn)
 
 
@@ -213,16 +213,18 @@ def _test_gnn_value_error(nn, error_info, error_type="ValueError"):
     reason="Test only valid when torch and torch_geometric are available",
 )
 def test_gnn_value_error():
-    nn = SAGE_Sequential(ReLU, global_max_pool, "mean", True)
-    _test_gnn_value_error(nn, "this operation is not supported")
+    nn = sage_sequential(ReLU, global_max_pool, "mean", root_weight=True)
+    _test_gnn_value_error(nn, "Operation global_max_pool is not supported.")
 
-    nn = SAGE_Sequential(Sigmoid, global_mean_pool, "sum", True)
+    nn = sage_sequential(Sigmoid, global_mean_pool, "sum", root_weight=True)
     _test_gnn_value_error(nn, "nonlinear activation results in a MINLP", "warns")
 
-    nn = SAGE_Sequential(ReLU, global_mean_pool, "mean", True)
+    nn = sage_sequential(ReLU, global_mean_pool, "mean", root_weight=True)
     _test_gnn_value_error(
         nn, "this aggregation is not supported when the graph is not fixed"
     )
 
-    nn = GCN_Sequential(ReLU, global_mean_pool)
-    _test_gnn_value_error(nn, "this layer is not supported when the graph is not fixed")
+    nn = gcn_sequential(ReLU, global_mean_pool)
+    _test_gnn_value_error(
+        nn, "this layer is not supported when the graph is not fixed."
+    )
