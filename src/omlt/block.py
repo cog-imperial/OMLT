@@ -25,6 +25,12 @@ Example:
 """
 
 
+from omlt.base import OmltVar, DEFAULT_MODELING_LANGUAGE
+from omlt.dependencies import julia_available
+
+if julia_available:
+    from omlt.base import jump
+
 import pyomo.environ as pyo
 from pyomo.core.base.block import _BlockData, declare_custom_block
 
@@ -36,6 +42,16 @@ class OmltBlockData(_BlockData):
         self.__formulation = None
         self.__input_indexes = None
         self.__output_indexes = None
+        self._format = DEFAULT_MODELING_LANGUAGE
+        if self._format == "jump":
+            self._jumpmodel = jump.Model()
+        else:
+            self._jumpmodel = None
+
+    def set_format(self, format):
+        self._format = format
+        if self._format == "jump" and self._jumpmodel is None:
+            self._jumpmodel = jump.Model()
 
     def _setup_inputs_outputs(self, *, input_indexes, output_indexes):
         """Setup inputs and outputs.
@@ -55,13 +71,13 @@ class OmltBlockData(_BlockData):
         self.__output_indexes = output_indexes
 
         self.inputs_set = pyo.Set(initialize=input_indexes)
-        self.inputs = pyo.Var(self.inputs_set, initialize=0)
+        self.inputs = OmltVar(self.inputs_set, initialize=0, format=self._format)
         self.outputs_set = pyo.Set(initialize=output_indexes)
-        self.outputs = pyo.Var(self.outputs_set, initialize=0)
+        self.outputs = OmltVar(self.outputs_set, initialize=0, format=self._format)
 
-    def build_formulation(self, formulation):
-        """Build formulation.
 
+    def build_formulation(self, formulation, format=None):
+        """
         Call this method to construct the constraints (and possibly
         intermediate variables) necessary for the particular neural network
         formulation. The formulation object can be accessed later through the
@@ -71,6 +87,10 @@ class OmltBlockData(_BlockData):
         ----------
         formulation : instance of _PyomoFormulation
             see, for example, FullSpaceNNFormulation
+        format : str
+            Which modelling language to build the formulation in.
+            Currently supported are "pyomo" (default) and "jump".
+
         """
         if not formulation.input_indexes:
             msg = (
@@ -85,6 +105,14 @@ class OmltBlockData(_BlockData):
                 f"{formulation} has no outputs."
             )
             raise ValueError(msg)
+
+
+        if format is not None:
+            self._format = format
+
+        if self._format == "jump":
+            self._jumpmodel = jump.Model()
+
 
         self._setup_inputs_outputs(
             input_indexes=list(formulation.input_indexes),

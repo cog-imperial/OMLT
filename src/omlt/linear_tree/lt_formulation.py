@@ -2,6 +2,7 @@ import numpy as np
 import pyomo.environ as pe
 from pyomo.gdp import Disjunct
 
+from omlt.base import OmltVar
 from omlt.formulation import _PyomoFormulation, _setup_scaled_inputs_outputs
 
 
@@ -248,7 +249,7 @@ def _add_gdp_formulation_to_block(
     block.scaled_outputs.setub(output_bounds[1])
     block.scaled_outputs.setlb(output_bounds[0])
 
-    block.intermediate_output = pe.Var(
+    block.intermediate_output = OmltVar(
         tree_ids, bounds=(output_bounds[0], output_bounds[1])
     )
 
@@ -323,7 +324,7 @@ def _add_hybrid_formulation_to_block(block, model_definition, input_vars, output
     # Create the intermeditate variables. z is binary that indicates which leaf
     # in tree t is returned. intermediate_output is the output of tree t and
     # the total output of the model is the sum of the intermediate_output vars
-    block.z = pe.Var(t_l, within=pe.Binary)
+    block.z = OmltVar(t_l, within=pe.Binary)
     block.intermediate_output = pe.Var(tree_ids)
 
     @block.Constraint(features, tree_ids)

@@ -1,6 +1,8 @@
 import pyomo.environ as pyo
 import pytest
 from omlt import OmltBlock
+from omlt.base import OmltVar
+from omlt.dependencies import julia_available
 
 INPUTS_LENGTH = 3
 OUTPUTS_LENGTH = 2
@@ -42,6 +44,37 @@ def test_block():
     m.b = OmltBlock()
     formulation = DummyFormulation()
     m.b.build_formulation(formulation)
+
+    assert m.b._OmltBlockData__formulation is formulation
+    assert [k for k in m.b.inputs] == ["A", "C", "D"]
+    assert [k for k in m.b.outputs] == [(0, 0), (0, 1), (1, 0), (1, 1)]
+
+
+@pytest.mark.skipif(
+    not julia_available, reason="Test only valid when Julia is available"
+)
+def test_jump_block():
+    m = pyo.ConcreteModel()
+    m.b = OmltBlock()
+    m.b.set_format("jump")
+
+    with pytest.raises(ValueError) as excinfo:
+        m.b.x = OmltVar(initialize=(2, 7), format="jump")
+    expected_msg = "Initial value for JuMP variables must be an int or float, but <class 'tuple'> was provided."
+
+    assert str(excinfo.value) == expected_msg
+
+    m.b.y = OmltVar(initialize=2, format="jump")
+    assert m.b.y.value == 2
+    assert m.b.y.name == "y"
+    m.b.y.lb = 0
+    m.b.y.ub = 5
+    assert m.b.y.lb == 0
+    assert m.b.y.ub == 5
+
+    formulation = dummy_formulation()
+
+    m.b.build_formulation(formulation, format="jump")
 
     assert m.b._OmltBlockData__formulation is formulation
     assert list(m.b.inputs) == ["A", "C", "D"]
