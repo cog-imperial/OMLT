@@ -9,7 +9,6 @@ if keras_available:
 
 from conftest import get_neural_network_data
 from omlt import OmltBlock
-from omlt.formulation import _PyomoFormulation
 from omlt.neuralnet import FullSpaceNNFormulation, ReducedSpaceNNFormulation
 from omlt.neuralnet.activations import ComplementarityReLUActivation
 from omlt.scaling import OffsetScaling
