@@ -1,13 +1,10 @@
-import pytest
 import keras
-
-# from conftest import get_neural_network_data
+from conftest import get_neural_network_data
 from keras.layers import Conv2D, Dense
-from keras.models import Model, Sequential
-from pyomo.common.fileutils import this_file_dir
+from keras.models import Sequential
 from keras.optimizers import Adamax
-
 from omlt.io import write_onnx_model_with_bounds
+from pyomo.common.fileutils import this_file_dir
 
 
 def train_models():
@@ -37,7 +34,7 @@ def train_models():
         )
     )
     nn.compile(optimizer=Adamax(learning_rate=0.01), loss="mae")
-    history = nn.fit(
+    nn.fit(
         x=x, y=y, validation_split=0.2, batch_size=16, verbose=1, epochs=15
     )
     nn.save(this_file_dir() + "/models/keras_linear_131.keras")
@@ -69,7 +66,7 @@ def train_models():
         )
     )
     nn.compile(optimizer=Adamax(learning_rate=0.01), loss="mae")
-    history = nn.fit(
+    nn.fit(
         x=x, y=y, validation_split=0.2, batch_size=16, verbose=1, epochs=15
     )
     nn.save(this_file_dir() + "/models/keras_linear_131_sigmoid.keras")
@@ -102,7 +99,7 @@ def train_models():
         )
     )
     nn.compile(optimizer=Adamax(learning_rate=0.01), loss="mae")
-    history = nn.fit(
+    nn.fit(
         x=x, y=y, validation_split=0.2, batch_size=16, verbose=1, epochs=15
     )
     nn.save(
@@ -136,7 +133,7 @@ def train_models():
         )
     )
     nn.compile(optimizer=Adamax(learning_rate=0.01), loss="mae")
-    history = nn.fit(
+    nn.fit(
         x=x, y=y, validation_split=0.2, batch_size=16, verbose=1, epochs=15
     )
     nn.save(this_file_dir() + "/models/keras_linear_131_relu.keras")
@@ -169,7 +166,7 @@ def train_models():
         )
     )
     nn.compile(optimizer=Adamax(learning_rate=0.01), loss="mae")
-    history = nn.fit(
+    nn.fit(
         x=x, y=y, validation_split=0.2, batch_size=16, verbose=1, epochs=15
     )
     nn.save(this_file_dir() + "/models/keras_linear_131_relu_output_activation.keras")
@@ -202,7 +199,7 @@ def train_models():
         )
     )
     nn.compile(optimizer=Adamax(learning_rate=0.01), loss="mae")
-    history = nn.fit(
+    nn.fit(
         x=x, y=y, validation_split=0.2, batch_size=16, verbose=1, epochs=15
     )
     nn.save(
@@ -263,7 +260,7 @@ def train_models():
         )
     )
     nn.compile(optimizer=Adamax(learning_rate=0.01), loss="mae")
-    history = nn.fit(
+    nn.fit(
         x=x, y=y, validation_split=0.2, batch_size=16, verbose=1, epochs=15
     )
     nn.save(this_file_dir() + "/models/big.keras")
@@ -305,7 +302,7 @@ def train_models():
         )
     )
     nn.compile(optimizer=Adamax(learning_rate=0.01), loss="mae")
-    history = nn.fit(
+    nn.fit(
         x=x, y=y, validation_split=0.2, batch_size=16, verbose=1, epochs=15
     )
 
@@ -333,7 +330,7 @@ def train_conv():
 
     onnx_model, _ = tf2onnx.convert.from_keras(nn)
 
-    input_bounds = dict()
+    input_bounds = {}
     for i in range(7):
         for j in range(7):
             input_bounds[0, i, j] = (0.0, 1.0)

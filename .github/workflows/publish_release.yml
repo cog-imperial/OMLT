@@ -1,0 +1,23 @@
+name: Publish release
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+jobs:
+  publish-release:
+    runs-on: ubuntu-22.04
+    env:
+      VERSION: ${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+      - run: pip install -e '.[dev]'
+      - run: python -m build
+      - run:
+          twine upload
+          -u __token__
+          -p ${{ secrets.PYPI_API_TOKEN }}
+          dist/*

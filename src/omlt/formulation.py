@@ -6,7 +6,8 @@ from omlt.base import OmltVar
 
 
 class _PyomoFormulationInterface(abc.ABC):
-    """
+    """Pyomo Formulation Interface.
+
     Base class interface for a Pyomo formulation object. This class
     is largely internal, and developers of new formulations should derive from
     _PyomoFormulation.
@@ -24,43 +25,45 @@ class _PyomoFormulationInterface(abc.ABC):
     @abc.abstractmethod
     def block(self):
         """Return the block associated with this formulation."""
-        pass
 
     @property
     @abc.abstractmethod
     def input_indexes(self):
-        """Return the indices corresponding to the inputs of the
+        """Input indexes.
+
+        Return the indices corresponding to the inputs of the
         ML model. This is a list of entries (which may be tuples
         for higher dimensional inputs).
         """
-        pass
 
     @property
     @abc.abstractmethod
     def output_indexes(self):
-        """Return the indices corresponding to the outputs of the
+        """Output indexes.
+
+        Return the indices corresponding to the outputs of the
         ML model. This is a list of entries (which may be tuples
         for higher dimensional outputs).
         """
-        pass
 
     @abc.abstractmethod
     def _build_formulation(self):
-        """This method is called by the OmltBlock object to build the
+        """Build formulation.
+
+        This method is called by the OmltBlock object to build the
         corresponding mathematical formulation of the model.
         """
-        pass
 
 
 class _PyomoFormulation(_PyomoFormulationInterface):
-    """
+    """Pyomo Formulation.
+
     This is a base class for different Pyomo formulations. To create a new
     formulation, inherit from this class and implement the abstract methods
     and properties.
     """
 
     def __init__(self):
-        super(_PyomoFormulation, self).__init__()
         self.__block = None
 
     def _set_block(self, block):
@@ -68,9 +71,14 @@ class _PyomoFormulation(_PyomoFormulationInterface):
 
     @property
     def block(self):
-        """The underlying block containing the constraints / variables for this
-        formulation."""
-        return self.__block()
+        """Block.
+
+        The underlying block containing the constraints / variables for this
+        formulation.
+        """
+        if self.__block is not None:
+            return self.__block()
+        return None
 
 
 def scalar_or_tuple(x):
