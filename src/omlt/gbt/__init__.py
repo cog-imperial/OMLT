@@ -1,4 +1,5 @@
-r"""
+r"""Gradient-Boosted Trees formulation.
+
 We use the following notation to describe the gradient-boosted trees formulation:
 
 .. math::
@@ -25,3 +26,5 @@ We use the following notation to describe the gradient-boosted trees formulation
 
 from omlt.gbt.gbt_formulation import GBTBigMFormulation
 from omlt.gbt.model import GradientBoostedTreeModel
+
+__all__ = ["GBTBigMFormulation", "GradientBoostedTreeModel"]

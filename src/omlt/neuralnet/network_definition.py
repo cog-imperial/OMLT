@@ -7,7 +7,8 @@ class NetworkDefinition:
     def __init__(
         self, scaling_object=None, scaled_input_bounds=None, unscaled_input_bounds=None
     ):
-        """
+        """Network Definition.
+
         Create a network definition object used to create the neural network
         formulation in Pyomo
 
@@ -26,7 +27,7 @@ class NetworkDefinition:
               parameter will be generated using the scaling object.
               If None, then no bounds are specified.
         """
-        self.__layers_by_id = dict()
+        self.__layers_by_id = {}
         self.__graph = nx.DiGraph()
         self.__scaling_object = scaling_object
 
@@ -41,10 +42,11 @@ class NetworkDefinition:
                 )
 
                 scaled_input_bounds = {
-                    k: (lbs[k], ubs[k]) for k in unscaled_input_bounds.keys()
+                    k: (lbs[k], ubs[k]) for k in unscaled_input_bounds
                 }
 
-            # If unscaled input bounds provided and no scaler provided, scaled input bounds = unscaled input bounds
+            # If unscaled input bounds provided and no scaler provided,
+            # scaled input bounds = unscaled input bounds
             elif unscaled_input_bounds is not None and scaling_object is None:
                 scaled_input_bounds = unscaled_input_bounds
 
@@ -52,8 +54,7 @@ class NetworkDefinition:
         self.__scaled_input_bounds = scaled_input_bounds
 
     def add_layer(self, layer):
-        """
-        Add a layer to the network.
+        """Add a layer to the network.
 
         Parameters
         ----------
@@ -65,8 +66,7 @@ class NetworkDefinition:
         self.__graph.add_node(layer_id)
 
     def add_edge(self, from_layer, to_layer):
-        """
-        Add an edge between two layers.
+        """Add an edge between two layers.
 
         Parameters
         ----------
@@ -78,69 +78,85 @@ class NetworkDefinition:
         id_to = id(to_layer)
         id_from = id(from_layer)
         if id_to not in self.__layers_by_id:
-            raise ValueError(f"Inbound layer {to_layer} not found in network.")
+            msg = f"Inbound layer {to_layer} not found in network."
+            raise ValueError(msg)
         if id_from not in self.__layers_by_id:
-            raise ValueError(f"Outbound layer {from_layer} not found in network.")
+            msg = f"Outbound layer {from_layer} not found in network."
+            raise ValueError(msg)
         self.__graph.add_edge(id_from, id_to)
 
     @property
     def scaling_object(self):
-        """Return an instance of the scaling object that supports the ScalingInterface"""
+        """Return an instance of the scaling object supporting the ScalingInterface."""
         return self.__scaling_object
 
     @property
     def scaled_input_bounds(self):
-        """Return a dict of tuples containing lower and upper bounds of neural network inputs"""
+        """Scaled Input Bounds.
+
+        Return a dict of tuples containing lower and upper bounds of neural network
+        inputs.
+        """
         return self.__scaled_input_bounds
 
     @property
     def unscaled_input_bounds(self):
-        """Return a dict of tuples containing lower and upper bounds of unscaled neural network inputs"""
+        """Unscaled Input Bounds.
+
+        Return a dict of tuples containing lower and upper bounds of unscaled neural
+        network inputs.
+        """
         return self.__unscaled_input_bounds
 
     @property
     def input_layers(self):
-        """Return an iterator over the input layers"""
+        """Return an iterator over the input layers."""
         for layer_id, in_degree in self.__graph.in_degree():
             if in_degree == 0:
                 yield self.__layers_by_id[layer_id]
 
     @property
     def input_nodes(self):
-        """An alias for input_layers"""
+        """An alias for input_layers."""
         return self.input_layers
 
     @property
     def output_layers(self):
-        """Return an iterator over the output layer"""
+        """Return an iterator over the output layer."""
         for layer_id, out_degree in self.__graph.out_degree():
             if out_degree == 0:
                 yield self.__layers_by_id[layer_id]
 
     @property
     def output_nodes(self):
-        """An alias for output_layers"""
+        """An alias for output_layers."""
         return self.output_layers
 
     def layer(self, layer_id):
-        """Return the layer with the given id"""
+        """Return the layer with the given id."""
         return self.__layers_by_id[layer_id]
 
     @property
     def layers(self):
-        """Return an iterator over all the layers"""
+        """Return an iterator over all the layers."""
         for layer_id in nx.topological_sort(self.__graph):
             yield self.__layers_by_id[layer_id]
 
     def predecessors(self, layer):
-        """Return an iterator over the layers with outbound connections into the layer"""
+        """Predecessors.
+
+        Return an iterator over the layers with outbound connections into the layer.
+        """
         if isinstance(layer, Layer):
             layer = id(layer)
         for node_id in self.__graph.predecessors(layer):
             yield self.__layers_by_id[node_id]
 
     def successors(self, layer):
-        """Return an iterator over the layers with an inbound connection from the layer"""
+        """Successors.
+
+        Return an iterator over the layers with an inbound connection from the layer.
+        """
         if isinstance(layer, Layer):
             layer = id(layer)
         for node_id in self.__graph.successors(layer):

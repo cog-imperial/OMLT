@@ -1,5 +1,4 @@
-r"""
-There are multiple formulations for representing linear model decision trees.
+r"""There are multiple formulations for representing linear model decision trees.
 
 Please see the following reference:
     * Ammari et al. (2023) Linear Model Decision Trees as Surrogates in Optimization
@@ -23,3 +22,9 @@ from omlt.linear_tree.lt_formulation import (
     LinearTreeGDPFormulation,
     LinearTreeHybridBigMFormulation,
 )
+
+__all__ = [
+    "LinearTreeDefinition",
+    "LinearTreeGDPFormulation",
+    "LinearTreeHybridBigMFormulation",
+]

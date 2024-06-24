@@ -1,0 +1,6 @@
+channels:
+  - conda-forge
+dependencies:
+  - ipopt
+  - pyscipopt
+  - coin-or-cbc

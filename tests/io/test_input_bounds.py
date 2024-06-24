@@ -15,7 +15,7 @@ def test_input_bounds_reader_writer_with_list():
 
 
 def test_input_bounds_reader_writer_with_dictionary():
-    input_bounds = dict(((i, i), (i * 10.0, i * 10.0 + 1.0)) for i in range(10))
+    input_bounds = {(i, i): (i * 10.0, i * 10.0 + 1.0) for i in range(10)}
     with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:
         write_input_bounds(f.name, input_bounds)
 

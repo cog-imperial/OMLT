@@ -1,21 +1,23 @@
 import numpy as np
 import pyomo.environ as pe
 import pytest
-from pytest import approx
-
 from omlt.dependencies import lineartree_available
 
 if lineartree_available:
     from lineartree import LinearTreeRegressor
-    from sklearn.linear_model import LinearRegression
     from omlt.linear_tree import (
+        LinearTreeDefinition,
         LinearTreeGDPFormulation,
         LinearTreeHybridBigMFormulation,
-        LinearTreeDefinition,
     )
+    from sklearn.linear_model import LinearRegression
 
 import omlt
 from omlt import OmltBlock
+
+NUM_INPUTS = 2
+NUM_SPLITS = 5
+NUM_LEAVES = 6
 
 scip_available = pe.SolverFactory("scip").available()
 cbc_available = pe.SolverFactory("cbc").available()
@@ -100,7 +102,7 @@ def test_linear_tree_model_single_var():
     assert n_outputs == 1
     # test for splits
     # assert the number of splits
-    assert len(splits[0].keys()) == 5
+    assert len(splits[0].keys()) == NUM_SPLITS
     splits_key_list = [
         "col",
         "th",
@@ -114,12 +116,12 @@ def test_linear_tree_model_single_var():
         "y_index",
     ]
     # assert whether all the dicts have such keys
-    for i in splits[0].keys():
-        for key in splits[0][i].keys():
+    for i in splits[0]:
+        for key in splits[0][i]:
             assert key in splits_key_list
     # test for leaves
     # assert the number of leaves
-    assert len(leaves[0].keys()) == 6
+    assert len(leaves[0].keys()) == NUM_LEAVES
     # assert whether all the dicts have such keys
     leaves_key_list = [
         "loss",
@@ -130,8 +132,8 @@ def test_linear_tree_model_single_var():
         "parent",
         "bounds",
     ]
-    for j in leaves[0].keys():
-        for key in leaves[0][j].keys():
+    for j in leaves[0]:
+        for key in leaves[0][j]:
             assert key in leaves_key_list
             # if the key is slope, ensure slope dimension match n_inputs
             if key == "slope":
@@ -187,7 +189,7 @@ def test_bigm_formulation_single_var():
     pe.assert_optimal_termination(status_1_bigm)
     solution_1_bigm = (pe.value(model1.x), pe.value(model1.y))
     y_pred = regr_small.predict(np.array(solution_1_bigm[0]).reshape(1, -1))
-    assert y_pred[0] == approx(solution_1_bigm[1])
+    assert y_pred[0] == pytest.approx(solution_1_bigm[1])
 
 
 @pytest.mark.skipif(
@@ -221,7 +223,7 @@ def test_hull_formulation_single_var():
     pe.assert_optimal_termination(status_1_bigm)
     solution_1_bigm = (pe.value(model1.x), pe.value(model1.y))
     y_pred = regr_small.predict(np.array(solution_1_bigm[0]).reshape(1, -1))
-    assert y_pred[0] == approx(solution_1_bigm[1])
+    assert y_pred[0] == pytest.approx(solution_1_bigm[1])
 
 
 @pytest.mark.skipif(
@@ -255,7 +257,7 @@ def test_mbigm_formulation_single_var():
     pe.assert_optimal_termination(status_1_bigm)
     solution_1_bigm = (pe.value(model1.x), pe.value(model1.y))
     y_pred = regr_small.predict(np.array(solution_1_bigm[0]).reshape(1, -1))
-    assert y_pred[0] == approx(solution_1_bigm[1])
+    assert y_pred[0] == pytest.approx(solution_1_bigm[1])
 
 
 @pytest.mark.skipif(
@@ -289,7 +291,7 @@ def test_hybrid_bigm_formulation_single_var():
     pe.assert_optimal_termination(status_1_bigm)
     solution_1_bigm = (pe.value(model1.x), pe.value(model1.y))
     y_pred = regr_small.predict(np.array(solution_1_bigm[0]).reshape(1, -1))
-    assert y_pred[0] == approx(solution_1_bigm[1])
+    assert y_pred[0] == pytest.approx(solution_1_bigm[1])
 
 
 @pytest.mark.skipif(not lineartree_available, reason="Need Linear-Tree Package")
@@ -317,12 +319,12 @@ def test_scaling():
     lt_def2 = LinearTreeDefinition(
         regr, unscaled_input_bounds=unscaled_input_bounds, scaling_object=scaler
     )
-    assert lt_def2.scaled_input_bounds[0][0] == approx(scaled_input_bounds[0][0])
-    assert lt_def2.scaled_input_bounds[0][1] == approx(scaled_input_bounds[0][1])
+    assert lt_def2.scaled_input_bounds[0][0] == pytest.approx(scaled_input_bounds[0][0])
+    assert lt_def2.scaled_input_bounds[0][1] == pytest.approx(scaled_input_bounds[0][1])
     with pytest.raises(
         Exception, match="Input Bounds needed to represent linear trees as MIPs"
     ):
-        ltmodel_scaled = LinearTreeDefinition(regr)
+        LinearTreeDefinition(regr)
 
 
 #### MULTIVARIATE INPUT TESTING ####
@@ -394,12 +396,12 @@ def test_linear_tree_model_multi_var():
 
     # assert attributes in LinearTreeDefinition
     assert scaled_input_bounds is not None
-    assert n_inputs == 2
+    assert n_inputs == NUM_INPUTS
     assert n_outputs == 1
 
     # test for splits
     # assert the number of splits
-    assert len(splits[0].keys()) == 5
+    assert len(splits[0].keys()) == NUM_SPLITS
     splits_key_list = [
         "col",
         "th",
@@ -413,12 +415,12 @@ def test_linear_tree_model_multi_var():
         "y_index",
     ]
     # assert whether all the dicts have such keys
-    for i in splits[0].keys():
-        for key in splits[0][i].keys():
+    for i in splits[0]:
+        for key in splits[0][i]:
             assert key in splits_key_list
     # test for leaves
     # assert the number of leaves
-    assert len(leaves[0].keys()) == 6
+    assert len(leaves[0].keys()) == NUM_LEAVES
     # assert whether all the dicts have such keys
     leaves_key_list = [
         "loss",
@@ -429,8 +431,8 @@ def test_linear_tree_model_multi_var():
         "parent",
         "bounds",
     ]
-    for j in leaves[0].keys():
-        for key in leaves[0][j].keys():
+    for j in leaves[0]:
+        for key in leaves[0][j]:
             assert key in leaves_key_list
             # if the key is slope, test the shape of it
             if key == "slope":
@@ -494,7 +496,7 @@ def test_bigm_formulation_multi_var():
     y_pred = regr.predict(
         np.array([pe.value(model1.x0), pe.value(model1.x1)]).reshape(1, -1)
     )
-    assert y_pred[0] == approx(solution_1_bigm)
+    assert y_pred[0] == pytest.approx(solution_1_bigm)
 
 
 @pytest.mark.skipif(
@@ -536,7 +538,7 @@ def test_hull_formulation_multi_var():
     y_pred = regr.predict(
         np.array([pe.value(model1.x0), pe.value(model1.x1)]).reshape(1, -1)
     )
-    assert y_pred[0] == approx(solution_1_bigm)
+    assert y_pred[0] == pytest.approx(solution_1_bigm)
 
 
 @pytest.mark.skipif(
@@ -578,7 +580,7 @@ def test_mbigm_formulation_multi_var():
     y_pred = regr.predict(
         np.array([pe.value(model1.x0), pe.value(model1.x1)]).reshape(1, -1)
     )
-    assert y_pred[0] == approx(solution_1_bigm)
+    assert y_pred[0] == pytest.approx(solution_1_bigm)
 
 
 @pytest.mark.skipif(
@@ -620,7 +622,7 @@ def test_hybrid_bigm_formulation_multi_var():
     y_pred = regr.predict(
         np.array([pe.value(model1.x0), pe.value(model1.x1)]).reshape(1, -1)
     )
-    assert y_pred[0] == approx(solution_1_bigm)
+    assert y_pred[0] == pytest.approx(solution_1_bigm)
 
 
 @pytest.mark.skipif(not lineartree_available, reason="Need Linear-Tree Package")
@@ -641,11 +643,11 @@ def test_summary_dict_as_argument():
 
     # assert attributes in LinearTreeDefinition
     assert scaled_input_bounds is not None
-    assert n_inputs == 2
+    assert n_inputs == NUM_INPUTS
     assert n_outputs == 1
     # test for splits
     # assert the number of splits
-    assert len(splits[0].keys()) == 5
+    assert len(splits[0].keys()) == NUM_SPLITS
     splits_key_list = [
         "col",
         "th",
@@ -659,12 +661,12 @@ def test_summary_dict_as_argument():
         "y_index",
     ]
     # assert whether all the dicts have such keys
-    for i in splits[0].keys():
-        for key in splits[0][i].keys():
+    for i in splits[0]:
+        for key in splits[0][i]:
             assert key in splits_key_list
     # test for leaves
     # assert the number of leaves
-    assert len(leaves[0].keys()) == 6
+    assert len(leaves[0].keys()) == NUM_LEAVES
     # assert whether all the dicts have such keys
     leaves_key_list = [
         "loss",
@@ -675,8 +677,8 @@ def test_summary_dict_as_argument():
         "parent",
         "bounds",
     ]
-    for j in leaves[0].keys():
-        for key in leaves[0][j].keys():
+    for j in leaves[0]:
+        for key in leaves[0][j]:
             assert key in leaves_key_list
             # if the key is slope, test the shape of it
             if key == "slope":
@@ -709,24 +711,26 @@ def test_raise_exception_if_wrong_model_instance():
     input_bounds = {0: (min(X[:, 0]), max(X[:, 0])), 1: (min(X[:, 1]), max(X[:, 1]))}
     with pytest.raises(
         Exception,
-        match="Input dict must be the summary of the linear-tree model"
-        + " e.g. dict = model.summary()",
+        match=(
+            "Input dict must be the summary of the linear-tree model"
+            " e.g. dict = model.summary()"
+        ),
     ):
-        ltmodel_small = LinearTreeDefinition(
+        LinearTreeDefinition(
             regr.summary(only_leaves=True), scaled_input_bounds=input_bounds
         )
     with pytest.raises(
         Exception, match="Model entry must be dict or linear-tree instance"
     ):
-        ltmodel_small = LinearTreeDefinition((0, 0), scaled_input_bounds=input_bounds)
+        LinearTreeDefinition((0, 0), scaled_input_bounds=input_bounds)
     with pytest.raises(
         Exception,
-        match="Input dict must be the summary of the linear-tree model"
-        + " e.g. dict = model.summary()",
+        match=(
+            "Input dict must be the summary of the linear-tree model"
+            " e.g. dict = model.summary()"
+        ),
     ):
-        ltmodel_small = LinearTreeDefinition(
-            wrong_summary_dict, scaled_input_bounds=input_bounds
-        )
+        LinearTreeDefinition(wrong_summary_dict, scaled_input_bounds=input_bounds)
 
 
 @pytest.mark.skipif(not lineartree_available, reason="Need Linear-Tree Package")
@@ -762,4 +766,4 @@ def test_raise_exception_for_wrong_transformation():
         Exception,
         match="Supported transformations are: bigm, mbigm, hull, and custom",
     ):
-        formulation = LinearTreeGDPFormulation(model_def, transformation="hello")
+        LinearTreeGDPFormulation(model_def, transformation="hello")

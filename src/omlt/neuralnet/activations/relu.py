@@ -1,10 +1,11 @@
 import pyomo.environ as pyo
-import pyomo.mpec as mpec
+from pyomo import mpec
+
+from omlt.base import OmltVar
 
 
 def bigm_relu_activation_constraint(net_block, net, layer_block, layer):
-    r"""
-    Big-M ReLU activation formulation.
+    r"""Big-M ReLU activation formulation.
 
     Generates the constraints for the ReLU activation function:
 
@@ -35,10 +36,11 @@ def bigm_relu_activation_constraint(net_block, net, layer_block, layer):
             y&\le \sigma u
         \end{align*}
 
-    The lower bound of :math:`y` is :math:`\max(0,l)`, and the upper bound of :math:`y` is :math:`\max(0,u)`.
+    The lower bound of :math:`y` is :math:`\max(0,l)`, and the upper bound of :math:`y`
+    is :math:`\max(0,u)`.
 
     """
-    layer_block.q_relu = pyo.Var(layer.output_indexes, within=pyo.Binary)
+    layer_block.q_relu = OmltVar(layer.output_indexes, within=pyo.Binary)
 
     layer_block._z_lower_bound_relu = pyo.Constraint(layer.output_indexes)
     layer_block._z_lower_bound_zhat_relu = pyo.Constraint(layer.output_indexes)
@@ -77,14 +79,11 @@ def bigm_relu_activation_constraint(net_block, net, layer_block, layer):
             output_index
         ] <= layer_block.zhat[output_index] - layer_block._big_m_lb_relu[
             output_index
-        ] * (
-            1.0 - layer_block.q_relu[output_index]
-        )
+        ] * (1.0 - layer_block.q_relu[output_index])
 
 
 class ComplementarityReLUActivation:
-    r"""
-    Complementarity-based ReLU activation formulation.
+    r"""Complementarity-based ReLU activation formulation.
 
     Generates the constraints for the ReLU activation function:
 
