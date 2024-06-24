@@ -8,7 +8,8 @@ if keras_available:
     from omlt.io import load_keras_sequential
 
 from conftest import get_neural_network_data
-from omlt.block import OmltBlock
+from omlt import OmltBlock
+from omlt.formulation import _PyomoFormulation
 from omlt.neuralnet import FullSpaceNNFormulation, ReducedSpaceNNFormulation
 from omlt.neuralnet.activations import ComplementarityReLUActivation
 from omlt.scaling import OffsetScaling
@@ -32,10 +33,9 @@ def _test_keras_linear_131(keras_fname, *, reduced_space=False):
     m = pyo.ConcreteModel()
     m.neural_net_block = OmltBlock()
     if reduced_space:
-        formulation = ReducedSpaceNNFormulation(net)
+        m.neural_net_block.build_formulation(ReducedSpaceNNFormulation(net))
     else:
-        formulation = FullSpaceNNFormulation(net)
-    m.neural_net_block.build_formulation(formulation)
+        m.neural_net_block.build_formulation(FullSpaceNNFormulation(net))
 
     nn_outputs = nn.predict(x=x_test)
     for d in range(len(x_test)):
@@ -104,10 +104,9 @@ def _test_keras_linear_big(keras_fname, *, reduced_space=False):
     m = pyo.ConcreteModel()
     m.neural_net_block = OmltBlock()
     if reduced_space:
-        formulation = ReducedSpaceNNFormulation(net)
+        m.neural_net_block.build_formulation(ReducedSpaceNNFormulation(net))
     else:
-        formulation = FullSpaceNNFormulation(net)
-    m.neural_net_block.build_formulation(formulation)
+        m.neural_net_block.build_formulation(FullSpaceNNFormulation(net))
 
     nn_outputs = nn.predict(x=x_test)
     for d in range(len(x_test)):

@@ -5,6 +5,7 @@ activation functions for a single neuron, where :math:`x` denotes pre-activation
 variable, and :math:`y` denotes post-activation variable.
 
 """
+from typing import Any
 
 from .linear import linear_activation_constraint, linear_activation_function
 from .relu import ComplementarityReLUActivation, bigm_relu_activation_constraint
@@ -25,7 +26,7 @@ ACTIVATION_FUNCTION_MAP = {
     "tanh": tanh_activation_function,
 }
 
-NON_INCREASING_ACTIVATIONS = []
+NON_INCREASING_ACTIVATIONS: list[Any] = []
 
 __all__ = [
     "linear_activation_constraint",

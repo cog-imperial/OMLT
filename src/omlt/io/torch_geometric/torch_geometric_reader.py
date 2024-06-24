@@ -2,7 +2,7 @@ import warnings
 
 import numpy as np
 
-from omlt.neuralnet.layer import DenseLayer, GNNLayer, InputLayer
+from omlt.neuralnet.layer import DenseLayer, GNNLayer, InputLayer, Layer
 from omlt.neuralnet.network_definition import NetworkDefinition
 
 
@@ -150,7 +150,7 @@ def load_torch_geometric_sequential(
         unscaled_input_bounds=unscaled_input_bounds,
     )
 
-    prev_layer = InputLayer([n_inputs])
+    prev_layer: Layer = InputLayer([n_inputs])
     net.add_layer(prev_layer)
 
     operations = []

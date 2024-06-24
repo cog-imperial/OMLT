@@ -43,7 +43,7 @@ def load_onnx_neural_network_with_bounds(filename):
     onnx_model = onnx.load(filename)
     input_bounds_filename = Path(f"{filename}.bounds.json")
     input_bounds = None
-    if input_bounds_filename.exists:
+    if input_bounds_filename.exists():
         input_bounds = load_input_bounds(input_bounds_filename)
 
     return load_onnx_neural_network(onnx_model, input_bounds=input_bounds)

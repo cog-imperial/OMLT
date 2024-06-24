@@ -1,4 +1,5 @@
 import collections
+from typing import Any
 
 import numpy as np
 import pyomo.environ as pe
@@ -158,7 +159,7 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars):
         domain=pe.Reals,
     )
 
-    branch_value_by_feature_id = {}
+    branch_value_by_feature_id: dict[int, Any] = {}
     branch_value_by_feature_id = collections.defaultdict(list)
 
     for f in feature_ids:

@@ -4,6 +4,7 @@ import numpy as np
 import pyomo.environ as pyo
 import pytest
 from omlt import OmltBlock
+from omlt.formulation import _PyomoFormulation
 from omlt.neuralnet import (
     FullSpaceNNFormulation,
     FullSpaceSmoothNNFormulation,
@@ -31,6 +32,12 @@ from omlt.neuralnet.layers.partition_based import (
 from omlt.neuralnet.layers.reduced_space import reduced_space_dense_layer
 from pyomo.contrib.fbbt import interval
 
+formulations = {
+    "FullSpace": FullSpaceNNFormulation,
+    "ReducedSpace": ReducedSpaceNNFormulation,
+    "relu": ReluPartitionFormulation,
+}
+
 NEAR_EQUAL = 1e-6
 FULLSPACE_SMOOTH_VARS = 15
 FULLSPACE_SMOOTH_CONSTRAINTS = 14
@@ -40,6 +47,7 @@ REDUCED_VARS = 6
 REDUCED_CONSTRAINTS = 5
 THREE_NODE_VARS = 81
 THREE_NODE_CONSTRAINTS = 120
+
 
 def two_node_network(activation, input_value):
     """Two node network.
@@ -370,12 +378,7 @@ def _test_formulation_added_extra_input(network_formulation):
     """network_formulation can be:'FullSpace', 'ReducedSpace', 'relu'."""
     net, y = two_node_network("linear", -2.0)
     extra_input = InputLayer([1])
-    if network_formulation == "FullSpace":
-        formulation = FullSpaceNNFormulation(net)
-    elif network_formulation == "ReducedSpace":
-        formulation = ReducedSpaceNNFormulation(net)
-    elif network_formulation == "relu":
-        formulation = ReluPartitionFormulation(net)
+    formulation: _PyomoFormulation = formulations[network_formulation](net)
     net.add_layer(extra_input)
     expected_msg = "Multiple input layers are not currently supported."
     with pytest.raises(ValueError, match=expected_msg):
@@ -386,12 +389,7 @@ def _test_formulation_build_extra_input(network_formulation):
     """network_formulation can be:'FullSpace', 'ReducedSpace', 'relu'."""
     net, y = two_node_network("linear", -2.0)
     extra_input = InputLayer([1])
-    if network_formulation == "FullSpace":
-        formulation = FullSpaceNNFormulation(net)
-    elif network_formulation == "ReducedSpace":
-        formulation = ReducedSpaceNNFormulation(net)
-    elif network_formulation == "relu":
-        formulation = ReluPartitionFormulation(net)
+    formulation: _PyomoFormulation = formulations[network_formulation](net)
     net.add_layer(extra_input)
     m = pyo.ConcreteModel()
     m.neural_net_block = OmltBlock()
@@ -410,12 +408,7 @@ def _test_formulation_added_extra_output(network_formulation):
         weights=np.array([[1.0, 0.0], [5.0, 1.0]]),
         biases=np.array([3.0, 4.0]),
     )
-    if network_formulation == "FullSpace":
-        formulation = FullSpaceNNFormulation(net)
-    elif network_formulation == "ReducedSpace":
-        formulation = ReducedSpaceNNFormulation(net)
-    elif network_formulation == "relu":
-        formulation = ReluPartitionFormulation(net)
+    formulation: _PyomoFormulation = formulations[network_formulation](net)
     net.add_layer(extra_output)
     net.add_edge(list(net.layers)[-2], extra_output)
     expected_msg = "Multiple output layers are not currently supported."

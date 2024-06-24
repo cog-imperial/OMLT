@@ -44,14 +44,14 @@ class GradientBoostedTreeModel:
         """Return an instance of the scaling object supporting the ScalingInterface."""
         return self.__scaling_object
 
+    @scaling_object.setter
+    def scaling_object(self, scaling_object):
+        self.__scaling_object = scaling_object
+
     @property
     def scaled_input_bounds(self):
         """Return a list of tuples of lower and upper bounds of tree ensemble inputs."""
         return self.__scaled_input_bounds
-
-    @scaling_object.setter
-    def scaling_object(self, scaling_object):
-        self.__scaling_object = scaling_object
 
 
 def _model_num_inputs(model):

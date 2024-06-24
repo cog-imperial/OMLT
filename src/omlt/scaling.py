@@ -4,8 +4,8 @@ The omlt.scaling module describes the interface for providing different scaling
 expressions to the Pyomo model for the inputs and outputs of an ML model. An
 implementation of a common scaling approach is included with `OffsetScaling`.
 """
-
 import abc
+from typing import Any
 
 
 class ScalingInterface(abc.ABC):
@@ -28,7 +28,7 @@ class ScalingInterface(abc.ABC):
         # pragma: no cover
 
 
-def convert_to_dict(x):
+def convert_to_dict(x: Any) -> dict[Any, Any]:
     if isinstance(x, dict):
         return dict(x)
     return dict(enumerate(x))

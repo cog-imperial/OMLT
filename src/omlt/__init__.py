@@ -11,7 +11,7 @@ sequential Keras and general ONNX models.
 """
 
 from omlt._version import __version__
-from omlt.block import OmltBlock
+from omlt.block import OmltBlock  # type: ignore[attr-defined]
 from omlt.scaling import OffsetScaling
 
 __all__ = [

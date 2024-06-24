@@ -1,3 +1,5 @@
+from typing import Any
+
 import lineartree
 import numpy as np
 
@@ -178,9 +180,7 @@ def _find_all_children_leaves(split, splits_dict, leaves_dict):
     # For each leaf, check if the parents appear in the list of children
     # splits (all_splits). If so, it must be a leaf of the argument split
 
-    return [
-        leaf for leaf in leaves_dict if leaves_dict[leaf]["parent"] in all_splits
-    ]
+    return [leaf for leaf in leaves_dict if leaves_dict[leaf]["parent"] in all_splits]
 
 
 def _find_n_inputs(leaves):
@@ -341,7 +341,7 @@ def _parse_tree_data(model, input_bounds):
 
     # For each variable that appears in the tree, go through all the splits
     # and record its splitting threshold
-    splitting_thresholds = {}
+    splitting_thresholds: dict[int, Any] = {}
     for split in splits:
         var = splits[split]["col"]
         splitting_thresholds[var] = {}

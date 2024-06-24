@@ -59,8 +59,8 @@ def test_onnx_relu(datadir):
         SolverFactory("cbc").solve(model, tee=False)
 
         x_s = (x - scale_x[0]) / scale_x[1]
-        x_s = np.array([[x_s]], dtype=np.float32)
-        outputs = net_regression.run(None, {"dense_input:0": x_s})
+        x_s_arr = np.array([[x_s]], dtype=np.float32)
+        outputs = net_regression.run(None, {"dense_input:0": x_s_arr})
         y_s = outputs[0][0, 0]
         y = y_s * scale_y[1] + scale_y[0]
 
@@ -102,8 +102,8 @@ def test_onnx_linear(datadir):
         SolverFactory("cbc").solve(model, tee=False)
 
         x_s = (x - scale_x[0]) / scale_x[1]
-        x_s = np.array([[x_s]], dtype=np.float32)
-        outputs = net_regression.run(None, {"dense_input:0": x_s})
+        x_s_arr = np.array([[x_s]], dtype=np.float32)
+        outputs = net_regression.run(None, {"dense_input:0": x_s_arr})
         y_s = outputs[0][0, 0]
         y = y_s * scale_y[1] + scale_y[0]
 
@@ -146,8 +146,8 @@ def test_onnx_sigmoid(datadir):
         SolverFactory("ipopt").solve(model, tee=False)
 
         x_s = (x - scale_x[0]) / scale_x[1]
-        x_s = np.array([[x_s]], dtype=np.float32)
-        outputs = net_regression.run(None, {"dense_2_input:0": x_s})
+        x_s_arr = np.array([[x_s]], dtype=np.float32)
+        outputs = net_regression.run(None, {"dense_2_input:0": x_s_arr})
         y_s = outputs[0][0, 0]
         y = y_s * scale_y[1] + scale_y[0]
 

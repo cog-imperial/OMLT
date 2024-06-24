@@ -8,16 +8,16 @@ from omlt.scaling import convert_to_dict
 
 def test_convert_to_dict():
     x = ["a", "b"]
-    x = convert_to_dict(x)
-    assert sorted(x.keys()) == [0, 1]
-    assert x[0] == "a"
-    assert x[1] == "b"
+    xd = convert_to_dict(x)
+    assert sorted(xd.keys()) == [0, 1]
+    assert xd[0] == "a"
+    assert xd[1] == "b"
 
-    x = {2: "a", 1: "b"}
-    x = convert_to_dict(x)
-    assert sorted(x.keys()) == [1, 2]
-    assert x[2] == "a"
-    assert x[1] == "b"
+    y = {2: "a", 1: "b"}
+    yd = convert_to_dict(y)
+    assert sorted(yd.keys()) == [1, 2]
+    assert yd[2] == "a"
+    assert yd[1] == "b"
 
 
 def test_offset_scaling():

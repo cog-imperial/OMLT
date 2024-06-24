@@ -28,6 +28,7 @@ ATTR_INT = 2
 ATTR_TENSOR = 4
 ATTR_INTS = 7
 
+
 class NetworkParser:
     """Network Parser.
 
@@ -41,31 +42,31 @@ class NetworkParser:
 
     def _reset_state(self):
         self._graph = None
-        self._initializers = None
-        self._constants = None
-        self._nodes = None
+        self._initializers = {}
+        self._constants = {}
+        self._nodes = {}
         self._nodes_by_output = None
         self._inputs = None
         self._outputs = None
-        self._node_stack = None
-        self._node_map = None
+        self._node_stack = []
+        self._node_map = {}
 
     def parse_network(self, graph, scaling_object, input_bounds):
         self._reset_state()
         self._graph = graph
 
         # initializers contain constant data
-        initializers = {}
+        initializers: dict[str, Any] = {}
         for initializer in self._graph.initializer:
             initializers[initializer.name] = numpy_helper.to_array(initializer)
 
         self._initializers = initializers
 
         # Build graph
-        nodes = {}
+        nodes: dict[str, tuple[str, Any, list[Any]]] = {}
         nodes_by_output = {}
         inputs = set()
-        outputs = set()
+        outputs: set[Any] = set()
         self._node_map = {}
 
         network = NetworkDefinition(

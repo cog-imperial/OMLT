@@ -1,6 +1,6 @@
 from tensorflow import keras
 
-from omlt.neuralnet.layer import DenseLayer, InputLayer
+from omlt.neuralnet.layer import DenseLayer, InputLayer, Layer
 from omlt.neuralnet.network_definition import NetworkDefinition
 
 
@@ -43,7 +43,7 @@ def load_keras_sequential(
         unscaled_input_bounds=unscaled_input_bounds,
     )
 
-    prev_layer = InputLayer([n_inputs])
+    prev_layer: Layer = InputLayer([n_inputs])
     net.add_layer(prev_layer)
 
     for layer in nn.layers:

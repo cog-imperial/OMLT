@@ -1,7 +1,7 @@
 import numpy as np
 import pyomo.environ as pyo
 import pytest
-from omlt.block import OmltBlock
+from omlt import OmltBlock
 from omlt.dependencies import onnx_available
 from omlt.neuralnet import (
     FullSpaceNNFormulation,
