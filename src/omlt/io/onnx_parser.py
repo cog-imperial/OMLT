@@ -31,6 +31,7 @@ ATTR_INT = 2
 ATTR_TENSOR = 4
 ATTR_INTS = 7
 
+
 class NetworkParser:
     """Network Parser.
 

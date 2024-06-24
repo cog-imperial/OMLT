@@ -5,6 +5,7 @@ activation functions for a single neuron, where :math:`x` denotes pre-activation
 variable, and :math:`y` denotes post-activation variable.
 
 """
+from typing import Any
 
 from typing import Any
 

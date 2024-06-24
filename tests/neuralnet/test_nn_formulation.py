@@ -6,6 +6,7 @@ import numpy as np
 import pyomo.environ as pyo
 import pytest
 from omlt import OmltBlock
+from omlt.formulation import _PyomoFormulation
 from omlt.neuralnet import (
     FullSpaceNNFormulation,
     FullSpaceSmoothNNFormulation,
@@ -51,6 +52,7 @@ REDUCED_VARS = 6
 REDUCED_CONSTRAINTS = 5
 THREE_NODE_VARS = 81
 THREE_NODE_CONSTRAINTS = 120
+
 
 def two_node_network(activation, input_value):
     """Two node network.
