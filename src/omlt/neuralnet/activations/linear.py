@@ -1,3 +1,6 @@
+from omlt.base import OmltConstraint
+
+
 def linear_activation_function(zhat):
     return zhat
 
@@ -16,10 +19,11 @@ def linear_activation_constraint(
         \end{align*}
 
     """
-
-    @layer_block.Constraint(layer.output_indexes)
-    def linear_activation(b, *output_index):
-        zhat_lb, zhat_ub = b.zhat[output_index].bounds
-        b.z[output_index].setlb(zhat_lb)
-        b.z[output_index].setub(zhat_ub)
-        return b.z[output_index] == b.zhat[output_index]
+    layer_block.linear_activation = OmltConstraint(layer.output_indexes)
+    for output_index in layer.output_indexes:
+        zhat_lb, zhat_ub = layer_block.zhat[output_index].bounds
+        layer_block.z[output_index].setlb(zhat_lb)
+        layer_block.z[output_index].setub(zhat_ub)
+        layer_block.linear_activation[output_index] = (
+            layer_block.z[output_index] == layer_block.zhat[output_index]
+        )

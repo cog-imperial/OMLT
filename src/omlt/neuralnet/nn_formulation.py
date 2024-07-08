@@ -2,7 +2,7 @@ from functools import partial
 
 import pyomo.environ as pyo
 
-from omlt.base import OmltVar
+from omlt.base import OmltConstraint, OmltVar
 from omlt.formulation import _PyomoFormulation, _setup_scaled_inputs_outputs
 from omlt.neuralnet.activations import (
     ACTIVATION_FUNCTION_MAP as _DEFAULT_ACTIVATION_FUNCTIONS,
@@ -61,6 +61,7 @@ _DEFAULT_ACTIVATION_CONSTRAINTS = {
 
 MULTI_INPUTS_UNSUPPORTED = "Multiple input layers are not currently supported."
 MULTI_OUTPUTS_UNSUPPORTED = "Multiple output layers are not currently supported."
+
 
 class FullSpaceNNFormulation(_PyomoFormulation):
     """This class is the entry-point to build neural network formulations.
@@ -202,9 +203,12 @@ def _build_neural_network_formulation(  # noqa: C901
         raise ValueError(MULTI_INPUTS_UNSUPPORTED)
     input_layer = input_layers[0]
 
-    @block.Constraint(input_layer.output_indexes)
-    def input_assignment(b, *output_index):
-        return b.scaled_inputs[output_index] == b.layer[id(input_layer)].z[output_index]
+    block.input_assignment = OmltConstraint(input_layer.output_indexes)
+    for output_index in input_layer.output_indexes:
+        block.input_assignment[output_index] = (
+            block.scaled_inputs[output_index]
+            == block.layer[id(input_layer)].z[output_index]
+        )
 
     # setup output variables constraints
     # currently only support a single output layer
@@ -213,10 +217,11 @@ def _build_neural_network_formulation(  # noqa: C901
         raise ValueError(MULTI_OUTPUTS_UNSUPPORTED)
     output_layer = output_layers[0]
 
-    @block.Constraint(output_layer.output_indexes)
-    def output_assignment(b, *output_index):
-        return (
-            b.scaled_outputs[output_index] == b.layer[id(output_layer)].z[output_index]
+    block.output_assignment = OmltConstraint(output_layer.output_indexes)
+    for output_index in output_layer.output_indexes:
+        block.output_assignment[output_index] = (
+            block.scaled_outputs[output_index]
+            == block.layer[id(output_layer)].z[output_index]
         )
 
 
@@ -395,12 +400,11 @@ class ReducedSpaceNNFormulation(_PyomoFormulation):
             raise ValueError(msg)
         output_layer = output_layers[0]
 
-        @block.Constraint(output_layer.output_indexes)
-        def output_assignment(b, *output_index):
-            b.parent_block()
-            return (
-                b.scaled_outputs[output_index]
-                == b.layer[id(output_layer)].z[output_index]
+        block.output_assignment = OmltConstraint(output_layer.output_indexes)
+        for output_index in output_layer.output_indexes:
+            block.output_assignment[output_index] = (
+                block.scaled_outputs[output_index]
+                == block.layer[id(output_layer)].z[output_index]
             )
 
     @property
@@ -533,11 +537,11 @@ class ReluPartitionFormulation(_PyomoFormulation):
             raise ValueError(MULTI_INPUTS_UNSUPPORTED)
         input_layer = input_layers[0]
 
-        @block.Constraint(input_layer.output_indexes)
-        def input_assignment(b, *output_index):
-            return (
-                b.scaled_inputs[output_index]
-                == b.layer[id(input_layer)].z[output_index]
+        block.input_assignment = OmltConstraint(input_layer.output_indexes)
+        for output_index in input_layer.output_indexes:
+            block.input_assignment[output_index] = (
+                block.scaled_inputs[output_index]
+                == block.layer[id(input_layer)].z[output_index]
             )
 
         # setup output variables constraints
@@ -547,11 +551,11 @@ class ReluPartitionFormulation(_PyomoFormulation):
             raise ValueError(MULTI_OUTPUTS_UNSUPPORTED)
         output_layer = output_layers[0]
 
-        @block.Constraint(output_layer.output_indexes)
-        def output_assignment(b, *output_index):
-            return (
-                b.scaled_outputs[output_index]
-                == b.layer[id(output_layer)].z[output_index]
+        block.output_assignment = OmltConstraint(output_layer.output_indexes)
+        for output_index in output_layer.output_indexes:
+            block.output_assignment[output_index] = (
+                block.scaled_outputs[output_index]
+                == block.layer[id(output_layer)].z[output_index]
             )
 
     @property

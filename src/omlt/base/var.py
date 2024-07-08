@@ -1,29 +1,25 @@
-"""
-Abstraction layer of classes used by OMLT. Underneath these are
+"""Abstraction layer of classes used by OMLT.
+
+Underneath these are
 objects in a choice of modeling languages: Pyomo (default),
 JuMP, or others (not yet implemented - e.g. Smoke, Gurobi).
-
-
 """
 
 from abc import ABC, abstractmethod
+from typing import Any
+
 import pyomo.environ as pyo
 
+from omlt.base import DEFAULT_MODELING_LANGUAGE, expression
 from omlt.dependencies import julia_available
-
-from omlt.base import DEFAULT_MODELING_LANGUAGE
 
 if julia_available:
     from omlt.base import jump
-from omlt.base.julia import JuMPVarInfo, JumpVar
-from omlt.base.expression import OmltExprIndexed, OmltExprScalar
-
-# from omlt.base.constraint import OmltRelation, OmltRelScalar
+from omlt.base.julia import JumpVar, JuMPVarInfo
 
 
 class OmltVar(ABC):
-    def __new__(cls, *indexes, **kwargs):
-
+    def __new__(cls, *indexes, **kwargs: Any):
         if not indexes:
             instance = OmltScalar.__new__(OmltScalar, **kwargs)
         else:
@@ -63,19 +59,20 @@ class OmltVar(ABC):
 
 
 class OmltScalar(OmltVar):
-    def __new__(cls, *args, format=DEFAULT_MODELING_LANGUAGE, **kwargs):
+    def __new__(cls, *args, lang=DEFAULT_MODELING_LANGUAGE, **kwargs: Any):
         subclass_map = {subclass.format: subclass for subclass in cls.__subclasses__()}
-        if format not in subclass_map:
-            raise ValueError(
+        if lang not in subclass_map:
+            msg = (
                 "Variable format %s not recognized. Supported formats "
                 "are 'pyomo' or 'jump'.",
-                format,
+                lang,
             )
-        subclass = subclass_map[format]
+            raise ValueError(msg)
+        subclass = subclass_map[lang]
         instance = super(OmltVar, subclass).__new__(subclass)
 
         instance.__init__(*args, **kwargs)
-        instance._format = format
+        instance._format = lang
         return instance
 
     def is_indexed(self):
@@ -135,56 +132,41 @@ class OmltScalar(OmltVar):
 
     # Interface governing how variables behave in expressions.
 
-    # def __lt__(self, other):
-    #     return OmltRelScalar(expr=(self, "<", other))
-
-    # def __gt__(self, other):
-    #     return OmltRelScalar(expr=(self, ">", other))
-
-    # def __le__(self, other):
-    #     return OmltRelScalar(expr=(self, "<=", other))
-
-    # def __ge__(self, other):
-    #     return OmltRelScalar(expr=(self, ">=", other))
-
-    # def __eq__(self, other):
-    #     return OmltRelScalar(expr=(self, "==", other))
-
     def __add__(self, other):
-        return OmltExprScalar(format=self._format, expr=(self, "+", other))
+        return expression.OmltExprScalar(lang=self._format, expr=(self, "+", other))
 
     def __sub__(self, other):
-        return OmltExprScalar(format=self._format, expr=(self, "-", other))
+        return expression.OmltExprScalar(lang=self._format, expr=(self, "-", other))
 
     def __mul__(self, other):
-        return OmltExprScalar(format=self._format, expr=(self, "*", other))
+        return expression.OmltExprScalar(lang=self._format, expr=(self, "*", other))
 
     def __div__(self, other):
-        return OmltExprScalar(format=self._format, expr=(self, "//", other))
+        return expression.OmltExprScalar(lang=self._format, expr=(self, "//", other))
 
     def __truediv__(self, other):
-        return OmltExprScalar(format=self._format, expr=(self, "/", other))
+        return expression.OmltExprScalar(lang=self._format, expr=(self, "/", other))
 
     def __pow__(self, other):
-        return OmltExprScalar(format=self._format, expr=(self, "**", other))
+        return expression.OmltExprScalar(lang=self._format, expr=(self, "**", other))
 
     def __radd__(self, other):
-        return OmltExprScalar(format=self._format, expr=(other, "+", self))
+        return expression.OmltExprScalar(lang=self._format, expr=(other, "+", self))
 
     def __rsub__(self, other):
-        return OmltExprScalar(format=self._format, expr=(other, "-", self))
+        return expression.OmltExprScalar(lang=self._format, expr=(other, "-", self))
 
     def __rmul__(self, other):
-        return OmltExprScalar(format=self._format, expr=(other, "*", self))
+        return expression.OmltExprScalar(lang=self._format, expr=(other, "*", self))
 
     def __rdiv__(self, other):
-        return OmltExprScalar(format=self._format, expr=(other, "//", self))
+        return expression.OmltExprScalar(lang=self._format, expr=(other, "//", self))
 
     def __rtruediv__(self, other):
-        return OmltExprScalar(format=self._format, expr=(other, "/", self))
+        return expression.OmltExprScalar(lang=self._format, expr=(other, "/", self))
 
     def __rpow__(self, other):
-        return OmltExprScalar(format=self._format, expr=(other, "**", self))
+        return expression.OmltExprScalar(lang=self._format, expr=(other, "**", self))
 
     def __iadd__(self, other):
         return pyo.NumericValue.__iadd__(self, other)
@@ -214,74 +196,6 @@ class OmltScalar(OmltVar):
         return pyo.NumericValue.__abs__(self)
 
 
-class OmltScalarPyomo(OmltScalar, pyo.ScalarVar):
-    format = "pyomo"
-
-    def __init__(self, *args, **kwargs):
-        kwargs.pop("format", None)
-        # pyo.ScalarVar.__init__(self, *args, **kwargs)
-        self._pyovar = pyo.ScalarVar(*args, **kwargs)
-        self._parent = None
-        self._constructed = None
-
-    def construct(self, data=None):
-        return self._pyovar.construct(data)
-
-    def fix(self, value, skip_validation):
-        return self._pyovar.fix(value, skip_validation)
-
-    @property
-    def ctype(self):
-        return pyo.ScalarVar
-
-    @property
-    def name(self):
-        self._pyovar._name = self._name
-        return self._pyovar._name
-
-    @property
-    def bounds(self):
-        return (self._pyovar._lb, self._pyovar._ub)
-
-    @bounds.setter
-    def bounds(self, val):
-        self._pyovar.lb = val[0]
-        self._pyovar.ub = val[1]
-
-    @property
-    def lb(self):
-        return self._pyovar._lb
-
-    @lb.setter
-    def lb(self, val):
-        self._pyovar.setlb(val)
-
-    @property
-    def ub(self):
-        return self._pyovar._ub
-
-    @ub.setter
-    def ub(self, val):
-        self._pyovar.setub(val)
-
-    @property
-    def domain(self):
-        return self._pyovar._domain
-
-    @domain.setter
-    def domain(self, val):
-        self._pyovar._domain = val
-
-    # Interface for getting/setting value
-    @property
-    def value(self):
-        return self._pyovar.value
-
-    @value.setter
-    def value(self, val):
-        self._pyovar.value = val
-
-
 class OmltScalarJuMP(OmltScalar):
     format = "jump"
 
@@ -291,8 +205,7 @@ class OmltScalarJuMP(OmltScalar):
     def __class__(self):
         return pyo.ScalarVar
 
-    def __init__(self, *args, **kwargs):
-
+    def __init__(self, **kwargs: Any):
         self._block = kwargs.pop("block", None)
 
         self._bounds = kwargs.pop("bounds", None)
@@ -304,19 +217,21 @@ class OmltScalarJuMP(OmltScalar):
             _lb = None
             _ub = None
         else:
-            raise ValueError("Bounds must be given as a tuple")
+            msg = ("Bounds must be given as a tuple.", self._bounds)
+            raise ValueError(msg)
 
         _domain = kwargs.pop("domain", None)
         _within = kwargs.pop("within", None)
 
         if _domain and _within and _domain != _within:
-            raise ValueError(
+            msg = (
                 "'domain' and 'within' keywords have both "
                 "been supplied and do not agree. Please try "
                 "with a single keyword for the domain of this "
                 "variable."
             )
-        elif _domain:
+            raise ValueError(msg)
+        if _domain:
             self.domain = _domain
         elif _within:
             self.domain = _within
@@ -343,10 +258,11 @@ class OmltScalarJuMP(OmltScalar):
                 # Pyomo's "scalar" variables can be multidimensional, they're
                 # just not indexed. JuMP scalar variables can only be a single
                 # dimension. Rewrite this error to be more helpful.
-                raise ValueError(
+                msg = (
                     "Initial value for JuMP variables must be an int"
                     f" or float, but {type(_initialize)} was provided."
                 )
+                raise ValueError(msg)
         else:
             self._value = None
 
@@ -372,7 +288,7 @@ class OmltScalarJuMP(OmltScalar):
                 self._parent()._jumpmodel, self.to_jumpvar()
             )
 
-    def fix(self, value, skip_validation):
+    def fix(self, value, *, skip_validation=True):
         self.fixed = True
         self._value = value
         self._varinfo.fixed_value = value
@@ -417,8 +333,7 @@ class OmltScalarJuMP(OmltScalar):
     def value(self):
         if self._constructed:
             return self._var.value
-        else:
-            return self._varinfo.start_value
+        return self._varinfo.start_value
 
     @value.setter
     def value(self, val):
@@ -426,7 +341,6 @@ class OmltScalarJuMP(OmltScalar):
             self._var.value = val
         else:
             self._varinfo.start_value = val
-            self
 
     @property
     def ctype(self):
@@ -443,49 +357,26 @@ class OmltScalarJuMP(OmltScalar):
     def to_jumpvar(self):
         if self._constructed:
             return self._var.to_jump()
-        else:
-            return self._varinfo.to_jump()
+        return self._varinfo.to_jump()
 
     def to_jumpexpr(self):
         return jump.AffExpr(0, jump.OrderedDict([(self._blockvar, 1)]))
 
 
-"""
-Future formats to implement.
-"""
-
-
-class OmltScalarSmoke(OmltScalar):
-    format = "smoke"
-
-    def __init__(self, *args, **kwargs):
-        raise ValueError(
-            "Storing variables in Smoke format is not currently implemented."
-        )
-
-
-class OmltScalarGurobi(OmltScalar):
-    format = "gurobi"
-
-    def __init__(self, *args, **kwargs):
-        raise ValueError(
-            "Storing variables in Gurobi format is not currently implemented."
-        )
-
-
 class OmltIndexed(OmltVar):
-    def __new__(cls, *indexes, format=DEFAULT_MODELING_LANGUAGE, **kwargs):
+    def __new__(cls, *indexes, lang=DEFAULT_MODELING_LANGUAGE, **kwargs: Any):
         subclass_map = {subclass.format: subclass for subclass in cls.__subclasses__()}
-        if format not in subclass_map:
-            raise ValueError(
+        if lang not in subclass_map:
+            msg = (
                 "Variable format %s not recognized. Supported formats are 'pyomo'"
                 " or 'jump'.",
-                format,
+                lang,
             )
-        subclass = subclass_map[format]
+            raise ValueError(msg)
+        subclass = subclass_map[lang]
         instance = super(OmltVar, subclass).__new__(subclass)
         instance.__init__(*indexes, **kwargs)
-        instance._format = format
+        instance._format = lang
         return instance
 
     def is_indexed(self):
@@ -540,56 +431,41 @@ class OmltIndexed(OmltVar):
 
     # Interface governing how variables behave in expressions.
 
-    # def __lt__(self, other):
-    #     return OmltRelation(self.index_set(), expr=(self, "<", other))
-
-    # def __gt__(self, other):
-    #     return OmltRelation(self.index_set(), expr=(self, ">", other))
-
-    # def __le__(self, other):
-    #     return OmltRelation(self.index_set(), expr=(self, "<=", other))
-
-    # def __ge__(self, other):
-    #     return OmltRelation(self.index_set(), expr=(self, ">=", other))
-
-    # def __eq__(self, other):
-    #     return OmltRelation(self.index_set(), expr=(self, "==", other))
-
     def __add__(self, other):
-        return OmltExprIndexed(self.index_set(), expr=(self, "+", other))
+        return expression.OmltExprIndexed(self.index_set(), expr=(self, "+", other))
 
     def __sub__(self, other):
-        return OmltExprIndexed(self.index_set(), expr=(self, "-", other))
+        return expression.OmltExprIndexed(self.index_set(), expr=(self, "-", other))
 
     def __mul__(self, other):
-        return OmltExprIndexed(self.index_set(), expr=(self, "*", other))
+        return expression.OmltExprIndexed(self.index_set(), expr=(self, "*", other))
 
     def __div__(self, other):
-        return OmltExprIndexed(self.index_set(), expr=(self, "//", other))
+        return expression.OmltExprIndexed(self.index_set(), expr=(self, "//", other))
 
     def __truediv__(self, other):
-        return OmltExprIndexed(self.index_set(), expr=(self, "/", other))
+        return expression.OmltExprIndexed(self.index_set(), expr=(self, "/", other))
 
     def __pow__(self, other):
-        return OmltExprIndexed(self.index_set(), expr=(self, "**", other))
+        return expression.OmltExprIndexed(self.index_set(), expr=(self, "**", other))
 
     def __radd__(self, other):
-        return OmltExprIndexed(self.index_set(), expr=(other, "+", self))
+        return expression.OmltExprIndexed(self.index_set(), expr=(other, "+", self))
 
     def __rsub__(self, other):
-        return OmltExprIndexed(self.index_set(), expr=(other, "-", self))
+        return expression.OmltExprIndexed(self.index_set(), expr=(other, "-", self))
 
     def __rmul__(self, other):
-        return OmltExprIndexed(self.index_set(), expr=(other, "*", self))
+        return expression.OmltExprIndexed(self.index_set(), expr=(other, "*", self))
 
     def __rdiv__(self, other):
-        return OmltExprIndexed(self.index_set(), expr=(other, "//", self))
+        return expression.OmltExprIndexed(self.index_set(), expr=(other, "//", self))
 
     def __rtruediv__(self, other):
-        return OmltExprIndexed(self.index_set(), expr=(other, "/", self))
+        return expression.OmltExprIndexed(self.index_set(), expr=(other, "/", self))
 
     def __rpow__(self, other):
-        return OmltExprIndexed(self.index_set(), expr=(other, "**", self))
+        return expression.OmltExprIndexed(self.index_set(), expr=(other, "**", self))
 
     def __iadd__(self, other):
         return pyo.NumericValue.__iadd__(self, other)
@@ -619,31 +495,6 @@ class OmltIndexed(OmltVar):
         return pyo.NumericValue.__abs__(self)
 
 
-class OmltIndexedPyomo(pyo.Var, OmltIndexed):
-    format = "pyomo"
-
-    def __init__(self, *indexes, **kwargs):
-        kwargs.pop("format", None)
-        super().__init__(*indexes, **kwargs)
-
-    def fix(self, value=None, skip_validation=False):
-        self.fixed = True
-        if value is None:
-            for vardata in self.values():
-                vardata.fix(skip_validation)
-        else:
-            for vardata in self.values():
-                vardata.fix(value, skip_validation)
-
-    def setub(self, value):
-        for vardata in self.values():
-            vardata.ub = value
-
-    def setlb(self, value):
-        for vardata in self.values():
-            vardata.lb = value
-
-
 class OmltIndexedJuMP(OmltIndexed):
     format = "jump"
 
@@ -653,7 +504,7 @@ class OmltIndexedJuMP(OmltIndexed):
     def __class__(self):
         return pyo.Var
 
-    def __init__(self, *indexes, **kwargs):
+    def __init__(self, *indexes, **kwargs: Any):
         if len(indexes) == 1:
             index_set = indexes[0]
             i_dict = {}
@@ -661,7 +512,8 @@ class OmltIndexedJuMP(OmltIndexed):
                 i_dict[i] = val
             self._index_set = tuple(i_dict[i] for i in range(len(index_set)))
         else:
-            raise ValueError("Currently index cross-products are unsupported.")
+            msg = ("Currently index cross-products are unsupported.")
+            raise ValueError(msg)
 
         self._block = kwargs.pop("block", None)
 
@@ -677,21 +529,23 @@ class OmltIndexedJuMP(OmltIndexed):
             _lb = {i: None for i in self._index_set}
             _ub = {i: None for i in self._index_set}
         else:
-            raise ValueError(
+            msg = (
                 "Bounds must be given as a tuple," " but %s was given.", self._bounds
             )
+            raise TypeError(msg)
 
         _domain = kwargs.pop("domain", None)
         _within = kwargs.pop("within", None)
 
         if _domain and _within and _domain != _within:
-            raise ValueError(
+            msg = (
                 "'domain' and 'within' keywords have both "
                 "been supplied and do not agree. Please try "
                 "with a single keyword for the domain of this "
                 "variable."
             )
-        elif _domain:
+            raise ValueError(msg)
+        if _domain:
             self.domain = _domain
         elif _within:
             self.domain = _within
@@ -719,11 +573,12 @@ class OmltIndexedJuMP(OmltIndexed):
             elif len(_initialize) == 1:
                 self._value = {i: _initialize[0] for i in self._index_set}
             else:
-                raise ValueError(
+                msg = (
                     "Index set has length %s, but initializer has length %s.",
                     len(self._index_set),
                     len(_initialize),
                 )
+                raise ValueError(msg)
         else:
             self._value = {i: None for i in self._index_set}
 
@@ -746,8 +601,7 @@ class OmltIndexedJuMP(OmltIndexed):
     def __getitem__(self, item):
         if isinstance(item, tuple) and len(item) == 1:
             return self._vars[item[0]]
-        else:
-            return self._vars[item]
+        return self._vars[item]
 
     def __setitem__(self, item, value):
         self._varinfo[item] = value
@@ -757,20 +611,17 @@ class OmltIndexedJuMP(OmltIndexed):
     def keys(self):
         if self._parent is not None:
             return self._varrefs.keys()
-        else:
-            return self._vars.keys()
+        return self._vars.keys()
 
     def values(self):
         if self._parent is not None:
             return self._varrefs.values()
-        else:
-            return self._vars.values()
+        return self._vars.values()
 
     def items(self):
         if self._parent is not None:
             return self._varrefs.items()
-        else:
-            return self._vars.items()
+        return self._vars.items()
 
     def fix(self, value=None):
         self.fixed = True
@@ -783,14 +634,11 @@ class OmltIndexedJuMP(OmltIndexed):
                 vardata.has_fix = True
 
     def __len__(self):
-        """
-        Return the number of component data objects stored by this
-        component.
-        """
+        """Return the number of component data objects stored by this component."""
         return len(self._vars)
 
     def __contains__(self, idx):
-        """Return true if the index is in the dictionary"""
+        """Return true if the index is in the dictionary."""
         return idx in self._vars
 
     # The default implementation is for keys() and __iter__ to be
@@ -798,7 +646,7 @@ class OmltIndexedJuMP(OmltIndexed):
     # keys/values/items continue to work for components that implement
     # other definitions for __iter__ (e.g., Set)
     def __iter__(self):
-        """Return an iterator of the component data keys"""
+        """Return an iterator of the component data keys."""
         return self._vars.__iter__()
 
     def construct(self, data=None):
@@ -845,29 +693,8 @@ class OmltIndexedJuMP(OmltIndexed):
     def to_jumpvar(self):
         if self._constructed:
             return jump.Containers.DenseAxisArray(list(self.values()), self.index_set())
+        msg = "Variable must be constructed before exporting to JuMP."
+        raise ValueError(msg)
 
     def to_jumpexpr(self):
         return {k: jump.AffExpr(0, jump.OrderedDict([(v, 1)])) for k, v in self.items()}
-
-
-"""
-Future formats to implement.
-"""
-
-
-class OmltIndexedSmoke(OmltIndexed):
-    format = "smoke"
-
-    def __init__(self, *args, **kwargs):
-        raise ValueError(
-            "Storing variables in Smoke format is not currently implemented."
-        )
-
-
-class OmltIndexedGurobi(OmltIndexed):
-    format = "gurobi"
-
-    def __init__(self, *args, **kwargs):
-        raise ValueError(
-            "Storing variables in Gurobi format is not currently implemented."
-        )

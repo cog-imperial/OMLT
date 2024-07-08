@@ -1,12 +1,11 @@
-import pytest
-
 import pyomo.environ as pyo
+import pytest
 from omlt.base import OmltVar
 from omlt.dependencies import julia_available
 
 
-def _test_scalar_var(format):
-    v = OmltVar(format=format, initialize=2, domain=pyo.Integers)
+def _test_scalar_var(lang):
+    v = OmltVar(lang=lang, initialize=2, domain=pyo.Integers)
     assert v.is_indexed() is False
     assert v.ctype == pyo.ScalarVar
 

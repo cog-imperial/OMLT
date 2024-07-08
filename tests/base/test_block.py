@@ -26,6 +26,7 @@ class DummyFormulation:
     def _clear_outputs(self):
         self.output_indexes = []
 
+
 def test_block():
     m = pyo.ConcreteModel()
     m.b = OmltBlock()

@@ -2,7 +2,7 @@ import numpy as np
 import pyomo.environ as pe
 from pyomo.gdp import Disjunct
 
-from omlt.base import OmltVar
+from omlt.base import OmltConstraint, OmltVar
 from omlt.formulation import _PyomoFormulation, _setup_scaled_inputs_outputs
 
 
@@ -277,13 +277,11 @@ def _add_gdp_formulation_to_block(  # noqa: PLR0913
         def lb_rule(dsj, feat):
             return input_vars[feat] >= leaves[tree][leaf]["bounds"][feat][0] + epsilon
 
-        dsj.lb_constraint = pe.Constraint(features, rule=lb_rule)
-
+        dsj.lb_constraint = OmltConstraint(features, rule=lb_rule)
         def ub_rule(dsj, feat):
             return input_vars[feat] <= leaves[tree][leaf]["bounds"][feat][1]
 
-        dsj.ub_constraint = pe.Constraint(features, rule=ub_rule)
-
+        dsj.ub_constraint = OmltConstraint(features, rule=ub_rule)
         slope = leaves[tree][leaf]["slope"]
         intercept = leaves[tree][leaf]["intercept"]
         dsj.linear_exp = pe.Constraint(

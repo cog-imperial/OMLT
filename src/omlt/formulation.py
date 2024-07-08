@@ -2,7 +2,8 @@ import abc
 import weakref
 
 import pyomo.environ as pyo
-from omlt.base import OmltVar
+
+from omlt.base import OmltConstraint, OmltVar
 
 
 class _PyomoFormulationInterface(abc.ABC):
@@ -125,15 +126,14 @@ def _setup_scaled_inputs_outputs(block, scaler=None, scaled_input_bounds=None):
             output_unscaling_expressions
         )
 
-    @block.Constraint(block.scaled_inputs.index_set())
-    def _scale_input_constraint(b, *args):
-        return (
-            block.scaled_inputs[args]
-            == input_scaling_expressions[scalar_or_tuple(args)]
-        )
+    block._scale_input_constraint = OmltConstraint(block.inputs_set)
+    for idx in block.inputs_set:
+        block._scale_input_constraint[idx] = (
+        block.scaled_inputs[idx] == input_scaling_expressions[idx]
+    )
 
-    @block.Constraint(block.outputs.index_set())
-    def _scale_output_constraint(b, *args):
-        return (
-            block.outputs[args] == output_unscaling_expressions[scalar_or_tuple(args)]
+    block._scale_output_constraint = OmltConstraint(block.outputs_set)
+    for idx in block.outputs_set:
+        block._scale_output_constraint[idx] = (
+            block.outputs[idx] == output_unscaling_expressions[idx]
         )

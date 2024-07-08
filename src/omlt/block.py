@@ -26,7 +26,7 @@ Example:
 
 import warnings
 
-from omlt.base import OmltVar, DEFAULT_MODELING_LANGUAGE
+from omlt.base import DEFAULT_MODELING_LANGUAGE, OmltVar
 from omlt.dependencies import julia_available
 
 if julia_available:
@@ -49,8 +49,8 @@ class OmltBlockData(BlockData):
         else:
             self._jumpmodel = None
 
-    def set_format(self, format):
-        self._format = format
+    def set_format(self, lang):
+        self._format = lang
         if self._format == "jump" and self._jumpmodel is None:
             self._jumpmodel = jump.Model()
 
@@ -72,9 +72,9 @@ class OmltBlockData(BlockData):
         self.__output_indexes = output_indexes
 
         self.inputs_set = pyo.Set(initialize=input_indexes)
-        self.inputs = OmltVar(self.inputs_set, initialize=0, format=self._format)
+        self.inputs = OmltVar(self.inputs_set, initialize=0, lang=self._format)
         self.outputs_set = pyo.Set(initialize=output_indexes)
-        self.outputs = OmltVar(self.outputs_set, initialize=0, format=self._format)
+        self.outputs = OmltVar(self.outputs_set, initialize=0, lang=self._format)
 
     def build_formulation(self, formulation):
         """Build formulation.
@@ -88,7 +88,7 @@ class OmltBlockData(BlockData):
         ----------
         formulation : instance of _PyomoFormulation
             see, for example, FullSpaceNNFormulation
-        format : str
+        lang : str
             Which modelling language to build the formulation in.
             Currently supported are "pyomo" (default) and "jump".
 
