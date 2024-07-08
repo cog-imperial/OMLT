@@ -25,7 +25,7 @@ Example:
 """
 
 
-from omlt.base import OmltVar, DEFAULT_MODELING_LANGUAGE
+from omlt.base import DEFAULT_MODELING_LANGUAGE, OmltVar
 from omlt.dependencies import julia_available
 
 if julia_available:
@@ -48,8 +48,8 @@ class OmltBlockData(_BlockData):
         else:
             self._jumpmodel = None
 
-    def set_format(self, format):
-        self._format = format
+    def set_format(self, lang):
+        self._format = lang
         if self._format == "jump" and self._jumpmodel is None:
             self._jumpmodel = jump.Model()
 
@@ -71,13 +71,14 @@ class OmltBlockData(_BlockData):
         self.__output_indexes = output_indexes
 
         self.inputs_set = pyo.Set(initialize=input_indexes)
-        self.inputs = OmltVar(self.inputs_set, initialize=0, format=self._format)
+        self.inputs = OmltVar(self.inputs_set, initialize=0, lang=self._format)
         self.outputs_set = pyo.Set(initialize=output_indexes)
-        self.outputs = OmltVar(self.outputs_set, initialize=0, format=self._format)
+        self.outputs = OmltVar(self.outputs_set, initialize=0, lang=self._format)
 
 
-    def build_formulation(self, formulation, format=None):
-        """
+    def build_formulation(self, formulation, lang=None):
+        """Build formulation.
+
         Call this method to construct the constraints (and possibly
         intermediate variables) necessary for the particular neural network
         formulation. The formulation object can be accessed later through the
@@ -87,7 +88,7 @@ class OmltBlockData(_BlockData):
         ----------
         formulation : instance of _PyomoFormulation
             see, for example, FullSpaceNNFormulation
-        format : str
+        lang : str
             Which modelling language to build the formulation in.
             Currently supported are "pyomo" (default) and "jump".
 
@@ -107,8 +108,8 @@ class OmltBlockData(_BlockData):
             raise ValueError(msg)
 
 
-        if format is not None:
-            self._format = format
+        if lang is not None:
+            self._format = lang
 
         if self._format == "jump":
             self._jumpmodel = jump.Model()

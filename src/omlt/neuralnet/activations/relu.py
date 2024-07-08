@@ -1,7 +1,7 @@
 import pyomo.environ as pyo
 from pyomo import mpec
 
-from omlt.base import OmltVar
+from omlt.base import OmltConstraint, OmltVar
 
 
 def bigm_relu_activation_constraint(net_block, net, layer_block, layer):
@@ -42,10 +42,18 @@ def bigm_relu_activation_constraint(net_block, net, layer_block, layer):
     """
     layer_block.q_relu = OmltVar(layer.output_indexes, within=pyo.Binary)
 
-    layer_block._z_lower_bound_relu = pyo.Constraint(layer.output_indexes)
-    layer_block._z_lower_bound_zhat_relu = pyo.Constraint(layer.output_indexes)
-    layer_block._z_upper_bound_relu = pyo.Constraint(layer.output_indexes)
-    layer_block._z_upper_bound_zhat_relu = pyo.Constraint(layer.output_indexes)
+    layer_block._z_lower_bound_relu = OmltConstraint(
+        layer.output_indexes, model=layer_block.model
+    )
+    layer_block._z_lower_bound_zhat_relu = OmltConstraint(
+        layer.output_indexes, model=layer_block.model
+    )
+    layer_block._z_upper_bound_relu = OmltConstraint(
+        layer.output_indexes, model=layer_block.model
+    )
+    layer_block._z_upper_bound_zhat_relu = OmltConstraint(
+        layer.output_indexes, model=layer_block.model
+    )
 
     # set dummy parameters here to avoid warning message from Pyomo
     layer_block._big_m_lb_relu = pyo.Param(

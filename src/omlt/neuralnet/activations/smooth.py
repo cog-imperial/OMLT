@@ -1,5 +1,7 @@
 from pyomo.environ import exp, log, tanh
 
+from omlt.base import OmltConstraint
+
 
 def softplus_activation_function(x):
     r"""Applies the softplus function.
@@ -74,12 +76,15 @@ def smooth_monotonic_activation_constraint(net_block, net, layer_block, layer, f
         \end{align*}
 
     """
-
-    @layer_block.Constraint(layer.output_indexes)
-    def _smooth_monotonic_activation_constraint(b, *output_index):
-        zhat_lb, zhat_ub = b.zhat[output_index].bounds
+    layer_block._smooth_monotonic_activation_constraint = OmltConstraint(
+        layer.output_indexes
+    )
+    for output_index in layer.output_indexes:
+        zhat_lb, zhat_ub = layer_block.zhat[output_index].bounds
         if zhat_lb is not None:
-            b.z[output_index].setlb(fcn(zhat_lb))
+            layer_block.z[output_index].setlb(fcn(zhat_lb))
         if zhat_ub is not None:
-            b.z[output_index].setub(fcn(zhat_ub))
-        return b.z[output_index] == fcn(b.zhat[output_index])
+            layer_block.z[output_index].setub(fcn(zhat_ub))
+        layer_block._smooth_monotonic_activation_constraint[output_index] = (
+            layer_block.z[output_index] == fcn(layer_block.zhat[output_index])
+        )

@@ -1,6 +1,7 @@
 import numpy as np
 import pyomo.environ as pyo
 
+from omlt.base import OmltConstraint, OmltVar
 from omlt.io.torch_geometric.torch_geometric_reader import (
     load_torch_geometric_sequential,
 )
@@ -58,7 +59,7 @@ def gnn_with_non_fixed_graph(
     )
 
     # define binary variables for adjacency matrix
-    block.A = pyo.Var(
+    block.A = OmltVar(
         pyo.Set(initialize=range(N)),
         pyo.Set(initialize=range(N)),
         within=pyo.Binary,
@@ -67,10 +68,11 @@ def gnn_with_non_fixed_graph(
     for u in range(N):
         block.A[u, u].fix(1)
     # assume the adjacency matrix is always symmetric
-    block.symmetric_adjacency = pyo.ConstraintList()
+    indexes = [(u, v) for u in range(N) for v in range(u + 1, N)]
+    block.symmetric_adjacency = OmltConstraint(indexes)
     for u in range(N):
         for v in range(u + 1, N):
-            block.symmetric_adjacency.add(block.A[u, v] == block.A[v, u])
+            block.symmetric_adjacency[(u,v)] = block.A[u, v] == block.A[v, u]
 
     # build formulation for GNN
     block.build_formulation(FullSpaceNNFormulation(net))
@@ -139,7 +141,7 @@ def gnn_with_fixed_graph(
     )
 
     # define binary variables for adjacency matrix
-    block.A = pyo.Var(
+    block.A = OmltVar(
         pyo.Set(initialize=range(N)),
         pyo.Set(initialize=range(N)),
         within=pyo.Binary,

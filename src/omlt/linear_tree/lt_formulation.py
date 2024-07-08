@@ -2,7 +2,7 @@ import numpy as np
 import pyomo.environ as pe
 from pyomo.gdp import Disjunct
 
-from omlt.base import OmltVar
+from omlt.base import OmltConstraint, OmltVar
 from omlt.formulation import _PyomoFormulation, _setup_scaled_inputs_outputs
 
 
@@ -259,13 +259,11 @@ def _add_gdp_formulation_to_block(
         def lb_rule(dsj, feat):
             return input_vars[feat] >= leaves[tree][leaf]["bounds"][feat][0]
 
-        dsj.lb_constraint = pe.Constraint(features, rule=lb_rule)
-
+        dsj.lb_constraint = OmltConstraint(features, rule=lb_rule)
         def ub_rule(dsj, feat):
             return input_vars[feat] <= leaves[tree][leaf]["bounds"][feat][1]
 
-        dsj.ub_constraint = pe.Constraint(features, rule=ub_rule)
-
+        dsj.ub_constraint = OmltConstraint(features, rule=ub_rule)
         slope = leaves[tree][leaf]["slope"]
         intercept = leaves[tree][leaf]["intercept"]
         dsj.linear_exp = pe.Constraint(
@@ -325,34 +323,36 @@ def _add_hybrid_formulation_to_block(block, model_definition, input_vars, output
     # in tree t is returned. intermediate_output is the output of tree t and
     # the total output of the model is the sum of the intermediate_output vars
     block.z = OmltVar(t_l, within=pe.Binary)
-    block.intermediate_output = pe.Var(tree_ids)
+    block.intermediate_output = OmltVar(tree_ids)
 
-    @block.Constraint(features, tree_ids)
-    def lower_bound_constraints(mdl, feat, tree):
+    block.lower_bound_constraints = OmltConstraint(features, tree_ids)
+    for tree in tree_ids:
         leaf_ids = list(leaves[tree].keys())
-        return (
-            sum(
-                leaves[tree][leaf]["bounds"][feat][0] * mdl.z[tree, leaf]
-                for leaf in leaf_ids
+        for feat in features:
+            block.lower_bound_constraints[feat, tree] = (
+                sum(
+                    leaves[tree][leaf]["bounds"][feat][0] * block.z[tree, leaf]
+                    for leaf in leaf_ids
+                )
+                <= input_vars[feat]
             )
-            <= input_vars[feat]
-        )
 
-    @block.Constraint(features, tree_ids)
-    def upper_bound_constraints(mdl, feat, tree):
+    block.upper_bound_constraints = OmltConstraint(features, tree_ids)
+    for tree in tree_ids:
         leaf_ids = list(leaves[tree].keys())
-        return (
-            sum(
-                leaves[tree][leaf]["bounds"][feat][1] * mdl.z[tree, leaf]
-                for leaf in leaf_ids
+        for feat in features:
+            block.upper_bound_constraints[feat, tree] = (
+                sum(
+                    leaves[tree][leaf]["bounds"][feat][1] * block.z[tree, leaf]
+                    for leaf in leaf_ids
+                )
+                >= input_vars[feat]
             )
-            >= input_vars[feat]
-        )
 
-    @block.Constraint(tree_ids)
-    def linear_constraint(mdl, tree):
+    block.linear_constraint = OmltConstraint(tree_ids)
+    for tree in tree_ids:
         leaf_ids = list(leaves[tree].keys())
-        return block.intermediate_output[tree] == sum(
+        block.linear_constraint[tree] = block.intermediate_output[tree] == sum(
             (
                 sum(
                     leaves[tree][leaf]["slope"][feat] * input_vars[feat]
@@ -363,14 +363,13 @@ def _add_hybrid_formulation_to_block(block, model_definition, input_vars, output
             * block.z[tree, leaf]
             for leaf in leaf_ids
         )
-
-    @block.Constraint(tree_ids)
-    def only_one_leaf_per_tree(b, tree):
+    block.only_one_leaf_per_tree = OmltConstraint(tree_ids)
+    for tree in tree_ids:
         leaf_ids = list(leaves[tree].keys())
-        return sum(block.z[tree, leaf] for leaf in leaf_ids) == 1
-
-    @block.Constraint()
-    def output_sum_of_trees(b):
-        return output_vars[0] == sum(
-            block.intermediate_output[tree] for tree in tree_ids
+        block.only_one_leaf_per_tree[tree] = (
+            sum(block.z[tree, leaf] for leaf in leaf_ids) == 1
         )
+
+    block.output_sum_of_trees = output_vars[0] == sum(
+        block.intermediate_output[tree] for tree in tree_ids
+    )

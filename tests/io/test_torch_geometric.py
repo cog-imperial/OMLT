@@ -132,6 +132,7 @@ def _test_gnn_with_non_fixed_graph(nn):
     m.nn = OmltBlock()
     gnn_with_non_fixed_graph(m.nn, nn, N, scaled_input_bounds=input_bounds)
     assert m.nvariables() == 282
+    print(m.nn.symmetric_adjacency.constraints)
     assert m.nconstraints() == 620
 
 

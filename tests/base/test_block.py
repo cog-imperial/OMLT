@@ -25,6 +25,7 @@ class DummyFormulation:
     def _clear_outputs(self):
         self.output_indexes = []
 
+
 def test_block():
     m = pyo.ConcreteModel()
     m.b = OmltBlock()
@@ -58,9 +59,13 @@ def test_jump_block():
     m.b = OmltBlock()
     m.b.set_format("jump")
 
-    with pytest.raises(ValueError) as excinfo:
+    expected_msg = (
+        "Initial value for JuMP variables must be an int or float, but"
+        " <class 'tuple'> was provided."
+    )
+
+    with pytest.raises(ValueError, match=expected_msg) as excinfo:
         m.b.x = OmltVar(initialize=(2, 7), format="jump")
-    expected_msg = "Initial value for JuMP variables must be an int or float, but <class 'tuple'> was provided."
 
     assert str(excinfo.value) == expected_msg
 
@@ -102,17 +107,17 @@ def test_input_output_auto_creation():
     formulation1 = DummyFormulation()
     formulation1._clear_inputs()
     expected_msg = (
-                "OmltBlock must have at least one input to build a formulation. "
-                f"{formulation1} has no inputs."
-            )
+        "OmltBlock must have at least one input to build a formulation. "
+        f"{formulation1} has no inputs."
+    )
     with pytest.raises(ValueError, match=expected_msg):
         m.b3.build_formulation(formulation1)
 
     formulation2 = DummyFormulation()
     formulation2._clear_outputs()
     expected_msg = (
-                "OmltBlock must have at least one output to build a formulation. "
-                f"{formulation2} has no outputs."
-            )
+        "OmltBlock must have at least one output to build a formulation. "
+        f"{formulation2} has no outputs."
+    )
     with pytest.raises(ValueError, match=expected_msg):
         m.b3.build_formulation(formulation2)

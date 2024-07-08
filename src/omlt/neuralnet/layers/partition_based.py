@@ -2,7 +2,7 @@ import numpy as np
 import pyomo.environ as pyo
 from pyomo.contrib.fbbt.fbbt import compute_bounds_on_expr
 
-from omlt.base import OmltVar
+from omlt.base import OmltConstraint, OmltVar
 
 
 def default_partition_split_func(w, n):
@@ -91,11 +91,11 @@ def partition_based_dense_relu_layer(net_block, net, layer_block, layer, split_f
 
         mapper = layer.input_index_mapper
 
-        b.eq_16_lb = pyo.ConstraintList()
-        b.eq_16_ub = pyo.ConstraintList()
+        b.eq_16_lb = OmltConstraint(range(num_splits))
+        b.eq_16_ub = OmltConstraint(range(num_splits))
 
-        b.eq_17_lb = pyo.ConstraintList()
-        b.eq_17_ub = pyo.ConstraintList()
+        b.eq_17_lb = OmltConstraint(range(num_splits))
+        b.eq_17_ub = OmltConstraint(range(num_splits))
 
         input_layer_indexes = list(layer.input_indexes_with_input_layer_indexes)
 
@@ -123,12 +123,12 @@ def partition_based_dense_relu_layer(net_block, net, layer_block, layer, split_f
             z2.setlb(min(0, lb))
             z2.setub(max(0, ub))
 
-            b.eq_16_lb.add(b.sig * lb <= expr - z2)
-            b.eq_16_ub.add(b.sig * ub >= expr - z2)
+            b.eq_16_lb[split_index] = b.sig * lb <= expr - z2
+            b.eq_16_ub[split_index] = b.sig * ub >= expr - z2
 
             minus_sig = 1 - b.sig
-            b.eq_17_lb.add(minus_sig * lb <= z2)
-            b.eq_17_ub.add(minus_sig * ub >= z2)
+            b.eq_17_lb[split_index] = minus_sig * lb <= z2
+            b.eq_17_ub[split_index] = minus_sig * ub >= z2
 
         # compute dense layer expression to compute bounds
         expr = 0.0
@@ -160,13 +160,13 @@ def partition_based_dense_relu_layer(net_block, net, layer_block, layer, split_f
             eq_13_expr -= b.z2[split_index]
         eq_13_expr += bias * b.sig
 
-        b.eq_13 = pyo.Constraint(expr=eq_13_expr <= 0)
-        b.eq_14 = pyo.Constraint(
+        b.eq_13 = OmltConstraint(expr=eq_13_expr <= 0)
+        b.eq_14 = OmltConstraint(
             expr=sum(b.z2[s] for s in range(num_splits))
             + bias * (1 - b.sig)._expression
             >= 0
         )
-        b.eq_15 = pyo.Constraint(
+        b.eq_15 = OmltConstraint(
             expr=layer_block.z[output_index]
             == sum(b.z2[s] for s in range(num_splits)) + bias * (1 - b.sig)._expression
         )

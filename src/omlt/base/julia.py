@@ -1,8 +1,8 @@
 from omlt.dependencies import julia_available
 
 if julia_available:
-    from juliacall import Main as jl
     from juliacall import Base
+    from juliacall import Main as jl
 
     jl_err = Base.error
     jl.seval("import JuMP")
