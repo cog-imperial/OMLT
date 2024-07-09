@@ -158,6 +158,7 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars):
         list(zip(nodes_tree_ids[nodes_leaf_mask], nodes_node_ids[nodes_leaf_mask])),
         bounds=(0, None),
         domain=pe.Reals,
+        lang=block._format,
     )
 
     branch_value_by_feature_id: dict[int, Any] = {}
@@ -173,9 +174,9 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars):
         for f in continuous_vars
         for bi, _ in enumerate(branch_value_by_feature_id[f])
     ]
-    block.y = OmltVar(y_index, domain=pe.Binary)
+    block.y = OmltVar(y_index, lang=block._format, domain=pe.Binary)
 
-    block.single_leaf = OmltConstraint(tree_ids)
+    block.single_leaf = OmltConstraint(tree_ids, lang=block._format)
     for tree_id in tree_ids:
         r"""Single leaf constraint.
 
@@ -247,7 +248,7 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars):
                 visit_queue.append(local_true_node_ids[node_id])
         return sum_of_z_l
 
-    block.left_split = OmltConstraint(nodes_tree_branch_ids)
+    block.left_split = OmltConstraint(nodes_tree_branch_ids, lang=block._format)
     for tree_id, branch_node_id in nodes_tree_branch_ids:
         r"""Left split.
 
@@ -267,7 +268,7 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars):
             _sum_of_z_l(tree_id, subtree_root) <= y
         )
 
-    block.right_split = OmltConstraint(nodes_tree_branch_ids)
+    block.right_split = OmltConstraint(nodes_tree_branch_ids, lang=block._format)
     for tree_id, branch_node_id in nodes_tree_branch_ids:
         r"""Right split.
 
@@ -287,7 +288,7 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars):
             _sum_of_z_l(tree_id, subtree_root) <= 1 - y
         )
 
-    block.order_y = OmltConstraint(y_index)
+    block.order_y = OmltConstraint(y_index, lang=block._format)
     for feature_id, branch_y_idx in y_index:
         r"""Add constraint to activate splits in the correct order.
 
@@ -304,7 +305,7 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars):
                 block.y[feature_id, branch_y_idx] <= block.y[feature_id, branch_y_idx + 1]
             )
 
-    block.var_lower = OmltConstraint(y_index)
+    block.var_lower = OmltConstraint(y_index, lang=block._format)
     for feature_id, branch_y_idx in y_index:
         r"""Lower bound constraint.
 
@@ -327,7 +328,7 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars):
                 branch_value - x.lb
             ) * (1 - block.y[feature_id, branch_y_idx])
 
-    block.var_upper = OmltConstraint(y_index)
+    block.var_upper = OmltConstraint(y_index, lang=block._format)
     for feature_id, branch_y_idx in y_index:
         r"""Upper bound constraint.
         Add constraint to link discrete tree splits to upper bound of continuous
@@ -357,7 +358,8 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars):
                 )
             )
             + base_value
-        )
+        ),
+        lang = block._format
     )
 
     r"""Add constraint to link block output tree model mean.

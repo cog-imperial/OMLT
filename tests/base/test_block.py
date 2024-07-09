@@ -65,11 +65,11 @@ def test_jump_block():
     )
 
     with pytest.raises(ValueError, match=expected_msg) as excinfo:
-        m.b.x = OmltVar(initialize=(2, 7), format="jump")
+        m.b.x = OmltVar(initialize=(2, 7), lang="jump")
 
     assert str(excinfo.value) == expected_msg
 
-    m.b.y = OmltVar(initialize=2, format="jump")
+    m.b.y = OmltVar(initialize=2, lang="jump")
     assert m.b.y.value == 2
     assert m.b.y.name == "y"
     m.b.y.lb = 0

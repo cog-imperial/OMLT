@@ -19,7 +19,9 @@ def linear_activation_constraint(
         \end{align*}
 
     """
-    layer_block.linear_activation = OmltConstraint(layer.output_indexes)
+    layer_block.linear_activation = OmltConstraint(
+        layer.output_indexes, lang=net_block._format
+    )
     for output_index in layer.output_indexes:
         zhat_lb, zhat_ub = layer_block.zhat[output_index].bounds
         layer_block.z[output_index].setlb(zhat_lb)
