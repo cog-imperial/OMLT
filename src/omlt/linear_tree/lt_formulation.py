@@ -278,6 +278,7 @@ def _add_gdp_formulation_to_block(  # noqa: PLR0913
             return input_vars[feat] >= leaves[tree][leaf]["bounds"][feat][0] + epsilon
 
         dsj.lb_constraint = OmltConstraint(features, rule=lb_rule)
+
         def ub_rule(dsj, feat):
             return input_vars[feat] <= leaves[tree][leaf]["bounds"][feat][1]
 
