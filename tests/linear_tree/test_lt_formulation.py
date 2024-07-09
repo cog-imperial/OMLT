@@ -595,9 +595,9 @@ def test_hybrid_bigm_formulation_multi_var():
     formulation1_lt = LinearTreeHybridBigMFormulation(ltmodel_small)
 
     model1 = pe.ConcreteModel()
-    model1.x0 = pe.Var(initialize=0)
-    model1.x1 = pe.Var(initialize=0)
-    model1.y = pe.Var(initialize=0)
+    model1.x0 = OmltVar(initialize=0)
+    model1.x1 = OmltVar(initialize=0)
+    model1.y = OmltVar(initialize=0)
     model1.obj = pe.Objective(expr=1)
     model1.lt = OmltBlock()
     model1.lt.build_formulation(formulation1_lt)

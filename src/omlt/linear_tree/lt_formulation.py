@@ -260,6 +260,7 @@ def _add_gdp_formulation_to_block(
             return input_vars[feat] >= leaves[tree][leaf]["bounds"][feat][0]
 
         dsj.lb_constraint = OmltConstraint(features, rule=lb_rule)
+
         def ub_rule(dsj, feat):
             return input_vars[feat] <= leaves[tree][leaf]["bounds"][feat][1]
 
@@ -370,6 +371,6 @@ def _add_hybrid_formulation_to_block(block, model_definition, input_vars, output
             sum(block.z[tree, leaf] for leaf in leaf_ids) == 1
         )
 
-    block.output_sum_of_trees = output_vars[0] == sum(
-        block.intermediate_output[tree] for tree in tree_ids
+    block.output_sum_of_trees = OmltConstraint(
+        expr=output_vars[0] == sum(block.intermediate_output[tree] for tree in tree_ids)
     )
