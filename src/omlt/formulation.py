@@ -89,11 +89,15 @@ def _setup_scaled_inputs_outputs(block, scaler=None, scaled_input_bounds=None):
             k: (float(scaled_input_bounds[k][0]), float(scaled_input_bounds[k][1]))
             for k in block.inputs_set
         }
-        block.scaled_inputs = OmltVar(block.inputs_set, initialize=0, bounds=bnds)
+        block.scaled_inputs = OmltVar(
+            block.inputs_set, initialize=0, lang=block._format, bounds=bnds
+        )
     else:
-        block.scaled_inputs = OmltVar(block.inputs_set, initialize=0)
+        block.scaled_inputs = OmltVar(
+            block.inputs_set, initialize=0, lang=block._format
+        )
 
-    block.scaled_outputs = OmltVar(block.outputs_set, initialize=0)
+    block.scaled_outputs = OmltVar(block.outputs_set, initialize=0, lang=block._format)
 
     if scaled_input_bounds is not None and scaler is None:
         # set the bounds on the inputs to be the same as the scaled inputs
@@ -126,13 +130,13 @@ def _setup_scaled_inputs_outputs(block, scaler=None, scaled_input_bounds=None):
             output_unscaling_expressions
         )
 
-    block._scale_input_constraint = OmltConstraint(block.inputs_set)
+    block._scale_input_constraint = OmltConstraint(block.inputs_set, lang=block._format)
     for idx in block.inputs_set:
         block._scale_input_constraint[idx] = (
-        block.scaled_inputs[idx] == input_scaling_expressions[idx]
-    )
+            block.scaled_inputs[idx] == input_scaling_expressions[idx]
+        )
 
-    block._scale_output_constraint = OmltConstraint(block.outputs_set)
+    block._scale_output_constraint = OmltConstraint(block.outputs_set, lang=block._format)
     for idx in block.outputs_set:
         block._scale_output_constraint[idx] = (
             block.outputs[idx] == output_unscaling_expressions[idx]

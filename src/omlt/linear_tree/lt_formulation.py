@@ -268,7 +268,7 @@ def _add_gdp_formulation_to_block(  # noqa: PLR0913
     block.scaled_outputs.setlb(output_bounds[0])
 
     block.intermediate_output = OmltVar(
-        tree_ids, bounds=(output_bounds[0], output_bounds[1])
+        tree_ids, lang=block._format, bounds=(output_bounds[0], output_bounds[1])
     )
 
     # Create a disjunct for each leaf containing the bound constraints

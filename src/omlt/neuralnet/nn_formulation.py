@@ -165,7 +165,7 @@ def _build_neural_network_formulation(  # noqa: C901
     @block.Block(block.layers)
     def layer(b, layer_id):
         net_layer = net.layer(layer_id)
-        b.z = OmltVar(net_layer.output_indexes, initialize=0)
+        b.z = OmltVar(net_layer.output_indexes, initialize=0, lang=block._format)
         if isinstance(net_layer, InputLayer):
             for index in net_layer.output_indexes:
                 input_var = block.scaled_inputs[index]
@@ -174,7 +174,7 @@ def _build_neural_network_formulation(  # noqa: C901
                 z_var.setub(input_var.ub)
         else:
             # add zhat only to non input layers
-            b.zhat = OmltVar(net_layer.output_indexes, initialize=0)
+            b.zhat = OmltVar(net_layer.output_indexes, initialize=0, lang=block._format)
 
         return b
 
@@ -203,7 +203,9 @@ def _build_neural_network_formulation(  # noqa: C901
         raise ValueError(MULTI_INPUTS_UNSUPPORTED)
     input_layer = input_layers[0]
 
-    block.input_assignment = OmltConstraint(input_layer.output_indexes)
+    block.input_assignment = OmltConstraint(
+        input_layer.output_indexes, lang=block._format
+    )
     for output_index in input_layer.output_indexes:
         block.input_assignment[output_index] = (
             block.scaled_inputs[output_index]
@@ -217,7 +219,9 @@ def _build_neural_network_formulation(  # noqa: C901
         raise ValueError(MULTI_OUTPUTS_UNSUPPORTED)
     output_layer = output_layers[0]
 
-    block.output_assignment = OmltConstraint(output_layer.output_indexes)
+    block.output_assignment = OmltConstraint(
+        output_layer.output_indexes, lang=block._format
+    )
     for output_index in output_layer.output_indexes:
         block.output_assignment[output_index] = (
             block.scaled_outputs[output_index]
@@ -400,7 +404,9 @@ class ReducedSpaceNNFormulation(_PyomoFormulation):
             raise ValueError(msg)
         output_layer = output_layers[0]
 
-        block.output_assignment = OmltConstraint(output_layer.output_indexes)
+        block.output_assignment = OmltConstraint(
+            output_layer.output_indexes, lang=block._format
+        )
         for output_index in output_layer.output_indexes:
             block.output_assignment[output_index] = (
                 block.scaled_outputs[output_index]
@@ -488,8 +494,9 @@ class ReluPartitionFormulation(_PyomoFormulation):
         # create the z and z_hat variables for each of the layers
         @block.Block(block.layers)
         def layer(b, layer_id):
+            b._format = block._format
             net_layer = net.layer(layer_id)
-            b.z = OmltVar(net_layer.output_indexes, initialize=0)
+            b.z = OmltVar(net_layer.output_indexes, lang=b._format, initialize=0)
             if isinstance(net_layer, InputLayer):
                 for index in net_layer.output_indexes:
                     input_var = block.scaled_inputs[index]
@@ -498,7 +505,7 @@ class ReluPartitionFormulation(_PyomoFormulation):
                     z_var.setub(input_var.ub)
             else:
                 # add zhat only to non input layers
-                b.zhat = OmltVar(net_layer.output_indexes, initialize=0)
+                b.zhat = OmltVar(net_layer.output_indexes, lang=b._format, initialize=0)
 
             return b
 
@@ -537,7 +544,9 @@ class ReluPartitionFormulation(_PyomoFormulation):
             raise ValueError(MULTI_INPUTS_UNSUPPORTED)
         input_layer = input_layers[0]
 
-        block.input_assignment = OmltConstraint(input_layer.output_indexes)
+        block.input_assignment = OmltConstraint(
+            input_layer.output_indexes, lang=block._format
+        )
         for output_index in input_layer.output_indexes:
             block.input_assignment[output_index] = (
                 block.scaled_inputs[output_index]
@@ -551,7 +560,9 @@ class ReluPartitionFormulation(_PyomoFormulation):
             raise ValueError(MULTI_OUTPUTS_UNSUPPORTED)
         output_layer = output_layers[0]
 
-        block.output_assignment = OmltConstraint(output_layer.output_indexes)
+        block.output_assignment = OmltConstraint(
+            output_layer.output_indexes, lang=block._format
+        )
         for output_index in output_layer.output_indexes:
             block.output_assignment[output_index] = (
                 block.scaled_outputs[output_index]

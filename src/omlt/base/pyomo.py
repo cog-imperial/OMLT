@@ -177,6 +177,8 @@ class OmltConstraintIndexedPyomo(OmltConstraintIndexed, pyo.Constraint):
     def __init__(self, *args, **kwargs: Any):
         super().__init__(*args, **kwargs)
         kwargs.pop("model", None)
+        kwargs.pop("lang", None)
+
         self.constraint = pyo.Constraint(*self._index_set, **kwargs)
         self._index_set = self.constraint._index_set
         self.constraint._parent = self._parent

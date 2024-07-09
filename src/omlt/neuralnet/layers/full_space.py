@@ -18,7 +18,7 @@ def full_space_dense_layer(net_block, net, layer_block, layer):
     """
     input_layer, input_layer_block = _input_layer_and_block(net_block, net, layer)
 
-    layer_block.dense_layer = OmltConstraint(layer.output_indexes)
+    layer_block.dense_layer = OmltConstraint(layer.output_indexes, lang=net_block._format)
     for output_index in layer.output_indexes:
         # dense layers multiply only the last dimension of
         # their inputs
@@ -88,22 +88,28 @@ def full_space_gnn_layer(net_block, net, layer_block, layer):
         pyo.Set(initialize=layer.input_indexes),
         pyo.Set(initialize=range(layer.N)),
         initialize=0,
+        lang=net_block._format,
     )
     input_layer_block._zbar_lower_bound_z_big_m = OmltConstraint(
         pyo.Set(initialize=layer.input_indexes),
         pyo.Set(initialize=range(layer.N)),
+        lang=net_block._format,
     )
     input_layer_block._zbar_upper_bound_z_big_m = OmltConstraint(
         pyo.Set(initialize=layer.input_indexes),
         pyo.Set(initialize=range(layer.N)),
+        lang=net_block._format,
+
     )
     input_layer_block._zbar_lower_bound_big_m = OmltConstraint(
         pyo.Set(initialize=layer.input_indexes),
         pyo.Set(initialize=range(layer.N)),
+        lang=net_block._format,
     )
     input_layer_block._zbar_upper_bound_big_m = OmltConstraint(
         pyo.Set(initialize=layer.input_indexes),
         pyo.Set(initialize=range(layer.N)),
+        lang=net_block._format,
     )
 
     for local_index, input_index in layer.input_indexes_with_input_layer_indexes:
@@ -155,7 +161,7 @@ def full_space_gnn_layer(net_block, net, layer_block, layer):
                 <= ub * net_block.A[input_node_index, output_node_index]
             )
 
-    layer_block.gnn_layer = OmltConstraint(layer.output_indexes)
+    layer_block.gnn_layer = OmltConstraint(layer.output_indexes, lang=net_block._format)
     for output_index in layer.output_indexes:
         # gnn layers multiply only the last dimension of
         # their inputs
@@ -206,7 +212,7 @@ def full_space_conv2d_layer(net_block, net, layer_block, layer):
 
     input_layer, input_layer_block = _input_layer_and_block(net_block, net, layer)
 
-    layer_block.convolutional_layer = OmltConstraint(layer.output_indexes)
+    layer_block.convolutional_layer = OmltConstraint(layer.output_indexes, lang=net_block._format)
     for output_index in layer.output_indexes:
         out_d, out_r, out_c = output_index
         expr = 0.0
@@ -282,14 +288,17 @@ def full_space_maxpool2d_layer(net_block, net, layer_block, layer):
         )
     )
     layer_block.q_maxpool = OmltVar(
-        layer.output_indexes, layer_block._kernel_indexes, within=pyo.Binary
+        layer.output_indexes,
+        layer_block._kernel_indexes,
+        lang=net_block._format,
+        within=pyo.Binary,
     )
-    layer_block._q_sum_maxpool = OmltConstraint(layer.output_indexes)
+    layer_block._q_sum_maxpool = OmltConstraint(layer.output_indexes, lang=net_block._format)
     layer_block._zhat_upper_bound = OmltConstraint(
-        layer.output_indexes, layer_block._kernel_indexes
+        layer.output_indexes, layer_block._kernel_indexes, lang=net_block._format
     )
     layer_block._zhat_lower_bound = OmltConstraint(
-        layer.output_indexes, layer_block._kernel_indexes
+        layer.output_indexes, layer_block._kernel_indexes, lang=net_block._format
     )
 
     for output_index in layer.output_indexes:

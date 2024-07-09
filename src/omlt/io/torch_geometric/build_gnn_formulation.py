@@ -63,13 +63,14 @@ def gnn_with_non_fixed_graph(  # noqa: PLR0913
         pyo.Set(initialize=range(N)),
         pyo.Set(initialize=range(N)),
         within=pyo.Binary,
+        lang=block._format,
     )
     # assume that the self contribution always exists
     for u in range(N):
         block.A[u, u].fix(1)
     # assume the adjacency matrix is always symmetric
     indexes = [(u, v) for u in range(N) for v in range(u + 1, N)]
-    block.symmetric_adjacency = OmltConstraint(indexes)
+    block.symmetric_adjacency = OmltConstraint(indexes, lang=block._format)
     for u in range(N):
         for v in range(u + 1, N):
             block.symmetric_adjacency[(u,v)] = block.A[u, v] == block.A[v, u]
@@ -145,6 +146,7 @@ def gnn_with_fixed_graph(  # noqa: PLR0913
         pyo.Set(initialize=range(N)),
         pyo.Set(initialize=range(N)),
         within=pyo.Binary,
+        lang=block._format,
     )
     # fix A using given values
     for u in range(N):

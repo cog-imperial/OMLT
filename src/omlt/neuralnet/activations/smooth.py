@@ -77,7 +77,7 @@ def smooth_monotonic_activation_constraint(net_block, net, layer_block, layer, f
 
     """
     layer_block._smooth_monotonic_activation_constraint = OmltConstraint(
-        layer.output_indexes
+        layer.output_indexes, lang=net_block._format
     )
     for output_index in layer.output_indexes:
         zhat_lb, zhat_ub = layer_block.zhat[output_index].bounds

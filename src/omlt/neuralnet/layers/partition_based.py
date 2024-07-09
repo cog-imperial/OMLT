@@ -86,16 +86,16 @@ def partition_based_dense_relu_layer(net_block, net, layer_block, layer, split_f
         splits = split_func(weights)
         num_splits = len(splits)
 
-        b.sig = OmltVar(domain=pyo.Binary)
-        b.z2 = OmltVar(range(num_splits))
+        b.sig = OmltVar(domain=pyo.Binary, lang=net_block._format)
+        b.z2 = OmltVar(range(num_splits), lang=net_block._format)
 
         mapper = layer.input_index_mapper
 
-        b.eq_16_lb = OmltConstraint(range(num_splits))
-        b.eq_16_ub = OmltConstraint(range(num_splits))
+        b.eq_16_lb = OmltConstraint(range(num_splits), lang=net_block._format)
+        b.eq_16_ub = OmltConstraint(range(num_splits), lang=net_block._format)
 
-        b.eq_17_lb = OmltConstraint(range(num_splits))
-        b.eq_17_ub = OmltConstraint(range(num_splits))
+        b.eq_17_lb = OmltConstraint(range(num_splits), lang=net_block._format)
+        b.eq_17_ub = OmltConstraint(range(num_splits), lang=net_block._format)
 
         input_layer_indexes = list(layer.input_indexes_with_input_layer_indexes)
 
@@ -160,13 +160,15 @@ def partition_based_dense_relu_layer(net_block, net, layer_block, layer, split_f
             eq_13_expr -= b.z2[split_index]
         eq_13_expr += bias * b.sig
 
-        b.eq_13 = OmltConstraint(expr=eq_13_expr <= 0)
+        b.eq_13 = OmltConstraint(expr=eq_13_expr <= 0, lang=net_block._format)
         b.eq_14 = OmltConstraint(
             expr=sum(b.z2[s] for s in range(num_splits))
             + bias * (1 - b.sig)._expression
-            >= 0
+            >= 0,
+            lang=net_block._format,
         )
         b.eq_15 = OmltConstraint(
             expr=layer_block.z[output_index]
-            == sum(b.z2[s] for s in range(num_splits)) + bias * (1 - b.sig)._expression
+            == sum(b.z2[s] for s in range(num_splits)) + bias * (1 - b.sig)._expression,
+            lang=net_block._format,
         )
