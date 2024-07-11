@@ -5,13 +5,6 @@ import pyomo.environ as pyo
 
 from omlt.base import DEFAULT_MODELING_LANGUAGE
 
-# from omlt.dependencies import julia_available
-
-# if julia_available:
-#     from omlt.base.julia import jl, jump, JumpVar
-#     from juliacall import AnyValue
-# relations = {"==", ">=", "<=", ">", "<"}
-
 
 class OmltExpr(ABC):
     def __new__(cls, *indexes, **kwargs: Any):
