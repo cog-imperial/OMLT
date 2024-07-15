@@ -3,6 +3,7 @@
 branch = True
 source = optml
 # omit = bad_file.py
+omit = julia.py
 
 [paths]
 source =
