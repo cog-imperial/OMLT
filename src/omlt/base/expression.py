@@ -28,24 +28,12 @@ class OmltExpr(ABC):
 
     @abstractmethod
     def is_indexed(self):
-        pass
+        """Return False for a scalar expression, True for an indexed expression."""
+
 
     def valid_model_component(self):
         """Return True if this can be used as a model component."""
         return True
-
-    @property
-    @abstractmethod
-    def args(self):
-        pass
-
-    @abstractmethod
-    def arg(self, index):
-        pass
-
-    @abstractmethod
-    def nargs(self):
-        pass
 
 
 class OmltExprScalar(OmltExpr):
@@ -63,11 +51,25 @@ class OmltExprScalar(OmltExpr):
         instance._format = lang
         return instance
 
-    def is_potentially_variable(self):
-        pass
+    def is_indexed(self):
+        return False
 
-    def __mul__(self, other):
-        pass
+    @abstractmethod
+    def is_potentially_variable(self):
+        """Return True if the expression has variable arguments, False if constant."""
+
+    @property
+    @abstractmethod
+    def args(self):
+        """Return a list of the args of the expression."""
+
+    @abstractmethod
+    def arg(self, index):
+        """Return the arg corresponding to the given index."""
+
+    @abstractmethod
+    def nargs(self):
+        """Return the number of arguments."""
 
 
 class OmltExprIndexed(OmltExpr):
@@ -75,7 +77,7 @@ class OmltExprIndexed(OmltExpr):
         subclass_map = {subclass.format: subclass for subclass in cls.__subclasses__()}
         if lang not in subclass_map:
             msg = (
-                "Variable format %s not recognized. Supported formats are 'pyomo'"
+                "Expression format %s not recognized. Supported formats are 'pyomo'"
                 " or 'jump'.",
                 lang,
             )
@@ -85,3 +87,6 @@ class OmltExprIndexed(OmltExpr):
         instance.__init__(*indexes, **kwargs)
         instance._format = lang
         return instance
+
+    def is_indexed(self):
+        return True

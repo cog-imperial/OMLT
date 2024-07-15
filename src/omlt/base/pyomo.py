@@ -20,8 +20,9 @@ class OmltScalarPyomo(OmltScalar, pyo.ScalarVar):
     def __init__(self, *args, **kwargs: Any):
         kwargs.pop("lang", None)
         self._pyovar = pyo.ScalarVar(*args, **kwargs)
+        self._name = None
         self._parent = None
-        self._constructed = None
+        self._constructed = self._pyovar._constructed
 
     def construct(self, data=None):
         return self._pyovar.construct(data)
@@ -90,6 +91,7 @@ class OmltIndexedPyomo(pyo.Var, OmltIndexed):
     def __init__(self, *indexes, **kwargs: Any):
         kwargs.pop("lang", None)
         super().__init__(*indexes, **kwargs)
+        self.bounds = (None, None)
 
     def fix(self, value=None, *, skip_validation=False):
         self.fixed = True
@@ -101,10 +103,12 @@ class OmltIndexedPyomo(pyo.Var, OmltIndexed):
                 vardata.fix(value, skip_validation)
 
     def setub(self, value):
+        self.bounds = (self.bounds[0], value)
         for vardata in self.values():
             vardata.ub = value
 
     def setlb(self, value):
+        self.bounds = (value, self.bounds[1])
         for vardata in self.values():
             vardata.lb = value
 
@@ -130,12 +134,8 @@ class OmltConstraintScalarPyomo(OmltConstraintScalar, pyo.Constraint):
             pyoexpr = self.lhs == self.rhs
         if self.sense == ">=":
             pyoexpr = self.lhs >= self.rhs
-        if self.sense == ">":
-            pyoexpr = self.lhs > self.rhs
         if self.sense == "<=":
             pyoexpr = self.lhs <= self.rhs
-        if self.sense == "<":
-            pyoexpr = self.lhs < self.rhs
 
         self.constraint = pyo.Constraint(expr=pyoexpr)
         self.constraint._parent = self._parent
@@ -242,10 +242,10 @@ class OmltExprScalarPyomo(OmltExprScalar, pyo.Expression):
 
     def __init__(self, expr=None, **kwargs: Any):
         self._index_set = {}
-        if isinstance(expr, (pyo.Expression, pyo.NumericValue)):
-            self._expression = expr
-        elif isinstance(expr, OmltExprScalarPyomo):
+        if isinstance(expr, OmltExprScalarPyomo):
             self._expression = expr._expression
+        elif isinstance(expr, (pyo.Expression, pyo.NumericValue)):
+            self._expression = expr
         elif isinstance(expr, tuple):
             self._expression = self._parse_expression_tuple(expr)
         else:
@@ -294,9 +294,6 @@ class OmltExprScalarPyomo(OmltExprScalar, pyo.Expression):
     def is_potentially_variable(self):
         return self._expression.is_potentially_variable()
 
-    def is_indexed(self):
-        return False
-
     def as_numeric(self):
         return self._expression._apply_operation(self._expression.args)
 
@@ -332,56 +329,56 @@ class OmltExprScalarPyomo(OmltExprScalar, pyo.Expression):
             expr = self._expression + other._expression
         elif isinstance(other, (int, float, pyo.Expression)):
             expr = self._expression + other
-        return OmltExprScalar(format=self._format, expr=expr)
+        return OmltExprScalar(lang=self._format, expr=expr)
 
     def __sub__(self, other):
         if isinstance(other, OmltExprScalarPyomo):
             expr = self._expression - other._expression
         elif isinstance(other, (int, float, pyo.Expression)):
             expr = self._expression - other
-        return OmltExprScalar(format=self._format, expr=expr)
+        return OmltExprScalar(lang=self._format, expr=expr)
 
     def __mul__(self, other):
         if isinstance(other, OmltExprScalarPyomo):
             expr = self._expression * other._expression
         elif isinstance(other, (int, float, pyo.Expression)):
             expr = self._expression * other
-        return OmltExprScalar(format=self._format, expr=expr)
+        return OmltExprScalar(lang=self._format, expr=expr)
 
     def __div__(self, other):
         if isinstance(other, OmltExprScalarPyomo):
             expr = self._expression / other._expression
         elif isinstance(other, (int, float, pyo.Expression)):
             expr = self._expression / other
-        return OmltExprScalar(format=self._format, expr=expr)
+        return OmltExprScalar(lang=self._format, expr=expr)
 
     def __truediv__(self, other):
         if isinstance(other, OmltExprScalarPyomo):
             expr = self._expression // other._expression
         elif isinstance(other, (int, float, pyo.Expression)):
             expr = self._expression // other
-        return OmltExprScalar(format=self._format, expr=expr)
+        return OmltExprScalar(lang=self._format, expr=expr)
 
     def __radd__(self, other):
         if isinstance(other, OmltExprScalarPyomo):
             expr = other._expression + self._expression
         elif isinstance(other, (int, float, pyo.Expression)):
             expr = other + self._expression
-        return OmltExprScalar(format=self._format, expr=expr)
+        return OmltExprScalar(lang=self._format, expr=expr)
 
     def __rsub__(self, other):
         if isinstance(other, OmltExprScalarPyomo):
             expr = other._expression - self._expression
         elif isinstance(other, (int, float, pyo.Expression)):
             expr = other - self._expression
-        return OmltExprScalar(format=self._format, expr=expr)
+        return OmltExprScalar(lang=self._format, expr=expr)
 
     def __rmul__(self, other):
         if isinstance(other, OmltExprScalar):
             expr = other._expression * self._expression
         elif isinstance(other, (int, float, pyo.Expression)):
             expr = other * self._expression
-        return OmltExprScalar(format=self._format, expr=expr)
+        return OmltExprScalar(lang=self._format, expr=expr)
 
     def __ge__(self, other):
         if isinstance(other, OmltExprScalarPyomo):
@@ -391,7 +388,7 @@ class OmltExprScalarPyomo(OmltExprScalar, pyo.Expression):
         else:
             rhs = other
         return OmltConstraintScalar(
-            model=self._parent, format=self._format, lhs=self, sense=">=", rhs=rhs
+            model=self._parent, lang=self._format, lhs=self, sense=">=", rhs=rhs
         )
 
     def __le__(self, other):
@@ -402,7 +399,7 @@ class OmltExprScalarPyomo(OmltExprScalar, pyo.Expression):
         else:
             rhs = other
         return OmltConstraintScalar(
-            model=self._parent, format=self._format, lhs=self, sense="<=", rhs=rhs
+            model=self._parent, lang=self._format, lhs=self, sense="<=", rhs=rhs
         )
 
     def __eq__(self, other):
@@ -413,7 +410,7 @@ class OmltExprScalarPyomo(OmltExprScalar, pyo.Expression):
         else:
             rhs = other
         return OmltConstraintScalar(
-            model=self._parent, format=self._format, lhs=self, sense="==", rhs=rhs
+            model=self._parent, lang=self._format, lhs=self, sense="==", rhs=rhs
         )
 
 
@@ -435,9 +432,6 @@ class OmltExprIndexedPyomo(OmltExprIndexed, pyo.Expression):
             self._index_set = {}
         self._format = format
         self._expression = pyo.Expression(self._index_set, expr=expr)
-
-    def is_indexed(self):
-        return True
 
     def expression_as_dict(self):
         if len(self._index_set) == 1:

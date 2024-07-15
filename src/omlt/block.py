@@ -26,14 +26,10 @@ Example:
 
 import warnings
 
-from omlt.base import DEFAULT_MODELING_LANGUAGE, OmltVar
-from omlt.dependencies import julia_available
-
-if julia_available:
-    from omlt.base import jump
-
 import pyomo.environ as pyo
 from pyomo.core.base.block import BlockData, declare_custom_block
+
+from omlt.base import DEFAULT_MODELING_LANGUAGE, OmltVar
 
 
 @declare_custom_block(name="OmltBlock")
@@ -44,15 +40,10 @@ class OmltBlockData(BlockData):
         self.__input_indexes = None
         self.__output_indexes = None
         self._format = DEFAULT_MODELING_LANGUAGE
-        if self._format == "jump":
-            self._jumpmodel = jump.Model()
-        else:
-            self._jumpmodel = None
 
     def set_format(self, lang):
         self._format = lang
-        if self._format == "jump" and self._jumpmodel is None:
-            self._jumpmodel = jump.Model()
+
 
     def _setup_inputs_outputs(self, *, input_indexes, output_indexes):
         """Setup inputs and outputs.

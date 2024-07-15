@@ -23,21 +23,21 @@ class OmltVar(ABC):
 
     @abstractmethod
     def construct(self, data):
-        pass
+        """Construct the variable."""
 
     @abstractmethod
     def fix(self, value, skip_validation):
-        pass
+        """Fix the value of the variable."""
 
     @property
     @abstractmethod
     def ctype(self):
-        pass
+        """Return the type of the variable."""
 
     @property
     @abstractmethod
     def name(self):
-        pass
+        """Return the name of the variable."""
 
     # Some methods to tell OMLT (and Pyomo components) that this
     # is a variable.
@@ -46,7 +46,7 @@ class OmltVar(ABC):
 
     @abstractmethod
     def is_indexed(self):
-        pass
+        """Return False for a scalar variable, True for an indexed variable."""
 
     def valid_model_component(self):
         """Return True if this can be used as a model component."""
@@ -77,53 +77,53 @@ class OmltScalar(OmltVar):
     @property
     @abstractmethod
     def bounds(self):
-        pass
+        """Return a tuple with the lower and upper bounds."""
 
     @bounds.setter
     @abstractmethod
     def bounds(self, val):
-        pass
+        """Set lower and upper bounds to the given tuple."""
 
     @property
     @abstractmethod
     def lb(self):
-        pass
+        """Return the lower bound of the variable."""
 
     @lb.setter
     @abstractmethod
     def lb(self, val):
-        pass
+        """Set lower bound to the given value."""
 
     @property
     @abstractmethod
     def ub(self):
-        pass
+        """Return the upper bound of the variable."""
 
     @ub.setter
     @abstractmethod
     def ub(self, val):
-        pass
+        """Set upper bound to the given value."""
 
     @property
     @abstractmethod
     def domain(self):
-        pass
+        """Return the set of allowable values."""
 
     @domain.setter
     @abstractmethod
     def domain(self, val):
-        pass
+        """Set the allowable values to the given set."""
 
     # Interface for getting/setting value
     @property
     @abstractmethod
     def value(self):
-        pass
+        """Return the current value of the variable."""
 
     @value.setter
     @abstractmethod
     def value(self, val):
-        pass
+        """Set the current value of the variable."""
 
     # Interface governing how variables behave in expressions.
 
@@ -162,33 +162,6 @@ class OmltScalar(OmltVar):
 
     def __rpow__(self, other):
         return expression.OmltExprScalar(lang=self._format, expr=(other, "**", self))
-
-    def __iadd__(self, other):
-        return pyo.NumericValue.__iadd__(self, other)
-
-    def __isub__(self, other):
-        return pyo.NumericValue.__isub__(self, other)
-
-    def __imul__(self, other):
-        return pyo.NumericValue.__imul__(self, other)
-
-    def __idiv__(self, other):
-        return pyo.NumericValue.__idiv__(self, other)
-
-    def __itruediv__(self, other):
-        return pyo.NumericValue.__itruediv__(self, other)
-
-    def __ipow__(self, other):
-        return pyo.NumericValue.__ipow__(self, other)
-
-    def __neg__(self):
-        return pyo.NumericValue.__neg__(self)
-
-    def __pos__(self):
-        return pyo.NumericValue.__pos__(self)
-
-    def __abs__(self):
-        return pyo.NumericValue.__abs__(self)
 
 
 class OmltIndexed(OmltVar):
@@ -294,30 +267,3 @@ class OmltIndexed(OmltVar):
 
     def __rpow__(self, other):
         return expression.OmltExprIndexed(self.index_set(), expr=(other, "**", self))
-
-    def __iadd__(self, other):
-        return pyo.NumericValue.__iadd__(self, other)
-
-    def __isub__(self, other):
-        return pyo.NumericValue.__isub__(self, other)
-
-    def __imul__(self, other):
-        return pyo.NumericValue.__imul__(self, other)
-
-    def __idiv__(self, other):
-        return pyo.NumericValue.__idiv__(self, other)
-
-    def __itruediv__(self, other):
-        return pyo.NumericValue.__itruediv__(self, other)
-
-    def __ipow__(self, other):
-        return pyo.NumericValue.__ipow__(self, other)
-
-    def __neg__(self):
-        return pyo.NumericValue.__neg__(self)
-
-    def __pos__(self):
-        return pyo.NumericValue.__pos__(self)
-
-    def __abs__(self):
-        return pyo.NumericValue.__abs__(self)
