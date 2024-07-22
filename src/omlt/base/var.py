@@ -8,8 +8,6 @@ JuMP, or others (not yet implemented - e.g. Smoke, Gurobi).
 from abc import ABC, abstractmethod
 from typing import Any
 
-import pyomo.environ as pyo
-
 from omlt.base import DEFAULT_MODELING_LANGUAGE, expression
 
 
@@ -26,7 +24,7 @@ class OmltVar(ABC):
         """Construct the variable."""
 
     @abstractmethod
-    def fix(self, value, skip_validation):
+    def fix(self, value, *, skip_validation=False):
         """Fix the value of the variable."""
 
     @property
@@ -128,40 +126,28 @@ class OmltScalar(OmltVar):
     # Interface governing how variables behave in expressions.
 
     def __add__(self, other):
-        return expression.OmltExprScalar(lang=self._format, expr=(self, "+", other))
+        return expression.OmltExpr(lang=self._format, expr=(self, "+", other))
 
     def __sub__(self, other):
-        return expression.OmltExprScalar(lang=self._format, expr=(self, "-", other))
+        return expression.OmltExpr(lang=self._format, expr=(self, "-", other))
 
     def __mul__(self, other):
-        return expression.OmltExprScalar(lang=self._format, expr=(self, "*", other))
-
-    def __div__(self, other):
-        return expression.OmltExprScalar(lang=self._format, expr=(self, "//", other))
+        return expression.OmltExpr(lang=self._format, expr=(self, "*", other))
 
     def __truediv__(self, other):
-        return expression.OmltExprScalar(lang=self._format, expr=(self, "/", other))
-
-    def __pow__(self, other):
-        return expression.OmltExprScalar(lang=self._format, expr=(self, "**", other))
+        return expression.OmltExpr(lang=self._format, expr=(self, "/", other))
 
     def __radd__(self, other):
-        return expression.OmltExprScalar(lang=self._format, expr=(other, "+", self))
+        return expression.OmltExpr(lang=self._format, expr=(other, "+", self))
 
     def __rsub__(self, other):
-        return expression.OmltExprScalar(lang=self._format, expr=(other, "-", self))
+        return expression.OmltExpr(lang=self._format, expr=(other, "-", self))
 
     def __rmul__(self, other):
-        return expression.OmltExprScalar(lang=self._format, expr=(other, "*", self))
-
-    def __rdiv__(self, other):
-        return expression.OmltExprScalar(lang=self._format, expr=(other, "//", self))
+        return expression.OmltExpr(lang=self._format, expr=(other, "*", self))
 
     def __rtruediv__(self, other):
-        return expression.OmltExprScalar(lang=self._format, expr=(other, "/", self))
-
-    def __rpow__(self, other):
-        return expression.OmltExprScalar(lang=self._format, expr=(other, "**", self))
+        return expression.OmltExpr(lang=self._format, expr=(other, "/", self))
 
 
 class OmltIndexed(OmltVar):
@@ -229,41 +215,3 @@ class OmltIndexed(OmltVar):
     @abstractmethod
     def __iter__(self):
         pass
-
-    # Interface governing how variables behave in expressions.
-
-    def __add__(self, other):
-        return expression.OmltExprIndexed(self.index_set(), expr=(self, "+", other))
-
-    def __sub__(self, other):
-        return expression.OmltExprIndexed(self.index_set(), expr=(self, "-", other))
-
-    def __mul__(self, other):
-        return expression.OmltExprIndexed(self.index_set(), expr=(self, "*", other))
-
-    def __div__(self, other):
-        return expression.OmltExprIndexed(self.index_set(), expr=(self, "//", other))
-
-    def __truediv__(self, other):
-        return expression.OmltExprIndexed(self.index_set(), expr=(self, "/", other))
-
-    def __pow__(self, other):
-        return expression.OmltExprIndexed(self.index_set(), expr=(self, "**", other))
-
-    def __radd__(self, other):
-        return expression.OmltExprIndexed(self.index_set(), expr=(other, "+", self))
-
-    def __rsub__(self, other):
-        return expression.OmltExprIndexed(self.index_set(), expr=(other, "-", self))
-
-    def __rmul__(self, other):
-        return expression.OmltExprIndexed(self.index_set(), expr=(other, "*", self))
-
-    def __rdiv__(self, other):
-        return expression.OmltExprIndexed(self.index_set(), expr=(other, "//", self))
-
-    def __rtruediv__(self, other):
-        return expression.OmltExprIndexed(self.index_set(), expr=(other, "/", self))
-
-    def __rpow__(self, other):
-        return expression.OmltExprIndexed(self.index_set(), expr=(other, "**", self))

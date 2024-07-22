@@ -1,13 +1,15 @@
+import pyomo.environ as pyo
+
 from omlt.base.var import OmltIndexed, OmltScalar
 from omlt.dependencies import julia_available
 
 if julia_available:
     from juliacall import Base
-    from juliacall import Main as jl
+    from juliacall import Main as Jl
 
     jl_err = Base.error
-    jl.seval("import JuMP")
-    jump = jl.JuMP
+    Jl.seval("import JuMP")
+    jump = Jl.JuMP
 
 # Elements
 
@@ -18,6 +20,7 @@ class JuMPVarInfo:
         upper_bound=None,
         fixed_value=None,
         start_value=None,
+        *,
         binary=False,
         integer=False,
     ):
@@ -100,8 +103,7 @@ class JumpVar:
     def add_to_model(self, model, name=None):
         if name is None:
             name = self.name
-        variable_ref = jump.add_variable(model, self.var, name)
-        return variable_ref
+        return jump.add_variable(model, self.var, name)
 
     def to_jump(self):
         return self.var
@@ -129,7 +131,7 @@ class OmltScalarJuMP(OmltScalar):
     def __class__(self):
         return pyo.ScalarVar
 
-    def __init__(self, **kwargs: Any):
+    def __init__(self, **kwargs):
         self._block = kwargs.pop("block", None)
 
         self._bounds = kwargs.pop("bounds", None)

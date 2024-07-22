@@ -1,4 +1,3 @@
-import re
 
 import pyomo.environ as pyo
 import pytest

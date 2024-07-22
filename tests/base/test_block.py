@@ -44,8 +44,9 @@ def test_block():
 
     m = pyo.ConcreteModel()
     m.b = OmltBlock()
+    m.b.set_format("pyomo")
     formulation = DummyFormulation()
-    m.b.build_formulation(formulation)
+    m.b.build_formulation(formulation, lang="pyomo")
 
     assert m.b._OmltBlockData__formulation is formulation
     assert list(m.b.inputs) == ["A", "C", "D"]

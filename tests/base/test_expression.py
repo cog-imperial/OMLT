@@ -1,14 +1,15 @@
+import omlt.base.pyomo as pobjects
 import pyomo.environ as pyo
 import pytest
-from omlt.base import OmltExpr, OmltExprIndexed, OmltExprScalar, OmltVar
+from omlt.base import OmltExpr, OmltScalar, OmltVar
 
 VAR1_VALUE = 6
 VAR2_VALUE = 3
 CONST_VALUE = 4
 
 def _test_build_scalar_expressions(lang):
-    v1 = OmltVar(lang=lang)
-    v2 = OmltVar(lang=lang)
+    v1 = OmltScalar(lang=lang)
+    v2 = OmltScalar(lang=lang)
 
     v1.domain = pyo.Integers
     v2.domain = pyo.Integers
@@ -57,12 +58,13 @@ def test_init_scalar_expression():
     v1.value = VAR1_VALUE
     e1 = v1 + CONST_VALUE
 
-    e2 = OmltExprScalar(expr=e1)
+    e2 = OmltExpr(expr=e1)
 
     assert e2.ctype == pyo.Expression
     assert e2.is_component_type()
     assert e2.is_expression_type()
     assert e2.valid_model_component()
+    assert e2.is_potentially_variable()
     assert not e2.is_indexed()
 
     assert e2.nargs() == 2
@@ -76,26 +78,31 @@ def test_init_scalar_expression():
         )
 
     with pytest.raises(TypeError, match=expected_msg):
-        OmltExprScalar(expr="test")
+        OmltExpr(expr="test")
 
     expected_msg = (
                 "Expression format %s not recognized. Supported formats "
                 "are 'pyomo' or 'jump'."
             )
     with pytest.raises(ValueError, match=expected_msg):
-        OmltExprScalar(lang="test")
+        OmltExpr(lang="test")
 
     expected_msg = "Expression middle term was {%s}."
     with pytest.raises(ValueError, match=expected_msg):
-        OmltExprScalar(expr=(v1, "test", CONST_VALUE))
+        OmltExpr(expr=(v1, "test", CONST_VALUE))
+
+    expected_msg = "Term of expression %s is an unsupported type. %s"
+
+    with pytest.raises(TypeError, match=expected_msg):
+        OmltExpr(expr=((e1, "-", "test"), "+", CONST_VALUE))
 
 def test_combine_scalar_expression():
-    v1 = OmltVar()
+    v1 = OmltScalar()
     v1.domain = pyo.Integers
     v1.value = VAR1_VALUE
     e1 = v1 + CONST_VALUE
 
-    v2 = OmltVar()
+    v2 = OmltScalar()
     v2.domain = pyo.Integers
     v2.value = VAR2_VALUE
     e2 = v2 + CONST_VALUE
@@ -119,25 +126,11 @@ def test_combine_scalar_expression():
     p_prod = e1 * CONST_VALUE
     assert p_prod() == (VAR1_VALUE + CONST_VALUE) * CONST_VALUE
 
+    r_sum = CONST_VALUE + e1
+    assert r_sum() == VAR1_VALUE + 2*CONST_VALUE
 
-def test_init_indexed_expression():
-    v1 = OmltVar(range(3))
-    v1.domain = pyo.Integers
-    v1.value = VAR1_VALUE
-    e1 = v1 + CONST_VALUE
+    r_diff = CONST_VALUE - e1
+    assert r_diff() == -VAR1_VALUE
 
-    e2 = OmltExpr(range(3), expr=e1)
-
-    assert e2.ctype == pyo.Expression
-    assert e2.is_component_type()
-    assert e2.is_expression_type()
-    assert e2.valid_model_component()
-    assert e2.is_indexed()
-
-    expected_msg = (
-                "Expression format %s not recognized. Supported formats "
-                "are 'pyomo' or 'jump'."
-            )
-
-    with pytest.raises(ValueError, match=expected_msg):
-        OmltExprIndexed(range(3), lang="test")
+    r_prod = CONST_VALUE * e1
+    assert r_prod() == (VAR1_VALUE + CONST_VALUE) * CONST_VALUE
