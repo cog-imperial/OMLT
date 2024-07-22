@@ -7,13 +7,18 @@ from omlt.base import DEFAULT_MODELING_LANGUAGE
 
 
 class OmltExpr(ABC):
-    def __new__(cls, *indexes, **kwargs: Any):
-        if not indexes:
-            instance = super().__new__(OmltExprScalar)
-            instance.__init__(**kwargs)
-        else:
-            instance = super().__new__(OmltExprIndexed)
-            instance.__init__(*indexes, **kwargs)
+    def __new__(cls, lang=DEFAULT_MODELING_LANGUAGE, **kwargs: Any):
+        subclass_map = {subclass.format: subclass for subclass in cls.__subclasses__()}
+        if lang not in subclass_map:
+            msg = (
+                "Expression format %s not recognized. Supported formats "
+                "are 'pyomo' or 'jump'.",
+                lang,
+            )
+            raise ValueError(msg)
+        subclass = subclass_map[lang]
+        instance = super().__new__(subclass)
+        instance._format = lang
         return instance
 
     @property
@@ -35,24 +40,9 @@ class OmltExpr(ABC):
         """Return True if this can be used as a model component."""
         return True
 
-
-class OmltExprScalar(OmltExpr):
-    def __new__(cls, lang=DEFAULT_MODELING_LANGUAGE, **kwargs: Any):
-        subclass_map = {subclass.format: subclass for subclass in cls.__subclasses__()}
-        if lang not in subclass_map:
-            msg = (
-                "Expression format %s not recognized. Supported formats "
-                "are 'pyomo' or 'jump'.",
-                lang,
-            )
-            raise ValueError(msg)
-        subclass = subclass_map[lang]
-        instance = super(OmltExpr, cls).__new__(subclass)
-        instance._format = lang
-        return instance
-
-    def is_indexed(self):
-        return False
+    @abstractmethod
+    def __call__(self):
+        """Return the current value of the expression."""
 
     @abstractmethod
     def is_potentially_variable(self):
@@ -70,23 +60,3 @@ class OmltExprScalar(OmltExpr):
     @abstractmethod
     def nargs(self):
         """Return the number of arguments."""
-
-
-class OmltExprIndexed(OmltExpr):
-    def __new__(cls, *indexes, lang=DEFAULT_MODELING_LANGUAGE, **kwargs: Any):
-        subclass_map = {subclass.format: subclass for subclass in cls.__subclasses__()}
-        if lang not in subclass_map:
-            msg = (
-                "Expression format %s not recognized. Supported formats are 'pyomo'"
-                " or 'jump'.",
-                lang,
-            )
-            raise ValueError(msg)
-        subclass = subclass_map[lang]
-        instance = super(OmltExpr, subclass).__new__(subclass)
-        instance.__init__(*indexes, **kwargs)
-        instance._format = lang
-        return instance
-
-    def is_indexed(self):
-        return True

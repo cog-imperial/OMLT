@@ -3,16 +3,18 @@
 This file contains implementations of the OMLT classes, using
 Pyomo objects as the underlying data storage mechanism.
 """
+
 from typing import Any
 
 import pyomo.environ as pyo
 from pyomo.core.base.var import _GeneralVarData
 
 from omlt.base.constraint import OmltConstraintIndexed, OmltConstraintScalar
-from omlt.base.expression import OmltExprIndexed, OmltExprScalar
+from omlt.base.expression import OmltExpr
 from omlt.base.var import OmltIndexed, OmltScalar
 
 # Variables
+
 
 class OmltScalarPyomo(OmltScalar, pyo.ScalarVar):
     format = "pyomo"
@@ -112,7 +114,9 @@ class OmltIndexedPyomo(pyo.Var, OmltIndexed):
         for vardata in self.values():
             vardata.lb = value
 
+
 # Constraints
+
 
 class OmltConstraintScalarPyomo(OmltConstraintScalar, pyo.Constraint):
     format = "pyomo"
@@ -120,14 +124,10 @@ class OmltConstraintScalarPyomo(OmltConstraintScalar, pyo.Constraint):
     def __init__(self, *args, **kwargs: Any):
         super().__init__(*args, **kwargs)
         self.lhs = (
-            self.lhs._expression
-            if isinstance(self.lhs, OmltExprScalar)
-            else self.lhs
+            self.lhs._expression if isinstance(self.lhs, OmltExprScalarPyomo) else self.lhs
         )
         self.rhs = (
-            self.rhs._expression
-            if isinstance(self.rhs, OmltExprScalar)
-            else self.rhs
+            self.rhs._expression if isinstance(self.rhs, OmltExprScalarPyomo) else self.rhs
         )
 
         if self.sense == "==":
@@ -171,6 +171,7 @@ class OmltConstraintScalarPyomo(OmltConstraintScalar, pyo.Constraint):
     def is_indexed(self):
         return False
 
+
 class OmltConstraintIndexedPyomo(OmltConstraintIndexed, pyo.Constraint):
     format = "pyomo"
 
@@ -178,9 +179,10 @@ class OmltConstraintIndexedPyomo(OmltConstraintIndexed, pyo.Constraint):
         super().__init__(*args, **kwargs)
         kwargs.pop("model", None)
         kwargs.pop("lang", None)
-
+        kwargs.pop("expr_tuple", None)
         self.constraint = pyo.Constraint(*self._index_set, **kwargs)
         self._index_set = self.constraint._index_set
+
         self.constraint._parent = self._parent
         self.constraint.construct()
         self.model = self.constraint.model
@@ -193,7 +195,7 @@ class OmltConstraintIndexedPyomo(OmltConstraintIndexed, pyo.Constraint):
             self.constraints[index] = self.constraint[index]
         else:
             msg = (
-                "Couldn't find index %s in index set %.",
+                "Couldn't find index %s in index set %s.",
                 index,
                 list(self._index_set.data()),
             )
@@ -203,7 +205,7 @@ class OmltConstraintIndexedPyomo(OmltConstraintIndexed, pyo.Constraint):
         if index in self.constraint._index_set:
             return self.constraint[index]
         msg = (
-            "Couldn't find index %s in index set %.",
+            "Couldn't find index %s in index set %s.",
             index,
             list(self._index_set.data()),
         )
@@ -235,12 +237,14 @@ class OmltConstraintIndexedPyomo(OmltConstraintIndexed, pyo.Constraint):
     def doc(self):
         return self.constraint.doc
 
+
 # Expressions
 
-class OmltExprScalarPyomo(OmltExprScalar, pyo.Expression):
+
+class OmltExprScalarPyomo(OmltExpr, pyo.Expression):
     format = "pyomo"
 
-    def __init__(self, expr=None, **kwargs: Any):
+    def __init__(self, expr=None, **kwargs):
         self._index_set = {}
         if isinstance(expr, OmltExprScalarPyomo):
             self._expression = expr._expression
@@ -324,61 +328,57 @@ class OmltExprScalarPyomo(OmltExprScalar, pyo.Expression):
     def __call__(self):
         return self._expression()
 
+    def is_indexed(self):
+        return False
+
     def __add__(self, other):
         if isinstance(other, OmltExprScalarPyomo):
             expr = self._expression + other._expression
         elif isinstance(other, (int, float, pyo.Expression)):
             expr = self._expression + other
-        return OmltExprScalar(lang=self._format, expr=expr)
+        return OmltExpr(lang=self._format, expr=expr)
 
     def __sub__(self, other):
         if isinstance(other, OmltExprScalarPyomo):
             expr = self._expression - other._expression
         elif isinstance(other, (int, float, pyo.Expression)):
             expr = self._expression - other
-        return OmltExprScalar(lang=self._format, expr=expr)
+        return OmltExpr(lang=self._format, expr=expr)
 
     def __mul__(self, other):
         if isinstance(other, OmltExprScalarPyomo):
             expr = self._expression * other._expression
         elif isinstance(other, (int, float, pyo.Expression)):
             expr = self._expression * other
-        return OmltExprScalar(lang=self._format, expr=expr)
+        return OmltExpr(lang=self._format, expr=expr)
 
     def __div__(self, other):
         if isinstance(other, OmltExprScalarPyomo):
             expr = self._expression / other._expression
         elif isinstance(other, (int, float, pyo.Expression)):
             expr = self._expression / other
-        return OmltExprScalar(lang=self._format, expr=expr)
-
-    def __truediv__(self, other):
-        if isinstance(other, OmltExprScalarPyomo):
-            expr = self._expression // other._expression
-        elif isinstance(other, (int, float, pyo.Expression)):
-            expr = self._expression // other
-        return OmltExprScalar(lang=self._format, expr=expr)
+        return OmltExpr(lang=self._format, expr=expr)
 
     def __radd__(self, other):
         if isinstance(other, OmltExprScalarPyomo):
             expr = other._expression + self._expression
         elif isinstance(other, (int, float, pyo.Expression)):
             expr = other + self._expression
-        return OmltExprScalar(lang=self._format, expr=expr)
+        return OmltExpr(lang=self._format, expr=expr)
 
     def __rsub__(self, other):
         if isinstance(other, OmltExprScalarPyomo):
             expr = other._expression - self._expression
         elif isinstance(other, (int, float, pyo.Expression)):
             expr = other - self._expression
-        return OmltExprScalar(lang=self._format, expr=expr)
+        return OmltExpr(lang=self._format, expr=expr)
 
     def __rmul__(self, other):
-        if isinstance(other, OmltExprScalar):
+        if isinstance(other, OmltExprScalarPyomo):
             expr = other._expression * self._expression
         elif isinstance(other, (int, float, pyo.Expression)):
             expr = other * self._expression
-        return OmltExprScalar(lang=self._format, expr=expr)
+        return OmltExpr(lang=self._format, expr=expr)
 
     def __ge__(self, other):
         if isinstance(other, OmltExprScalarPyomo):
@@ -412,106 +412,3 @@ class OmltExprScalarPyomo(OmltExprScalar, pyo.Expression):
         return OmltConstraintScalar(
             model=self._parent, lang=self._format, lhs=self, sense="==", rhs=rhs
         )
-
-
-class OmltExprIndexedPyomo(OmltExprIndexed, pyo.Expression):
-    format = "pyomo"
-
-    def __init__(
-        self, *indexes, expr=None, **kwargs: Any
-    ):
-        if len(indexes) == 1:
-            index_set = indexes[0]
-            i_dict = {}
-            for i, val in enumerate(index_set):
-                i_dict[i] = val
-            self._index_set = tuple(i_dict[i] for i in range(len(index_set)))
-        elif len(indexes) > 1:
-            raise ValueError("Currently index cross-products are unsupported.")
-        else:
-            self._index_set = {}
-        self._format = format
-        self._expression = pyo.Expression(self._index_set, expr=expr)
-
-    def expression_as_dict(self):
-        if len(self._index_set) == 1:
-            return {self._index_set[0]: self._expression}
-        return {k: self._expression[k] for k in self._index_set}
-
-    def __getitem__(self, item):
-        if isinstance(item, tuple) and len(item) == 1:
-            return self._expression[item[0]]
-        return self._expression[item]
-
-    def __setitem__(self, item, value):
-        self._expression[item] = value
-
-    def keys(self):
-        return self._expression.keys()
-
-    def values(self):
-        return self._expression.values()
-
-    def items(self):
-        return self._expression.items()
-
-    def __len__(self):
-        """Return the number of component data objects stored by this component."""
-        return len(self._expression)
-
-    def __contains__(self, idx):
-        """Return true if the index is in the dictionary."""
-        return idx in self._expression
-
-    # The default implementation is for keys() and __iter__ to be
-    # synonyms.  The logic is implemented in keys() so that
-    # keys/values/items continue to work for components that implement
-    # other definitions for __iter__ (e.g., Set)
-    def __iter__(self):
-        """Return an iterator of the component data keys."""
-        return self._expression.__iter__()
-
-    @property
-    def args(self):
-        return self._expression.args()
-
-    def arg(self, index):
-        return self._expression.arg(index)
-
-    def nargs(self):
-        return self._expression.nargs()
-
-    def __call__(self):
-        return self._expression()
-
-    def __add__(self, other):
-        expr = (self, "+", other)
-        return OmltExprIndexed(self._index_set, format=self._format, expr=expr)
-
-    def __sub__(self, other):
-        expr = (self, "-", other)
-        return OmltExprIndexed(self._index_set, format=self._format, expr=expr)
-
-    def __mul__(self, other):
-        expr = (self, "*", other)
-        return OmltExprIndexed(self._index_set, format=self._format, expr=expr)
-
-    def __div__(self, other):
-        expr = (self, "/", other)
-        return OmltExprIndexed(self._index_set, format=self._format, expr=expr)
-
-    def __truediv__(self, other):
-        expr = (self, "//", other)
-        return OmltExprIndexed(self._index_set, format=self._format, expr=expr)
-
-    def __eq__(self, other):
-        expr = (self, "==", other)
-        return pyo.Expression(self._index_set, expr=expr)
-
-    def __le__(self, other):
-        expr = (self, "<=", other)
-        return pyo.Expression(self._index_set, expr=expr)
-
-    def __ge__(self, other):
-        expr = (self, ">=", other)
-        return pyo.Expression(self._index_set, expr=expr)

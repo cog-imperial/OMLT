@@ -85,11 +85,11 @@ class OmltConstraintScalar(OmltConstraint):
         self._parent = None
 
     def __call__(self, *args: Any, **kwds: Any) -> Any:
-        pass
+        """Return the value of the body of the constraint."""
 
     @property
     def args(self):
-        pass
+        """Return an iterator over the arguments of the constraint."""
 
 
 class OmltConstraintIndexed(OmltConstraint):
@@ -111,22 +111,6 @@ class OmltConstraintIndexed(OmltConstraint):
     def __init__(self, *indexes, lang=DEFAULT_MODELING_LANGUAGE, **kwargs: Any):
         self._index_set = indexes
 
-        lhs = kwargs.pop("lhs", None)
-        if lhs:
-            self.lhs = lhs
-        sense = kwargs.pop("sense", None)
-        if sense:
-            self.sense = sense
-        rhs = kwargs.pop("rhs", None)
-        if rhs:
-            self.rhs = rhs
-        if not lhs and not sense and not rhs:
-            expr_tuple = kwargs.pop("expr_tuple", None)
-            if expr_tuple and expr_tuple[1] in {"==", ">=", "<=", ">", "<", "in"}:
-                self.lhs = expr_tuple[0]
-                self.sense = expr_tuple[1]
-                self.rhs = expr_tuple[2]
-
         self.model = kwargs.pop("model", None)
         self._parent = None
         self.name = None
@@ -142,19 +126,19 @@ class OmltConstraintIndexed(OmltConstraint):
     @property
     @abstractmethod
     def _constructed(self):
-        pass
+        """Return True if the constraint has been constructed."""
 
     @property
     @abstractmethod
     def _active(self):
-        pass
+        """Return True if the constraint is active."""
 
     @_active.setter
     @abstractmethod
     def _active(self, val):
-        pass
+        """Set the constraint status to active or inactive."""
 
     @property
     @abstractmethod
     def _data(self):
-        pass
+        """Return data from the constraint."""

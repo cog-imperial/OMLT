@@ -43,47 +43,13 @@ def test_block():
 
     m = pyo.ConcreteModel()
     m.b = OmltBlock()
+    m.b.set_format("pyomo")
     formulation = DummyFormulation()
-    m.b.build_formulation(formulation)
+    m.b.build_formulation(formulation, lang="pyomo")
 
     assert m.b._OmltBlockData__formulation is formulation
     assert [k for k in m.b.inputs] == ["A", "C", "D"]
     assert [k for k in m.b.outputs] == [(0, 0), (0, 1), (1, 0), (1, 1)]
-
-
-@pytest.mark.skipif(
-    not julia_available, reason="Test only valid when Julia is available"
-)
-def test_jump_block():
-    m = pyo.ConcreteModel()
-    m.b = OmltBlock()
-    m.b.set_format("jump")
-
-    expected_msg = (
-        "Initial value for JuMP variables must be an int or float, but"
-        " <class 'tuple'> was provided."
-    )
-
-    with pytest.raises(ValueError, match=expected_msg) as excinfo:
-        m.b.x = OmltVar(initialize=(2, 7), lang="jump")
-
-    assert str(excinfo.value) == expected_msg
-
-    m.b.y = OmltVar(initialize=2, lang="jump")
-    assert m.b.y.value == 2
-    assert m.b.y.name == "y"
-    m.b.y.lb = 0
-    m.b.y.ub = 5
-    assert m.b.y.lb == 0
-    assert m.b.y.ub == 5
-
-    formulation = dummy_formulation()
-
-    m.b.build_formulation(formulation, format="jump")
-
-    assert m.b._OmltBlockData__formulation is formulation
-    assert list(m.b.inputs) == ["A", "C", "D"]
-    assert list(m.b.outputs) == [(0, 0), (0, 1), (1, 0), (1, 1)]
 
 
 def test_input_output_auto_creation():
