@@ -5,6 +5,8 @@ from omlt.dependencies import onnx, onnx_available
 if onnx_available:
     from omlt.io.onnx import load_onnx_neural_network
     from omlt.io.onnx_parser import NetworkParser
+    from onnx import numpy_helper
+    from numpy import array
 
 
 @pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
@@ -76,6 +78,8 @@ def test_gemm_transB(datadir):
 @pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
 def test_conv(datadir):
     model = onnx.load(datadir.file("convx1_gemmx1.onnx"))
+    del model.graph.node[0].attribute[0]
+    del model.graph.node[0].attribute[2]
     net = load_onnx_neural_network(model)
     layers = list(net.layers)
     assert len(layers) == 4
@@ -84,6 +88,37 @@ def test_conv(datadir):
     assert layers[3].activation == "relu"
     assert layers[1].strides == [1, 1]
     assert layers[1].kernel_shape == (2, 2)
+    assert layers[1].dilations == [1, 1]
+    assert layers[1].pads == [0, 0, 0, 0]
+
+
+@pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
+def test_conv_dilations(datadir):
+    model = onnx.load(datadir.file("convx1_gemmx1.onnx"))
+    for attr in model.graph.node[0].attribute:
+        if attr.name == "dilations":
+            del attr.ints[:]
+            attr.ints.extend([2, 2])
+        if attr.name == "pads":
+            del attr.ints[:]
+            attr.ints.extend([1, 2, 1, 0])
+    model.graph.node[1].attribute[0].t.raw_data = numpy_helper.from_array(
+        array([-1, 128])
+    ).raw_data
+    net = load_onnx_neural_network(model)
+    layers = list(net.layers)
+    assert layers[1].dilations == [2, 2]
+    assert (
+        layers[1].dilated_kernel[0][0].round(8)
+        == array(
+            [[-0.00886667, 0, 0.18750042], [0, 0, 0], [-0.11404419, 0, -0.02588665]]
+        )
+    ).all()
+    assert (
+        layers[1].dilated_kernel[1][0].round(8)
+        == array([[-0.07554907, 0, -0.05939162], [0, 0, 0], [0.2217437, 0, 0.14637864]])
+    ).all()
+    assert layers[1].pads == [1, 2, 1, 0]
 
 
 @pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
@@ -153,7 +188,7 @@ def test_consume_wrong_node_type(datadir):
             parser._nodes["StatefulPartitionedCall/keras_linear_131/dense/BiasAdd"][1],
             parser._nodes["StatefulPartitionedCall/keras_linear_131/dense/BiasAdd"][2],
         )
-    expected_msg_dense = "StatefulPartitionedCall/keras_linear_131/dense/BiasAdd is a Add node, only MatMul nodes can be used as starting points for consumption."
+    expected_msg_dense = "StatefulPartitionedCall/keras_linear_131/dense/BiasAdd is a Add node, but the method for parsing MatMul nodes was invoked."
     assert str(excinfo.value) == expected_msg_dense
 
     with pytest.raises(ValueError) as excinfo:
@@ -161,7 +196,7 @@ def test_consume_wrong_node_type(datadir):
             parser._nodes["StatefulPartitionedCall/keras_linear_131/dense/BiasAdd"][1],
             parser._nodes["StatefulPartitionedCall/keras_linear_131/dense/BiasAdd"][2],
         )
-    expected_msg_gemm = "StatefulPartitionedCall/keras_linear_131/dense/BiasAdd is a Add node, only Gemm nodes can be used as starting points for consumption."
+    expected_msg_gemm = "StatefulPartitionedCall/keras_linear_131/dense/BiasAdd is a Add node, but the method for parsing Gemm nodes was invoked."
     assert str(excinfo.value) == expected_msg_gemm
 
     with pytest.raises(ValueError) as excinfo:
@@ -169,7 +204,7 @@ def test_consume_wrong_node_type(datadir):
             parser._nodes["StatefulPartitionedCall/keras_linear_131/dense/BiasAdd"][1],
             parser._nodes["StatefulPartitionedCall/keras_linear_131/dense/BiasAdd"][2],
         )
-    expected_msg_conv = "StatefulPartitionedCall/keras_linear_131/dense/BiasAdd is a Add node, only Conv nodes can be used as starting points for consumption."
+    expected_msg_conv = "StatefulPartitionedCall/keras_linear_131/dense/BiasAdd is a Add node, but the method for parsing Conv nodes was invoked."
     assert str(excinfo.value) == expected_msg_conv
 
     with pytest.raises(ValueError) as excinfo:
@@ -177,7 +212,7 @@ def test_consume_wrong_node_type(datadir):
             parser._nodes["StatefulPartitionedCall/keras_linear_131/dense/BiasAdd"][1],
             parser._nodes["StatefulPartitionedCall/keras_linear_131/dense/BiasAdd"][2],
         )
-    expected_msg_reshape = "StatefulPartitionedCall/keras_linear_131/dense/BiasAdd is a Add node, only Reshape nodes can be used as starting points for consumption."
+    expected_msg_reshape = "StatefulPartitionedCall/keras_linear_131/dense/BiasAdd is a Add node, but the method for parsing Reshape nodes was invoked."
     assert str(excinfo.value) == expected_msg_reshape
 
     with pytest.raises(ValueError) as excinfo:
@@ -185,7 +220,7 @@ def test_consume_wrong_node_type(datadir):
             parser._nodes["StatefulPartitionedCall/keras_linear_131/dense/BiasAdd"][1],
             parser._nodes["StatefulPartitionedCall/keras_linear_131/dense/BiasAdd"][2],
         )
-    expected_msg_pool = """StatefulPartitionedCall/keras_linear_131/dense/BiasAdd is a Add node, only MaxPool nodes can be used as starting points for consumption."""
+    expected_msg_pool = """StatefulPartitionedCall/keras_linear_131/dense/BiasAdd is a Add node, but the method for parsing MaxPool nodes was invoked."""
     assert str(excinfo.value) == expected_msg_pool
 
 
@@ -203,7 +238,7 @@ def test_consume_dense_wrong_dims(datadir):
             parser._nodes["StatefulPartitionedCall/keras_linear_131/dense/MatMul"][1],
             parser._nodes["StatefulPartitionedCall/keras_linear_131/dense/MatMul"][2],
         )
-    expected_msg_dense = "StatefulPartitionedCall/keras_linear_131/dense/MatMul input has 3 dimensions, only nodes with 2 input dimensions can be used as starting points for consumption."
+    expected_msg_dense = "StatefulPartitionedCall/keras_linear_131/dense/MatMul input has 3 dimensions, but the parser requires the starting node to have 2 input dimensions."
     assert str(excinfo.value) == expected_msg_dense
 
 
@@ -217,7 +252,7 @@ def test_consume_gemm_wrong_dims(datadir):
         parser._consume_gemm_dense_nodes(
             parser._nodes["Gemm_0"][1], parser._nodes["Gemm_0"][2]
         )
-    expected_msg_gemm = "Gemm_0 input has 4 dimensions, only nodes with 3 input dimensions can be used as starting points for consumption."
+    expected_msg_gemm = "Gemm_0 input has 4 dimensions, but the parser requires the starting node to have 3 input dimensions."
     assert str(excinfo.value) == expected_msg_gemm
 
 
@@ -231,7 +266,7 @@ def test_consume_conv_wrong_dims(datadir):
         parser._consume_conv_nodes(
             parser._nodes["Conv_0"][1], parser._nodes["Conv_0"][2]
         )
-    expected_msg_conv = "Conv_0 input has 4 dimensions, only nodes with 2 or 3 input dimensions can be used as starting points for consumption."
+    expected_msg_conv = "Conv_0 input has 4 dimensions, but the parser requires the starting node to have 2 or 3 input dimensions."
     assert str(excinfo.value) == expected_msg_conv
 
 
@@ -245,7 +280,7 @@ def test_consume_reshape_wrong_dims(datadir):
         parser._consume_reshape_nodes(
             parser._nodes["Reshape_2"][1], parser._nodes["Reshape_2"][2]
         )
-    expected_msg_reshape = """Reshape_2 input has 3 dimensions, only nodes with 2 input dimensions can be used as starting points for consumption."""
+    expected_msg_reshape = """Reshape_2 input has 3 dimensions, but the parser requires the starting node to have 2 input dimensions."""
     assert str(excinfo.value) == expected_msg_reshape
 
 
@@ -257,5 +292,5 @@ def test_consume_maxpool_wrong_dims(datadir):
     parser._nodes["node1"][1].input.append("abcd")
     with pytest.raises(ValueError) as excinfo:
         parser._consume_pool_nodes(parser._nodes["node1"][1], parser._nodes["node1"][2])
-    expected_msg_maxpool = """node1 input has 2 dimensions, only nodes with 1 input dimension can be used as starting points for consumption."""
+    expected_msg_maxpool = """node1 input has 2 dimensions, but the parser requires the starting node to have 1 input dimension."""
     assert str(excinfo.value) == expected_msg_maxpool
