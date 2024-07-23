@@ -7,10 +7,10 @@ if keras_available:
 
 
 @pytest.mark.skipif(
-    not keras_available, reason="Test only valid when keras not available"
+    not keras_available, reason="Test only valid when keras is available"
 )
 def test_keras_reader(datadir):
-    nn = keras.models.load_model(datadir.file("keras_linear_131"), compile=False)
+    nn = keras.models.load_model(datadir.file("keras_linear_131.keras"), compile=False)
     net = load_keras_sequential(nn)
 
     layers = list(net.layers)
@@ -21,7 +21,7 @@ def test_keras_reader(datadir):
     assert layers[2].weights.shape == (3, 1)
 
     nn = keras.models.load_model(
-        datadir.file("keras_linear_131_sigmoid"), compile=False
+        datadir.file("keras_linear_131_sigmoid.keras"), compile=False
     )
     net = load_keras_sequential(nn)
     layers = list(net.layers)
@@ -32,7 +32,7 @@ def test_keras_reader(datadir):
     assert layers[2].weights.shape == (3, 1)
 
     nn = keras.models.load_model(
-        datadir.file("keras_linear_131_sigmoid_output_activation"), compile=False
+        datadir.file("keras_linear_131_sigmoid_output_activation.keras"), compile=False
     )
     net = load_keras_sequential(nn)
     layers = list(net.layers)
@@ -42,7 +42,7 @@ def test_keras_reader(datadir):
     assert layers[1].weights.shape == (1, 3)
     assert layers[2].weights.shape == (3, 1)
 
-    nn = keras.models.load_model(datadir.file("big"), compile=False)
+    nn = keras.models.load_model(datadir.file("big.keras"), compile=False)
     net = load_keras_sequential(nn)
     layers = list(net.layers)
     assert len(layers) == 5
