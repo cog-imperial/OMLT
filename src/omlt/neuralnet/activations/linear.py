@@ -1,4 +1,4 @@
-from omlt.base import OmltConstraint
+from omlt.base import OmltConstraintFactory
 
 
 def linear_activation_function(zhat):
@@ -19,7 +19,8 @@ def linear_activation_constraint(
         \end{align*}
 
     """
-    layer_block.linear_activation = OmltConstraint(
+    constraint_factory = OmltConstraintFactory()
+    layer_block.linear_activation = constraint_factory.new_constraint(
         layer.output_indexes, lang=net_block._format
     )
     for output_index in layer.output_indexes:

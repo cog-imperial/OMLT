@@ -1,15 +1,16 @@
-import omlt.base.pyomo as pobjects
 import pyomo.environ as pyo
 import pytest
-from omlt.base import OmltExpr, OmltScalar, OmltVar
+from omlt.base import OmltExpr, OmltVarFactory
 
 VAR1_VALUE = 6
 VAR2_VALUE = 3
 CONST_VALUE = 4
 
+var_factory = OmltVarFactory()
+
 def _test_build_scalar_expressions(lang):
-    v1 = OmltScalar(lang=lang)
-    v2 = OmltScalar(lang=lang)
+    v1 = var_factory.new_var(lang=lang)
+    v2 = var_factory.new_var(lang=lang)
 
     v1.domain = pyo.Integers
     v2.domain = pyo.Integers
@@ -53,7 +54,7 @@ def test_build_scalar_exp_pyomo():
     _test_build_scalar_expressions("pyomo")
 
 def test_init_scalar_expression():
-    v1 = OmltVar()
+    v1 = var_factory.new_var()
     v1.domain = pyo.Integers
     v1.value = VAR1_VALUE
     e1 = v1 + CONST_VALUE
@@ -97,12 +98,12 @@ def test_init_scalar_expression():
         OmltExpr(expr=((e1, "-", "test"), "+", CONST_VALUE))
 
 def test_combine_scalar_expression():
-    v1 = OmltScalar()
+    v1 = var_factory.new_var()
     v1.domain = pyo.Integers
     v1.value = VAR1_VALUE
     e1 = v1 + CONST_VALUE
 
-    v2 = OmltScalar()
+    v2 = var_factory.new_var()
     v2.domain = pyo.Integers
     v2.value = VAR2_VALUE
     e2 = v2 + CONST_VALUE

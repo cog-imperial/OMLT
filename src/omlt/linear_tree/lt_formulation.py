@@ -2,7 +2,7 @@ import numpy as np
 import pyomo.environ as pe
 from pyomo.gdp import Disjunct
 
-from omlt.base import OmltConstraint, OmltVar
+from omlt.base import OmltConstraintFactory, OmltVarFactory
 from omlt.formulation import _PyomoFormulation, _setup_scaled_inputs_outputs
 
 
@@ -249,7 +249,8 @@ def _add_gdp_formulation_to_block(
     block.scaled_outputs.setub(output_bounds[1])
     block.scaled_outputs.setlb(output_bounds[0])
 
-    block.intermediate_output = OmltVar(
+    var_factory = OmltVarFactory()
+    block.intermediate_output = var_factory.new_var(
         tree_ids, lang=block._format, bounds=(output_bounds[0], output_bounds[1])
     )
 
@@ -259,12 +260,12 @@ def _add_gdp_formulation_to_block(
         def lb_rule(dsj, feat):
             return input_vars[feat] >= leaves[tree][leaf]["bounds"][feat][0]
 
-        dsj.lb_constraint = OmltConstraint(features, rule=lb_rule)
+        dsj.lb_constraint = pe.Constraint(features, rule=lb_rule)
 
         def ub_rule(dsj, feat):
             return input_vars[feat] <= leaves[tree][leaf]["bounds"][feat][1]
 
-        dsj.ub_constraint = OmltConstraint(features, rule=ub_rule)
+        dsj.ub_constraint = pe.Constraint(features, rule=ub_rule)
         slope = leaves[tree][leaf]["slope"]
         intercept = leaves[tree][leaf]["intercept"]
         dsj.linear_exp = pe.Constraint(
@@ -323,10 +324,12 @@ def _add_hybrid_formulation_to_block(block, model_definition, input_vars, output
     # Create the intermeditate variables. z is binary that indicates which leaf
     # in tree t is returned. intermediate_output is the output of tree t and
     # the total output of the model is the sum of the intermediate_output vars
-    block.z = OmltVar(t_l, lang=block._format, within=pe.Binary)
-    block.intermediate_output = OmltVar(tree_ids, lang=block._format)
+    var_factory = OmltVarFactory()
+    block.z = var_factory.new_var(t_l, lang=block._format, within=pe.Binary)
+    block.intermediate_output = var_factory.new_var(tree_ids, lang=block._format)
 
-    block.lower_bound_constraints = OmltConstraint(features, tree_ids)
+    constraint_factory = OmltConstraintFactory()
+    block.lower_bound_constraints = constraint_factory.new_constraint(features, tree_ids)
     for tree in tree_ids:
         leaf_ids = list(leaves[tree].keys())
         for feat in features:
@@ -338,7 +341,7 @@ def _add_hybrid_formulation_to_block(block, model_definition, input_vars, output
                 <= input_vars[feat]
             )
 
-    block.upper_bound_constraints = OmltConstraint(features, tree_ids)
+    block.upper_bound_constraints = constraint_factory.new_constraint(features, tree_ids)
     for tree in tree_ids:
         leaf_ids = list(leaves[tree].keys())
         for feat in features:
@@ -350,7 +353,7 @@ def _add_hybrid_formulation_to_block(block, model_definition, input_vars, output
                 >= input_vars[feat]
             )
 
-    block.linear_constraint = OmltConstraint(tree_ids)
+    block.linear_constraint = constraint_factory.new_constraint(tree_ids)
     for tree in tree_ids:
         leaf_ids = list(leaves[tree].keys())
         block.linear_constraint[tree] = block.intermediate_output[tree] == sum(
@@ -364,13 +367,13 @@ def _add_hybrid_formulation_to_block(block, model_definition, input_vars, output
             * block.z[tree, leaf]
             for leaf in leaf_ids
         )
-    block.only_one_leaf_per_tree = OmltConstraint(tree_ids)
+    block.only_one_leaf_per_tree = constraint_factory.new_constraint(tree_ids)
     for tree in tree_ids:
         leaf_ids = list(leaves[tree].keys())
         block.only_one_leaf_per_tree[tree] = (
             sum(block.z[tree, leaf] for leaf in leaf_ids) == 1
         )
 
-    block.output_sum_of_trees = OmltConstraint(
+    block.output_sum_of_trees = constraint_factory.new_constraint(
         expr=output_vars[0] == sum(block.intermediate_output[tree] for tree in tree_ids)
     )

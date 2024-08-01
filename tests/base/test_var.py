@@ -1,12 +1,13 @@
-
 import pyomo.environ as pyo
 import pytest
-from omlt.base import OmltVar
+from omlt.base import OmltVarFactory
 from omlt.dependencies import julia_available
+
+var_factory = OmltVarFactory()
 
 
 def _test_scalar_var(lang):
-    v = OmltVar(lang=lang, initialize=2)
+    v = var_factory.new_var(lang=lang, initialize=2)
     assert v._parent is None
     assert v._constructed is False
     assert v.name is None
@@ -20,7 +21,6 @@ def _test_scalar_var(lang):
 
     v.value = 3
     assert v.value == 3
-
 
     v.fix(2, skip_validation=True)
     v.bounds = (0, 5)
@@ -44,16 +44,15 @@ def test_scalar_pyomo():
 def test_scalar_jump():
     _test_scalar_var("jump")
 
+
 def test_scalar_invalid_lang():
-    expected_msg = (
-                "Variable format %s not recognized. Supported formats "
-                "are 'pyomo' or 'jump'."
-            )
-    with pytest.raises(ValueError, match=expected_msg):
-        OmltVar(lang="test")
+    expected_msg = "Variable format %s not recognized. Supported formats are %s"
+    with pytest.raises(KeyError, match=expected_msg):
+        var_factory.new_var(lang="test")
+
 
 def _test_indexed_var(lang):
-    v = OmltVar(range(4), lang=lang, initialize=2)
+    v = var_factory.new_var(range(4), lang=lang, initialize=2)
     assert v._parent is None
     assert v._constructed is False
     assert v.is_indexed() is True
@@ -64,7 +63,6 @@ def _test_indexed_var(lang):
 
     v.value = 3
     assert v.value == 3
-
 
     v.fix(2, skip_validation=True)
     for e in v:
@@ -80,13 +78,14 @@ def _test_indexed_var(lang):
     v.domain = pyo.Integers
     assert v.domain == pyo.Integers
 
+
 def test_indexed_pyomo():
     _test_indexed_var("pyomo")
 
+
 def test_indexed_invalid_lang():
     expected_msg = (
-                "Variable format %s not recognized. Supported formats "
-                "are 'pyomo' or 'jump'."
-            )
-    with pytest.raises(ValueError, match=expected_msg):
-        OmltVar(range(3), lang="test")
+        "Variable format %s not recognized. Supported formats are %s"
+    )
+    with pytest.raises(KeyError, match=expected_msg):
+        var_factory.new_var(range(3), lang="test")
