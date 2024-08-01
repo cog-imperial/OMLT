@@ -1,6 +1,6 @@
 from pyomo.environ import exp, log, tanh
 
-from omlt.base import OmltConstraint
+from omlt.base import OmltConstraintFactory
 
 
 def softplus_activation_function(x):
@@ -76,8 +76,9 @@ def smooth_monotonic_activation_constraint(net_block, net, layer_block, layer, f
         \end{align*}
 
     """
-    layer_block._smooth_monotonic_activation_constraint = OmltConstraint(
-        layer.output_indexes, lang=net_block._format
+    constraint_factory = OmltConstraintFactory()
+    layer_block._smooth_monotonic_activation_constraint = (
+        constraint_factory.new_constraint(layer.output_indexes, lang=net_block._format)
     )
     for output_index in layer.output_indexes:
         zhat_lb, zhat_ub = layer_block.zhat[output_index].bounds

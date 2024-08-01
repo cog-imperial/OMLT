@@ -19,8 +19,9 @@ from omlt.base.var import OmltIndexed, OmltScalar
 class OmltScalarPyomo(OmltScalar, pyo.ScalarVar):
     format = "pyomo"
 
-    def __init__(self, *args, **kwargs: Any):
+    def __init__(self, *args: Any, **kwargs: Any):
         kwargs.pop("lang", None)
+        self._format = "pyomo"
         self._pyovar = pyo.ScalarVar(*args, **kwargs)
         self._name = None
         self._parent = None
@@ -90,8 +91,9 @@ class OmltScalarPyomo(OmltScalar, pyo.ScalarVar):
 class OmltIndexedPyomo(pyo.Var, OmltIndexed):
     format = "pyomo"
 
-    def __init__(self, *indexes, **kwargs: Any):
+    def __init__(self, *indexes: Any, **kwargs: Any):
         kwargs.pop("lang", None)
+        self._format = "pyomo"
         super().__init__(*indexes, **kwargs)
         self.bounds = (None, None)
 
@@ -121,13 +123,17 @@ class OmltIndexedPyomo(pyo.Var, OmltIndexed):
 class OmltConstraintScalarPyomo(OmltConstraintScalar, pyo.Constraint):
     format = "pyomo"
 
-    def __init__(self, *args, **kwargs: Any):
+    def __init__(self, *args: Any, **kwargs: Any):
         super().__init__(*args, **kwargs)
-        self.lhs = (
-            self.lhs._expression if isinstance(self.lhs, OmltExprScalarPyomo) else self.lhs
+        self.lhs: pyo.Expression = (
+            self.lhs._expression
+            if isinstance(self.lhs, OmltExprScalarPyomo)
+            else self.lhs
         )
-        self.rhs = (
-            self.rhs._expression if isinstance(self.rhs, OmltExprScalarPyomo) else self.rhs
+        self.rhs: pyo.Expression = (
+            self.rhs._expression
+            if isinstance(self.rhs, OmltExprScalarPyomo)
+            else self.rhs
         )
 
         if self.sense == "==":
@@ -175,19 +181,19 @@ class OmltConstraintScalarPyomo(OmltConstraintScalar, pyo.Constraint):
 class OmltConstraintIndexedPyomo(OmltConstraintIndexed, pyo.Constraint):
     format = "pyomo"
 
-    def __init__(self, *args, **kwargs: Any):
+    def __init__(self, *args: Any, **kwargs: Any):
         super().__init__(*args, **kwargs)
         kwargs.pop("model", None)
         kwargs.pop("lang", None)
         kwargs.pop("expr_tuple", None)
-        self.constraint = pyo.Constraint(*self._index_set, **kwargs)
+        self.constraint = pyo.Constraint(*args, **kwargs)
         self._index_set = self.constraint._index_set
 
         self.constraint._parent = self._parent
         self.constraint.construct()
         self.model = self.constraint.model
 
-        self.constraints = {}
+        self.constraints: dict[Any, Any] = {}
 
     def __setitem__(self, index, expr):
         if index in self._index_set:
@@ -387,7 +393,7 @@ class OmltExprScalarPyomo(OmltExpr, pyo.Expression):
             rhs = other._pyovar
         else:
             rhs = other
-        return OmltConstraintScalar(
+        return OmltConstraintScalarPyomo(
             model=self._parent, lang=self._format, lhs=self, sense=">=", rhs=rhs
         )
 
@@ -398,7 +404,7 @@ class OmltExprScalarPyomo(OmltExpr, pyo.Expression):
             rhs = other._pyovar
         else:
             rhs = other
-        return OmltConstraintScalar(
+        return OmltConstraintScalarPyomo(
             model=self._parent, lang=self._format, lhs=self, sense="<=", rhs=rhs
         )
 
@@ -409,6 +415,6 @@ class OmltExprScalarPyomo(OmltExpr, pyo.Expression):
             rhs = other._pyovar
         else:
             rhs = other
-        return OmltConstraintScalar(
+        return OmltConstraintScalarPyomo(
             model=self._parent, lang=self._format, lhs=self, sense="==", rhs=rhs
         )

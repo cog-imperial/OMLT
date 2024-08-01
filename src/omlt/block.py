@@ -29,7 +29,7 @@ import warnings
 import pyomo.environ as pyo
 from pyomo.core.base.block import BlockData, declare_custom_block
 
-from omlt.base import DEFAULT_MODELING_LANGUAGE, OmltVar
+from omlt.base import DEFAULT_MODELING_LANGUAGE, OmltVarFactory
 
 
 @declare_custom_block(name="OmltBlock")
@@ -43,7 +43,6 @@ class OmltBlockData(BlockData):
 
     def set_format(self, lang):
         self._format = lang
-
 
     def _setup_inputs_outputs(self, *, input_indexes, output_indexes):
         """Setup inputs and outputs.
@@ -61,13 +60,18 @@ class OmltBlockData(BlockData):
         """
         self.__input_indexes = input_indexes
         self.__output_indexes = output_indexes
+        self.__var_factory = OmltVarFactory()
 
         self.inputs_set = pyo.Set(initialize=input_indexes)
-        self.inputs = OmltVar(self.inputs_set, initialize=0, lang=self._format)
+        self.inputs = self.__var_factory.new_var(
+            self.inputs_set, initialize=0, lang=self._format
+        )
         self.outputs_set = pyo.Set(initialize=output_indexes)
-        self.outputs = OmltVar(self.outputs_set, initialize=0, lang=self._format)
+        self.outputs = self.__var_factory.new_var(
+            self.outputs_set, initialize=0, lang=self._format
+        )
 
-    def build_formulation(self, formulation):
+    def build_formulation(self, formulation, lang=None):
         """Build formulation.
 
         Call this method to construct the constraints (and possibly
@@ -97,6 +101,9 @@ class OmltBlockData(BlockData):
                 f"{formulation} has no outputs."
             )
             raise ValueError(msg)
+
+        if lang is not None:
+            self._format = lang
 
         self._setup_inputs_outputs(
             input_indexes=list(formulation.input_indexes),

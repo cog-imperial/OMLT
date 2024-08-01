@@ -5,6 +5,8 @@ objects in a choice of modeling languages: Pyomo (default),
 JuMP, or others (not yet implemented - e.g. Smoke, Gurobi).
 """
 
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from typing import Any
 
@@ -12,13 +14,6 @@ from omlt.base import DEFAULT_MODELING_LANGUAGE, expression
 
 
 class OmltVar(ABC):
-    def __new__(cls, *indexes, **kwargs: Any):
-        if not indexes:
-            instance = OmltScalar.__new__(OmltScalar, **kwargs)
-        else:
-            instance = OmltIndexed.__new__(OmltIndexed, *indexes, **kwargs)
-        return instance
-
     @abstractmethod
     def construct(self, data):
         """Construct the variable."""
@@ -52,21 +47,7 @@ class OmltVar(ABC):
 
 
 class OmltScalar(OmltVar):
-    def __new__(cls, *args, lang=DEFAULT_MODELING_LANGUAGE, **kwargs: Any):
-        subclass_map = {subclass.format: subclass for subclass in cls.__subclasses__()}
-        if lang not in subclass_map:
-            msg = (
-                "Variable format %s not recognized. Supported formats "
-                "are 'pyomo' or 'jump'.",
-                lang,
-            )
-            raise ValueError(msg)
-        subclass = subclass_map[lang]
-        instance = super(OmltVar, subclass).__new__(subclass)
-
-        instance.__init__(*args, **kwargs)
-        instance._format = lang
-        return instance
+    format: str | None = None
 
     def is_indexed(self):
         return False
@@ -126,45 +107,32 @@ class OmltScalar(OmltVar):
     # Interface governing how variables behave in expressions.
 
     def __add__(self, other):
-        return expression.OmltExpr(lang=self._format, expr=(self, "+", other))
+        return expression.OmltExpr(lang=self.format, expr=(self, "+", other))
 
     def __sub__(self, other):
-        return expression.OmltExpr(lang=self._format, expr=(self, "-", other))
+        return expression.OmltExpr(lang=self.format, expr=(self, "-", other))
 
     def __mul__(self, other):
-        return expression.OmltExpr(lang=self._format, expr=(self, "*", other))
+        return expression.OmltExpr(lang=self.format, expr=(self, "*", other))
 
     def __truediv__(self, other):
-        return expression.OmltExpr(lang=self._format, expr=(self, "/", other))
+        return expression.OmltExpr(lang=self.format, expr=(self, "/", other))
 
     def __radd__(self, other):
-        return expression.OmltExpr(lang=self._format, expr=(other, "+", self))
+        return expression.OmltExpr(lang=self.format, expr=(other, "+", self))
 
     def __rsub__(self, other):
-        return expression.OmltExpr(lang=self._format, expr=(other, "-", self))
+        return expression.OmltExpr(lang=self.format, expr=(other, "-", self))
 
     def __rmul__(self, other):
-        return expression.OmltExpr(lang=self._format, expr=(other, "*", self))
+        return expression.OmltExpr(lang=self.format, expr=(other, "*", self))
 
     def __rtruediv__(self, other):
-        return expression.OmltExpr(lang=self._format, expr=(other, "/", self))
+        return expression.OmltExpr(lang=self.format, expr=(other, "/", self))
 
 
 class OmltIndexed(OmltVar):
-    def __new__(cls, *indexes, lang=DEFAULT_MODELING_LANGUAGE, **kwargs: Any):
-        subclass_map = {subclass.format: subclass for subclass in cls.__subclasses__()}
-        if lang not in subclass_map:
-            msg = (
-                "Variable format %s not recognized. Supported formats are 'pyomo'"
-                " or 'jump'.",
-                lang,
-            )
-            raise ValueError(msg)
-        subclass = subclass_map[lang]
-        instance = super(OmltVar, subclass).__new__(subclass)
-        instance.__init__(*indexes, **kwargs)
-        instance._format = lang
-        return instance
+    format: str | None = None
 
     def is_indexed(self):
         return True
@@ -215,3 +183,49 @@ class OmltIndexed(OmltVar):
     @abstractmethod
     def __iter__(self):
         pass
+
+
+class OmltVarFactory:
+    def __init__(self):
+        self.scalars = {
+            subclass.format: subclass for subclass in OmltScalar.__subclasses__()
+        }
+        self.indexed = {
+            subclass.format: subclass for subclass in OmltIndexed.__subclasses__()
+        }
+
+    def register(self, lang, indexed, varclass):
+        if lang is None:
+            lang = varclass.format
+        if indexed:
+            if lang in self.indexed:
+                msg = ("Indexed variable format %s is already registered.", lang)
+                raise KeyError(msg)
+            self.indexed[lang] = varclass
+        else:
+            if lang in self.scalars:
+                msg = ("Scalar variable format %s is already registered.", lang)
+                raise KeyError(msg)
+            self.scalars[lang] = varclass
+
+    def new_var(
+        self, *indexes: Any, lang: str = DEFAULT_MODELING_LANGUAGE, **kwargs: Any
+    ) -> Any:
+        if indexes:
+            if lang not in self.indexed:
+                msg = (
+                    "Variable format %s not recognized. Supported formats are %s",
+                    lang,
+                    list(self.indexed.keys()),
+                )
+                raise KeyError(msg)
+            return self.indexed[lang](*indexes, **kwargs)
+        if lang not in self.scalars:
+            msg = (
+                "Variable format %s not recognized. Supported formats are %s",
+                lang,
+                list(self.scalars.keys()),
+            )
+            raise KeyError(msg)
+
+        return self.scalars[lang](**kwargs)

@@ -1,7 +1,6 @@
 import numpy as np
 import pyomo.environ as pe
 import pytest
-from omlt.base import OmltScalar, OmltVar
 from omlt.dependencies import lineartree_available
 
 if lineartree_available:
@@ -172,8 +171,8 @@ def test_bigm_formulation_single_var():
     formulation1_lt = LinearTreeGDPFormulation(ltmodel_small, transformation="bigm")
 
     model1 = pe.ConcreteModel()
-    model1.x = OmltScalar(initialize=0)
-    model1.y = OmltScalar(initialize=0)
+    model1.x = pe.Var(initialize=0)
+    model1.y = pe.Var(initialize=0)
     model1.obj = pe.Objective(expr=1)
     model1.lt = OmltBlock()
     model1.lt.build_formulation(formulation1_lt)
@@ -260,8 +259,8 @@ def test_hull_formulation_single_var():
     formulation1_lt = LinearTreeGDPFormulation(ltmodel_small, transformation="hull")
 
     model1 = pe.ConcreteModel()
-    model1.x = OmltVar(initialize=0)
-    model1.y = OmltVar(initialize=0)
+    model1.x = pe.Var(initialize=0)
+    model1.y = pe.Var(initialize=0)
     model1.obj = pe.Objective(expr=1)
     model1.lt = OmltBlock()
     model1.lt.build_formulation(formulation1_lt)
@@ -294,8 +293,8 @@ def test_mbigm_formulation_single_var():
     formulation1_lt = LinearTreeGDPFormulation(ltmodel_small, transformation="mbigm")
 
     model1 = pe.ConcreteModel()
-    model1.x = OmltVar(initialize=0)
-    model1.y = OmltVar(initialize=0)
+    model1.x = pe.Var(initialize=0)
+    model1.y = pe.Var(initialize=0)
     model1.obj = pe.Objective(expr=1)
     model1.lt = OmltBlock()
     model1.lt.build_formulation(formulation1_lt)
@@ -328,8 +327,8 @@ def test_hybrid_bigm_formulation_single_var():
     formulation1_lt = LinearTreeHybridBigMFormulation(ltmodel_small)
 
     model1 = pe.ConcreteModel()
-    model1.x = OmltVar(initialize=0)
-    model1.y = OmltVar(initialize=0)
+    model1.x = pe.Var(initialize=0)
+    model1.y = pe.Var(initialize=0)
     model1.obj = pe.Objective(expr=1)
     model1.lt = OmltBlock()
     model1.lt.build_formulation(formulation1_lt)
@@ -525,9 +524,9 @@ def test_bigm_formulation_multi_var():
     formulation1_lt = LinearTreeGDPFormulation(ltmodel_small, transformation="bigm")
 
     model1 = pe.ConcreteModel()
-    model1.x0 = OmltVar(initialize=0)
-    model1.x1 = OmltVar(initialize=0)
-    model1.y = OmltVar(initialize=0)
+    model1.x0 = pe.Var(initialize=0)
+    model1.x1 = pe.Var(initialize=0)
+    model1.y = pe.Var(initialize=0)
     model1.obj = pe.Objective(expr=1)
     model1.lt = OmltBlock()
     model1.lt.build_formulation(formulation1_lt)
@@ -567,9 +566,9 @@ def test_hull_formulation_multi_var():
     formulation1_lt = LinearTreeGDPFormulation(ltmodel_small, transformation="hull")
 
     model1 = pe.ConcreteModel()
-    model1.x0 = OmltVar(initialize=0)
-    model1.x1 = OmltVar(initialize=0)
-    model1.y = OmltVar(initialize=0)
+    model1.x0 = pe.Var(initialize=0)
+    model1.x1 = pe.Var(initialize=0)
+    model1.y = pe.Var(initialize=0)
     model1.obj = pe.Objective(expr=1)
     model1.lt = OmltBlock()
     model1.lt.build_formulation(formulation1_lt)
@@ -609,9 +608,9 @@ def test_mbigm_formulation_multi_var():
     formulation1_lt = LinearTreeGDPFormulation(ltmodel_small, transformation="mbigm")
 
     model1 = pe.ConcreteModel()
-    model1.x0 = OmltVar(initialize=0)
-    model1.x1 = OmltVar(initialize=0)
-    model1.y = OmltVar(initialize=0)
+    model1.x0 = pe.Var(initialize=0)
+    model1.x1 = pe.Var(initialize=0)
+    model1.y = pe.Var(initialize=0)
     model1.obj = pe.Objective(expr=1)
     model1.lt = OmltBlock()
     model1.lt.build_formulation(formulation1_lt)
@@ -651,9 +650,9 @@ def test_hybrid_bigm_formulation_multi_var():
     formulation1_lt = LinearTreeHybridBigMFormulation(ltmodel_small)
 
     model1 = pe.ConcreteModel()
-    model1.x0 = OmltVar(initialize=0)
-    model1.x1 = OmltVar(initialize=0)
-    model1.y = OmltVar(initialize=0)
+    model1.x0 = pe.Var(initialize=0)
+    model1.x1 = pe.Var(initialize=0)
+    model1.y = pe.Var(initialize=0)
     model1.obj = pe.Objective(expr=1)
     model1.lt = OmltBlock()
     model1.lt.build_formulation(formulation1_lt)

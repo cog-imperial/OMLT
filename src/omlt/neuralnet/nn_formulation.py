@@ -2,7 +2,7 @@ from functools import partial
 
 import pyomo.environ as pyo
 
-from omlt.base import OmltConstraint, OmltVar
+from omlt.base import OmltConstraintFactory, OmltVarFactory
 from omlt.formulation import _PyomoFormulation, _setup_scaled_inputs_outputs
 from omlt.neuralnet.activations import (
     ACTIVATION_FUNCTION_MAP as _DEFAULT_ACTIVATION_FUNCTIONS,
@@ -162,10 +162,14 @@ def _build_neural_network_formulation(  # noqa: C901
     block.layers = pyo.Set(initialize=[id(layer) for layer in layers], ordered=True)
 
     # create the z and z_hat variables for each of the layers
+    var_factory = OmltVarFactory()
+
     @block.Block(block.layers)
     def layer(b, layer_id):
         net_layer = net.layer(layer_id)
-        b.z = OmltVar(net_layer.output_indexes, initialize=0, lang=block._format)
+        b.z = var_factory.new_var(
+            net_layer.output_indexes, initialize=0, lang=block._format
+        )
         if isinstance(net_layer, InputLayer):
             for index in net_layer.output_indexes:
                 input_var = block.scaled_inputs[index]
@@ -174,7 +178,9 @@ def _build_neural_network_formulation(  # noqa: C901
                 z_var.setub(input_var.ub)
         else:
             # add zhat only to non input layers
-            b.zhat = OmltVar(net_layer.output_indexes, initialize=0, lang=block._format)
+            b.zhat = var_factory.new_var(
+                net_layer.output_indexes, initialize=0, lang=block._format
+            )
 
         return b
 
@@ -198,12 +204,13 @@ def _build_neural_network_formulation(  # noqa: C901
 
     # setup input variables constraints
     # currently only support a single input layer
+    constraint_factory = OmltConstraintFactory()
     input_layers = list(net.input_layers)
     if len(input_layers) != 1:
         raise ValueError(MULTI_INPUTS_UNSUPPORTED)
     input_layer = input_layers[0]
 
-    block.input_assignment = OmltConstraint(
+    block.input_assignment = constraint_factory.new_constraint(
         input_layer.output_indexes, lang=block._format
     )
     for output_index in input_layer.output_indexes:
@@ -219,7 +226,7 @@ def _build_neural_network_formulation(  # noqa: C901
         raise ValueError(MULTI_OUTPUTS_UNSUPPORTED)
     output_layer = output_layers[0]
 
-    block.output_assignment = OmltConstraint(
+    block.output_assignment = constraint_factory.new_constraint(
         output_layer.output_indexes, lang=block._format
     )
     for output_index in output_layer.output_indexes:
@@ -395,6 +402,7 @@ class ReducedSpaceNNFormulation(_PyomoFormulation):
 
         # setup output variable constraints
         # currently only support a single output layer
+        constraint_factory = OmltConstraintFactory()
         output_layers = list(net.output_layers)
         if len(output_layers) != 1:
             msg = (
@@ -404,7 +412,7 @@ class ReducedSpaceNNFormulation(_PyomoFormulation):
             raise ValueError(msg)
         output_layer = output_layers[0]
 
-        block.output_assignment = OmltConstraint(
+        block.output_assignment = constraint_factory.new_constraint(
             output_layer.output_indexes, lang=block._format
         )
         for output_index in output_layer.output_indexes:
@@ -492,11 +500,15 @@ class ReluPartitionFormulation(_PyomoFormulation):
         block.layers = pyo.Set(initialize=[id(layer) for layer in layers], ordered=True)
 
         # create the z and z_hat variables for each of the layers
+        var_factory = OmltVarFactory()
+
         @block.Block(block.layers)
         def layer(b, layer_id):
             b._format = block._format
             net_layer = net.layer(layer_id)
-            b.z = OmltVar(net_layer.output_indexes, lang=b._format, initialize=0)
+            b.z = var_factory.new_var(
+                net_layer.output_indexes, lang=b._format, initialize=0
+            )
             if isinstance(net_layer, InputLayer):
                 for index in net_layer.output_indexes:
                     input_var = block.scaled_inputs[index]
@@ -505,7 +517,9 @@ class ReluPartitionFormulation(_PyomoFormulation):
                     z_var.setub(input_var.ub)
             else:
                 # add zhat only to non input layers
-                b.zhat = OmltVar(net_layer.output_indexes, lang=b._format, initialize=0)
+                b.zhat = var_factory.new_var(
+                    net_layer.output_indexes, lang=b._format, initialize=0
+                )
 
             return b
 
@@ -539,12 +553,13 @@ class ReluPartitionFormulation(_PyomoFormulation):
 
         # setup input variables constraints
         # currently only support a single input layer
+        constraint_factory = OmltConstraintFactory()
         input_layers = list(net.input_layers)
         if len(input_layers) != 1:
             raise ValueError(MULTI_INPUTS_UNSUPPORTED)
         input_layer = input_layers[0]
 
-        block.input_assignment = OmltConstraint(
+        block.input_assignment = constraint_factory.new_constraint(
             input_layer.output_indexes, lang=block._format
         )
         for output_index in input_layer.output_indexes:
@@ -560,7 +575,7 @@ class ReluPartitionFormulation(_PyomoFormulation):
             raise ValueError(MULTI_OUTPUTS_UNSUPPORTED)
         output_layer = output_layers[0]
 
-        block.output_assignment = OmltConstraint(
+        block.output_assignment = constraint_factory.new_constraint(
             output_layer.output_indexes, lang=block._format
         )
         for output_index in output_layer.output_indexes:

@@ -132,3 +132,5 @@ dmypy.json
 # Pyre type checker
 .pyre/
 .vscode/settings.json
+
+src/omlt/base/julia.py

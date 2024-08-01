@@ -1,7 +1,7 @@
 import pyomo.environ as pyo
 from pyomo import mpec
 
-from omlt.base import OmltConstraint, OmltVar
+from omlt.base import OmltConstraintFactory, OmltVarFactory
 
 
 def bigm_relu_activation_constraint(net_block, net, layer_block, layer):
@@ -40,20 +40,22 @@ def bigm_relu_activation_constraint(net_block, net, layer_block, layer):
     is :math:`\max(0,u)`.
 
     """
-    layer_block.q_relu = OmltVar(
+    var_factory = OmltVarFactory()
+    layer_block.q_relu = var_factory.new_var(
         layer.output_indexes, lang=net_block._format, within=pyo.Binary
     )
 
-    layer_block._z_lower_bound_relu = OmltConstraint(
+    constraint_factory = OmltConstraintFactory()
+    layer_block._z_lower_bound_relu = constraint_factory.new_constraint(
         layer.output_indexes, lang=net_block._format, model=layer_block.model
     )
-    layer_block._z_lower_bound_zhat_relu = OmltConstraint(
+    layer_block._z_lower_bound_zhat_relu = constraint_factory.new_constraint(
         layer.output_indexes, lang=net_block._format, model=layer_block.model
     )
-    layer_block._z_upper_bound_relu = OmltConstraint(
+    layer_block._z_upper_bound_relu = constraint_factory.new_constraint(
         layer.output_indexes, lang=net_block._format, model=layer_block.model
     )
-    layer_block._z_upper_bound_zhat_relu = OmltConstraint(
+    layer_block._z_upper_bound_zhat_relu = constraint_factory.new_constraint(
         layer.output_indexes, lang=net_block._format, model=layer_block.model
     )
 

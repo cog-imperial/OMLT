@@ -1,7 +1,7 @@
 import pyomo.environ as pyo
 from pyomo.contrib.fbbt.fbbt import compute_bounds_on_expr
 
-from omlt.base import OmltConstraint, OmltVar
+from omlt.base import OmltConstraintFactory, OmltVarFactory
 from omlt.neuralnet.activations import NON_INCREASING_ACTIVATIONS
 from omlt.neuralnet.layer import ConvLayer2D, PoolingLayer2D
 
@@ -18,7 +18,10 @@ def full_space_dense_layer(net_block, net, layer_block, layer):
     """
     input_layer, input_layer_block = _input_layer_and_block(net_block, net, layer)
 
-    layer_block.dense_layer = OmltConstraint(layer.output_indexes, lang=net_block._format)
+    constraint_factory = OmltConstraintFactory()
+    layer_block.dense_layer = constraint_factory.new_constraint(
+        layer.output_indexes, lang=net_block._format
+    )
     for output_index in layer.output_indexes:
         # dense layers multiply only the last dimension of
         # their inputs
@@ -84,29 +87,31 @@ def full_space_gnn_layer(net_block, net, layer_block, layer):
     """
     input_layer, input_layer_block = _input_layer_and_block(net_block, net, layer)
 
-    input_layer_block.zbar = OmltVar(
+    var_factory = OmltVarFactory()
+    constraint_factory = OmltConstraintFactory()
+
+    input_layer_block.zbar = var_factory.new_var(
         pyo.Set(initialize=layer.input_indexes),
         pyo.Set(initialize=range(layer.N)),
         initialize=0,
         lang=net_block._format,
     )
-    input_layer_block._zbar_lower_bound_z_big_m = OmltConstraint(
+    input_layer_block._zbar_lower_bound_z_big_m = constraint_factory.new_constraint(
         pyo.Set(initialize=layer.input_indexes),
         pyo.Set(initialize=range(layer.N)),
         lang=net_block._format,
     )
-    input_layer_block._zbar_upper_bound_z_big_m = OmltConstraint(
-        pyo.Set(initialize=layer.input_indexes),
-        pyo.Set(initialize=range(layer.N)),
-        lang=net_block._format,
-
-    )
-    input_layer_block._zbar_lower_bound_big_m = OmltConstraint(
+    input_layer_block._zbar_upper_bound_z_big_m = constraint_factory.new_constraint(
         pyo.Set(initialize=layer.input_indexes),
         pyo.Set(initialize=range(layer.N)),
         lang=net_block._format,
     )
-    input_layer_block._zbar_upper_bound_big_m = OmltConstraint(
+    input_layer_block._zbar_lower_bound_big_m = constraint_factory.new_constraint(
+        pyo.Set(initialize=layer.input_indexes),
+        pyo.Set(initialize=range(layer.N)),
+        lang=net_block._format,
+    )
+    input_layer_block._zbar_upper_bound_big_m = constraint_factory.new_constraint(
         pyo.Set(initialize=layer.input_indexes),
         pyo.Set(initialize=range(layer.N)),
         lang=net_block._format,
@@ -161,7 +166,9 @@ def full_space_gnn_layer(net_block, net, layer_block, layer):
                 <= ub * net_block.A[input_node_index, output_node_index]
             )
 
-    layer_block.gnn_layer = OmltConstraint(layer.output_indexes, lang=net_block._format)
+    layer_block.gnn_layer = constraint_factory.new_constraint(
+        layer.output_indexes, lang=net_block._format
+    )
     for output_index in layer.output_indexes:
         # gnn layers multiply only the last dimension of
         # their inputs
@@ -211,8 +218,11 @@ def full_space_conv2d_layer(net_block, net, layer_block, layer):
         layer.activation = "linear"
 
     input_layer, input_layer_block = _input_layer_and_block(net_block, net, layer)
+    constraint_factory = OmltConstraintFactory()
 
-    layer_block.convolutional_layer = OmltConstraint(layer.output_indexes, lang=net_block._format)
+    layer_block.convolutional_layer = constraint_factory.new_constraint(
+        layer.output_indexes, lang=net_block._format
+    )
     for output_index in layer.output_indexes:
         out_d, out_r, out_c = output_index
         expr = 0.0
@@ -287,17 +297,21 @@ def full_space_maxpool2d_layer(net_block, net, layer_block, layer):
             for kernel_index, _ in layer.kernel_index_with_input_indexes(0, 0, 0)
         )
     )
-    layer_block.q_maxpool = OmltVar(
+    var_factory = OmltVarFactory()
+    constraint_factory = OmltConstraintFactory()
+    layer_block.q_maxpool = var_factory.new_var(
         layer.output_indexes,
         layer_block._kernel_indexes,
         lang=net_block._format,
         within=pyo.Binary,
     )
-    layer_block._q_sum_maxpool = OmltConstraint(layer.output_indexes, lang=net_block._format)
-    layer_block._zhat_upper_bound = OmltConstraint(
+    layer_block._q_sum_maxpool = constraint_factory.new_constraint(
+        layer.output_indexes, lang=net_block._format
+    )
+    layer_block._zhat_upper_bound = constraint_factory.new_constraint(
         layer.output_indexes, layer_block._kernel_indexes, lang=net_block._format
     )
-    layer_block._zhat_lower_bound = OmltConstraint(
+    layer_block._zhat_lower_bound = constraint_factory.new_constraint(
         layer.output_indexes, layer_block._kernel_indexes, lang=net_block._format
     )
 

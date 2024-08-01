@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from typing import Any
 
@@ -8,14 +10,6 @@ from omlt.base import DEFAULT_MODELING_LANGUAGE
 
 
 class OmltConstraint(ABC):
-    def __new__(cls, *indexes, **kwargs: Any):
-        if not indexes:
-            instance = OmltConstraintScalar.__new__(OmltConstraintScalar, **kwargs)
-        else:
-            instance = OmltConstraintIndexed.__new__(
-                OmltConstraintIndexed, *indexes, **kwargs
-            )
-        return instance
 
     @property
     def ctype(self):
@@ -38,22 +32,8 @@ class OmltConstraint(ABC):
 
 
 class OmltConstraintScalar(OmltConstraint):
-    def __new__(cls, lang=DEFAULT_MODELING_LANGUAGE, **kwargs: Any):
-        subclass_map = {subclass.format: subclass for subclass in cls.__subclasses__()}
-        if lang not in subclass_map:
-            msg = (
-                "Constraint format %s not recognized. Supported formats "
-                "are 'pyomo' or 'jump'.",
-                lang,
-            )
-            raise ValueError(msg)
-        subclass = subclass_map[lang]
-        instance = super(OmltConstraint, subclass).__new__(subclass)
-        instance.__init__(**kwargs)
-        instance._format = lang
-        return instance
 
-    def __init__(self, lang=DEFAULT_MODELING_LANGUAGE, **kwargs: Any):
+    def __init__(self, lang: str = DEFAULT_MODELING_LANGUAGE, **kwargs: Any):
         lhs = kwargs.pop("lhs", None)
         if lhs is not None:
             self.lhs = lhs
@@ -93,22 +73,10 @@ class OmltConstraintScalar(OmltConstraint):
 
 
 class OmltConstraintIndexed(OmltConstraint):
-    def __new__(cls, *indexes, lang=DEFAULT_MODELING_LANGUAGE, **kwargs: Any):
-        subclass_map = {subclass.format: subclass for subclass in cls.__subclasses__()}
-        if lang not in subclass_map:
-            msg = (
-                "Constraint format %s not recognized. Supported formats "
-                "are 'pyomo' or 'jump'.",
-                lang,
-            )
-            raise ValueError(msg)
-        subclass = subclass_map[lang]
-        instance = super(OmltConstraint, subclass).__new__(subclass)
-        instance.__init__(*indexes, **kwargs)
-        instance._format = lang
-        return instance
 
-    def __init__(self, *indexes, lang=DEFAULT_MODELING_LANGUAGE, **kwargs: Any):
+    def __init__(
+        self, *indexes: Any, lang: str = DEFAULT_MODELING_LANGUAGE, **kwargs: Any
+    ):
         self._index_set = indexes
 
         self.model = kwargs.pop("model", None)
@@ -142,3 +110,50 @@ class OmltConstraintIndexed(OmltConstraint):
     @abstractmethod
     def _data(self):
         """Return data from the constraint."""
+
+
+class OmltConstraintFactory:
+    def __init__(self):
+        self.scalars = {
+            subclass.format: subclass
+            for subclass in OmltConstraintScalar.__subclasses__()
+        }
+        self.indexed = {
+            subclass.format: subclass
+            for subclass in OmltConstraintIndexed.__subclasses__()
+        }
+
+    def register(self, lang, indexed, varclass):
+        if lang is None:
+            lang = varclass.format
+        if indexed:
+            if lang in self.indexed:
+                msg = ("Indexed constraint format %s is already registered.", lang)
+                raise KeyError(msg)
+            self.indexed[lang] = varclass
+        else:
+            if lang in self.scalars:
+                msg = ("Scalar constraint format %s is already registered.", lang)
+                raise KeyError(msg)
+            self.scalars[lang] = varclass
+
+    def new_constraint(
+        self, *indexes: Any, lang: str = DEFAULT_MODELING_LANGUAGE, **kwargs: Any
+    ) -> Any:
+        if indexes:
+            if lang not in self.indexed:
+                msg = (
+                    "Constraint format %s not recognized. Supported formats are %s",
+                    lang,
+                    list(self.indexed.keys()),
+                )
+                raise KeyError(msg)
+            return self.indexed[lang](*indexes, **kwargs)
+        if lang not in self.scalars:
+            msg = (
+                "Constraint format %s not recognized. Supported formats are %s",
+                lang,
+                list(self.scalars.keys()),
+            )
+            raise KeyError(msg)
+        return self.scalars[lang](**kwargs)
