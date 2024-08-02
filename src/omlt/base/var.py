@@ -49,6 +49,9 @@ class OmltVar(ABC):
 class OmltScalar(OmltVar):
     format: str | None = None
 
+    def __init__(self):
+        self.expr_factory = expression.OmltExprFactory()
+
     def is_indexed(self):
         return False
 
@@ -107,28 +110,44 @@ class OmltScalar(OmltVar):
     # Interface governing how variables behave in expressions.
 
     def __add__(self, other):
-        return expression.OmltExpr(lang=self.format, expr=(self, "+", other))
+        return self.expr_factory.new_expression(
+            lang=self.format, expr=(self, "+", other)
+        )
 
     def __sub__(self, other):
-        return expression.OmltExpr(lang=self.format, expr=(self, "-", other))
+        return self.expr_factory.new_expression(
+            lang=self.format, expr=(self, "-", other)
+        )
 
     def __mul__(self, other):
-        return expression.OmltExpr(lang=self.format, expr=(self, "*", other))
+        return self.expr_factory.new_expression(
+            lang=self.format, expr=(self, "*", other)
+        )
 
     def __truediv__(self, other):
-        return expression.OmltExpr(lang=self.format, expr=(self, "/", other))
+        return self.expr_factory.new_expression(
+            lang=self.format, expr=(self, "/", other)
+        )
 
     def __radd__(self, other):
-        return expression.OmltExpr(lang=self.format, expr=(other, "+", self))
+        return self.expr_factory.new_expression(
+            lang=self.format, expr=(other, "+", self)
+        )
 
     def __rsub__(self, other):
-        return expression.OmltExpr(lang=self.format, expr=(other, "-", self))
+        return self.expr_factory.new_expression(
+            lang=self.format, expr=(other, "-", self)
+        )
 
     def __rmul__(self, other):
-        return expression.OmltExpr(lang=self.format, expr=(other, "*", self))
+        return self.expr_factory.new_expression(
+            lang=self.format, expr=(other, "*", self)
+        )
 
     def __rtruediv__(self, other):
-        return expression.OmltExpr(lang=self.format, expr=(other, "/", self))
+        return self.expr_factory.new_expression(
+            lang=self.format, expr=(other, "/", self)
+        )
 
 
 class OmltIndexed(OmltVar):

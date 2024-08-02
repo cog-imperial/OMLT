@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from typing import Any
 
@@ -7,19 +9,7 @@ from omlt.base import DEFAULT_MODELING_LANGUAGE
 
 
 class OmltExpr(ABC):
-    def __new__(cls, lang=DEFAULT_MODELING_LANGUAGE, **kwargs: Any):
-        subclass_map = {subclass.format: subclass for subclass in cls.__subclasses__()}
-        if lang not in subclass_map:
-            msg = (
-                "Expression format %s not recognized. Supported formats "
-                "are 'pyomo' or 'jump'.",
-                lang,
-            )
-            raise ValueError(msg)
-        subclass = subclass_map[lang]
-        instance = super().__new__(subclass)
-        instance._format = lang
-        return instance
+    format: str | None = None
 
     @property
     def ctype(self):
@@ -60,3 +50,30 @@ class OmltExpr(ABC):
     @abstractmethod
     def nargs(self):
         """Return the number of arguments."""
+
+class OmltExprFactory:
+    def __init__(self):
+        self.exprs = {
+            subclass.format: subclass
+            for subclass in OmltExpr.__subclasses__()
+        }
+
+    def register(self, lang, varclass):
+        if lang is None:
+            lang = varclass.format
+        if lang in self.exprs:
+            msg = ("Expression format %s is already registered.", lang)
+            raise KeyError(msg)
+        self.exprs[lang] = varclass
+
+    def new_expression(
+        self, lang: str | None = DEFAULT_MODELING_LANGUAGE, **kwargs: Any
+    ) -> Any:
+        if lang not in self.exprs:
+            msg = (
+                "Expression format %s not recognized. Supported formats are %s",
+                lang,
+                list(self.exprs.keys()),
+            )
+            raise KeyError(msg)
+        return self.exprs[lang](**kwargs)

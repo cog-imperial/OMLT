@@ -10,7 +10,7 @@ import pyomo.environ as pyo
 from pyomo.core.base.var import _GeneralVarData
 
 from omlt.base.constraint import OmltConstraintIndexed, OmltConstraintScalar
-from omlt.base.expression import OmltExpr
+from omlt.base.expression import OmltExpr, OmltExprFactory
 from omlt.base.var import OmltIndexed, OmltScalar
 
 # Variables
@@ -20,6 +20,7 @@ class OmltScalarPyomo(OmltScalar, pyo.ScalarVar):
     format = "pyomo"
 
     def __init__(self, *args: Any, **kwargs: Any):
+        OmltScalar.__init__(self)
         kwargs.pop("lang", None)
         self._format = "pyomo"
         self._pyovar = pyo.ScalarVar(*args, **kwargs)
@@ -266,6 +267,8 @@ class OmltExprScalarPyomo(OmltExpr, pyo.Expression):
         self.name = None
         self.__class__ = type(self._expression)
         self._args_ = self._expression._args_
+        self._format = "pyomo"
+        self.expr_factory = OmltExprFactory()
 
     def _parse_expression_tuple_term(self, term):
         if isinstance(term, tuple):
@@ -342,49 +345,49 @@ class OmltExprScalarPyomo(OmltExpr, pyo.Expression):
             expr = self._expression + other._expression
         elif isinstance(other, (int, float, pyo.Expression)):
             expr = self._expression + other
-        return OmltExpr(lang=self._format, expr=expr)
+        return self.expr_factory.new_expression(lang=self._format, expr=expr)
 
     def __sub__(self, other):
         if isinstance(other, OmltExprScalarPyomo):
             expr = self._expression - other._expression
         elif isinstance(other, (int, float, pyo.Expression)):
             expr = self._expression - other
-        return OmltExpr(lang=self._format, expr=expr)
+        return self.expr_factory.new_expression(lang=self._format, expr=expr)
 
     def __mul__(self, other):
         if isinstance(other, OmltExprScalarPyomo):
             expr = self._expression * other._expression
         elif isinstance(other, (int, float, pyo.Expression)):
             expr = self._expression * other
-        return OmltExpr(lang=self._format, expr=expr)
+        return self.expr_factory.new_expression(lang=self._format, expr=expr)
 
     def __div__(self, other):
         if isinstance(other, OmltExprScalarPyomo):
             expr = self._expression / other._expression
         elif isinstance(other, (int, float, pyo.Expression)):
             expr = self._expression / other
-        return OmltExpr(lang=self._format, expr=expr)
+        return self.expr_factory.new_expression(lang=self._format, expr=expr)
 
     def __radd__(self, other):
         if isinstance(other, OmltExprScalarPyomo):
             expr = other._expression + self._expression
         elif isinstance(other, (int, float, pyo.Expression)):
             expr = other + self._expression
-        return OmltExpr(lang=self._format, expr=expr)
+        return self.expr_factory.new_expression(lang=self._format, expr=expr)
 
     def __rsub__(self, other):
         if isinstance(other, OmltExprScalarPyomo):
             expr = other._expression - self._expression
         elif isinstance(other, (int, float, pyo.Expression)):
             expr = other - self._expression
-        return OmltExpr(lang=self._format, expr=expr)
+        return self.expr_factory.new_expression(lang=self._format, expr=expr)
 
     def __rmul__(self, other):
         if isinstance(other, OmltExprScalarPyomo):
             expr = other._expression * self._expression
         elif isinstance(other, (int, float, pyo.Expression)):
             expr = other * self._expression
-        return OmltExpr(lang=self._format, expr=expr)
+        return self.expr_factory.new_expression(lang=self._format, expr=expr)
 
     def __ge__(self, other):
         if isinstance(other, OmltExprScalarPyomo):
