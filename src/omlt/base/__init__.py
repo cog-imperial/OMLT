@@ -10,7 +10,7 @@ from omlt.base.constraint import (
     OmltConstraintIndexed,
     OmltConstraintScalar,
 )
-from omlt.base.expression import OmltExpr
+from omlt.base.expression import OmltExpr, OmltExprFactory
 from omlt.base.pyomo import (
     OmltConstraintIndexedPyomo,
     OmltConstraintScalarPyomo,
@@ -26,6 +26,7 @@ __all__ = [
     # "jl",
     # "jump",
     "OmltExpr",
+    "OmltExprFactory",
     "OmltScalar",
     "OmltIndexed",
     "OmltVar",
