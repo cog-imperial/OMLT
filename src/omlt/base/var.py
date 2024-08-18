@@ -159,16 +159,16 @@ class OmltIndexed(OmltVar):
     @property
     @abstractmethod
     def index_set(self):
-        pass
+        """Return the index set for the variable."""
 
     # Bound-setting interface for indexed variables:
     @abstractmethod
     def setub(self, value):
-        pass
+        """Set upper bounds on all component variables."""
 
     @abstractmethod
     def setlb(self, value):
-        pass
+        """Set lower bounds on all component variables."""
 
     # Interface: act as a dict for the sub-variables.
     @abstractmethod
@@ -176,32 +176,24 @@ class OmltIndexed(OmltVar):
         pass
 
     @abstractmethod
-    def __setitem__(self, item, value):
-        pass
-
-    @abstractmethod
     def keys(self):
-        pass
+        """Return iterator over the index set."""
 
     @abstractmethod
-    def values(self):
-        pass
+    def values(self, sort):
+        """Return iterator over the component variables."""
 
     @abstractmethod
     def items(self):
-        pass
+        """Return iterator over the key-value pairs."""
 
     @abstractmethod
     def __len__(self):
-        pass
+        """Return size of the index set."""
 
     @abstractmethod
     def __contains__(self, idx):
-        pass
-
-    @abstractmethod
-    def __iter__(self):
-        pass
+        """Return true if idx is in the index set."""
 
 
 class OmltVarFactory:
