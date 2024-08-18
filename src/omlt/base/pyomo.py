@@ -89,14 +89,63 @@ class OmltScalarPyomo(OmltScalar, pyo.ScalarVar):
         self._pyovar.value = val
 
 
-class OmltIndexedPyomo(pyo.Var, OmltIndexed):
+class OmltIndexedPyomo(OmltIndexed, pyo.Var):
     format = "pyomo"
 
     def __init__(self, *indexes: Any, **kwargs: Any):
         kwargs.pop("lang", None)
         self._format = "pyomo"
-        super().__init__(*indexes, **kwargs)
+        self._pyovar = pyo.Var(*indexes, **kwargs)
+        self._name = None
+        self._parent = None
+        self._constructed = self._pyovar._constructed
+        self._index_set = self._pyovar._index_set
+        self._rule_init = self._pyovar._rule_init
+        self._rule_domain = self._pyovar._rule_domain
+        self._rule_bounds = self._pyovar._rule_bounds
+        self._dense = self._pyovar._dense
+        self._data = self._pyovar._data
+        self._units = self._pyovar._units
+        self._implicit_subsets = self._pyovar._implicit_subsets
+        self.doc = self._pyovar.doc
+        self._ctype = pyo.Var
         self.bounds = (None, None)
+
+    @property
+    def ctype(self):
+        return pyo.Var
+
+    def construct(self, data=None):
+        self._pyovar.construct(data)
+
+    def is_constructed(self):
+        return self._pyovar.is_constructed()
+
+    @property
+    def index_set(self):
+        return self._index_set
+
+    @property
+    def name(self):
+        return self._name
+
+    def items(self):
+        return self._pyovar.items()
+
+    def keys(self):
+        return self._pyovar.keys()
+
+    def values(self, sort=False):  # noqa: FBT002
+        return self._pyovar.values(sort)
+
+    def __contains__(self, idx):
+        return idx in self.index_set
+
+    def __getitem__(self, item):
+        return self._pyovar[item]
+
+    def __len__(self):
+        return len(self.index_set)
 
     def fix(self, value=None, *, skip_validation=False):
         self.fixed = True
