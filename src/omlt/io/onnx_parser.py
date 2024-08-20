@@ -33,8 +33,7 @@ class NetworkParser:
     """Network Parser.
 
     References:
-    ----------
-    * https://github.com/onnx/onnx/blob/master/docs/Operators.md
+        * https://github.com/onnx/onnx/blob/master/docs/Operators.md
     """
 
     def __init__(self):

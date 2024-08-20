@@ -238,25 +238,24 @@ def full_space_maxpool2d_layer(net_block, net, layer_block, layer):
         \end{align*}
 
     where:
+
     :math:`w` is the convolution kernel on the preceding convolutional layer;
     :math:`d` is the number of features in each of the :math:`N` max pooling windows;
     :math:`x_{i}` is the set of :math:`d` features in the :math:`i`-th max pooling
-        window;
+    window;
     :math:`\Delta^{d}` is the :math:`d`-dimensional simplex; and [L_{i},U_{i}] are the
-        bounds on x_{i}.
+    bounds on x_{i}.
 
     NOTE This formulation is adapted from the Anderson et al. (2020) formulation,
     section 5.1, with the following changes:
 
     - OMLT presently does not support biases on convolutional layers. Bias terms from
-    the original formulation are removed.
-
+      the original formulation are removed.
     - The original formulation formulates the max of :math:`w^{l}\cdot x + b^{l}`,
       varying the weights :math:`w` and biases :math:`b` and keeping the input :math:`x`
       constant. Since convolutional layers have constant weights and biases convolved
       with varying portions of the feature map, this formulation formulates the max of
       :math:`w\cdot x^{l} + b`.
-
     - Due to the above 2 changes, the calculation of :math:`N^{l,k}` is changed.
 
     """
