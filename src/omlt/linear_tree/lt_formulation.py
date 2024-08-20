@@ -48,7 +48,7 @@ class LinearTreeGDPFormulation(_PyomoFormulation):
           optimization development. Optimization and Engineering, 23:607–642
     """
 
-    def __init__(self, lt_definition, transformation="bigm"):
+    def __init__(self, lt_definition, transformation="bigm", epsilon=0):
         """
         Create a LinearTreeGDPFormulation object
 
@@ -66,6 +66,7 @@ class LinearTreeGDPFormulation(_PyomoFormulation):
         super().__init__()
         self.model_definition = lt_definition
         self.transformation = transformation
+        self.epsilon = epsilon
 
         # Ensure that the GDP transformation given is supported
         supported_transformations = ["bigm", "hull", "mbigm", "custom"]
@@ -100,6 +101,7 @@ class LinearTreeGDPFormulation(_PyomoFormulation):
             input_vars=self.block.scaled_inputs,
             output_vars=self.block.scaled_outputs,
             transformation=self.transformation,
+            epsilon=self.epsilon
         )
 
 
@@ -133,7 +135,7 @@ class LinearTreeHybridBigMFormulation(_PyomoFormulation):
 
     """
 
-    def __init__(self, lt_definition):
+    def __init__(self, lt_definition, epsilon=0):
         """
         Create a LinearTreeHybridBigMFormulation object
 
@@ -142,6 +144,7 @@ class LinearTreeHybridBigMFormulation(_PyomoFormulation):
         """
         super().__init__()
         self.model_definition = lt_definition
+        self.epsilon = epsilon
 
     @property
     def input_indexes(self):
@@ -169,6 +172,7 @@ class LinearTreeHybridBigMFormulation(_PyomoFormulation):
             input_vars=self.block.scaled_inputs,
             output_vars=self.block.scaled_outputs,
             transformation="custom",
+            epsilon=self.epsilon,
         )
 
         pe.TransformationFactory('gdp.bound_pretransformation').apply_to(self.block)
@@ -219,7 +223,7 @@ def _build_output_bounds(model_def, input_bounds):
 
 
 def _add_gdp_formulation_to_block(
-    block, model_definition, input_vars, output_vars, transformation
+    block, model_definition, input_vars, output_vars, transformation, epsilon
 ):
     """
     This function adds the GDP representation to the OmltBlock using Pyomo.GDP
@@ -262,7 +266,7 @@ def _add_gdp_formulation_to_block(
     # and the linear model expression.
     def disjuncts_rule(dsj, tree, leaf):
         def lb_rule(dsj, feat):
-            return input_vars[feat] >= leaves[tree][leaf]["bounds"][feat][0]
+            return input_vars[feat] >= leaves[tree][leaf]["bounds"][feat][0] + epsilon
 
         dsj.lb_constraint = pe.Constraint(features, rule=lb_rule)
 

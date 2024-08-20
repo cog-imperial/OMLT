@@ -190,6 +190,58 @@ def test_bigm_formulation_single_var():
     assert y_pred[0] == approx(solution_1_bigm[1])
 
 
+def get_epsilon_test_model(formulation_lt):
+    model1 = pe.ConcreteModel()
+    model1.x = pe.Var(initialize=0)
+    model1.y = pe.Var(initialize=0)
+    model1.obj = pe.Objective(expr=model1.y, sense=pe.maximize)
+    model1.lt = OmltBlock()
+    model1.lt.build_formulation(formulation_lt)
+
+    @model1.Constraint()
+    def connect_inputs(mdl):
+        return mdl.x == mdl.lt.inputs[0]
+
+    @model1.Constraint()
+    def connect_outputs(mdl):
+        return mdl.y == mdl.lt.outputs[0]
+
+    model1.x.fix(1.058749)
+
+    return model1
+
+
+@pytest.mark.skipif(
+    not lineartree_available or not cbc_available,
+    reason="Need Linear-Tree Package and cbc",
+)
+def test_nonzero_epsilon():
+    regr_small = linear_model_tree(X=X_small, y=y_small)
+    input_bounds = {0: (min(X_small)[0], max(X_small)[0])}
+    ltmodel_small = LinearTreeDefinition(regr_small, unscaled_input_bounds=input_bounds)
+    formulation_bad = LinearTreeGDPFormulation(ltmodel_small, transformation="bigm",
+                                               epsilon=0)
+    formulation1_lt = LinearTreeGDPFormulation(ltmodel_small, transformation="bigm",
+                                               epsilon=1e-4)
+
+    model_good = get_epsilon_test_model(formulation1_lt)
+    model_bad = get_epsilon_test_model(formulation_bad)
+
+    status_1_bigm = pe.SolverFactory("cbc").solve(model_bad)
+    pe.assert_optimal_termination(status_1_bigm)
+    solution_1_bigm = (pe.value(model_bad.x), pe.value(model_bad.y))
+    y_pred = regr_small.predict(np.array(solution_1_bigm[0]).reshape(1, -1))
+    # Without an epsilon, the model cheats and does not match the tree prediction
+    assert y_pred[0] != approx(solution_1_bigm[1])
+
+    status = pe.SolverFactory("cbc").solve(model_good)
+    pe.assert_optimal_termination(status)
+    solution = (pe.value(model_good.x), pe.value(model_good.y))
+    y_pred = regr_small.predict(np.array(solution[0]).reshape(1, -1))
+    # With epsilon, the model matches the tree prediction
+    assert y_pred[0] == approx(solution[1])
+
+
 @pytest.mark.skipif(
     not lineartree_available or not cbc_available,
     reason="Need Linear-Tree Package and cbc",
