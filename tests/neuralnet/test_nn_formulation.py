@@ -1,9 +1,10 @@
+import re
+
 import numpy as np
 import pyomo.environ as pyo
 import pytest
-from pyomo.contrib.fbbt import interval
-
 from omlt import OmltBlock
+from omlt.formulation import _PyomoFormulation
 from omlt.neuralnet import (
     FullSpaceNNFormulation,
     FullSpaceSmoothNNFormulation,
@@ -29,11 +30,29 @@ from omlt.neuralnet.layers.partition_based import (
     partition_based_dense_relu_layer,
 )
 from omlt.neuralnet.layers.reduced_space import reduced_space_dense_layer
+from pyomo.contrib.fbbt import interval
+
+formulations = {
+    "FullSpace": FullSpaceNNFormulation,
+    "ReducedSpace": ReducedSpaceNNFormulation,
+    "relu": ReluPartitionFormulation,
+}
+
+NEAR_EQUAL = 1e-6
+FULLSPACE_SMOOTH_VARS = 15
+FULLSPACE_SMOOTH_CONSTRAINTS = 14
+FULLSPACE_RELU_VARS = 19
+FULLSPACE_RELU_CONSTRAINTS = 26
+REDUCED_VARS = 6
+REDUCED_CONSTRAINTS = 5
+THREE_NODE_VARS = 81
+THREE_NODE_CONSTRAINTS = 120
 
 
 def two_node_network(activation, input_value):
-    """
-            1           1
+    """Two node network.
+
+    1           1
     x0 -------- (1) --------- (3)
      |                   /
      |                  /
@@ -75,158 +94,157 @@ def two_node_network(activation, input_value):
     return net, y
 
 
-def _test_two_node_FullSpaceNNFormulation_smooth(activation):
+def _test_two_node_full_space_nn_formulation_smooth(activation):
     m = pyo.ConcreteModel()
     m.neural_net_block = OmltBlock()
     net, y = two_node_network(activation, -2.0)
     m.neural_net_block.build_formulation(FullSpaceNNFormulation(net))
-    assert m.nvariables() == 15
-    assert m.nconstraints() == 14
+    assert m.nvariables() == FULLSPACE_SMOOTH_VARS
+    assert m.nconstraints() == FULLSPACE_SMOOTH_CONSTRAINTS
 
     m.neural_net_block.inputs[0].fix(-2)
     m.obj1 = pyo.Objective(expr=0)
-    status = pyo.SolverFactory("ipopt").solve(m, tee=False)
+    pyo.SolverFactory("ipopt").solve(m, tee=False)
 
-    assert abs(pyo.value(m.neural_net_block.outputs[0, 0]) - y[0, 0]) < 1e-6
-    assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - y[0, 1]) < 1e-6
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 0]) - y[0, 0]) < NEAR_EQUAL
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - y[0, 1]) < NEAR_EQUAL
 
     net, y = two_node_network(activation, 1.0)
     m.neural_net_block.inputs[0].fix(1)
-    status = pyo.SolverFactory("ipopt").solve(m, tee=False)
-    assert abs(pyo.value(m.neural_net_block.outputs[0, 0]) - y[0, 0]) < 1e-6
-    assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - y[0, 1]) < 1e-6
+    pyo.SolverFactory("ipopt").solve(m, tee=False)
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 0]) - y[0, 0]) < NEAR_EQUAL
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - y[0, 1]) < NEAR_EQUAL
 
 
-def _test_two_node_FullSpaceNNFormulation_relu():
+def _test_two_node_full_space_nn_formulation_relu():
     m = pyo.ConcreteModel()
     m.neural_net_block = OmltBlock()
     net, y = two_node_network("relu", -2.0)
     m.neural_net_block.build_formulation(FullSpaceNNFormulation(net))
-    assert m.nvariables() == 19
-    assert m.nconstraints() == 26
+    assert m.nvariables() == FULLSPACE_RELU_VARS
+    assert m.nconstraints() == FULLSPACE_RELU_CONSTRAINTS
 
     m.neural_net_block.inputs[0].fix(-2)
     m.obj1 = pyo.Objective(expr=0)
-    status = pyo.SolverFactory("cbc").solve(m, tee=False)
+    pyo.SolverFactory("cbc").solve(m, tee=False)
 
-    assert abs(pyo.value(m.neural_net_block.outputs[0, 0]) - y[0, 0]) < 1e-6
-    assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - y[0, 1]) < 1e-6
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 0]) - y[0, 0]) < NEAR_EQUAL
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - y[0, 1]) < NEAR_EQUAL
 
     net, y = two_node_network("relu", 1.0)
     m.neural_net_block.inputs[0].fix(1)
-    status = pyo.SolverFactory("cbc").solve(m, tee=False)
-    assert abs(pyo.value(m.neural_net_block.outputs[0, 0]) - y[0, 0]) < 1e-6
-    assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - y[0, 1]) < 1e-6
+    pyo.SolverFactory("cbc").solve(m, tee=False)
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 0]) - y[0, 0]) < NEAR_EQUAL
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - y[0, 1]) < NEAR_EQUAL
 
 
-def _test_two_node_FullSpaceSmoothNNFormulation(activation):
+def _test_two_node_full_space_smooth_nn_formulation(activation):
     m = pyo.ConcreteModel()
     m.neural_net_block = OmltBlock()
     net, y = two_node_network(activation, -2.0)
     m.neural_net_block.build_formulation(FullSpaceSmoothNNFormulation(net))
-    assert m.nvariables() == 15
-    assert m.nconstraints() == 14
+    assert m.nvariables() == FULLSPACE_SMOOTH_VARS
+    assert m.nconstraints() == FULLSPACE_SMOOTH_CONSTRAINTS
 
     m.neural_net_block.inputs[0].fix(-2)
     m.obj1 = pyo.Objective(expr=0)
-    status = pyo.SolverFactory("ipopt").solve(m, tee=False)
+    pyo.SolverFactory("ipopt").solve(m, tee=False)
 
-    assert abs(pyo.value(m.neural_net_block.outputs[0, 0]) - y[0, 0]) < 1e-6
-    assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - y[0, 1]) < 1e-6
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 0]) - y[0, 0]) < NEAR_EQUAL
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - y[0, 1]) < NEAR_EQUAL
 
     net, y = two_node_network(activation, 1.0)
     m.neural_net_block.inputs[0].fix(1)
-    status = pyo.SolverFactory("ipopt").solve(m, tee=False)
-    assert abs(pyo.value(m.neural_net_block.outputs[0, 0]) - y[0, 0]) < 1e-6
-    assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - y[0, 1]) < 1e-6
+    pyo.SolverFactory("ipopt").solve(m, tee=False)
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 0]) - y[0, 0]) < NEAR_EQUAL
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - y[0, 1]) < NEAR_EQUAL
 
 
-def _test_two_node_ReducedSpaceNNFormulation(activation):
+def _test_two_node_reduced_space_nn_formulation(activation):
     m = pyo.ConcreteModel()
     m.neural_net_block = OmltBlock()
     net, y = two_node_network(activation, -2.0)
     m.neural_net_block.build_formulation(ReducedSpaceNNFormulation(net))
-    assert m.nvariables() == 6
-    assert m.nconstraints() == 5
+    assert m.nvariables() == REDUCED_VARS
+    assert m.nconstraints() == REDUCED_CONSTRAINTS
 
     m.neural_net_block.inputs[0].fix(-2)
     m.obj1 = pyo.Objective(expr=0)
-    status = pyo.SolverFactory("ipopt").solve(m, tee=False)
+    pyo.SolverFactory("ipopt").solve(m, tee=False)
 
-    assert abs(pyo.value(m.neural_net_block.outputs[0, 0]) - y[0, 0]) < 1e-6
-    assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - y[0, 1]) < 1e-6
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 0]) - y[0, 0]) < NEAR_EQUAL
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - y[0, 1]) < NEAR_EQUAL
 
     net, y = two_node_network(activation, 1.0)
     m.neural_net_block.inputs[0].fix(1)
-    status = pyo.SolverFactory("ipopt").solve(m, tee=False)
-    assert abs(pyo.value(m.neural_net_block.outputs[0, 0]) - y[0, 0]) < 1e-6
-    assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - y[0, 1]) < 1e-6
+    pyo.SolverFactory("ipopt").solve(m, tee=False)
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 0]) - y[0, 0]) < NEAR_EQUAL
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - y[0, 1]) < NEAR_EQUAL
 
 
-def _test_two_node_ReducedSpaceSmoothNNFormulation(activation):
+def _test_two_node_reduced_space_smooth_nn_formulation(activation):
     m = pyo.ConcreteModel()
     m.neural_net_block = OmltBlock()
     net, y = two_node_network(activation, -2.0)
     m.neural_net_block.build_formulation(ReducedSpaceSmoothNNFormulation(net))
-    assert m.nvariables() == 6
-    assert m.nconstraints() == 5
+    assert m.nvariables() == REDUCED_VARS
+    assert m.nconstraints() == REDUCED_CONSTRAINTS
 
     m.neural_net_block.inputs[0].fix(-2)
     m.obj1 = pyo.Objective(expr=0)
-    status = pyo.SolverFactory("ipopt").solve(m, tee=False)
+    pyo.SolverFactory("ipopt").solve(m, tee=False)
 
-    assert abs(pyo.value(m.neural_net_block.outputs[0, 0]) - y[0, 0]) < 1e-6
-    assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - y[0, 1]) < 1e-6
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 0]) - y[0, 0]) < NEAR_EQUAL
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - y[0, 1]) < NEAR_EQUAL
 
     net, y = two_node_network(activation, 1.0)
     m.neural_net_block.inputs[0].fix(1)
-    status = pyo.SolverFactory("ipopt").solve(m, tee=False)
-    assert abs(pyo.value(m.neural_net_block.outputs[0, 0]) - y[0, 0]) < 1e-6
-    assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - y[0, 1]) < 1e-6
+    pyo.SolverFactory("ipopt").solve(m, tee=False)
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 0]) - y[0, 0]) < NEAR_EQUAL
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 1]) - y[0, 1]) < NEAR_EQUAL
 
 
-def test_two_node_ReducedSpaceNNFormulation():
-    _test_two_node_ReducedSpaceNNFormulation("linear")
-    _test_two_node_ReducedSpaceNNFormulation("sigmoid")
-    _test_two_node_ReducedSpaceNNFormulation("tanh")
+def test_two_node_reduced_space_nn_formulation():
+    _test_two_node_reduced_space_nn_formulation("linear")
+    _test_two_node_reduced_space_nn_formulation("sigmoid")
+    _test_two_node_reduced_space_nn_formulation("tanh")
 
 
-def test_two_node_ReducedSpaceSmoothNNFormulation():
-    _test_two_node_ReducedSpaceSmoothNNFormulation("linear")
-    _test_two_node_ReducedSpaceSmoothNNFormulation("sigmoid")
-    _test_two_node_ReducedSpaceSmoothNNFormulation("tanh")
+def test_two_node_reduced_space_smooth_nn_formulation():
+    _test_two_node_reduced_space_smooth_nn_formulation("linear")
+    _test_two_node_reduced_space_smooth_nn_formulation("sigmoid")
+    _test_two_node_reduced_space_smooth_nn_formulation("tanh")
 
 
-def test_two_node_ReducedSpaceSmoothNNFormulation_invalid_activation():
-    with pytest.raises(ValueError) as excinfo:
-        _test_two_node_ReducedSpaceSmoothNNFormulation("relu")
+def test_two_node_reduced_space_smooth_nn_formulation_invalid_activation():
     expected_msg = "Activation relu is not supported by this formulation."
-    assert str(excinfo.value) == expected_msg
+    with pytest.raises(ValueError, match=expected_msg):
+        _test_two_node_reduced_space_smooth_nn_formulation("relu")
 
 
-def test_two_node_FullSpaceNNFormulation():
-    _test_two_node_FullSpaceNNFormulation_smooth("linear")
-    _test_two_node_FullSpaceNNFormulation_smooth("sigmoid")
-    _test_two_node_FullSpaceNNFormulation_smooth("tanh")
-    _test_two_node_FullSpaceNNFormulation_relu()
+def test_two_node_full_space_nn_formulation():
+    _test_two_node_full_space_nn_formulation_smooth("linear")
+    _test_two_node_full_space_nn_formulation_smooth("sigmoid")
+    _test_two_node_full_space_nn_formulation_smooth("tanh")
+    _test_two_node_full_space_nn_formulation_relu()
 
 
-def test_two_node_FullSpaceSmoothNNFormulation():
-    _test_two_node_FullSpaceSmoothNNFormulation("linear")
-    _test_two_node_FullSpaceSmoothNNFormulation("sigmoid")
-    _test_two_node_FullSpaceSmoothNNFormulation("tanh")
+def test_two_node_full_space_smooth_nn_formulation():
+    _test_two_node_full_space_smooth_nn_formulation("linear")
+    _test_two_node_full_space_smooth_nn_formulation("sigmoid")
+    _test_two_node_full_space_smooth_nn_formulation("tanh")
 
 
-def test_two_node_FullSpaceSmoothNNFormulation_invalid_activation():
-    with pytest.raises(ValueError) as excinfo:
-        _test_two_node_FullSpaceSmoothNNFormulation("relu")
+def test_two_node_full_space_smooth_nn_formulation_invalid_activation():
     expected_msg = "Activation relu is not supported by this formulation."
-    assert str(excinfo.value) == expected_msg
+    with pytest.raises(ValueError, match=expected_msg):
+        _test_two_node_full_space_smooth_nn_formulation("relu")
 
 
 @pytest.mark.skip(reason="Need to add checks on layer types")
 def test_invalid_layer_type():
-    raise AssertionError("Layer type test not yet implemented")
+    msg = "Layer type test not yet implemented"
+    raise AssertionError(msg)
 
 
 def _maxpool_conv_network(inputs):
@@ -305,7 +323,7 @@ def _maxpool_conv_network(inputs):
     return net, y
 
 
-def test_maxpool_FullSpaceNNFormulation():
+def test_maxpool_full_space_nn_formulation():
     m = pyo.ConcreteModel()
     m.neural_net_block = OmltBlock()
 
@@ -337,81 +355,51 @@ def test_maxpool_FullSpaceNNFormulation():
                     inputs_d, inputs_r, inputs_c
                 ]
     m.obj1 = pyo.Objective(expr=0)
-    status = pyo.SolverFactory("cbc").solve(m, tee=False)
-    assert abs(pyo.value(m.neural_net_block.outputs[0, 0, 0]) - y[0, 0, 0]) < 1e-6
+    pyo.SolverFactory("cbc").solve(m, tee=False)
+    assert abs(pyo.value(m.neural_net_block.outputs[0, 0, 0]) - y[0, 0, 0]) < NEAR_EQUAL
 
 
 def _test_formulation_initialize_extra_input(network_formulation):
-    """
-    network_formulation can be:
-    'FullSpace',
-    'ReducedSpace'
-    """
+    """network_formulation can be:'FullSpace', 'ReducedSpace'."""
     net, y = two_node_network("linear", -2.0)
     extra_input = InputLayer([1])
     net.add_layer(extra_input)
-    with pytest.raises(ValueError) as excinfo:
-        if network_formulation == "FullSpace":
-            FullSpaceNNFormulation(net)
-        elif network_formulation == "ReducedSpace":
-            ReducedSpaceNNFormulation(net)
+
     expected_msg = "Multiple input layers are not currently supported."
-    assert str(excinfo.value) == expected_msg
+    if network_formulation == "FullSpace":
+        with pytest.raises(ValueError, match=expected_msg):
+            FullSpaceNNFormulation(net)
+    elif network_formulation == "ReducedSpace":
+        with pytest.raises(ValueError, match=expected_msg):
+            ReducedSpaceNNFormulation(net)
 
 
 def _test_formulation_added_extra_input(network_formulation):
-    """
-    network_formulation can be:
-    'FullSpace',
-    'ReducedSpace'
-    'relu'
-    """
+    """network_formulation can be:'FullSpace', 'ReducedSpace', 'relu'."""
     net, y = two_node_network("linear", -2.0)
     extra_input = InputLayer([1])
-    if network_formulation == "FullSpace":
-        formulation = FullSpaceNNFormulation(net)
-    elif network_formulation == "ReducedSpace":
-        formulation = ReducedSpaceNNFormulation(net)
-    elif network_formulation == "relu":
-        formulation = ReluPartitionFormulation(net)
+    formulation: _PyomoFormulation = formulations[network_formulation](net)
     net.add_layer(extra_input)
-    with pytest.raises(ValueError) as excinfo:
-        formulation.input_indexes
     expected_msg = "Multiple input layers are not currently supported."
-    assert str(excinfo.value) == expected_msg
+    with pytest.raises(ValueError, match=expected_msg):
+        _ = formulation.input_indexes
 
 
 def _test_formulation_build_extra_input(network_formulation):
-    """
-    network_formulation can be:
-    'FullSpace',
-    'ReducedSpace'
-    'relu'
-    """
+    """network_formulation can be:'FullSpace', 'ReducedSpace', 'relu'."""
     net, y = two_node_network("linear", -2.0)
     extra_input = InputLayer([1])
-    if network_formulation == "FullSpace":
-        formulation = FullSpaceNNFormulation(net)
-    elif network_formulation == "ReducedSpace":
-        formulation = ReducedSpaceNNFormulation(net)
-    elif network_formulation == "relu":
-        formulation = ReluPartitionFormulation(net)
+    formulation: _PyomoFormulation = formulations[network_formulation](net)
     net.add_layer(extra_input)
     m = pyo.ConcreteModel()
     m.neural_net_block = OmltBlock()
-    with pytest.raises(ValueError) as excinfo:
-        m.neural_net_block.build_formulation(formulation)
     expected_msg = "Multiple input layers are not currently supported."
-    assert str(excinfo.value) == expected_msg
+    with pytest.raises(ValueError, match=expected_msg):
+        m.neural_net_block.build_formulation(formulation)
 
 
 def _test_formulation_added_extra_output(network_formulation):
-    """
-    network_formulation can be:
-    'FullSpace',
-    'ReducedSpace'
-    'relu'
-    """
+    """network_formulation can be: 'FullSpace', 'ReducedSpace' 'relu'."""
     net, y = two_node_network("linear", -2.0)
     extra_output = DenseLayer(
         [1, 2],
@@ -420,26 +408,16 @@ def _test_formulation_added_extra_output(network_formulation):
         weights=np.array([[1.0, 0.0], [5.0, 1.0]]),
         biases=np.array([3.0, 4.0]),
     )
-    if network_formulation == "FullSpace":
-        formulation = FullSpaceNNFormulation(net)
-    elif network_formulation == "ReducedSpace":
-        formulation = ReducedSpaceNNFormulation(net)
-    elif network_formulation == "relu":
-        formulation = ReluPartitionFormulation(net)
+    formulation: _PyomoFormulation = formulations[network_formulation](net)
     net.add_layer(extra_output)
     net.add_edge(list(net.layers)[-2], extra_output)
-    with pytest.raises(ValueError) as excinfo:
-        formulation.output_indexes
     expected_msg = "Multiple output layers are not currently supported."
-    assert str(excinfo.value) == expected_msg
+    with pytest.raises(ValueError, match=expected_msg):
+        _ = formulation.output_indexes
 
 
 def _test_formulation_initialize_extra_output(network_formulation):
-    """
-    network_formulation can be:
-    'FullSpace',
-    'ReducedSpace'
-    """
+    """network_formulation can be: 'FullSpace', 'ReducedSpace'."""
     net, y = two_node_network("linear", -2.0)
     extra_output = DenseLayer(
         [1, 2],
@@ -450,16 +428,17 @@ def _test_formulation_initialize_extra_output(network_formulation):
     )
     net.add_layer(extra_output)
     net.add_edge(list(net.layers)[-2], extra_output)
-    with pytest.raises(ValueError) as excinfo:
-        if network_formulation == "FullSpace":
-            FullSpaceNNFormulation(net)
-        elif network_formulation == "ReducedSpace":
-            ReducedSpaceNNFormulation(net)
+
     expected_msg = "Multiple output layers are not currently supported."
-    assert str(excinfo.value) == expected_msg
+    if network_formulation == "FullSpace":
+        with pytest.raises(ValueError, match=expected_msg):
+            FullSpaceNNFormulation(net)
+    elif network_formulation == "ReducedSpace":
+        with pytest.raises(ValueError, match=expected_msg):
+            ReducedSpaceNNFormulation(net)
 
 
-def test_FullSpaceNNFormulation_invalid_network():
+def test_full_space_nn_formulation_invalid_network():
     _test_formulation_initialize_extra_input("FullSpace")
     _test_formulation_added_extra_input("FullSpace")
     _test_formulation_build_extra_input("FullSpace")
@@ -467,15 +446,13 @@ def test_FullSpaceNNFormulation_invalid_network():
     _test_formulation_added_extra_output("FullSpace")
 
 
-def test_ReducedSpaceNNFormulation_invalid_network():
-    # _test_formulation_initialize_extra_input("ReducedSpace")
+def test_reduced_space_nn_formulation_invalid_network():
     _test_formulation_added_extra_input("ReducedSpace")
     _test_formulation_build_extra_input("ReducedSpace")
-    # _test_formulation_initialize_extra_output("ReducedSpace")
     _test_formulation_added_extra_output("ReducedSpace")
 
 
-def test_ReluPartitionFormulation_invalid_network():
+def test_relu_partition_formulation_invalid_network():
     _test_formulation_added_extra_input("relu")
     _test_formulation_build_extra_input("relu")
     _test_formulation_added_extra_output("relu")
@@ -489,19 +466,18 @@ def _test_dense_layer_multiple_predecessors(layer_type):
     test_layer = list(net.layers)[2]
     net.add_layer(extra_input)
     net.add_edge(extra_input, test_layer)
-    with pytest.raises(ValueError) as excinfo:
-        if layer_type == "PartitionBased":
+
+    expected_msg = re.escape(f"Layer {test_layer} has multiple predecessors.")
+    if layer_type == "PartitionBased":
+        with pytest.raises(ValueError, match=expected_msg):
             partition_based_dense_relu_layer(m, net, m, test_layer, None)
-        elif layer_type == "ReducedSpace":
+    elif layer_type == "ReducedSpace":
+        with pytest.raises(ValueError, match=expected_msg):
             reduced_space_dense_layer(m, net, m, test_layer, None)
-    expected_msg = f"Layer {test_layer} has multiple predecessors."
-    assert str(excinfo.value) == expected_msg
 
 
 def _test_dense_layer_no_predecessors(layer_type):
-    """
-    Layer type can be "ReducedSpace", or "PartitionBased".
-    """
+    """Layer type can be "ReducedSpace", or "PartitionBased"."""
     m = pyo.ConcreteModel()
     net = NetworkDefinition(scaled_input_bounds=[(-10.0, 10.0)])
 
@@ -513,13 +489,16 @@ def _test_dense_layer_no_predecessors(layer_type):
         biases=np.array([1.0, 2.0]),
     )
     net.add_layer(test_layer)
-    with pytest.raises(ValueError) as excinfo:
-        if layer_type == "PartitionBased":
+
+    expected_msg = re.escape(
+        f"Layer {test_layer} is not an input layer, but has no predecessors."
+    )
+    if layer_type == "PartitionBased":
+        with pytest.raises(ValueError, match=expected_msg):
             partition_based_dense_relu_layer(m, net, m, test_layer, None)
-        elif layer_type == "ReducedSpace":
+    elif layer_type == "ReducedSpace":
+        with pytest.raises(ValueError, match=expected_msg):
             reduced_space_dense_layer(m, net, m, test_layer, None)
-    expected_msg = f"Layer {test_layer} is not an input layer, but has no predecessors."
-    assert str(excinfo.value) == expected_msg
 
 
 def test_partition_based_dense_layer_predecessors():
@@ -546,12 +525,11 @@ def test_partition_based_unbounded_below():
 
     split_func = lambda w: default_partition_split_func(w, 2)
 
-    with pytest.raises(ValueError) as excinfo:
+    expected_msg = "Expression is unbounded below."
+    with pytest.raises(ValueError, match=expected_msg):
         partition_based_dense_relu_layer(
             m.neural_net_block, net, m.neural_net_block, test_layer, split_func
         )
-    expected_msg = "Expression is unbounded below."
-    assert str(excinfo.value) == expected_msg
 
 
 def test_partition_based_unbounded_above():
@@ -568,12 +546,11 @@ def test_partition_based_unbounded_above():
 
     split_func = lambda w: default_partition_split_func(w, 2)
 
-    with pytest.raises(ValueError) as excinfo:
+    expected_msg = "Expression is unbounded above."
+    with pytest.raises(ValueError, match=expected_msg):
         partition_based_dense_relu_layer(
             m.neural_net_block, net, m.neural_net_block, test_layer, split_func
         )
-    expected_msg = "Expression is unbounded above."
-    assert str(excinfo.value) == expected_msg
 
 
 def test_partition_based_bias_unbounded_below():
@@ -588,12 +565,11 @@ def test_partition_based_bias_unbounded_below():
     test_layer.biases[0] = -interval.inf
     split_func = lambda w: default_partition_split_func(w, 2)
 
-    with pytest.raises(ValueError) as excinfo:
+    expected_msg = "Expression is unbounded below."
+    with pytest.raises(ValueError, match=expected_msg):
         partition_based_dense_relu_layer(
             m.neural_net_block, net, m.neural_net_block, test_layer, split_func
         )
-    expected_msg = "Expression is unbounded below."
-    assert str(excinfo.value) == expected_msg
 
 
 def test_partition_based_bias_unbounded_above():
@@ -607,13 +583,11 @@ def test_partition_based_bias_unbounded_above():
 
     test_layer.biases[0] = interval.inf
     split_func = lambda w: default_partition_split_func(w, 2)
-
-    with pytest.raises(ValueError) as excinfo:
+    expected_msg = "Expression is unbounded above."
+    with pytest.raises(ValueError, match=expected_msg):
         partition_based_dense_relu_layer(
             m.neural_net_block, net, m.neural_net_block, test_layer, split_func
         )
-    expected_msg = "Expression is unbounded above."
-    assert str(excinfo.value) == expected_msg
 
 
 def test_fullspace_internal_extra_input():
@@ -626,10 +600,9 @@ def test_fullspace_internal_extra_input():
     m.neural_net_block.build_formulation(formulation)
     net.add_layer(extra_input)
     net.add_edge(extra_input, test_layer)
-    with pytest.raises(ValueError) as excinfo:
-        _input_layer_and_block(m.neural_net_block, net, test_layer)
     expected_msg = "Multiple input layers are not currently supported."
-    assert str(excinfo.value) == expected_msg
+    with pytest.raises(ValueError, match=expected_msg):
+        _input_layer_and_block(m.neural_net_block, net, test_layer)
 
 
 def test_conv2d_extra_activation():
@@ -673,10 +646,14 @@ def test_conv2d_extra_activation():
     )
     net.add_layer(maxpool_layer_1)
     net.add_edge(conv_layer_2, maxpool_layer_1)
-    with pytest.raises(ValueError) as excinfo:
+    expected_msg = re.escape(
+        "Activation is applied after convolution layer, but the successor maxpooling"
+        " layer PoolingLayer(input_size=[1, 3, 4], output_size=[1, 1, 2],"
+        " strides=[2, 2], kernel_shape=[3, 2]), pool_func_name=max has an activation"
+        " function also."
+    )
+    with pytest.raises(ValueError, match=expected_msg):
         m.neural_net_block.build_formulation(FullSpaceNNFormulation(net))
-    expected_msg = """Activation is applied after convolution layer, but the successor max pooling layer PoolingLayer(input_size=[1, 3, 4], output_size=[1, 1, 2], strides=[2, 2], kernel_shape=[3, 2]), pool_func_name=max has an activation function also."""
-    assert str(excinfo.value) == expected_msg
 
 
 def test_maxpool2d_bad_input_activation():
@@ -730,13 +707,14 @@ def test_maxpool2d_bad_input_activation():
     m.neural_net_block.build_formulation(FullSpaceNNFormulation(net))
 
     conv_layer_2.activation = "relu"
-
-    with pytest.raises(ValueError) as excinfo:
+    expected_msg = (
+        "Non-increasing activation functions on the preceding convolutional"
+        " layer are not supported."
+    )
+    with pytest.raises(ValueError, match=expected_msg):
         full_space_maxpool2d_layer(
             m.neural_net_block, net, m.neural_net_block, maxpool_layer_1
         )
-    expected_msg = """Non-increasing activation functions on the preceding convolutional layer are not supported."""
-    assert str(excinfo.value) == expected_msg
 
 
 def test_maxpool2d_bad_input_layer():
@@ -876,15 +854,15 @@ def _test_three_node_graph_neural_network(graph_type):
     for i in range(6):
         m.nn.inputs[i].fix(inputs[i])
 
-    assert m.nvariables() == 81
-    assert m.nconstraints() == 120
+    assert m.nvariables() == THREE_NODE_VARS
+    assert m.nconstraints() == THREE_NODE_CONSTRAINTS
 
     m.obj = pyo.Objective(expr=0)
 
-    status = pyo.SolverFactory("cbc").solve(m, tee=False)
+    pyo.SolverFactory("cbc").solve(m, tee=False)
 
     for i in range(9):
-        assert abs(pyo.value(m.nn.outputs[i]) - y[i]) < 1e-6
+        assert abs(pyo.value(m.nn.outputs[i]) - y[i]) < NEAR_EQUAL
 
     for i in range(6):
         for j in range(3):
@@ -893,7 +871,7 @@ def _test_three_node_graph_neural_network(graph_type):
                     pyo.value(m.nn.layer[m.nn.layers.at(1)].zbar[i, j])
                     - pyo.value(m.nn.A[i // 2, j]) * inputs[i]
                 )
-                < 1e-6
+                < NEAR_EQUAL
             )
 
 

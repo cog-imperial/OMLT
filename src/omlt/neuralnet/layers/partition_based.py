@@ -4,8 +4,7 @@ from pyomo.contrib.fbbt.fbbt import compute_bounds_on_expr
 
 
 def default_partition_split_func(w, n):
-    r"""
-    Default function for partitioning weights in :math:`w` into :math:`n` partitions.
+    r"""Default function to partition weights in :math:`w` into :math:`n` partitions.
 
     Weights in :math:`w` are sorted and partitioned evenly.
 
@@ -16,15 +15,15 @@ def default_partition_split_func(w, n):
 
 
 def partition_based_dense_relu_layer(net_block, net, layer_block, layer, split_func):
-    r"""
-    Partition-based ReLU activation formulation.
+    r"""Partition-based ReLU activation formulation.
 
     Generates the constraints for the ReLU activation function:
 
     .. math::
 
         \begin{align*}
-            y_j = \max\left(0,\sum\limits_{i=0}^{F_{in}-1}w_{ij}x_i+b_j\right), && \forall 0\le j<F_{out}
+            y_j = \max\left(0,\sum\limits_{i=0}^{F_{in}-1}w_{ij}x_i+b_j\right),
+                && \forall 0\le j<F_{out}
         \end{align*}
 
     We additionally introduce the following notations to describe this formulation:
@@ -34,14 +33,16 @@ def partition_based_dense_relu_layer(net_block, net, layer_block, layer, split_f
         \begin{align*}
             n       &:= \text{the number of partitions}\\
             S_k     &:=  \text{indexes of the $k$-th partition satisfying:} \\
-                    & \quad\quad \bigcup\limits_{k=0}^{n-1} S_k=\{0,1,\dots,F_{in}-1\},~S_{k_1}\cap S_{k_2}=\emptyset, ~\forall k_1\neq k_2\\
+                    & \quad\quad \bigcup\limits_{k=0}^{n-1} S_k=\{0,1,\dots,F_{in}-1\},
+                    ~S_{k_1}\cap S_{k_2}=\emptyset, ~\forall k_1\neq k_2\\
             \sigma  &:= \text{if this activation function is activated, i.e.,}\\
                     & \quad\quad y_j=
                     \begin{cases}
                         0, & \sigma=1\\
                         \sum\limits_{i=0}^{F_{in}-1}w_{ij}x_i+b_j, & \sigma=0
                     \end{cases}\\
-            p_k     &:=\text{auxiliary variable representing the $k$-th partition, i.e., $\sum\limits_{i\in S_k}w_{ij}x_i$}\\
+            p_k     &:=\text{auxiliary variable representing the $k$-th partition,
+                    i.e., $\sum\limits_{i\in S_k}w_{ij}x_i$}\\
             l_k     &:=\text{the lower bound of $\sum\limits_{i\in S_k}w_{ij}x_i$}\\
             u_k     &:=\text{the upper bound of $\sum\limits_{i\in S_k}w_{ij}x_i$}
         \end{align*}
@@ -53,9 +54,11 @@ def partition_based_dense_relu_layer(net_block, net, layer_block, layer, split_f
 
         \begin{align*}
             & y_j=\sum\limits_{k=0}^{n-1}p_k+(1-\sigma)b_j\\
-            & \sum\limits_{k=0}^{n-1}\left(\sum\limits_{i\in S_k}w_{ij}x_i-p_k\right)+\sigma b_j\le 0\\
+            & \sum\limits_{k=0}^{n-1}\left(\sum\limits_{i\in S_k}w_{ij}x_i-p_k\right)
+                +\sigma b_j\le 0\\
             & \sum\limits_{k=0}^{n-1}p_k+(1-\sigma)b_j\ge 0\\
-            & \sigma l_k\le \sum\limits_{i\in S_k}w_{ij}x_i-p_k\le \sigma u_k,~0\le k<n\\
+            & \sigma l_k\le \sum\limits_{i\in S_k}w_{ij}x_i-p_k
+                \le \sigma u_k,~0\le k<n\\
             & (1-\sigma)l_k\le p_k\le (1-\sigma)u_k,~0\le k<n
         \end{align*}
 
@@ -63,11 +66,11 @@ def partition_based_dense_relu_layer(net_block, net, layer_block, layer, split_f
     # not an input layer, process the expressions
     prev_layers = list(net.predecessors(layer))
     if len(prev_layers) == 0:
-        raise ValueError(
-            f"Layer {layer} is not an input layer, but has no predecessors."
-        )
-    elif len(prev_layers) > 1:
-        raise ValueError(f"Layer {layer} has multiple predecessors.")
+        msg = f"Layer {layer} is not an input layer, but has no predecessors."
+        raise ValueError(msg)
+    if len(prev_layers) > 1:
+        msg = f"Layer {layer} has multiple predecessors."
+        raise ValueError(msg)
     prev_layer = prev_layers[0]
     prev_layer_block = net_block.layer[id(prev_layer)]
 
@@ -100,19 +103,18 @@ def partition_based_dense_relu_layer(net_block, net, layer_block, layer, split_f
             for split_local_index in splits[split_index]:
                 _, local_index = input_layer_indexes[split_local_index]
 
-                if mapper:
-                    input_index = mapper(local_index)
-                else:
-                    input_index = local_index
+                input_index = mapper(local_index) if mapper else local_index
 
                 w = weights[local_index[-1]]
                 expr += prev_layer_block.z[input_index] * w
 
             lb, ub = compute_bounds_on_expr(expr)
             if lb is None:
-                raise ValueError("Expression is unbounded below.")
+                msg = "Expression is unbounded below."
+                raise ValueError(msg)
             if ub is None:
-                raise ValueError("Expression is unbounded above.")
+                msg = "Expression is unbounded above."
+                raise ValueError(msg)
 
             z2 = b.z2[split_index]
             z2.setlb(min(0, lb))
@@ -133,9 +135,11 @@ def partition_based_dense_relu_layer(net_block, net, layer_block, layer, split_f
 
         lb, ub = compute_bounds_on_expr(expr)
         if lb is None:
-            raise ValueError("Expression is unbounded below.")
+            msg = "Expression is unbounded below."
+            raise ValueError(msg)
         if ub is None:
-            raise ValueError("Expression is unbounded above.")
+            msg = "Expression is unbounded above."
+            raise ValueError(msg)
 
         layer_block.z[output_index].setlb(0)
         layer_block.z[output_index].setub(max(0, ub))
@@ -144,10 +148,7 @@ def partition_based_dense_relu_layer(net_block, net, layer_block, layer, split_f
         for split_index in range(num_splits):
             for split_local_index in splits[split_index]:
                 _, local_index = input_layer_indexes[split_local_index]
-                if mapper:
-                    input_index = mapper(local_index)
-                else:
-                    input_index = local_index
+                input_index = mapper(local_index) if mapper else local_index
 
                 w = weights[local_index[-1]]
                 eq_13_expr += prev_layer_block.z[input_index] * w

@@ -1,4 +1,3 @@
-import numpy as np
 import pyomo.environ as pyo
 
 from omlt.formulation import _PyomoFormulation, _setup_scaled_inputs_outputs
@@ -57,10 +56,11 @@ _DEFAULT_ACTIVATION_CONSTRAINTS = {
     "tanh": tanh_activation_constraint,
 }
 
+MULTI_INPUTS_UNSUPPORTED = "Multiple input layers are not currently supported."
+MULTI_OUTPUTS_UNSUPPORTED = "Multiple output layers are not currently supported."
 
 class FullSpaceNNFormulation(_PyomoFormulation):
-    """
-    This class is the entry-point to build neural network formulations.
+    """This class is the entry-point to build neural network formulations.
 
     This class iterates over all nodes in the neural network and for
     each one them, generates the constraints to represent the layer
@@ -96,10 +96,10 @@ class FullSpaceNNFormulation(_PyomoFormulation):
 
         network_inputs = list(self.__network_definition.input_nodes)
         if len(network_inputs) != 1:
-            raise ValueError("Multiple input layers are not currently supported.")
+            raise ValueError(MULTI_INPUTS_UNSUPPORTED)
         network_outputs = list(self.__network_definition.output_nodes)
         if len(network_outputs) != 1:
-            raise ValueError("Multiple output layers are not currently supported.")
+            raise ValueError(MULTI_OUTPUTS_UNSUPPORTED)
 
     def _supported_default_layer_constraints(self):
         return _DEFAULT_LAYER_CONSTRAINTS
@@ -124,7 +124,7 @@ class FullSpaceNNFormulation(_PyomoFormulation):
         """The indexes of the formulation inputs."""
         network_inputs = list(self.__network_definition.input_nodes)
         if len(network_inputs) != 1:
-            raise ValueError("Multiple input layers are not currently supported.")
+            raise ValueError(MULTI_INPUTS_UNSUPPORTED)
         return network_inputs[0].input_indexes
 
     @property
@@ -132,15 +132,14 @@ class FullSpaceNNFormulation(_PyomoFormulation):
         """The indexes of the formulation output."""
         network_outputs = list(self.__network_definition.output_nodes)
         if len(network_outputs) != 1:
-            raise ValueError("Multiple output layers are not currently supported.")
+            raise ValueError(MULTI_OUTPUTS_UNSUPPORTED)
         return network_outputs[0].output_indexes
 
 
 def _build_neural_network_formulation(
     block, network_structure, layer_constraints, activation_constraints
 ):
-    """
-    Adds the neural network formulation to the given Pyomo block.
+    """Adds the neural network formulation to the given Pyomo block.
 
     Parameters
     ----------
@@ -183,27 +182,21 @@ def _build_neural_network_formulation(
 
         layer_constraints_func = layer_constraints.get(type(layer), None)
         if layer_constraints_func is None:
-            raise ValueError(
-                "Layer type {} is not supported by this formulation.".format(
-                    type(layer)
-                )
-            )
+            msg = f"Layer type {type(layer)} is not supported by this formulation."
+            raise ValueError(msg)
         layer_constraints_func(block, net, layer_block, layer)
 
         activation_constraints_func = activation_constraints.get(layer.activation, None)
         if activation_constraints_func is None:
-            raise ValueError(
-                "Activation {} is not supported by this formulation.".format(
-                    layer.activation
-                )
-            )
+            msg = f"Activation {layer.activation} is not supported by this formulation."
+            raise ValueError(msg)
         activation_constraints_func(block, net, layer_block, layer)
 
     # setup input variables constraints
     # currently only support a single input layer
     input_layers = list(net.input_layers)
     if len(input_layers) != 1:
-        raise ValueError("Multiple input layers are not currently supported.")
+        raise ValueError(MULTI_INPUTS_UNSUPPORTED)
     input_layer = input_layers[0]
 
     @block.Constraint(input_layer.output_indexes)
@@ -214,7 +207,7 @@ def _build_neural_network_formulation(
     # currently only support a single output layer
     output_layers = list(net.output_layers)
     if len(output_layers) != 1:
-        raise ValueError("Multiple output layers are not currently supported.")
+        raise ValueError(MULTI_OUTPUTS_UNSUPPORTED)
     output_layer = output_layers[0]
 
     @block.Constraint(output_layer.output_indexes)
@@ -226,7 +219,8 @@ def _build_neural_network_formulation(
 
 class FullSpaceSmoothNNFormulation(FullSpaceNNFormulation):
     def __init__(self, network_structure):
-        """
+        """Full Space Smooth Neural Network Formulation.
+
         This class is used for building "full-space" formulations of
         neural network models composed of smooth activations (e.g., tanh,
         sigmoid, etc.)
@@ -249,7 +243,8 @@ class FullSpaceSmoothNNFormulation(FullSpaceNNFormulation):
 
 class ReluBigMFormulation(FullSpaceNNFormulation):
     def __init__(self, network_structure):
-        """
+        """Relu Big-M Formulation.
+
         This class is used for building "full-space" formulations of
         neural network models composed of relu activations using a
         big-M formulation
@@ -270,7 +265,8 @@ class ReluBigMFormulation(FullSpaceNNFormulation):
 
 class ReluComplementarityFormulation(FullSpaceNNFormulation):
     def __init__(self, network_structure):
-        """
+        """Relu Complementarity Formulation.
+
         This class is used for building "full-space" formulations of
         neural network models composed of relu activations using
         a complementarity formulation (smooth represenation)
@@ -290,7 +286,8 @@ class ReluComplementarityFormulation(FullSpaceNNFormulation):
 
 
 class ReducedSpaceNNFormulation(_PyomoFormulation):
-    """
+    """Reduced Space Neural Network Formulation.
+
     This class is used to build reduced-space formulations
     of neural networks.
 
@@ -309,23 +306,18 @@ class ReducedSpaceNNFormulation(_PyomoFormulation):
         self.__scaling_object = network_structure.scaling_object
         self.__scaled_input_bounds = network_structure.scaled_input_bounds
 
-        # TODO: look into increasing support for other layers / activations
-        # self._layer_constraints = {**_DEFAULT_LAYER_CONSTRAINTS, **layer_constraints}
         self._activation_functions = dict(
             self._supported_default_activation_functions()
         )
         if activation_functions is not None:
             self._activation_functions.update(activation_functions)
 
-        # If we want to do network input/output validation at initialize time instead
-        # of build time, as it is for FullSpaceNNFormulation:
-        #
-        # network_inputs = list(self.__network_definition.input_nodes)
-        # if len(network_inputs) != 1:
-        #     raise ValueError("Multiple input layers are not currently supported.")
-        # network_outputs = list(self.__network_definition.output_nodes)
-        # if len(network_outputs) != 1:
-        #     raise ValueError("Multiple output layers are not currently supported.")
+        network_inputs = list(self.__network_definition.input_nodes)
+        if len(network_inputs) != 1:
+            raise ValueError(MULTI_INPUTS_UNSUPPORTED)
+        network_outputs = list(self.__network_definition.output_nodes)
+        if len(network_outputs) != 1:
+            raise ValueError(MULTI_OUTPUTS_UNSUPPORTED)
 
     def _supported_default_activation_functions(self):
         return dict(_DEFAULT_ACTIVATION_FUNCTIONS)
@@ -346,10 +338,11 @@ class ReducedSpaceNNFormulation(_PyomoFormulation):
         # currently only support a single input layer
         input_layers = list(net.input_layers)
         if len(input_layers) != 1:
-            raise ValueError(
+            msg = (
                 "build_formulation called with a network that has more than"
                 " one input layer. Only single input layers are supported."
             )
+            raise ValueError(msg)
         input_layer = input_layers[0]
         input_layer_id = id(input_layer)
         input_layer_block = block.layer[input_layer_id]
@@ -367,18 +360,24 @@ class ReducedSpaceNNFormulation(_PyomoFormulation):
                 # skip the InputLayer
                 continue
 
-            # TODO: Add error checking on layer type
+            if not isinstance(layer, DenseLayer):
+                msg = (
+                    f"ReducedSpaceNNFormulation only supports Dense layers. {net}"
+                    f" contains {layer} which is a {type(layer)}."
+                )
+                raise TypeError(msg)
+
             # build the linear expressions and the activation function
             layer_id = id(layer)
             layer_block = block.layer[layer_id]
             layer_func = reduced_space_dense_layer  # layer_constraints[type(layer)]
             activation_func = self._activation_functions.get(layer.activation, None)
             if activation_func is None:
-                raise ValueError(
-                    "Activation {} is not supported by this formulation.".format(
-                        layer.activation
-                    )
+                msg = (
+                    f"Activation {layer.activation} is not supported by this"
+                    " formulation."
                 )
+                raise ValueError(msg)
 
             layer_func(block, net, layer_block, layer, activation_func)
 
@@ -386,10 +385,11 @@ class ReducedSpaceNNFormulation(_PyomoFormulation):
         # currently only support a single output layer
         output_layers = list(net.output_layers)
         if len(output_layers) != 1:
-            raise ValueError(
+            msg = (
                 "build_formulation called with a network that has more than"
                 " one output layer. Only single output layers are supported."
             )
+            raise ValueError(msg)
         output_layer = output_layers[0]
 
         @block.Constraint(output_layer.output_indexes)
@@ -413,7 +413,7 @@ class ReducedSpaceNNFormulation(_PyomoFormulation):
         """The indexes of the formulation inputs."""
         network_inputs = list(self.__network_definition.input_nodes)
         if len(network_inputs) != 1:
-            raise ValueError("Multiple input layers are not currently supported.")
+            raise ValueError(MULTI_INPUTS_UNSUPPORTED)
         return network_inputs[0].input_indexes
 
     @property
@@ -421,12 +421,13 @@ class ReducedSpaceNNFormulation(_PyomoFormulation):
         """The indexes of the formulation output."""
         network_outputs = list(self.__network_definition.output_nodes)
         if len(network_outputs) != 1:
-            raise ValueError("Multiple output layers are not currently supported.")
+            raise ValueError(MULTI_OUTPUTS_UNSUPPORTED)
         return network_outputs[0].output_indexes
 
 
 class ReducedSpaceSmoothNNFormulation(ReducedSpaceNNFormulation):
-    """
+    """Reduced Space Smooth Neural Network Formulation.
+
     This class is used to build reduced-space formulations
     of neural networks with smooth activation functions.
 
@@ -449,7 +450,8 @@ class ReducedSpaceSmoothNNFormulation(ReducedSpaceNNFormulation):
 
 
 class ReluPartitionFormulation(_PyomoFormulation):
-    """
+    """ReLU Partition Formulation.
+
     This class is used to build partition-based formulations
     of neural networks.
 
@@ -515,11 +517,14 @@ class ReluPartitionFormulation(_PyomoFormulation):
                     full_space_dense_layer(block, net, layer_block, layer)
                     linear_activation_constraint(block, net, layer_block, layer)
                 else:
-                    raise ValueError(
-                        "ReluPartitionFormulation supports Dense layers with relu or linear activation"
+                    msg = (
+                        "ReluPartitionFormulation supports Dense layers with relu or"
+                        " linear activation"
                     )
+                    raise ValueError(msg)
             else:
-                raise ValueError("ReluPartitionFormulation supports only Dense layers")
+                msg = "ReluPartitionFormulation supports only Dense layers"
+                raise TypeError(msg)
 
         # This check is never hit. The formulation._build_formulation() function is
         # only ever called by an OmltBlock.build_formulation(), and that runs the
@@ -530,7 +535,7 @@ class ReluPartitionFormulation(_PyomoFormulation):
         # currently only support a single input layer
         input_layers = list(net.input_layers)
         if len(input_layers) != 1:
-            raise ValueError("Multiple input layers are not currently supported.")
+            raise ValueError(MULTI_INPUTS_UNSUPPORTED)
         input_layer = input_layers[0]
 
         @block.Constraint(input_layer.output_indexes)
@@ -544,7 +549,7 @@ class ReluPartitionFormulation(_PyomoFormulation):
         # currently only support a single output layer
         output_layers = list(net.output_layers)
         if len(output_layers) != 1:
-            raise ValueError("Multiple output layers are not currently supported.")
+            raise ValueError(MULTI_OUTPUTS_UNSUPPORTED)
         output_layer = output_layers[0]
 
         @block.Constraint(output_layer.output_indexes)
@@ -559,7 +564,7 @@ class ReluPartitionFormulation(_PyomoFormulation):
         """The indexes of the formulation inputs."""
         network_inputs = list(self.__network_definition.input_nodes)
         if len(network_inputs) != 1:
-            raise ValueError("Multiple input layers are not currently supported.")
+            raise ValueError(MULTI_INPUTS_UNSUPPORTED)
         return network_inputs[0].input_indexes
 
     @property
@@ -567,5 +572,5 @@ class ReluPartitionFormulation(_PyomoFormulation):
         """The indexes of the formulation output."""
         network_outputs = list(self.__network_definition.output_nodes)
         if len(network_outputs) != 1:
-            raise ValueError("Multiple output layers are not currently supported.")
+            raise ValueError(MULTI_OUTPUTS_UNSUPPORTED)
         return network_outputs[0].output_indexes

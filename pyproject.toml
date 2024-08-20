@@ -78,6 +78,19 @@ ignore = [
   "ANN401",
   "COM812",
   "ISC001",
+  "SLF001",
+  "ARG001",
+  "N803",
+  "N806",
+  # Remove these after issue https://github.com/cog-imperial/OMLT/issues/153 is fixed.
+  "D100",
+  "D101",
+  "D102",
+  "D103",
+  "D104",
+  "D105",
+  "D106",
+  "D107",
   # TODO: Remove these eventually
   "ANN001",
   "ANN002",
@@ -106,6 +119,7 @@ convention = "google"
   "INP001",
 ]
 "docs/conf.py" = ["D100", "INP001"]
+"src/omlt/neuralnet/layer.py" = ["N802"]
 
 [tool.mypy]
 show_error_codes = true
