@@ -121,6 +121,7 @@ convention = "google"
 "docs/conf.py" = ["D100", "INP001"]
 "src/omlt/neuralnet/layer.py" = ["N802"]
 "docs/notebooks/data/build_sin_quadratic_csv.py" = ["INP001"]
+"docs/notebooks/*" = ["T201", "F811", "E402", "ICN001"]
 
 [tool.mypy]
 show_error_codes = true
