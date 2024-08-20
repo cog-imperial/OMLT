@@ -238,14 +238,14 @@ def test_nonzero_epsilon():
     solution_1_bigm = (pe.value(model_bad.x), pe.value(model_bad.y))
     y_pred = regr_small.predict(np.array(solution_1_bigm[0]).reshape(1, -1))
     # Without an epsilon, the model cheats and does not match the tree prediction
-    assert y_pred[0] != approx(solution_1_bigm[1])
+    assert y_pred[0] != pytest.approx(solution_1_bigm[1])
 
     status = pe.SolverFactory("cbc").solve(model_good)
     pe.assert_optimal_termination(status)
     solution = (pe.value(model_good.x), pe.value(model_good.y))
     y_pred = regr_small.predict(np.array(solution[0]).reshape(1, -1))
     # With epsilon, the model matches the tree prediction
-    assert y_pred[0] == approx(solution[1])
+    assert y_pred[0] == pytest.approx(solution[1])
 
 
 @pytest.mark.skipif(
