@@ -269,9 +269,6 @@ def full_space_maxpool2d_layer(net_block, net, layer_block, layer):
             " are not supported."
         )
         raise ValueError(msg)
-    # TODO @cog-imperial: add support for non-increasing activation functions on
-    # preceding convolutional layer
-    # https://github.com/cog-imperial/OMLT/issues/154
 
     # note kernel indexes are the same set of values for any output index, so wlog get
     # kernel indexes for (0, 0, 0)
@@ -317,30 +314,32 @@ def full_space_maxpool2d_layer(net_block, net, layer_block, layer):
             == 1
         )
 
-        for l, input_index in layer.kernel_index_with_input_indexes(
+        for layer_index, input_index in layer.kernel_index_with_input_indexes(
             out_d, out_r, out_c
         ):
             mapped_input_index = layer.input_index_mapper(input_index)
 
             # Since biases are zero,
             # input_layer_block.z[input_index] is equal to w dot x in the formulation.
-            layer_block._zhat_upper_bound[output_index, l] = layer_block.zhat[
+            layer_block._zhat_upper_bound[output_index, layer_index] = layer_block.zhat[
                 output_index
             ] <= input_layer_block.z[mapped_input_index] + sum(
                 layer_block.q_maxpool[output_index, k]
-                * _calculate_n_plus(output_index, l, k, layer, input_layer_block)
+                * _calculate_n_plus(
+                    output_index, layer_index, k, layer, input_layer_block
+                )
                 for k in layer_block._kernel_indexes
             )
-            layer_block._zhat_lower_bound[output_index, l] = (
+            layer_block._zhat_lower_bound[output_index, layer_index] = (
                 layer_block.zhat[output_index]
                 >= input_layer_block.z[mapped_input_index]
             )
 
 
-def _calculate_n_plus(out_index, l, k, layer, input_layer_block):
-    if l == k:
+def _calculate_n_plus(out_index, kernel_index, k, layer, input_layer_block):
+    if kernel_index == k:
         return 0
-    x_l_index = layer.input_index_mapper(layer.get_input_index(out_index, l))
+    x_l_index = layer.input_index_mapper(layer.get_input_index(out_index, kernel_index))
     x_k_index = layer.input_index_mapper(layer.get_input_index(out_index, k))
     return max(
         x_k_bound - x_l_bound

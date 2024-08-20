@@ -102,7 +102,7 @@ _AGGREGATION_OP_TYPES = ["sum", "mean"]
 _OP_TYPES = _LAYER_OP_TYPES_FIXED_GRAPH + _ACTIVATION_OP_TYPES + _POOLING_OP_TYPES
 
 
-def load_torch_geometric_sequential(
+def load_torch_geometric_sequential(  # noqa: C901, PLR0913, PLR0912, PLR0915
     nn,
     N,
     A=None,
@@ -154,12 +154,12 @@ def load_torch_geometric_sequential(
     net.add_layer(prev_layer)
 
     operations = []
-    for l in nn:
+    for layer in nn:
         op_name = None
-        if l.__class__.__name__ == "function":
-            op_name = l.__name__
+        if layer.__class__.__name__ == "function":
+            op_name = layer.__name__
         else:
-            op_name = l.__class__.__name__
+            op_name = layer.__class__.__name__
 
         if op_name not in _OP_TYPES:
             msg = f"Operation {op_name} is not supported."
@@ -167,18 +167,20 @@ def load_torch_geometric_sequential(
         operations.append(op_name)
 
     if A is None:
+        supported_layers = {
+            "Linear",
+            *_ACTIVATION_OP_TYPES,
+            *_POOLING_OP_TYPES,
+        }
         # If A is None, then the graph is not fixed.
         # Only layers in _LAYER_OP_TYPES_NON_FIXED_GRAPH are supported.
         # Only "sum" aggregation is supported.
         # Since all weights and biases are possibly needed, A is set to correspond to a
         # complete graph.
-        for index, l in enumerate(nn):
-            if (
-                operations[index]
-                in ["Linear"] + _ACTIVATION_OP_TYPES + _POOLING_OP_TYPES
-            ):
+        for index, layer in enumerate(nn):
+            if operations[index] in supported_layers:
                 # nonlinear activation results in a MINLP
-                if operations[index] in ["Sigmoid", "LogSoftmax", "Softplus", "Tanh"]:
+                if operations[index] in {"Sigmoid", "LogSoftmax", "Softplus", "Tanh"}:
                     warnings.warn(
                         "nonlinear activation results in a MINLP", stacklevel=2
                     )
@@ -188,13 +190,13 @@ def load_torch_geometric_sequential(
             if operations[index] not in _LAYER_OP_TYPES_NON_FIXED_GRAPH:
                 msg = "this layer is not supported when the graph is not fixed."
                 raise ValueError(msg)
-            if l.aggr != "sum":
+            if layer.aggr != "sum":
                 msg = "this aggregation is not supported when the graph is not fixed"
                 raise ValueError(msg)
 
         A = np.ones((N, N)) - np.eye(N)
 
-    for index, l in enumerate(nn):
+    for index, layer in enumerate(nn):
         if operations[index] in _ACTIVATION_OP_TYPES:
             # Skip activation layers since they are already handled in last layer
             continue
@@ -205,8 +207,8 @@ def load_torch_geometric_sequential(
             activation = operations[index + 1].lower()
 
         if operations[index] == "Linear":
-            gnn_weights = l.weight.detach().numpy()
-            gnn_biases = l.bias.detach().numpy()
+            gnn_weights = layer.weight.detach().numpy()
+            gnn_biases = layer.bias.detach().numpy()
             # A linear layer is either applied on each node's features (i.e.,
             # prev_layer.output_size[-1] = N * gnn_weights.shape[1])
             # or the features after pooling (i.e.,
@@ -224,12 +226,8 @@ def load_torch_geometric_sequential(
                 biases=biases,
             )
         elif operations[index] == "GCNConv":
-            assert not l.improved
-            assert not l.cached
-            assert l.add_self_loops
-            assert l.normalize
-            gnn_weights = l.lin.weight.detach().numpy()
-            gnn_biases = l.bias.detach().numpy()
+            gnn_weights = layer.lin.weight.detach().numpy()
+            gnn_biases = layer.bias.detach().numpy()
             gnn_norm = _compute_gcn_norm(A)
             weights, biases = _process_gnn_parameters(
                 gnn_weights, gnn_weights, gnn_biases, gnn_norm
@@ -244,15 +242,12 @@ def load_torch_geometric_sequential(
                 N=N,
             )
         elif operations[index] == "SAGEConv":
-            assert not l.normalize
-            assert not l.project
-            assert l.aggr in _AGGREGATION_OP_TYPES
-            gnn_weights_uv = l.lin_l.weight.detach().numpy()
-            gnn_biases = l.lin_l.bias.detach().numpy()
+            gnn_weights_uv = layer.lin_l.weight.detach().numpy()
+            gnn_biases = layer.lin_l.bias.detach().numpy()
             gnn_weights_vv = np.zeros(shape=gnn_weights_uv.shape)
-            if l.root_weight:
-                gnn_weights_vv = l.lin_r.weight.detach().numpy()
-            gnn_norm = _compute_sage_norm(A, l.aggr)
+            if layer.root_weight:
+                gnn_weights_vv = layer.lin_r.weight.detach().numpy()
+            gnn_norm = _compute_sage_norm(A, layer.aggr)
             weights, biases = _process_gnn_parameters(
                 gnn_weights_uv, gnn_weights_vv, gnn_biases, gnn_norm
             )

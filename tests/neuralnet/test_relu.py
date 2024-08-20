@@ -11,9 +11,6 @@ from omlt.neuralnet import (
 )
 from omlt.neuralnet.activations import ComplementarityReLUActivation
 
-# TODO @cog-imperial: Add tests for single dimensional outputs as well
-# https://github.com/cog-imperial/OMLT/issues/158
-
 NEAR_EQUAL = 1e-3
 
 

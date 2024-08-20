@@ -84,7 +84,7 @@ y_small = np.array(
 
 
 @pytest.mark.skipif(not lineartree_available, reason="Need Linear-Tree Package")
-def test_linear_tree_model_single_var():
+def test_linear_tree_model_single_var():  # noqa: C901
     # construct a LinearTreeDefinition
     regr_small = linear_model_tree(X=X_small, y=y_small)
     input_bounds = {0: (min(X_small)[0], max(X_small)[0])}
@@ -381,7 +381,7 @@ Y = np.array(
 
 
 @pytest.mark.skipif(not lineartree_available, reason="Need Linear-Tree Package")
-def test_linear_tree_model_multi_var():
+def test_linear_tree_model_multi_var():  # noqa: C901
     # construct a LinearTreeDefinition
     regr = linear_model_tree(X=X, y=Y)
     input_bounds = {0: (min(X[:, 0]), max(X[:, 0])), 1: (min(X[:, 1]), max(X[:, 1]))}
@@ -626,7 +626,7 @@ def test_hybrid_bigm_formulation_multi_var():
 
 
 @pytest.mark.skipif(not lineartree_available, reason="Need Linear-Tree Package")
-def test_summary_dict_as_argument():
+def test_summary_dict_as_argument():  # noqa: C901
     # construct a LinearTreeDefinition
     regr = linear_model_tree(X=X, y=Y)
     input_bounds = {0: (min(X[:, 0]), max(X[:, 0])), 1: (min(X[:, 1]), max(X[:, 1]))}

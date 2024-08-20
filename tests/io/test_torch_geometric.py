@@ -75,7 +75,7 @@ def _test_torch_geometric_reader(nn, activation, pooling):
     A = np.ones((N, N), dtype=int)
     net = load_torch_geometric_sequential(nn, N, A)
     layers = list(net.layers)
-    assert len(layers) == 7
+    assert len(layers) == 7  # noqa: PLR2004
     assert layers[1].weights.shape == (8, 16)
     assert layers[2].weights.shape == (16, 16)
     assert layers[3].weights.shape == (16, 16)
@@ -112,8 +112,8 @@ def _test_gnn_with_fixed_graph(nn):
     m.nn = OmltBlock()
     A = np.eye(N, dtype=int)
     gnn_with_fixed_graph(m.nn, nn, N, A, scaled_input_bounds=input_bounds)
-    assert m.nvariables() == 282
-    assert m.nconstraints() == 614
+    assert m.nvariables() == 282  # noqa: PLR2004
+    assert m.nconstraints() == 614  # noqa: PLR2004
 
 
 @pytest.mark.skipif(
@@ -131,8 +131,8 @@ def _test_gnn_with_non_fixed_graph(nn):
     m = pyo.ConcreteModel()
     m.nn = OmltBlock()
     gnn_with_non_fixed_graph(m.nn, nn, N, scaled_input_bounds=input_bounds)
-    assert m.nvariables() == 282
-    assert m.nconstraints() == 620
+    assert m.nvariables() == 282  # noqa: PLR2004
+    assert m.nconstraints() == 620  # noqa: PLR2004
 
 
 @pytest.mark.skipif(
@@ -189,7 +189,7 @@ def _test_gnn_value_error(nn, error_info, error_type="ValueError"):
     for i in range(input_size[0]):
         input_bounds[(i)] = (-1.0, 1.0)
     if error_type == "ValueError":
-        with pytest.raises(ValueError) as excinfo:
+        with pytest.raises(ValueError) as excinfo:  # noqa: PT011
             load_torch_geometric_sequential(
                 nn=nn,
                 N=N,

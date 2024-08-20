@@ -7,7 +7,7 @@ from omlt.io.torch_geometric.torch_geometric_reader import (
 from omlt.neuralnet import FullSpaceNNFormulation
 
 
-def gnn_with_non_fixed_graph(
+def gnn_with_non_fixed_graph(  # noqa: PLR0913
     block,
     nn,
     N,
@@ -78,7 +78,7 @@ def gnn_with_non_fixed_graph(
     return block
 
 
-def gnn_with_fixed_graph(
+def gnn_with_fixed_graph(  # noqa: PLR0913
     block,
     nn,
     N,

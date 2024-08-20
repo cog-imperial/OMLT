@@ -61,7 +61,7 @@ class GBTBigMFormulation(_PyomoFormulation):
         )
 
 
-def add_formulation_to_block(block, model_definition, input_vars, output_vars):
+def add_formulation_to_block(block, model_definition, input_vars, output_vars):  # noqa: C901, PLR0915
     r"""Adds the gradient-boosted trees formulation to the given Pyomo block.
 
     .. math::
@@ -125,13 +125,7 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars):
     nodes_node_ids = np.array(attr["nodes_nodeids"].ints)
     nodes_false_node_ids = np.array(attr["nodes_falsenodeids"].ints)
     nodes_true_node_ids = np.array(attr["nodes_truenodeids"].ints)
-    nodes_hitrates = np.array(attr["nodes_hitrates"].floats)
-    nodes_missing_value_tracks_true = np.array(
-        attr["nodes_missing_value_tracks_true"].ints
-    )
 
-    n_targets = attr["n_targets"].i
-    target_ids = np.array(attr["target_ids"].ints)
     target_node_ids = np.array(attr["target_nodeids"].ints)
     target_tree_ids = np.array(attr["target_treeids"].ints)
     target_weights = np.array(attr["target_weights"].floats)
