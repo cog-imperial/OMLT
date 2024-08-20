@@ -171,7 +171,7 @@ module = [
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
-addopts = "--cov omlt --cov-report term-missing --verbose"
+addopts = "--cov omlt --cov-report term-missing --cov-config pyproject.toml --verbose"
 
 [tool.coverage.run]
 branch = true
