@@ -22,6 +22,7 @@ import numpy as np
 
 OUTPUT_DIMENSIONS = 3
 
+
 class Layer:
     """Base layer class.
 
@@ -677,7 +678,8 @@ class ConvLayer2D(Layer2D):
         return (
             f"ConvLayer(input_size={self.input_size}, output_size={self.output_size},"
             f" strides={self.strides}, kernel_shape={self.kernel_shape})"
-            )
+        )
+
     def _eval_at_index(self, x, out_d, out_r, out_c):
         acc = 0.0
         for k, index in self.kernel_with_input_indexes(out_d, out_r, out_c):

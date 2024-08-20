@@ -4,6 +4,7 @@ The omlt.scaling module describes the interface for providing different scaling
 expressions to the Pyomo model for the inputs and outputs of an ML model. An
 implementation of a common scaling approach is included with `OffsetScaling`.
 """
+
 import abc
 from typing import Any
 
@@ -120,8 +121,7 @@ class OffsetScaling(ScalingInterface):
 
         scaled_x = scaled_input_vars
         return {
-            k: scaled_x[k] * self.__x_factor[k] + self.__x_offset[k]
-            for k in scaled_x
+            k: scaled_x[k] * self.__x_factor[k] + self.__x_offset[k] for k in scaled_x
         }
 
     def get_scaled_output_expressions(self, output_vars):
@@ -163,6 +163,5 @@ class OffsetScaling(ScalingInterface):
 
         scaled_y = scaled_output_vars
         return {
-            k: scaled_y[k] * self.__y_factor[k] + self.__y_offset[k]
-            for k in scaled_y
+            k: scaled_y[k] * self.__y_factor[k] + self.__y_offset[k] for k in scaled_y
         }

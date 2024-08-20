@@ -34,9 +34,7 @@ def train_models():
         )
     )
     nn.compile(optimizer=Adamax(learning_rate=0.01), loss="mae")
-    nn.fit(
-        x=x, y=y, validation_split=0.2, batch_size=16, verbose=1, epochs=15
-    )
+    nn.fit(x=x, y=y, validation_split=0.2, batch_size=16, verbose=1, epochs=15)
     nn.save(this_file_dir() + "/models/keras_linear_131.keras")
 
     x, y, x_test = get_neural_network_data("131")
@@ -66,9 +64,7 @@ def train_models():
         )
     )
     nn.compile(optimizer=Adamax(learning_rate=0.01), loss="mae")
-    nn.fit(
-        x=x, y=y, validation_split=0.2, batch_size=16, verbose=1, epochs=15
-    )
+    nn.fit(x=x, y=y, validation_split=0.2, batch_size=16, verbose=1, epochs=15)
     nn.save(this_file_dir() + "/models/keras_linear_131_sigmoid.keras")
 
     x, y, x_test = get_neural_network_data("131")
@@ -99,9 +95,7 @@ def train_models():
         )
     )
     nn.compile(optimizer=Adamax(learning_rate=0.01), loss="mae")
-    nn.fit(
-        x=x, y=y, validation_split=0.2, batch_size=16, verbose=1, epochs=15
-    )
+    nn.fit(x=x, y=y, validation_split=0.2, batch_size=16, verbose=1, epochs=15)
     nn.save(
         this_file_dir() + "/models/keras_linear_131_sigmoid_output_activation.keras"
     )
@@ -133,9 +127,7 @@ def train_models():
         )
     )
     nn.compile(optimizer=Adamax(learning_rate=0.01), loss="mae")
-    nn.fit(
-        x=x, y=y, validation_split=0.2, batch_size=16, verbose=1, epochs=15
-    )
+    nn.fit(x=x, y=y, validation_split=0.2, batch_size=16, verbose=1, epochs=15)
     nn.save(this_file_dir() + "/models/keras_linear_131_relu.keras")
 
     x, y, x_test = get_neural_network_data("131")
@@ -166,9 +158,7 @@ def train_models():
         )
     )
     nn.compile(optimizer=Adamax(learning_rate=0.01), loss="mae")
-    nn.fit(
-        x=x, y=y, validation_split=0.2, batch_size=16, verbose=1, epochs=15
-    )
+    nn.fit(x=x, y=y, validation_split=0.2, batch_size=16, verbose=1, epochs=15)
     nn.save(this_file_dir() + "/models/keras_linear_131_relu_output_activation.keras")
 
     x, y, x_test = get_neural_network_data("131")
@@ -199,9 +189,7 @@ def train_models():
         )
     )
     nn.compile(optimizer=Adamax(learning_rate=0.01), loss="mae")
-    nn.fit(
-        x=x, y=y, validation_split=0.2, batch_size=16, verbose=1, epochs=15
-    )
+    nn.fit(x=x, y=y, validation_split=0.2, batch_size=16, verbose=1, epochs=15)
     nn.save(
         this_file_dir()
         + "/models/keras_linear_131_sigmoid_softplus_output_activation.keras"
@@ -260,9 +248,7 @@ def train_models():
         )
     )
     nn.compile(optimizer=Adamax(learning_rate=0.01), loss="mae")
-    nn.fit(
-        x=x, y=y, validation_split=0.2, batch_size=16, verbose=1, epochs=15
-    )
+    nn.fit(x=x, y=y, validation_split=0.2, batch_size=16, verbose=1, epochs=15)
     nn.save(this_file_dir() + "/models/big.keras")
 
     x, y, x_test = get_neural_network_data("2353")
@@ -302,9 +288,7 @@ def train_models():
         )
     )
     nn.compile(optimizer=Adamax(learning_rate=0.01), loss="mae")
-    nn.fit(
-        x=x, y=y, validation_split=0.2, batch_size=16, verbose=1, epochs=15
-    )
+    nn.fit(x=x, y=y, validation_split=0.2, batch_size=16, verbose=1, epochs=15)
 
     nn.save(this_file_dir() + "/models/keras_linear_2353.keras")
 

@@ -13,6 +13,7 @@ Z_L_VARS = 160
 SINGLE_LEAVES = 20
 SPLITS = 140
 
+
 @pytest.mark.skip("Francesco and Alex need to check this test")
 def test_formulation_with_continuous_variables():
     model = onnx.load(Path(__file__).parent / "continuous_model.onnx")

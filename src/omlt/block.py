@@ -24,7 +24,6 @@ Example:
         pyo.assert_optimal_termination(status)
 """
 
-
 import pyomo.environ as pyo
 from pyomo.core.base.block import _BlockData, declare_custom_block
 
