@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 import pytest
 from pyomo.common.fileutils import this_file_dir
@@ -12,11 +13,10 @@ from omlt.dependencies import (
 )
 
 
-# TODO: These will be replaced with stronger tests using testbook soon
 def _test_run_notebook(folder, notebook_fname, n_cells):
     # Change to notebook directory to allow for testing
-    cwd = os.getcwd()
-    os.chdir(os.path.join(this_file_dir(), "..", "..", "docs", "notebooks", folder))
+    cwd = Path.cwd()
+    os.chdir(Path(this_file_dir()) / ".." / ".." / "docs" / "notebooks" / folder)
     with testbook(notebook_fname, timeout=500, execute=True) as tb:
         assert tb.code_cells_executed == n_cells
     os.chdir(cwd)

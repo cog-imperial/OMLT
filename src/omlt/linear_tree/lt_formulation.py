@@ -6,7 +6,8 @@ from omlt.formulation import _PyomoFormulation, _setup_scaled_inputs_outputs
 
 
 class LinearTreeGDPFormulation(_PyomoFormulation):
-    r"""
+    r"""Linear Tree GDP Formulation.
+
     Class to add a Linear Tree GDP formulation to OmltBlock. We use Pyomo.GDP
     to create the disjuncts and disjunctions and then apply a transformation
     to convert to a mixed-integer programming representation.
@@ -45,18 +46,17 @@ class LinearTreeGDPFormulation(_PyomoFormulation):
         * Ammari et al. (2023) Linear Model Decision Trees as Surrogates in
           Optimization of Engineering Applications. Computers & Chemical Engineering
         * Chen et al. (2022) Pyomo.GDP: An ecosystem for logic based modeling and
-          optimization development. Optimization and Engineering, 23:607–642
+          optimization development. Optimization and Engineering, 23:607-642
     """
 
     def __init__(self, lt_definition, transformation="bigm"):
-        """
-        Create a LinearTreeGDPFormulation object
+        """Create a LinearTreeGDPFormulation object.
 
         Arguments:
-            lt_definition -- LinearTreeDefintion Object
+            lt_definition: LinearTreeDefintion Object
 
         Keyword Arguments:
-            transformation -- choose which Pyomo.GDP formulation to apply.
+            transformation: choose which Pyomo.GDP formulation to apply.
                 Supported transformations are bigm, hull, mbigm, and custom
                 (default: {'bigm'})
 
@@ -70,9 +70,8 @@ class LinearTreeGDPFormulation(_PyomoFormulation):
         # Ensure that the GDP transformation given is supported
         supported_transformations = ["bigm", "hull", "mbigm", "custom"]
         if transformation not in supported_transformations:
-            raise NotImplementedError(
-                "Supported transformations are: bigm, mbigm, hull, and custom"
-            )
+            msg = "Supported transformations are: bigm, mbigm, hull, and custom"
+            raise NotImplementedError(msg)
 
     @property
     def input_indexes(self):
@@ -85,7 +84,9 @@ class LinearTreeGDPFormulation(_PyomoFormulation):
         return list(range(self.model_definition.n_outputs))
 
     def _build_formulation(self):
-        """This method is called by the OmltBlock to build the corresponding
+        """Build formulation.
+
+        This method is called by the OmltBlock to build the corresponding
         mathematical formulation on the Pyomo block.
         """
         _setup_scaled_inputs_outputs(
@@ -104,8 +105,7 @@ class LinearTreeGDPFormulation(_PyomoFormulation):
 
 
 class LinearTreeHybridBigMFormulation(_PyomoFormulation):
-    r"""
-    Class to add a Linear Tree Hybrid Big-M formulation to OmltBlock.
+    r"""Class to add a Linear Tree Hybrid Big-M formulation to OmltBlock.
 
     .. math::
         \begin{align*}
@@ -134,11 +134,10 @@ class LinearTreeHybridBigMFormulation(_PyomoFormulation):
     """
 
     def __init__(self, lt_definition):
-        """
-        Create a LinearTreeHybridBigMFormulation object
+        """Create a LinearTreeHybridBigMFormulation object.
 
         Arguments:
-            lt_definition -- LinearTreeDefinition Object
+            lt_definition: LinearTreeDefinition Object
         """
         super().__init__()
         self.model_definition = lt_definition
@@ -154,7 +153,9 @@ class LinearTreeHybridBigMFormulation(_PyomoFormulation):
         return list(range(self.model_definition.n_outputs))
 
     def _build_formulation(self):
-        """This method is called by the OmltBlock to build the corresponding
+        """Build formulation.
+
+        This method is called by the OmltBlock to build the corresponding
         mathematical formulation on the Pyomo block.
         """
         _setup_scaled_inputs_outputs(
@@ -172,13 +173,14 @@ class LinearTreeHybridBigMFormulation(_PyomoFormulation):
 
 
 def _build_output_bounds(model_def, input_bounds):
-    """
+    """Build output bounds.
+
     This helper function develops bounds of the output variable based on the
     values of the input_bounds and the signs of the slope
 
     Arguments:
-        model_def -- Model definition
-        input_bounds -- Dict of input bounds
+        model_def: Model definition
+        input_bounds: Dict of input bounds
 
     Returns:
         List that contains the conservative lower and upper bounds of the
@@ -204,10 +206,8 @@ def _build_output_bounds(model_def, input_bounds):
                 else:
                     upper_bound += slopes[k] * input_bounds[k][1] + intercept
                     lower_bound += slopes[k] * input_bounds[k][0] + intercept
-                if upper_bound >= bounds[1]:
-                    bounds[1] = upper_bound
-                if lower_bound <= bounds[0]:
-                    bounds[0] = lower_bound
+                bounds[1] = max(bounds[1], upper_bound)
+                bounds[0] = min(bounds[0], lower_bound)
             upper_bound = 0
             lower_bound = 0
 
@@ -217,15 +217,14 @@ def _build_output_bounds(model_def, input_bounds):
 def _add_gdp_formulation_to_block(
     block, model_definition, input_vars, output_vars, transformation
 ):
-    """
-    This function adds the GDP representation to the OmltBlock using Pyomo.GDP
+    """This function adds the GDP representation to the OmltBlock using Pyomo.GDP.
 
     Arguments:
-        block -- OmltBlock
-        model_definition -- LinearTreeDefinition Object
-        input_vars -- input variables to the linear tree model
-        output_vars -- output variable of the linear tree model
-        transformation -- Transformation to apply
+        block: OmltBlock
+        model_definition: LinearTreeDefinition Object
+        input_vars: input variables to the linear tree model
+        output_vars: output variable of the linear tree model
+        transformation: Transformation to apply
 
     """
     leaves = model_definition.leaves
@@ -234,10 +233,7 @@ def _add_gdp_formulation_to_block(
 
     # The set of leaves and the set of features
     tree_ids = list(leaves.keys())
-    t_l = []
-    for tree in tree_ids:
-        for leaf in leaves[tree].keys():
-            t_l.append((tree, leaf))
+    t_l = [(tree, leaf) for tree in tree_ids for leaf in leaves[tree]]
     features = np.arange(0, n_inputs)
 
     # Use the input_bounds and the linear models in the leaves to calculate
@@ -292,14 +288,13 @@ def _add_gdp_formulation_to_block(
 
 
 def _add_hybrid_formulation_to_block(block, model_definition, input_vars, output_vars):
-    """
-    This function adds the Hybrid BigM representation to the OmltBlock
+    """This function adds the Hybrid BigM representation to the OmltBlock.
 
     Arguments:
-        block -- OmltBlock
-        model_definition -- LinearTreeDefinition Object
-        input_vars -- input variables to the linear tree model
-        output_vars -- output variable of the linear tree model
+        block: OmltBlock
+        model_definition: LinearTreeDefinition Object
+        input_vars: input variables to the linear tree model
+        output_vars: output variable of the linear tree model
     """
     leaves = model_definition.leaves
     input_bounds = model_definition.scaled_input_bounds
@@ -309,10 +304,7 @@ def _add_hybrid_formulation_to_block(block, model_definition, input_vars, output
     tree_ids = list(leaves.keys())
     # Create a list of tuples that contains the tree and leaf indices. Note that
     # the leaf indices depend on the tree in the ensemble.
-    t_l = []
-    for tree in tree_ids:
-        for leaf in leaves[tree].keys():
-            t_l.append((tree, leaf))
+    t_l = [(tree, leaf) for tree in tree_ids for leaf in leaves[tree]]
 
     features = np.arange(0, n_inputs)
 

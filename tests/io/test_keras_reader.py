@@ -2,6 +2,9 @@ import pytest
 
 from omlt.dependencies import keras, keras_available
 
+NUM_LAYERS_131 = 3
+NUM_LAYERS_BIG = 5
+
 if keras_available:
     from omlt.io import load_keras_sequential
 
@@ -14,7 +17,7 @@ def test_keras_reader(datadir):
     net = load_keras_sequential(nn)
 
     layers = list(net.layers)
-    assert len(layers) == 3
+    assert len(layers) == NUM_LAYERS_131
     for layer in layers:
         assert layer.activation == "linear"
     assert layers[1].weights.shape == (1, 3)
@@ -25,7 +28,7 @@ def test_keras_reader(datadir):
     )
     net = load_keras_sequential(nn)
     layers = list(net.layers)
-    assert len(layers) == 3
+    assert len(layers) == NUM_LAYERS_131
     assert layers[1].activation == "sigmoid"
     assert layers[2].activation == "linear"
     assert layers[1].weights.shape == (1, 3)
@@ -36,7 +39,7 @@ def test_keras_reader(datadir):
     )
     net = load_keras_sequential(nn)
     layers = list(net.layers)
-    assert len(layers) == 3
+    assert len(layers) == NUM_LAYERS_131
     assert layers[1].activation == "sigmoid"
     assert layers[2].activation == "sigmoid"
     assert layers[1].weights.shape == (1, 3)
@@ -45,7 +48,7 @@ def test_keras_reader(datadir):
     nn = keras.models.load_model(datadir.file("big.keras"), compile=False)
     net = load_keras_sequential(nn)
     layers = list(net.layers)
-    assert len(layers) == 5
+    assert len(layers) == NUM_LAYERS_BIG
     assert layers[1].activation == "sigmoid"
     assert layers[2].activation == "sigmoid"
     assert layers[3].activation == "sigmoid"

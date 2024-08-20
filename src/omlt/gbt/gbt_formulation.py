@@ -1,4 +1,5 @@
 import collections
+from typing import Any
 
 import numpy as np
 import pyomo.environ as pe
@@ -8,26 +9,25 @@ from omlt.gbt.model import GradientBoostedTreeModel
 
 
 class GBTBigMFormulation(_PyomoFormulation):
-    """
-    This class is the entry-point to build gradient-boosted trees formulations.
+    """This class is the entry-point to build gradient-boosted trees formulations.
 
     This class iterates over all trees in the ensemble and generates
     constraints to enforce splitting rules according to:
 
-    References
-    ----------
-     * Misic, V. "Optimization of tree ensembles."
-       Operations Research 68.5 (2020): 1605-1624.
-     * Mistry, M., et al. "Mixed-integer convex nonlinear optimization with gradient-boosted trees embedded."
-       INFORMS Journal on Computing (2020).
+    References:
+         * Misic, V. "Optimization of tree ensembles."
+           Operations Research 68.5 (2020): 1605-1624.
+         * Mistry, M., et al. "Mixed-integer convex nonlinear optimization with
+           gradient-boosted trees embedded."
+           INFORMS Journal on Computing (2020).
 
-    Parameters
-    ----------
-    tree_ensemble_structure : GradientBoostedTreeModel
-        the tree ensemble definition
+    Parameters:
+        tree_ensemble_structure (GradientBoostedTreeModel):
+            the tree ensemble definition
     """
 
     def __init__(self, gbt_model):
+        """Constructor."""
         super().__init__()
         self.model_definition = gbt_model
 
@@ -42,7 +42,9 @@ class GBTBigMFormulation(_PyomoFormulation):
         return list(range(self.model_definition.n_outputs))
 
     def _build_formulation(self):
-        """This method is called by the OmltBlock to build the corresponding
+        """Build formulation.
+
+        This method is called by the OmltBlock to build the corresponding
         mathematical formulation on the Pyomo block.
         """
         _setup_scaled_inputs_outputs(
@@ -59,9 +61,8 @@ class GBTBigMFormulation(_PyomoFormulation):
         )
 
 
-def add_formulation_to_block(block, model_definition, input_vars, output_vars):
-    r"""
-    Adds the gradient-boosted trees formulation to the given Pyomo block.
+def add_formulation_to_block(block, model_definition, input_vars, output_vars):  # noqa: C901, PLR0915
+    r"""Adds the gradient-boosted trees formulation to the given Pyomo block.
 
     .. math::
         \begin{align*}
@@ -73,7 +74,8 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars):
         \sum\limits_{l \in \text{Right}_{t,s}} z_{t,l} &\leq 1 - y_{i(s),j(s)},
             && \forall t \in T, \forall s \in V_t, \\
         y_{i,j} &\leq y_{i,j+1},
-            && \forall i \in \left [ n \right ], \forall j \in \left [ m_i - 1 \right ], \\
+            && \forall i \in \left [ n \right ], \\
+            \forall j \in \left [ m_i - 1 \right ], \\
         x_{i} &\geq v_{i,0} +
             \sum\limits_{j=1}^{m_i} \left (v_{i,j} -
             v_{i,j-1} \right ) \left ( 1 - y_{i,j} \right ),
@@ -84,23 +86,22 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars):
         \end{align*}
 
 
-    References
-    ----------
-     * Misic, V. "Optimization of tree ensembles."
-       Operations Research 68.5 (2020): 1605-1624.
-     * Mistry, M., et al. "Mixed-integer convex nonlinear optimization with gradient-boosted trees embedded."
-       INFORMS Journal on Computing (2020).
+    References:
+         * Misic, V. "Optimization of tree ensembles."
+           Operations Research 68.5 (2020): 1605-1624.
+         * Mistry, M., et al. "Mixed-integer convex nonlinear optimization with
+           gradient-boosted trees embedded."
+           INFORMS Journal on Computing (2020).
 
-    Parameters
-    ----------
-    block : Block
-        the Pyomo block
-    tree_ensemble_structure : GradientBoostedTreeModel
-        the tree ensemble definition
-    input_vars : Var
-        the input variables of the Pyomo block
-    output_vars : Var
-        the output variables of the Pyomo block
+    Parameters:
+        block (Block):
+            the Pyomo block
+        tree_ensemble_structure (GradientBoostedTreeModel):
+            the tree ensemble definition
+        input_vars (Var):
+            the input variables of the Pyomo block
+        output_vars (Var):
+            the output variables of the Pyomo block
 
     """
     if isinstance(model_definition, GradientBoostedTreeModel):
@@ -124,13 +125,7 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars):
     nodes_node_ids = np.array(attr["nodes_nodeids"].ints)
     nodes_false_node_ids = np.array(attr["nodes_falsenodeids"].ints)
     nodes_true_node_ids = np.array(attr["nodes_truenodeids"].ints)
-    nodes_hitrates = np.array(attr["nodes_hitrates"].floats)
-    nodes_missing_value_tracks_true = np.array(
-        attr["nodes_missing_value_tracks_true"].ints
-    )
 
-    n_targets = attr["n_targets"].i
-    target_ids = np.array(attr["target_ids"].ints)
     target_node_ids = np.array(attr["target_nodeids"].ints)
     target_tree_ids = np.array(attr["target_treeids"].ints)
     target_weights = np.array(attr["target_weights"].floats)
@@ -142,7 +137,7 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars):
     tree_ids = set(nodes_tree_ids)
     feature_ids = set(nodes_feature_ids)
 
-    continuous_vars = dict()
+    continuous_vars = {}
 
     for var_idx in input_vars:
         var = input_vars[var_idx]
@@ -154,7 +149,7 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars):
         domain=pe.Reals,
     )
 
-    branch_value_by_feature_id = dict()
+    branch_value_by_feature_id: dict[int, Any] = {}
     branch_value_by_feature_id = collections.defaultdict(list)
 
     for f in feature_ids:
@@ -164,15 +159,17 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars):
 
     y_index = [
         (f, bi)
-        for f in continuous_vars.keys()
+        for f in continuous_vars
         for bi, _ in enumerate(branch_value_by_feature_id[f])
     ]
     block.y = pe.Var(y_index, domain=pe.Binary)
 
     @block.Constraint(tree_ids)
     def single_leaf(b, tree_id):
-        r"""
-        Add constraint to ensure that only one leaf per tree is active, Mistry et al. Equ. (3b).
+        r"""Single leaf constraint.
+
+        Add constraint to ensure that only one leaf per tree is active,
+        Mistry et al. Equ. (3b).
         .. math::
             \begin{align*}
             \sum\limits_{l \in L_t} z_{t,l} &= 1, && \forall t \in T
@@ -198,22 +195,28 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars):
         feature_id = nodes_feature_ids[node_mask]
         branch_value = nodes_values[node_mask]
         if len(branch_value) != 1:
-            raise ValueError(
-                f"The given tree_id and branch_node_id do not uniquely identify a branch value."
+            msg = (
+                "The given tree_id and branch_node_id do not uniquely identify a"
+                " branch value."
             )
+            raise ValueError(msg)
         if len(feature_id) != 1:
-            raise ValueError(
-                f"The given tree_id and branch_node_id do not uniquely identify a feature."
+            msg = (
+                "The given tree_id and branch_node_id do not uniquely identify a"
+                " feature."
             )
+            raise ValueError(msg)
         feature_id = feature_id[0]
         branch_value = branch_value[0]
         (branch_y_idx,) = np.where(
             branch_value_by_feature_id[feature_id] == branch_value
         )
         if len(branch_y_idx) != 1:
-            raise ValueError(
-                f"The given tree_id and branch_node_id do not uniquely identify a branch index."
+            msg = (
+                "The given tree_id and branch_node_id do not uniquely identify a branch"
+                " index."
             )
+            raise ValueError(msg)
         return block.y[feature_id, branch_y_idx[0]]
 
     def _sum_of_z_l(tree_id, start_node_id):
@@ -235,7 +238,8 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars):
 
     @block.Constraint(nodes_tree_branch_ids)
     def left_split(b, tree_id, branch_node_id):
-        r"""
+        r"""Left split.
+
         Add constraint to activate all left splits leading to an active leaf,
         Mistry et al. Equ. (3c).
         .. math::
@@ -252,7 +256,8 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars):
 
     @block.Constraint(nodes_tree_branch_ids)
     def right_split(b, tree_id, branch_node_id):
-        r"""
+        r"""Right split.
+
         Add constraint to activate all right splits leading to an active leaf,
         Mistry et al. Equ. (3d).
         .. math::
@@ -269,8 +274,8 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars):
 
     @block.Constraint(y_index)
     def order_y(b, feature_id, branch_y_idx):
-        r"""
-        Add constraint to activate splits in the correct order.
+        r"""Add constraint to activate splits in the correct order.
+
         Mistry et al. Equ. (3e).
         .. math::
             \begin{align*}
@@ -285,8 +290,11 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars):
 
     @block.Constraint(y_index)
     def var_lower(b, feature_id, branch_y_idx):
-        r"""
-        Add constraint to link discrete tree splits to lower bound of continuous variables.
+        r"""Lower bound constraint.
+
+        Add constraint to link discrete tree splits to lower bound of continuous
+        variables.
+
         Mistry et al. Equ. (4a).
         .. math::
             \begin{align*}
@@ -304,8 +312,10 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars):
 
     @block.Constraint(y_index)
     def var_upper(b, feature_id, branch_y_idx):
-        r"""
-        Add constraint to link discrete tree splits to upper bound of continuous variables.
+        r"""Upper bound constraint.
+
+        Add constraint to link discrete tree splits to upper bound of continuous
+        variables.
         Mistry et al. Equ. (4b).
         .. math::
             \begin{align*}
@@ -322,8 +332,8 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars):
 
     @block.Constraint()
     def tree_mean_value(b):
-        r"""
-        Add constraint to link block output tree model mean.
+        r"""Add constraint to link block output tree model mean.
+
         Mistry et al. Equ. (3a).
         .. math::
             \begin{align*}
@@ -344,7 +354,7 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars):
 
 
 def _node_attributes(node):
-    attr = dict()
+    attr = {}
     for at in node.attribute:
         attr[at.name] = at
     return attr
