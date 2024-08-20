@@ -223,10 +223,12 @@ def test_nonzero_epsilon():
     regr_small = linear_model_tree(X=X_small, y=y_small)
     input_bounds = {0: (min(X_small)[0], max(X_small)[0])}
     ltmodel_small = LinearTreeDefinition(regr_small, unscaled_input_bounds=input_bounds)
-    formulation_bad = LinearTreeGDPFormulation(ltmodel_small, transformation="bigm",
-                                               epsilon=0)
-    formulation1_lt = LinearTreeGDPFormulation(ltmodel_small, transformation="bigm",
-                                               epsilon=1e-4)
+    formulation_bad = LinearTreeGDPFormulation(
+        ltmodel_small, transformation="bigm", epsilon=0
+    )
+    formulation1_lt = LinearTreeGDPFormulation(
+        ltmodel_small, transformation="bigm", epsilon=1e-4
+    )
 
     model_good = get_epsilon_test_model(formulation1_lt)
     model_bad = get_epsilon_test_model(formulation_bad)
