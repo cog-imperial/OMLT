@@ -1,4 +1,5 @@
 import math
+from collections.abc import Callable
 from typing import Any
 
 import numpy as np
@@ -568,7 +569,7 @@ class NetworkParser:
             )
             raise ValueError(msg)
 
-        output_shape_wrapper = math.floor
+        output_shape_wrapper: Callable[[float], int] = math.floor
         if "ceil_mode" in attr and attr["ceil_mode"] == 1:
             output_shape_wrapper = math.ceil
 
