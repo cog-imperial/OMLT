@@ -3,6 +3,7 @@ import re
 import numpy as np
 import pyomo.environ as pyo
 import pytest
+
 from omlt import OmltBlock
 from omlt.neuralnet.layer import DenseLayer, InputLayer
 from omlt.neuralnet.network_definition import NetworkDefinition

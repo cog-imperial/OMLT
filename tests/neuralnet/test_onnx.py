@@ -2,20 +2,23 @@ import tempfile
 
 import numpy as np
 import pytest
-from omlt.dependencies import onnx, onnx_available
 from pyomo.common.dependencies import DeferredImportError
+
+from omlt.dependencies import onnx, onnx_available
 
 if onnx_available:
     import onnxruntime as ort
+
     from omlt.io.onnx import (
         load_onnx_neural_network,
         load_onnx_neural_network_with_bounds,
         write_onnx_model_with_bounds,
     )
 
+from pyomo.environ import ConcreteModel, SolverFactory, value
+
 from omlt import OffsetScaling, OmltBlock
 from omlt.neuralnet import FullSpaceNNFormulation
-from pyomo.environ import ConcreteModel, SolverFactory, value
 
 
 @pytest.mark.skipif(onnx_available, reason="Test only valid when onnx not available")

@@ -416,7 +416,7 @@ class Layer2D(Layer):
         map indexes from this layer index to the input layer index size
     """
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
         input_size,
         output_size,

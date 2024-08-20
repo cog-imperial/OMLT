@@ -2,6 +2,7 @@ import re
 
 import numpy as np
 import pytest
+
 from omlt import OffsetScaling
 from omlt.scaling import convert_to_dict
 

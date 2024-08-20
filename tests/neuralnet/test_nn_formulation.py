@@ -5,6 +5,8 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pyomo.environ as pyo
 import pytest
+from pyomo.contrib.fbbt import interval
+
 from omlt import OmltBlock
 from omlt.neuralnet import (
     FullSpaceNNFormulation,
@@ -31,7 +33,6 @@ from omlt.neuralnet.layers.partition_based import (
     partition_based_dense_relu_layer,
 )
 from omlt.neuralnet.layers.reduced_space import reduced_space_dense_layer
-from pyomo.contrib.fbbt import interval
 
 if TYPE_CHECKING:
     from omlt.formulation import _PyomoFormulation

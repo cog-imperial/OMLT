@@ -206,10 +206,8 @@ def _build_output_bounds(model_def, input_bounds):
                 else:
                     upper_bound += slopes[k] * input_bounds[k][1] + intercept
                     lower_bound += slopes[k] * input_bounds[k][0] + intercept
-                if upper_bound >= bounds[1]:
-                    bounds[1] = upper_bound
-                if lower_bound <= bounds[0]:
-                    bounds[0] = lower_bound
+                bounds[1] = max(bounds[1], upper_bound)
+                bounds[0] = min(bounds[0], lower_bound)
             upper_bound = 0
             lower_bound = 0
 
