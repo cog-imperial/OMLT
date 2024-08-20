@@ -133,16 +133,16 @@ def test_gnn_layer_with_input_index_mapper():
     y3 = np.array([[[-6, 4, 0, -12, 11, 1, -5, 5, 2], [-1, 0, 1, -1, 0, 1, -1, 0, 1]]])
     assert np.array_equal(layer._eval_with_adjacency(inputs, A3), y3)
 
-    with pytest.raises(ValueError) as excinfo:
+    expected_msg = (
+        "Input size must equal to the number of nodes multiplied by the number of"
+        " input node features"
+    )
+    with pytest.raises(ValueError, match=expected_msg):
         layer = GNNLayer([5], [9], weights, biases, N=3)
-    assert (
-        str(excinfo.value)
-        == "Input size must equal to the number of nodes multiplied by the number of input node features"
-    )
 
-    with pytest.raises(ValueError) as excinfo:
-        layer = GNNLayer([6], [8], weights, biases, N=3)
-    assert (
-        str(excinfo.value)
-        == "Output size must equal to the number of nodes multiplied by the number of output node features"
+    expected_msg = (
+        "Output size must equal to the number of nodes multiplied by the number of"
+        " output node features"
     )
+    with pytest.raises(ValueError, match=expected_msg):
+        layer = GNNLayer([6], [8], weights, biases, N=3)

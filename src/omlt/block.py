@@ -1,4 +1,5 @@
-"""
+"""OmltBlock.
+
 The omlt.block module contains the implementation of the OmltBlock class. This
 class is used in combination with a formulation object to construct the
 necessary constraints and variables to represent ML models.
@@ -23,8 +24,6 @@ Example:
         pyo.assert_optimal_termination(status)
 """
 
-import warnings
-
 import pyomo.environ as pyo
 from pyomo.core.base.block import _BlockData, declare_custom_block
 
@@ -32,13 +31,14 @@ from pyomo.core.base.block import _BlockData, declare_custom_block
 @declare_custom_block(name="OmltBlock")
 class OmltBlockData(_BlockData):
     def __init__(self, component):
-        super(OmltBlockData, self).__init__(component)
+        super().__init__(component)
         self.__formulation = None
         self.__input_indexes = None
         self.__output_indexes = None
 
     def _setup_inputs_outputs(self, *, input_indexes, output_indexes):
-        """
+        """Setup inputs and outputs.
+
         This function should be called by the derived class to create the
         inputs and outputs on the block
 
@@ -52,11 +52,6 @@ class OmltBlockData(_BlockData):
         """
         self.__input_indexes = input_indexes
         self.__output_indexes = output_indexes
-        if not input_indexes or not output_indexes:
-            # TODO: implement this check higher up in the class hierarchy to provide more contextual error msg
-            raise ValueError(
-                "OmltBlock must have at least one input and at least one output."
-            )
 
         self.inputs_set = pyo.Set(initialize=input_indexes)
         self.inputs = pyo.Var(self.inputs_set, initialize=0)
@@ -64,7 +59,8 @@ class OmltBlockData(_BlockData):
         self.outputs = pyo.Var(self.outputs_set, initialize=0)
 
     def build_formulation(self, formulation):
-        """
+        """Build formulation.
+
         Call this method to construct the constraints (and possibly
         intermediate variables) necessary for the particular neural network
         formulation. The formulation object can be accessed later through the
@@ -75,6 +71,20 @@ class OmltBlockData(_BlockData):
         formulation : instance of _PyomoFormulation
             see, for example, FullSpaceNNFormulation
         """
+        if not formulation.input_indexes:
+            msg = (
+                "OmltBlock must have at least one input to build a formulation. "
+                f"{formulation} has no inputs."
+            )
+            raise ValueError(msg)
+
+        if not formulation.output_indexes:
+            msg = (
+                "OmltBlock must have at least one output to build a formulation. "
+                f"{formulation} has no outputs."
+            )
+            raise ValueError(msg)
+
         self._setup_inputs_outputs(
             input_indexes=list(formulation.input_indexes),
             output_indexes=list(formulation.output_indexes),

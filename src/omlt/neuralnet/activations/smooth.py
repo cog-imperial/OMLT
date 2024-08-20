@@ -2,8 +2,7 @@ from pyomo.environ import exp, log, tanh
 
 
 def softplus_activation_function(x):
-    r"""
-    Applies the softplus function:
+    r"""Applies the softplus function.
 
     .. math::
 
@@ -16,8 +15,7 @@ def softplus_activation_function(x):
 
 
 def sigmoid_activation_function(x):
-    r"""
-    Applies the sigmoid function:
+    r"""Applies the sigmoid function.
 
     .. math::
 
@@ -30,8 +28,7 @@ def sigmoid_activation_function(x):
 
 
 def tanh_activation_function(x):
-    r"""
-    Applies the tanh function:
+    r"""Applies the tanh function.
 
     .. math::
 
@@ -44,40 +41,31 @@ def tanh_activation_function(x):
 
 
 def softplus_activation_constraint(net_block, net, layer_block, layer):
-    r"""
-    Softplus activation constraint generator.
-
-    """
+    r"""Softplus activation constraint generator."""
     return smooth_monotonic_activation_constraint(
         net_block, net, layer_block, layer, softplus_activation_function
     )
 
 
 def sigmoid_activation_constraint(net_block, net, layer_block, layer):
-    r"""
-    Sigmoid activation constraint generator.
-
-    """
+    r"""Sigmoid activation constraint generator."""
     return smooth_monotonic_activation_constraint(
         net_block, net, layer_block, layer, sigmoid_activation_function
     )
 
 
 def tanh_activation_constraint(net_block, net, layer_block, layer):
-    r"""
-    tanh activation constraint generator.
-
-    """
+    r"""Tanh activation constraint generator."""
     return smooth_monotonic_activation_constraint(
         net_block, net, layer_block, layer, tanh_activation_function
     )
 
 
 def smooth_monotonic_activation_constraint(net_block, net, layer_block, layer, fcn):
-    r"""
-    Activation constraint generator for a smooth monotonic function.
+    r"""Activation constraint generator for a smooth monotonic function.
 
-    Generates the constraints for the activation function :math:`f` if it is smooth and monotonic:
+    Generates the constraints for the activation function :math:`f` if it is smooth and
+    monotonic:
 
     .. math::
 
