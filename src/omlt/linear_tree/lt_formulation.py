@@ -144,7 +144,7 @@ class LinearTreeHybridBigMFormulation(_PyomoFormulation):
         Arguments:
             lt_definition: LinearTreeDefinition Object
 
-        Keyword arguments:
+        Keyword Arguments:
             epsilon: Tolerance to use in enforcing that choosing the right
                 branch of a linear tree node can only happen if the feature
                 is strictly greater than the branch value.(default: 0)
@@ -231,7 +231,7 @@ def _build_output_bounds(model_def, input_bounds):
     return bounds
 
 
-def _add_gdp_formulation_to_block(
+def _add_gdp_formulation_to_block( # noqa: PLR0913
     block, model_definition, input_vars, output_vars, transformation, epsilon
 ):
     """This function adds the GDP representation to the OmltBlock using Pyomo.GDP.
@@ -242,6 +242,9 @@ def _add_gdp_formulation_to_block(
         input_vars: input variables to the linear tree model
         output_vars: output variable of the linear tree model
         transformation: Transformation to apply
+        epsilon: Tolerance to use in enforcing that choosing the right
+            branch of a linear tree node can only happen if the feature
+            is strictly greater than the branch value.
 
     """
     leaves = model_definition.leaves
