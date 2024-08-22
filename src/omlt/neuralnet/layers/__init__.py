@@ -1,5 +1,7 @@
-r"""
-Since OMLT builds layer and activation functions in layer level, we ignore the layer index and use the following notations to describe the :math:`l`-th layer:
+r"""Neural network layers.
+
+Since OMLT builds layer and activation functions in layer level, we ignore the layer
+index and use the following notations to describe the :math:`l`-th layer:
 
 .. math::
 
@@ -13,5 +15,12 @@ Since OMLT builds layer and activation functions in layer level, we ignore the l
     \end{align*}
 
 """
+
 from .full_space import full_space_conv2d_layer, full_space_dense_layer
 from .reduced_space import reduced_space_dense_layer
+
+__all__ = [
+    "full_space_conv2d_layer",
+    "full_space_dense_layer",
+    "reduced_space_dense_layer",
+]

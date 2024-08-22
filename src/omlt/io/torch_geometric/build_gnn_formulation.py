@@ -1,10 +1,13 @@
 import numpy as np
 import pyomo.environ as pyo
+
+from omlt.io.torch_geometric.torch_geometric_reader import (
+    load_torch_geometric_sequential,
+)
 from omlt.neuralnet import FullSpaceNNFormulation
-from omlt.io.torch_geometric import load_torch_geometric_sequential
 
 
-def gnn_with_non_fixed_graph(
+def gnn_with_non_fixed_graph(  # noqa: PLR0913
     block,
     nn,
     N,
@@ -12,9 +15,11 @@ def gnn_with_non_fixed_graph(
     scaled_input_bounds=None,
     unscaled_input_bounds=None,
 ):
-    """
-    Build formulation for a torch_geometric graph neural network model (built with Sequential).
-    Since the input graph is not fixed, the elements in adjacency matrix are decision variables.
+    """Graph neural network with non-fixed graph.
+
+    Build formulation for a torch_geometric graph neural network model (built with
+    Sequential). Since the input graph is not fixed, the elements in adjacency matrix
+    are decision variables.
 
     Parameters
     ----------
@@ -26,7 +31,8 @@ def gnn_with_non_fixed_graph(
         The number of nodes of input graph
     scaling_object : instance of ScalingInterface or None
         Provide an instance of a scaling object to use to scale iputs --> scaled_inputs
-        and scaled_outputs --> outputs. If None, no scaling is performed. See scaling.py.
+        and scaled_outputs --> outputs. If None, no scaling is performed. See
+        scaling.py.
     scaled_input_bounds : dict or None
         A dict that contains the bounds on the scaled variables (the
         direct inputs to the neural network). If None, then no bounds
@@ -37,11 +43,10 @@ def gnn_with_non_fixed_graph(
         dictionary will be generated using the provided scaling object.
         If None, then no bounds are specified.
 
-    Returns
+    Returns:
     -------
     OmltBlock (formulated)
     """
-
     # build NetworkDefinition for nn
     net = load_torch_geometric_sequential(
         nn=nn,
@@ -65,7 +70,7 @@ def gnn_with_non_fixed_graph(
     block.symmetric_adjacency = pyo.ConstraintList()
     for u in range(N):
         for v in range(u + 1, N):
-            block.symmetric_adjacency.add((block.A[u, v] == block.A[v, u]))
+            block.symmetric_adjacency.add(block.A[u, v] == block.A[v, u])
 
     # build formulation for GNN
     block.build_formulation(FullSpaceNNFormulation(net))
@@ -73,7 +78,7 @@ def gnn_with_non_fixed_graph(
     return block
 
 
-def gnn_with_fixed_graph(
+def gnn_with_fixed_graph(  # noqa: PLR0913
     block,
     nn,
     N,
@@ -82,9 +87,10 @@ def gnn_with_fixed_graph(
     scaled_input_bounds=None,
     unscaled_input_bounds=None,
 ):
-    """
-    Build formulation for a torch_geometric graph neural network model (built with Sequential).
-    Given the adjacency matrix, the input graph structure is fixed.
+    """Graph neural network with non-fixed graph.
+
+    Build formulation for a torch_geometric graph neural network model (built with
+    Sequential). Given the adjacency matrix, the input graph structure is fixed.
 
     Parameters
     ----------
@@ -98,7 +104,8 @@ def gnn_with_fixed_graph(
         The adjacency matrix of input graph
     scaling_object : instance of ScalingInterface or None
         Provide an instance of a scaling object to use to scale iputs --> scaled_inputs
-        and scaled_outputs --> outputs. If None, no scaling is performed. See scaling.py.
+        and scaled_outputs --> outputs. If None, no scaling is performed. See
+        scaling.py.
     scaled_input_bounds : dict or None
         A dict that contains the bounds on the scaled variables (the
         direct inputs to the neural network). If None, then no bounds
@@ -109,13 +116,17 @@ def gnn_with_fixed_graph(
         dictionary will be generated using the provided scaling object.
         If None, then no bounds are specified.
 
-    Returns
+    Returns:
     -------
     OmltBlock (formulated)
     """
-
     # assume the adjacency matrix is always symmetric
-    assert np.array_equal(A, np.transpose(A))
+    if not np.array_equal(A, np.transpose(A)):
+        msg = (
+            f"Adjacency matrix A of the input graph must be symmetrical. {A} was"
+            " provided."
+        )
+        raise ValueError(msg)
 
     # build NetworkDefinition for nn
     net = load_torch_geometric_sequential(

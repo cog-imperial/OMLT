@@ -1,23 +1,28 @@
-import pytest
 import numpy as np
 import pyomo.environ as pyo
-from omlt import OmltBlock
+import pytest
 
+from omlt import OmltBlock
 from omlt.dependencies import (
-    torch,
     torch_available,
-    torch_geometric,
     torch_geometric_available,
 )
 
 if torch_available and torch_geometric_available:
-    from torch.nn import Linear, ReLU, Sigmoid, Softplus, Tanh
-    from torch_geometric.nn import Sequential, GCNConv, SAGEConv
-    from torch_geometric.nn import global_mean_pool, global_add_pool, global_max_pool
+    from torch.nn import Linear, ReLU, Sigmoid, Tanh
+    from torch_geometric.nn import (
+        GCNConv,
+        SAGEConv,
+        Sequential,
+        global_add_pool,
+        global_max_pool,
+        global_mean_pool,
+    )
+
     from omlt.io.torch_geometric import (
-        load_torch_geometric_sequential,
         gnn_with_fixed_graph,
         gnn_with_non_fixed_graph,
+        load_torch_geometric_sequential,
     )
 
 
@@ -25,7 +30,7 @@ if torch_available and torch_geometric_available:
     not (torch_available and torch_geometric_available),
     reason="Test only valid when torch and torch_geometric are available",
 )
-def GCN_Sequential(activation, pooling):
+def gcn_sequential(activation, pooling):
     return Sequential(
         "x, edge_index",
         [
@@ -46,7 +51,7 @@ def GCN_Sequential(activation, pooling):
     not (torch_available and torch_geometric_available),
     reason="Test only valid when torch and torch_geometric are available",
 )
-def SAGE_Sequential(activation, pooling, aggr, root_weight):
+def sage_sequential(activation, pooling, aggr, root_weight):
     return Sequential(
         "x, edge_index",
         [
@@ -72,7 +77,7 @@ def _test_torch_geometric_reader(nn, activation, pooling):
     A = np.ones((N, N), dtype=int)
     net = load_torch_geometric_sequential(nn, N, A)
     layers = list(net.layers)
-    assert len(layers) == 7
+    assert len(layers) == 7  # noqa: PLR2004
     assert layers[1].weights.shape == (8, 16)
     assert layers[2].weights.shape == (16, 16)
     assert layers[3].weights.shape == (16, 16)
@@ -109,8 +114,8 @@ def _test_gnn_with_fixed_graph(nn):
     m.nn = OmltBlock()
     A = np.eye(N, dtype=int)
     gnn_with_fixed_graph(m.nn, nn, N, A, scaled_input_bounds=input_bounds)
-    assert m.nvariables() == 282
-    assert m.nconstraints() == 614
+    assert m.nvariables() == 282  # noqa: PLR2004
+    assert m.nconstraints() == 614  # noqa: PLR2004
 
 
 @pytest.mark.skipif(
@@ -128,8 +133,8 @@ def _test_gnn_with_non_fixed_graph(nn):
     m = pyo.ConcreteModel()
     m.nn = OmltBlock()
     gnn_with_non_fixed_graph(m.nn, nn, N, scaled_input_bounds=input_bounds)
-    assert m.nvariables() == 282
-    assert m.nconstraints() == 620
+    assert m.nvariables() == 282  # noqa: PLR2004
+    assert m.nconstraints() == 620  # noqa: PLR2004
 
 
 @pytest.mark.skipif(
@@ -139,11 +144,11 @@ def _test_gnn_with_non_fixed_graph(nn):
 def test_torch_geometric_reader():
     for activation in [ReLU, Sigmoid, Tanh]:
         for pooling in [global_mean_pool, global_add_pool]:
-            nn = GCN_Sequential(activation, pooling)
+            nn = gcn_sequential(activation, pooling)
             _test_torch_geometric_reader(nn, activation, pooling)
             for aggr in ["sum", "mean"]:
                 for root_weight in [False, True]:
-                    nn = SAGE_Sequential(activation, pooling, aggr, root_weight)
+                    nn = sage_sequential(activation, pooling, aggr, root_weight)
                     _test_torch_geometric_reader(nn, activation, pooling)
 
 
@@ -153,11 +158,11 @@ def test_torch_geometric_reader():
 )
 def test_gnn_with_fixed_graph():
     for pooling in [global_mean_pool, global_add_pool]:
-        nn = GCN_Sequential(ReLU, pooling)
+        nn = gcn_sequential(ReLU, pooling)
         _test_gnn_with_fixed_graph(nn)
         for aggr in ["sum", "mean"]:
             for root_weight in [False, True]:
-                nn = SAGE_Sequential(ReLU, pooling, aggr, root_weight)
+                nn = sage_sequential(ReLU, pooling, aggr, root_weight)
                 _test_gnn_with_fixed_graph(nn)
 
 
@@ -169,7 +174,7 @@ def test_gnn_with_non_fixed_graph():
     for pooling in [global_mean_pool, global_add_pool]:
         for aggr in ["sum"]:
             for root_weight in [False, True]:
-                nn = SAGE_Sequential(ReLU, pooling, aggr, root_weight)
+                nn = sage_sequential(ReLU, pooling, aggr, root_weight)
                 _test_gnn_with_non_fixed_graph(nn)
 
 
@@ -186,7 +191,7 @@ def _test_gnn_value_error(nn, error_info, error_type="ValueError"):
     for i in range(input_size[0]):
         input_bounds[(i)] = (-1.0, 1.0)
     if error_type == "ValueError":
-        with pytest.raises(ValueError) as excinfo:
+        with pytest.raises(ValueError) as excinfo:  # noqa: PT011
             load_torch_geometric_sequential(
                 nn=nn,
                 N=N,
@@ -210,16 +215,18 @@ def _test_gnn_value_error(nn, error_info, error_type="ValueError"):
     reason="Test only valid when torch and torch_geometric are available",
 )
 def test_gnn_value_error():
-    nn = SAGE_Sequential(ReLU, global_max_pool, "mean", True)
-    _test_gnn_value_error(nn, "this operation is not supported")
+    nn = sage_sequential(ReLU, global_max_pool, "mean", root_weight=True)
+    _test_gnn_value_error(nn, "Operation global_max_pool is not supported.")
 
-    nn = SAGE_Sequential(Sigmoid, global_mean_pool, "sum", True)
+    nn = sage_sequential(Sigmoid, global_mean_pool, "sum", root_weight=True)
     _test_gnn_value_error(nn, "nonlinear activation results in a MINLP", "warns")
 
-    nn = SAGE_Sequential(ReLU, global_mean_pool, "mean", True)
+    nn = sage_sequential(ReLU, global_mean_pool, "mean", root_weight=True)
     _test_gnn_value_error(
         nn, "this aggregation is not supported when the graph is not fixed"
     )
 
-    nn = GCN_Sequential(ReLU, global_mean_pool)
-    _test_gnn_value_error(nn, "this layer is not supported when the graph is not fixed")
+    nn = gcn_sequential(ReLU, global_mean_pool)
+    _test_gnn_value_error(
+        nn, "this layer is not supported when the graph is not fixed."
+    )

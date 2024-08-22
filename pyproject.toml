@@ -1,8 +1,200 @@
 [build-system]
-# AVOID CHANGING REQUIRES: IT WILL BE UPDATED BY PYSCAFFOLD!
-requires = ["setuptools>=46.1.0", "setuptools_scm[toml]>=5", "wheel"]
+requires = ["setuptools", "setuptools_scm"]
 build-backend = "setuptools.build_meta"
 
+[project]
+name = "omlt"
+authors = [
+  { name = "The OMLT Developers", email = "omlt@googlegroups.com" },
+]
+
+dependencies = [
+  "networkx",
+  "numpy",
+  # Pyomo release that included #3262 fix and has transformations for linear trees
+  "pyomo>=6.7.3",
+  "onnx",
+  "onnxruntime",
+]
+requires-python = ">=3.9"
+dynamic = ["version"]
+readme = "README.rst"
+license = { file = "LICENSE.rst" }
+description = "OMLT is a Python package for representing machine learning models (such as neural networks) within the Pyomo optimization environment."
+
+[project.optional-dependencies]
+linear-tree = ["linear-tree"]
+keras = ["tensorflow", "keras"]
+keras-gpu = ["tensorflow[and-cuda]", "keras"]
+torch = ["torch", "torch-geometric"]
+dev-tools = [
+  "ruff",
+  "mypy",
+  "pytest",
+  "pytest-cov",
+  "sphinx",
+  "sphinx-copybutton",
+  "build",
+  "twine",
+  "furo",
+  "testbook",
+  "notebook",
+  "pandas",
+  "matplotlib",
+  "gurobipy",
+  "torchvision",
+  "tf2onnx",
+]
+docs = [
+  "sphinx",
+  "sphinx-rtd-theme",
+  "tensorflow",
+  "linear-tree",
+]
+dev = [
+  "omlt[dev-tools,keras,torch,linear-tree,docs]",
+]
+dev-gpu = [
+  "omlt[dev-tools,keras-gpu,torch,linear-tree,docs]",
+]
+
+
+[project.urls]
+github = "https://github.com/cog-imperial/OMLT"
+x = "https://x.com/cogimperial"
+documentation = "https://omlt.readthedocs.io"
+
 [tool.setuptools_scm]
-# See configuration details in https://github.com/pypa/setuptools_scm
-version_scheme = "no-guess-dev"
+write_to = "src/omlt/_version.py"
+
+[tool.ruff]
+line-length = 88
+extend-exclude = ["src/omlt/_version.py"]
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+  "ANN101",
+  "ANN401",
+  "COM812",
+  "ISC001",
+  "SLF001",
+  "ARG001",
+  "N803",
+  "N806",
+  # Remove these after issue https://github.com/cog-imperial/OMLT/issues/153 is fixed.
+  "D100",
+  "D101",
+  "D102",
+  "D103",
+  "D104",
+  "D105",
+  "D106",
+  "D107",
+  # TODO: Remove these eventually
+  "ANN001",
+  "ANN002",
+  "ANN201",
+  "ANN202",
+  "ANN204",
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = [
+  "D100",
+  "D101",
+  "D102",
+  "D103",
+  "D104",
+  "D105",
+  "D106",
+  "D107",
+  "S101",
+  "INP001",
+]
+"examples/*" = [
+  "INP001",
+]
+"docs/conf.py" = ["D100", "INP001"]
+"src/omlt/neuralnet/layer.py" = ["N802"]
+"docs/notebooks/data/build_sin_quadratic_csv.py" = ["INP001"]
+"docs/notebooks/*" = [
+  "T201",
+  "F811",
+  "E402",
+  "ICN001",
+  "E501",
+  "PD901",
+  "E731",
+  "F841",
+  "FBT002",
+  "PTH123",
+  "S311",
+  "N812",
+  "A001",
+  "E741",
+  "N802",
+  "PERF401",
+  "PLR2004",
+]
+
+[tool.mypy]
+show_error_codes = true
+implicit_optional = false
+warn_no_return = true
+strict_optional = true
+# TODO: Enable eventually
+# disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+warn_unreachable = true
+disallow_any_generics = true
+
+[[tool.mypy.overrides]]
+module = [
+  "pandas.*",
+  "networkx.*",
+  "tf2onnx.*",
+  "onnxruntime.*",
+  "lineartree.*",
+  "sklearn.*",
+  "testbook.*",
+  "pyomo.*",
+  "keras.*",
+  "tensorflow.*",
+  "torch_geometric.*",
+]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+addopts = "--cov omlt --cov-report term-missing --cov-config pyproject.toml --verbose"
+
+[tool.coverage.run]
+branch = true
+
+[tool.coverage.paths]
+source = [
+    "src/",
+    "*/site-packages/",
+]
+
+[tool.coverage.report]
+# Regexes for lines to exclude from consideration
+exclude_lines = [
+    # Have to re-enable the standard pragma
+    "pragma: no cover",
+
+    # Don't complain about missing debug-only code:
+    "def __repr__",
+
+    # Don't complain if tests don't hit defensive assertion code:
+    "raise AssertionError",
+    "raise NotImplementedError",
+
+    # Don't complain if non-runnable code isn't run:
+    "if __name__ == .__main__.:",
+]
