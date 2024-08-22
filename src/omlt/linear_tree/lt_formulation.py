@@ -231,7 +231,7 @@ def _build_output_bounds(model_def, input_bounds):
     return bounds
 
 
-def _add_gdp_formulation_to_block( # noqa: PLR0913
+def _add_gdp_formulation_to_block(  # noqa: PLR0913
     block, model_definition, input_vars, output_vars, transformation, epsilon
 ):
     """This function adds the GDP representation to the OmltBlock using Pyomo.GDP.
