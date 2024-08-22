@@ -674,81 +674,22 @@ class ConvLayer2D(Layer2D):
         )
         self.__kernel = kernel
         if self.dilations != [1, 1]:
-            dilate_rows = np.hstack(
-                [
-                    np.hstack(
-                        [
-                            np.hstack(
-                                [
-                                    kernel[:, :, i, :].reshape(
-                                        (
-                                            kernel.shape[0],
-                                            kernel.shape[1],
-                                            1,
-                                            kernel.shape[3],
-                                        )
-                                    ),
-                                    np.zeros(
-                                        (
-                                            kernel.shape[0],
-                                            kernel.shape[1],
-                                            self.dilations[0] - 1,
-                                            kernel.shape[3],
-                                        )
-                                    ),
-                                ]
-                            )
-                            for i in range(kernel.shape[2] - 1)
-                        ]
-                    ),
-                    kernel[:, :, -1, :].reshape(
-                        (kernel.shape[0], kernel.shape[1], 1, kernel.shape[3])
-                    ),
-                ]
+            dilated = np.zeros(
+                (
+                    kernel.shape[0],
+                    kernel.shape[1],
+                    (kernel.shape[2] - 1) * dilations[0] + 1,
+                    (kernel.shape[3] - 1) * dilations[1] + 1,
+                )
             )
-            dilate_kernel = np.dstack(
-                [
-                    np.dstack(
-                        [
-                            np.dstack(
-                                [
-                                    dilate_rows[:, :, :, i].reshape(
-                                        (
-                                            dilate_rows.shape[0],
-                                            dilate_rows.shape[1],
-                                            dilate_rows.shape[2],
-                                            1,
-                                        )
-                                    ),
-                                    np.zeros(
-                                        (
-                                            dilate_rows.shape[0],
-                                            dilate_rows.shape[1],
-                                            dilate_rows.shape[2],
-                                            self.dilations[1] - 1,
-                                        )
-                                    ),
-                                ]
-                            )
-                            for i in range(dilate_rows.shape[3] - 1)
-                        ]
-                    ),
-                    dilate_rows[:, :, :, -1].reshape(
-                        (
-                            dilate_rows.shape[0],
-                            dilate_rows.shape[1],
-                            dilate_rows.shape[2],
-                            1,
-                        )
-                    ),
-                ]
-            ).reshape(
-                kernel.shape[0],
-                kernel.shape[1],
-                kernel.shape[2] + self.dilations[1] - 1,
-                kernel.shape[3] + self.dilations[1] - 1,
-            )
-            self.__dilated_kernel = dilate_kernel
+            for i in range(kernel.shape[0]):
+                for j in range(kernel.shape[1]):
+                    for k in range(kernel.shape[2]):
+                        for l in range(kernel.shape[3]):
+                            dilated[i, j, k * dilations[0], l * dilations[1]] = kernel[
+                                i, j, k, l
+                            ]
+            self.__dilated_kernel = dilated
         else:
             self.__dilated_kernel = kernel
 

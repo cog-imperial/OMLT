@@ -475,7 +475,7 @@ class NetworkParser:
         in_channels = input_output_size[0]
 
         attr = _collect_attributes(node)
-        kernel_depth = attr["kernel_shape"][0]
+        kernel_depth = in_channels
         kernel_shape = attr["kernel_shape"][1:]
         strides = attr["strides"] if "strides" in attr else [1] * len(kernel_shape)
         pads = attr["pads"] if "pads" in attr else None
