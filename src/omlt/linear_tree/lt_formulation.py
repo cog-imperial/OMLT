@@ -49,7 +49,7 @@ class LinearTreeGDPFormulation(_PyomoFormulation):
           optimization development. Optimization and Engineering, 23:607-642
     """
 
-    def __init__(self, lt_definition, transformation="bigm"):
+    def __init__(self, lt_definition, transformation="bigm", epsilon=0):
         """Create a LinearTreeGDPFormulation object.
 
         Arguments:
@@ -59,6 +59,9 @@ class LinearTreeGDPFormulation(_PyomoFormulation):
             transformation: choose which Pyomo.GDP formulation to apply.
                 Supported transformations are bigm, hull, mbigm, and custom
                 (default: {'bigm'})
+            epsilon: Tolerance to use in enforcing that choosing the right
+                branch of a linear tree node can only happen if the feature
+                is strictly greater than the branch value.(default: 0)
 
         Raises:
             Exception: If transformation not in supported transformations
@@ -66,6 +69,7 @@ class LinearTreeGDPFormulation(_PyomoFormulation):
         super().__init__()
         self.model_definition = lt_definition
         self.transformation = transformation
+        self.epsilon = epsilon
 
         # Ensure that the GDP transformation given is supported
         supported_transformations = ["bigm", "hull", "mbigm", "custom"]
@@ -101,6 +105,7 @@ class LinearTreeGDPFormulation(_PyomoFormulation):
             input_vars=self.block.scaled_inputs,
             output_vars=self.block.scaled_outputs,
             transformation=self.transformation,
+            epsilon=self.epsilon,
         )
 
 
@@ -133,14 +138,21 @@ class LinearTreeHybridBigMFormulation(_PyomoFormulation):
 
     """
 
-    def __init__(self, lt_definition):
+    def __init__(self, lt_definition, epsilon=0):
         """Create a LinearTreeHybridBigMFormulation object.
 
         Arguments:
             lt_definition: LinearTreeDefinition Object
+
+        Keyword Arguments:
+            epsilon: Tolerance to use in enforcing that choosing the right
+                branch of a linear tree node can only happen if the feature
+                is strictly greater than the branch value.(default: 0)
+
         """
         super().__init__()
         self.model_definition = lt_definition
+        self.epsilon = epsilon
 
     @property
     def input_indexes(self):
@@ -164,12 +176,17 @@ class LinearTreeHybridBigMFormulation(_PyomoFormulation):
             self.model_definition.scaled_input_bounds,
         )
 
-        _add_hybrid_formulation_to_block(
+        _add_gdp_formulation_to_block(
             block=self.block,
             model_definition=self.model_definition,
             input_vars=self.block.scaled_inputs,
             output_vars=self.block.scaled_outputs,
+            transformation="custom",
+            epsilon=self.epsilon,
         )
+
+        pe.TransformationFactory("gdp.bound_pretransformation").apply_to(self.block)
+        pe.TransformationFactory("gdp.binary_multiplication").apply_to(self.block)
 
 
 def _build_output_bounds(model_def, input_bounds):
@@ -214,8 +231,8 @@ def _build_output_bounds(model_def, input_bounds):
     return bounds
 
 
-def _add_gdp_formulation_to_block(
-    block, model_definition, input_vars, output_vars, transformation
+def _add_gdp_formulation_to_block(  # noqa: PLR0913
+    block, model_definition, input_vars, output_vars, transformation, epsilon
 ):
     """This function adds the GDP representation to the OmltBlock using Pyomo.GDP.
 
@@ -225,6 +242,9 @@ def _add_gdp_formulation_to_block(
         input_vars: input variables to the linear tree model
         output_vars: output variable of the linear tree model
         transformation: Transformation to apply
+        epsilon: Tolerance to use in enforcing that choosing the right
+            branch of a linear tree node can only happen if the feature
+            is strictly greater than the branch value.
 
     """
     leaves = model_definition.leaves
@@ -254,7 +274,7 @@ def _add_gdp_formulation_to_block(
     # and the linear model expression.
     def disjuncts_rule(dsj, tree, leaf):
         def lb_rule(dsj, feat):
-            return input_vars[feat] >= leaves[tree][leaf]["bounds"][feat][0]
+            return input_vars[feat] >= leaves[tree][leaf]["bounds"][feat][0] + epsilon
 
         dsj.lb_constraint = pe.Constraint(features, rule=lb_rule)
 
@@ -285,89 +305,3 @@ def _add_gdp_formulation_to_block(
 
     if transformation != "custom":
         pe.TransformationFactory(transformation_string).apply_to(block)
-
-
-def _add_hybrid_formulation_to_block(block, model_definition, input_vars, output_vars):
-    """This function adds the Hybrid BigM representation to the OmltBlock.
-
-    Arguments:
-        block: OmltBlock
-        model_definition: LinearTreeDefinition Object
-        input_vars: input variables to the linear tree model
-        output_vars: output variable of the linear tree model
-    """
-    leaves = model_definition.leaves
-    input_bounds = model_definition.scaled_input_bounds
-    n_inputs = model_definition.n_inputs
-
-    # The set of trees
-    tree_ids = list(leaves.keys())
-    # Create a list of tuples that contains the tree and leaf indices. Note that
-    # the leaf indices depend on the tree in the ensemble.
-    t_l = [(tree, leaf) for tree in tree_ids for leaf in leaves[tree]]
-
-    features = np.arange(0, n_inputs)
-
-    # Use the input_bounds and the linear models in the leaves to calculate
-    # the lower and upper bounds on the output variable. Required for Pyomo.GDP
-    output_bounds = _build_output_bounds(model_definition, input_bounds)
-
-    # Ouptuts are automatically scaled based on whether inputs are scaled
-    block.outputs.setub(output_bounds[1])
-    block.outputs.setlb(output_bounds[0])
-    block.scaled_outputs.setub(output_bounds[1])
-    block.scaled_outputs.setlb(output_bounds[0])
-
-    # Create the intermeditate variables. z is binary that indicates which leaf
-    # in tree t is returned. intermediate_output is the output of tree t and
-    # the total output of the model is the sum of the intermediate_output vars
-    block.z = pe.Var(t_l, within=pe.Binary)
-    block.intermediate_output = pe.Var(tree_ids)
-
-    @block.Constraint(features, tree_ids)
-    def lower_bound_constraints(mdl, feat, tree):
-        leaf_ids = list(leaves[tree].keys())
-        return (
-            sum(
-                leaves[tree][leaf]["bounds"][feat][0] * mdl.z[tree, leaf]
-                for leaf in leaf_ids
-            )
-            <= input_vars[feat]
-        )
-
-    @block.Constraint(features, tree_ids)
-    def upper_bound_constraints(mdl, feat, tree):
-        leaf_ids = list(leaves[tree].keys())
-        return (
-            sum(
-                leaves[tree][leaf]["bounds"][feat][1] * mdl.z[tree, leaf]
-                for leaf in leaf_ids
-            )
-            >= input_vars[feat]
-        )
-
-    @block.Constraint(tree_ids)
-    def linear_constraint(mdl, tree):
-        leaf_ids = list(leaves[tree].keys())
-        return block.intermediate_output[tree] == sum(
-            (
-                sum(
-                    leaves[tree][leaf]["slope"][feat] * input_vars[feat]
-                    for feat in features
-                )
-                + leaves[tree][leaf]["intercept"]
-            )
-            * block.z[tree, leaf]
-            for leaf in leaf_ids
-        )
-
-    @block.Constraint(tree_ids)
-    def only_one_leaf_per_tree(b, tree):
-        leaf_ids = list(leaves[tree].keys())
-        return sum(block.z[tree, leaf] for leaf in leaf_ids) == 1
-
-    @block.Constraint()
-    def output_sum_of_trees(b):
-        return output_vars[0] == sum(
-            block.intermediate_output[tree] for tree in tree_ids
-        )

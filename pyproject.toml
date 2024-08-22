@@ -11,8 +11,8 @@ authors = [
 dependencies = [
   "networkx",
   "numpy",
-  # TODO: Remove constraint when fix to https://github.com/Pyomo/pyomo/issues/3262 is released
-  "pyomo==6.6.2",
+  # Pyomo release that included #3262 fix and has transformations for linear trees
+  "pyomo>=6.7.3",
   "onnx",
   "onnxruntime",
 ]
