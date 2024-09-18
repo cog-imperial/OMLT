@@ -41,19 +41,16 @@ def test_build_constraint():
 
     assert c_le_expressions.sense == "<="
     assert id(c_le_expressions.rhs) == id(e2._expression)
-    assert c_le_expressions() == VAR1_VALUE - VAR2_VALUE
 
     c_le_var = e1 <= v2
 
     assert c_le_var.sense == "<="
     assert id(c_le_var.rhs) == id(v2._pyovar)
-    assert c_le_var() == VAR1_VALUE - VAR2_VALUE + CONST_VALUE
 
     c_le_const = e1 <= CONST_VALUE
 
     assert c_le_const.sense == "<="
     assert c_le_const.rhs == CONST_VALUE
-    assert c_le_const() == VAR1_VALUE + CONST_VALUE
 
 
 def test_constraint_invalid_lang():

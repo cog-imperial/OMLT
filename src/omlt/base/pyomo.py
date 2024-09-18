@@ -197,9 +197,6 @@ class OmltConstraintScalarPyomo(OmltConstraintScalar, pyo.Constraint):
         self.constraint._parent = self._parent
         self.constraint.construct()
 
-    def __call__(self, *args: Any, **kwds: Any) -> Any:
-        return self.constraint.__call__(*args, **kwds)
-
     @property
     def __class__(self):
         return type(self.constraint.expr)
@@ -235,7 +232,6 @@ class OmltConstraintIndexedPyomo(OmltConstraintIndexed, pyo.Constraint):
         super().__init__(*args, **kwargs)
         kwargs.pop("model", None)
         kwargs.pop("lang", None)
-        kwargs.pop("expr_tuple", None)
         self.constraint = pyo.Constraint(*args, **kwargs)
         self._index_set = self.constraint._index_set
 
@@ -267,9 +263,6 @@ class OmltConstraintIndexedPyomo(OmltConstraintIndexed, pyo.Constraint):
         )
         raise KeyError(msg)
 
-    def __call__(self, *args: Any, **kwds: Any) -> Any:
-        return self.constraint.__call__(*args, **kwds)
-
     def __len__(self):
         return len(self.constraint)
 
@@ -280,10 +273,6 @@ class OmltConstraintIndexedPyomo(OmltConstraintIndexed, pyo.Constraint):
     @property
     def _active(self):
         return self.constraint._active
-
-    @_active.setter
-    def _active(self, val):
-        self.constraint._active = val
 
     @property
     def _data(self):
@@ -314,7 +303,6 @@ class OmltExprScalarPyomo(OmltExpr, pyo.Expression):
 
         self._parent = None
         self.name = None
-        self.__class__ = type(self._expression)
         self._args_ = self._expression._args_
         self._format = "pyomo"
         self.expr_factory = OmltExprFactory()
@@ -350,8 +338,6 @@ class OmltExprScalarPyomo(OmltExpr, pyo.Expression):
         msg = ("Expression middle term was {%s}.", expr[1])
         raise ValueError(msg)
 
-    def __class__(self):
-        return type(self._expression)
 
     def is_potentially_variable(self):
         return self._expression.is_potentially_variable()
@@ -359,16 +345,6 @@ class OmltExprScalarPyomo(OmltExpr, pyo.Expression):
     def as_numeric(self):
         return self._expression._apply_operation(self._expression.args)
 
-    def construct(self, data=None):
-        return self._expression.construct(data)
-
-    @property
-    def _constructed(self):
-        return self._expression.expr._constructed
-
-    @property
-    def const(self):
-        return self._expression.const
 
     @property
     def args(self):

@@ -15,20 +15,10 @@ class OmltConstraint(ABC):
     def ctype(self):
         return pyo.Constraint
 
-    def is_component_type(self):
-        return True
-
-    def is_expression_type(self, enum):
-        # The Pyomo ExpressionType.RELATIONAL is enum 1.
-        return enum.value == 1
-
     def valid_model_component(self):
         """Return True if this can be used as a model component."""
         return True
 
-    @abstractmethod
-    def __call__(self, *args: Any, **kwds: Any) -> Any:
-        pass
 
 
 class OmltConstraintScalar(OmltConstraint):
@@ -44,12 +34,6 @@ class OmltConstraintScalar(OmltConstraint):
         if rhs is not None:
             self.rhs = rhs
         if not lhs and not sense and not rhs:
-            expr_tuple = kwargs.pop("expr_tuple", None)
-            if expr_tuple and expr_tuple[1] in {"==", ">=", "<=", ">", "<", "in"}:
-                self.lhs = expr_tuple[0]
-                self.sense = expr_tuple[1]
-                self.rhs = expr_tuple[2]
-        if not lhs and not sense and not rhs and not expr_tuple:
             expr = kwargs.pop("expr", None)
             if isinstance(expr, EqualityExpression):
                 self.lhs = expr.arg(0)
@@ -64,8 +48,6 @@ class OmltConstraintScalar(OmltConstraint):
         self.format = lang
         self._parent = None
 
-    def __call__(self, *args: Any, **kwds: Any) -> Any:
-        """Return the value of the body of the constraint."""
 
     @property
     def args(self):
@@ -84,9 +66,6 @@ class OmltConstraintIndexed(OmltConstraint):
         self.name = None
         self.format = lang
 
-    @abstractmethod
-    def __call__(self, *args: Any, **kwds: Any) -> Any:
-        pass
 
     def keys(self, sort=False):
         yield from self._index_set
@@ -100,11 +79,6 @@ class OmltConstraintIndexed(OmltConstraint):
     @abstractmethod
     def _active(self):
         """Return True if the constraint is active."""
-
-    @_active.setter
-    @abstractmethod
-    def _active(self, val):
-        """Set the constraint status to active or inactive."""
 
     @property
     @abstractmethod
