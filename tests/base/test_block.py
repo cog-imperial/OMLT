@@ -46,9 +46,9 @@ def test_block():
     formulation = DummyFormulation()
     m.b.build_formulation(formulation, lang="pyomo")
 
-    assert m.b._OmltBlockData__formulation is formulation
-    assert list(m.b.inputs) == ["A", "C", "D"]
-    assert list(m.b.outputs) == [(0, 0), (0, 1), (1, 0), (1, 1)]
+    assert m.b._OmltBlockCore__formulation is formulation
+    assert [k for k in m.b.inputs] == ["A", "C", "D"]
+    assert [k for k in m.b.outputs] == [(0, 0), (0, 1), (1, 0), (1, 1)]
 
 
 def test_input_output_auto_creation():

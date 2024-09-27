@@ -32,18 +32,7 @@ from pyomo.core.base.block import BlockData, declare_custom_block
 from omlt.base import DEFAULT_MODELING_LANGUAGE, OmltVarFactory
 
 
-@declare_custom_block(name="OmltBlock")
-class OmltBlockData(BlockData):
-    def __init__(self, component):
-        super().__init__(component)
-        self.__formulation = None
-        self.__input_indexes = None
-        self.__output_indexes = None
-        self._format = DEFAULT_MODELING_LANGUAGE
-
-    def set_format(self, lang):
-        self._format = lang
-
+class OmltBlockCore:
     def _setup_inputs_outputs(self, *, input_indexes, output_indexes):
         """Setup inputs and outputs.
 
@@ -117,3 +106,16 @@ class OmltBlockData(BlockData):
 
         # tell the formulation object to construct the necessary models
         self.__formulation._build_formulation()
+
+
+@declare_custom_block(name="OmltBlock")
+class OmltBlockData(_BlockData, OmltBlockCore):
+    def __init__(self, component):
+        super().__init__(component)
+        self.__formulation = None
+        self.__input_indexes = None
+        self.__output_indexes = None
+        self._format = DEFAULT_MODELING_LANGUAGE
+
+    def set_format(self, lang):
+        self._format = lang
