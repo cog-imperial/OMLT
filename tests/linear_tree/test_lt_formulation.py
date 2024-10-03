@@ -1,8 +1,8 @@
 import numpy as np
 import pyomo.environ as pe
+import pytest
 from pyomo.common.collections import ComponentSet
 from pyomo.core.expr import identify_variables
-import pytest
 
 from omlt.dependencies import lineartree_available
 
