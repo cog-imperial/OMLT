@@ -106,7 +106,7 @@ class LinearTreeGDPFormulation(_PyomoFormulation):
             output_vars=self.block.scaled_outputs,
             transformation=self.transformation,
             epsilon=self.epsilon,
-            include_leaf_equalities=True
+            include_leaf_equalities=True,
         )
 
 
