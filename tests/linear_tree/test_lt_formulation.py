@@ -668,7 +668,7 @@ def test_hybrid_bigm_formulation_multi_var():
 
     num_leaves = len(ltmodel_small.leaves[0])
     # binary for each leaf + two inputs and an output + 5 scaled input/output vars
-    assert len(var_set)  == num_leaves + 3 + 4
+    assert len(var_set) == num_leaves + 3 + 4
     # 2 bounds constraints for each input, the xor, the output constraint, and
     # four scaling constraints from OMLT
     assert num_constraints == 2 * 2 + 1 + 1 + 4

@@ -188,7 +188,7 @@ class LinearTreeHybridBigMFormulation(_PyomoFormulation):
             output_vars=self.block.scaled_outputs,
             transformation="custom",
             epsilon=self.epsilon,
-            include_leaf_equalities=False
+            include_leaf_equalities=False,
         )
 
         pe.TransformationFactory("gdp.bound_pretransformation").apply_to(block)
@@ -200,6 +200,7 @@ class LinearTreeHybridBigMFormulation(_PyomoFormulation):
         # We now create the \sum((a_l^Tx + b_l)*y_l for l in leaves) = d constraints
         # manually.
         features = np.arange(0, self.model_definition.n_inputs)
+
         @block.Constraint(list(leaves.keys()))
         def linear_constraint(mdl, tree):
             leaf_ids = list(leaves[tree].keys())
@@ -259,8 +260,13 @@ def _build_output_bounds(model_def, input_bounds):
 
 
 def _add_gdp_formulation_to_block(  # noqa: PLR0913
-    block, model_definition, input_vars, output_vars, transformation, epsilon,
-    include_leaf_equalities=True
+    block,
+    model_definition,
+    input_vars,
+    output_vars,
+    transformation,
+    epsilon,
+    include_leaf_equalities=True,
 ):
     """This function adds the GDP representation to the OmltBlock using Pyomo.GDP.
 
