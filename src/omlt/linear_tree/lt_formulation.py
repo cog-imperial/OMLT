@@ -2,7 +2,6 @@ import numpy as np
 import pyomo.environ as pe
 from pyomo.gdp import Disjunct
 
-from omlt.base import OmltConstraintFactory, OmltVarFactory
 from omlt.formulation import _PyomoFormulation, _setup_scaled_inputs_outputs
 
 
@@ -267,9 +266,8 @@ def _add_gdp_formulation_to_block(  # noqa: PLR0913
     block.scaled_outputs.setub(output_bounds[1])
     block.scaled_outputs.setlb(output_bounds[0])
 
-    var_factory = OmltVarFactory()
-    block.intermediate_output = var_factory.new_var(
-        tree_ids, lang=block._format, bounds=(output_bounds[0], output_bounds[1])
+    block.intermediate_output = pe.Var(
+        tree_ids, bounds=(output_bounds[0], output_bounds[1])
     )
 
     # Create a disjunct for each leaf containing the bound constraints

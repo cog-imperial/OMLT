@@ -7,7 +7,6 @@ from pyomo.common.dependencies import DeferredImportError
 
 if onnx_available:
     import onnxruntime as ort
-
     from omlt.io.onnx import (
         load_onnx_neural_network,
         load_onnx_neural_network_with_bounds,

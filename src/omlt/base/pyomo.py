@@ -98,6 +98,7 @@ class OmltIndexedPyomo(OmltIndexed, pyo.Var):
         self._pyovar = pyo.Var(*indexes, **kwargs)
         self._name = None
         self._parent = None
+        self._pyovar._parent = None
         self._constructed = self._pyovar._constructed
         self._index_set = self._pyovar._index_set
         self._rule_init = self._pyovar._rule_init
@@ -106,7 +107,6 @@ class OmltIndexedPyomo(OmltIndexed, pyo.Var):
         self._dense = self._pyovar._dense
         self._data = self._pyovar._data
         self._units = self._pyovar._units
-        self._implicit_subsets = self._pyovar._implicit_subsets
         self.doc = self._pyovar.doc
         self._ctype = pyo.Var
         self.bounds = (None, None)
@@ -166,6 +166,16 @@ class OmltIndexedPyomo(OmltIndexed, pyo.Var):
         for vardata in self.values():
             vardata.lb = value
 
+    @property
+    def _parent(self):
+        return self._pyovar._parent
+
+    @_parent.setter
+    def _parent(self, value):
+        self._pyovar._parent = value
+        if self.is_constructed():
+            for idx in self.keys():
+                self[idx]._parent = value
 
 # Constraints
 
@@ -289,7 +299,7 @@ class OmltConstraintIndexedPyomo(OmltConstraintIndexed, pyo.Constraint):
 class OmltExprScalarPyomo(OmltExpr, pyo.Expression):
     format = "pyomo"
 
-    def __init__(self, expr=None, **kwargs):
+    def __init__(self, expr=None):
         self._index_set = {}
         if isinstance(expr, OmltExprScalarPyomo):
             self._expression = expr._expression

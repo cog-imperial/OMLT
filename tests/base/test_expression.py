@@ -5,6 +5,7 @@ from omlt.base import OmltExpr, OmltExprFactory, OmltVarFactory
 VAR1_VALUE = 6
 VAR2_VALUE = 3
 CONST_VALUE = 4
+NUM_ARGS = 2
 
 var_factory = OmltVarFactory()
 expr_factory = OmltExprFactory()
@@ -71,7 +72,7 @@ def test_init_scalar_expression():
     assert e2.is_potentially_variable()
     assert not e2.is_indexed()
 
-    assert e2.nargs() == 2
+    assert e2.nargs() == NUM_ARGS
     assert e2.args[1] == CONST_VALUE
     assert e2.arg(1) == CONST_VALUE
     assert len(e2) == 1

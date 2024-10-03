@@ -72,8 +72,10 @@ class _PyomoFormulation(_PyomoFormulationInterface):
 
     @property
     def block(self):
-        """The underlying block containing the constraints / variables for this
-        formulation."""
+        """Block.
+
+        The underlying block containing the constraints/variables for this formulation.
+        """
         return self.__block()
 
 
@@ -134,7 +136,9 @@ def _setup_scaled_inputs_outputs(block, scaler=None, scaled_input_bounds=None):
         )
     constraint_factory = OmltConstraintFactory()
 
-    block._scale_input_constraint = constraint_factory.new_constraint(block.inputs_set, lang=block._format)
+    block._scale_input_constraint = constraint_factory.new_constraint(
+        block.inputs_set, lang=block._format
+    )
     for idx in block.inputs_set:
         block._scale_input_constraint[idx] = (
             block.scaled_inputs[idx] == input_scaling_expressions[idx]

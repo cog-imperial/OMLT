@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from typing import Any
 
 import pyomo.environ as pyo
@@ -9,7 +9,7 @@ from pyomo.core.expr import EqualityExpression, InequalityExpression
 from omlt.base import DEFAULT_MODELING_LANGUAGE
 
 
-class OmltConstraint(ABC):
+class OmltConstraint:
 
     @property
     def ctype(self):
