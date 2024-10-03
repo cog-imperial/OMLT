@@ -1,5 +1,4 @@
 import pytest
-
 from omlt.dependencies import onnx, onnx_available
 
 NUM_LAYERS_131 = 3

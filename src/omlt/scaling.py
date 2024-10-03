@@ -4,7 +4,6 @@ The omlt.scaling module describes the interface for providing different scaling
 expressions to the Pyomo model for the inputs and outputs of an ML model. An
 implementation of a common scaling approach is included with `OffsetScaling`.
 """
-
 import abc
 from typing import Any
 

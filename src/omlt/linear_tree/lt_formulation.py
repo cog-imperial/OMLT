@@ -282,7 +282,6 @@ def _add_gdp_formulation_to_block(  # noqa: PLR0913
             return input_vars[feat] <= leaves[tree][leaf]["bounds"][feat][1]
 
         dsj.ub_constraint = pe.Constraint(features, rule=ub_rule)
-
         slope = leaves[tree][leaf]["slope"]
         intercept = leaves[tree][leaf]["intercept"]
         dsj.linear_exp = pe.Constraint(

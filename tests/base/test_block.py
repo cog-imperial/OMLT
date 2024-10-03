@@ -1,6 +1,5 @@
 import pyomo.environ as pyo
 import pytest
-
 from omlt import OmltBlock
 
 INPUTS_LENGTH = 3
@@ -42,10 +41,11 @@ def test_block():
 
     m = pyo.ConcreteModel()
     m.b = OmltBlock()
+    m.b.set_format("pyomo")
     formulation = DummyFormulation()
-    m.b.build_formulation(formulation)
+    m.b.build_formulation(formulation, lang="pyomo")
 
-    assert m.b._OmltBlockData__formulation is formulation
+    assert m.b._OmltBlockCore__formulation is formulation
     assert list(m.b.inputs) == ["A", "C", "D"]
     assert list(m.b.outputs) == [(0, 0), (0, 1), (1, 0), (1, 1)]
 

@@ -4,6 +4,7 @@ from typing import Any
 import numpy as np
 import pyomo.environ as pe
 
+from omlt.base import OmltConstraintFactory, OmltVarFactory
 from omlt.formulation import _PyomoFormulation, _setup_scaled_inputs_outputs
 from omlt.gbt.model import GradientBoostedTreeModel
 
@@ -15,11 +16,12 @@ class GBTBigMFormulation(_PyomoFormulation):
     constraints to enforce splitting rules according to:
 
     References:
-         * Misic, V. "Optimization of tree ensembles."
-           Operations Research 68.5 (2020): 1605-1624.
-         * Mistry, M., et al. "Mixed-integer convex nonlinear optimization with
-           gradient-boosted trees embedded."
-           INFORMS Journal on Computing (2020).
+    ----------
+     * Misic, V. "Optimization of tree ensembles."
+       Operations Research 68.5 (2020): 1605-1624.
+     * Mistry, M., et al. "Mixed-integer convex nonlinear optimization with
+        gradient-boosted trees embedded."
+       INFORMS Journal on Computing (2020).
 
     Parameters:
         tree_ensemble_structure (GradientBoostedTreeModel):
@@ -87,11 +89,12 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars): 
 
 
     References:
-         * Misic, V. "Optimization of tree ensembles."
-           Operations Research 68.5 (2020): 1605-1624.
-         * Mistry, M., et al. "Mixed-integer convex nonlinear optimization with
-           gradient-boosted trees embedded."
-           INFORMS Journal on Computing (2020).
+    ----------
+     * Misic, V. "Optimization of tree ensembles."
+       Operations Research 68.5 (2020): 1605-1624.
+     * Mistry, M., et al. "Mixed-integer convex nonlinear optimization with
+        gradient-boosted trees embedded."
+       INFORMS Journal on Computing (2020).
 
     Parameters:
         block (Block):
@@ -143,10 +146,13 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars): 
         var = input_vars[var_idx]
         continuous_vars[var_idx] = var
 
-    block.z_l = pe.Var(
+    var_factory = OmltVarFactory()
+
+    block.z_l = var_factory.new_var(
         list(zip(nodes_tree_ids[nodes_leaf_mask], nodes_node_ids[nodes_leaf_mask])),
         bounds=(0, None),
         domain=pe.Reals,
+        lang=block._format,
     )
 
     branch_value_by_feature_id: dict[int, Any] = {}
@@ -162,10 +168,12 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars): 
         for f in continuous_vars
         for bi, _ in enumerate(branch_value_by_feature_id[f])
     ]
-    block.y = pe.Var(y_index, domain=pe.Binary)
+    block.y = var_factory.new_var(y_index, lang=block._format, domain=pe.Binary)
 
-    @block.Constraint(tree_ids)
-    def single_leaf(b, tree_id):
+    constraint_factory = OmltConstraintFactory()
+
+    block.single_leaf = constraint_factory.new_constraint(tree_ids, lang=block._format)
+    for tree_id in tree_ids:
         r"""Single leaf constraint.
 
         Add constraint to ensure that only one leaf per tree is active,
@@ -176,9 +184,9 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars): 
             \end{align*}
         """
         tree_mask = nodes_tree_ids == tree_id
-        return (
+        block.single_leaf[tree_id] = (
             sum(
-                b.z_l[tree_id, node_id]
+                block.z_l[tree_id, node_id]
                 for node_id in nodes_node_ids[nodes_leaf_mask & tree_mask]
             )
             == 1
@@ -236,8 +244,10 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars): 
                 visit_queue.append(local_true_node_ids[node_id])
         return sum_of_z_l
 
-    @block.Constraint(nodes_tree_branch_ids)
-    def left_split(b, tree_id, branch_node_id):
+    block.left_split = constraint_factory.new_constraint(
+        nodes_tree_branch_ids, lang=block._format
+    )
+    for tree_id, branch_node_id in nodes_tree_branch_ids:
         r"""Left split.
 
         Add constraint to activate all left splits leading to an active leaf,
@@ -252,10 +262,14 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars): 
         y = _branching_y(tree_id, branch_node_id)
 
         subtree_root = nodes_true_node_ids[node_mask][0]
-        return _sum_of_z_l(tree_id, subtree_root) <= y
+        block.left_split[tree_id, branch_node_id] = (
+            _sum_of_z_l(tree_id, subtree_root) <= y
+        )
 
-    @block.Constraint(nodes_tree_branch_ids)
-    def right_split(b, tree_id, branch_node_id):
+    block.right_split = constraint_factory.new_constraint(
+        nodes_tree_branch_ids, lang=block._format
+    )
+    for tree_id, branch_node_id in nodes_tree_branch_ids:
         r"""Right split.
 
         Add constraint to activate all right splits leading to an active leaf,
@@ -270,10 +284,12 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars): 
         y = _branching_y(tree_id, branch_node_id)
 
         subtree_root = nodes_false_node_ids[node_mask][0]
-        return _sum_of_z_l(tree_id, subtree_root) <= 1 - y
+        block.right_split[tree_id, branch_node_id] = (
+            _sum_of_z_l(tree_id, subtree_root) <= 1 - y
+        )
 
-    @block.Constraint(y_index)
-    def order_y(b, feature_id, branch_y_idx):
+    block.order_y = constraint_factory.new_constraint(y_index, lang=block._format)
+    for feature_id, branch_y_idx in y_index:
         r"""Add constraint to activate splits in the correct order.
 
         Mistry et al. Equ. (3e).
@@ -284,12 +300,14 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars): 
             \end{align*}
         """
         branch_values = branch_value_by_feature_id[feature_id]
-        if branch_y_idx >= len(branch_values) - 1:
-            return pe.Constraint.Skip
-        return b.y[feature_id, branch_y_idx] <= b.y[feature_id, branch_y_idx + 1]
+        if branch_y_idx < len(branch_values) - 1:
+            block.order_y[feature_id, branch_y_idx] = (
+                block.y[feature_id, branch_y_idx]
+                <= block.y[feature_id, branch_y_idx + 1]
+            )
 
-    @block.Constraint(y_index)
-    def var_lower(b, feature_id, branch_y_idx):
+    block.var_lower = constraint_factory.new_constraint(y_index, lang=block._format)
+    for feature_id, branch_y_idx in y_index:
         r"""Lower bound constraint.
 
         Add constraint to link discrete tree splits to lower bound of continuous
@@ -305,15 +323,15 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars): 
             \end{align*}
         """
         x = input_vars[feature_id]
-        if x.lb is None:
-            return pe.Constraint.Skip
-        branch_value = branch_value_by_feature_id[feature_id][branch_y_idx]
-        return x >= x.lb + (branch_value - x.lb) * (1 - b.y[feature_id, branch_y_idx])
+        if x.lb is not None:
+            branch_value = branch_value_by_feature_id[feature_id][branch_y_idx]
+            block.var_lower[feature_id, branch_y_idx] = x >= x.lb + (
+                branch_value - x.lb
+            ) * (1 - block.y[feature_id, branch_y_idx])
 
-    @block.Constraint(y_index)
-    def var_upper(b, feature_id, branch_y_idx):
+    block.var_upper = constraint_factory.new_constraint(y_index, lang=block._format)
+    for feature_id, branch_y_idx in y_index:
         r"""Upper bound constraint.
-
         Add constraint to link discrete tree splits to upper bound of continuous
         variables.
         Mistry et al. Equ. (4b).
@@ -325,14 +343,27 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars): 
             \end{align*}
         """
         x = input_vars[feature_id]
-        if x.ub is None:
-            return pe.Constraint.Skip
-        branch_value = branch_value_by_feature_id[feature_id][branch_y_idx]
-        return x <= x.ub + (branch_value - x.ub) * b.y[feature_id, branch_y_idx]
+        if x.ub is not None:
+            branch_value = branch_value_by_feature_id[feature_id][branch_y_idx]
+            block.var_upper[feature_id, branch_y_idx] = (
+                x <= x.ub + (branch_value - x.ub) * block.y[feature_id, branch_y_idx]
+            )
 
-    @block.Constraint()
-    def tree_mean_value(b):
-        r"""Add constraint to link block output tree model mean.
+    block.tree_mean_value = constraint_factory.new_constraint(
+        expr=(
+            output_vars[0]
+            == sum(
+                weight * block.z_l[tree_id, node_id]
+                for tree_id, node_id, weight in zip(
+                    target_tree_ids, target_node_ids, target_weights
+                )
+            )
+            + base_value
+        ),
+        lang=block._format,
+    )
+
+    r"""Add constraint to link block output tree model mean.
 
         Mistry et al. Equ. (3a).
         .. math::
@@ -340,17 +371,7 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars): 
             \hat{\mu} &= \sum\limits_{t \in T} \sum\limits_{l \in {L_t}}
             F_{t,l} z_{t,l}
             \end{align*}
-        """
-        return (
-            output_vars[0]
-            == sum(
-                weight * b.z_l[tree_id, node_id]
-                for tree_id, node_id, weight in zip(
-                    target_tree_ids, target_node_ids, target_weights
-                )
-            )
-            + base_value
-        )
+    """
 
 
 def _node_attributes(node):
