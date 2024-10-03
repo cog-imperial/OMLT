@@ -19,6 +19,10 @@ class OmltVar(ABC):
         """Construct the variable."""
 
     @abstractmethod
+    def is_constructed(self):
+        """Return True if the variable has been constructed."""
+
+    @abstractmethod
     def fix(self, value, *, skip_validation=False):
         """Fix the value of the variable."""
 

@@ -86,6 +86,12 @@ def _test_indexed_var(lang):
 def test_indexed_pyomo():
     _test_indexed_var("pyomo")
 
+@pytest.mark.skipif(
+    not julia_available, reason="Test only valid when Julia is available"
+)
+def test_indexed_jump():
+    _test_indexed_var("jump")
+
 
 def test_indexed_invalid_lang():
     expected_msg = (
