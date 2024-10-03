@@ -106,6 +106,7 @@ class LinearTreeGDPFormulation(_PyomoFormulation):
             output_vars=self.block.scaled_outputs,
             transformation=self.transformation,
             epsilon=self.epsilon,
+            include_leaf_equalities=True
         )
 
 
@@ -266,7 +267,7 @@ def _add_gdp_formulation_to_block(  # noqa: PLR0913
     output_vars,
     transformation,
     epsilon,
-    include_leaf_equalities=True,
+    include_leaf_equalities,
 ):
     """This function adds the GDP representation to the OmltBlock using Pyomo.GDP.
 
