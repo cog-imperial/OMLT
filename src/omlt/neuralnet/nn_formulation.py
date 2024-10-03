@@ -1,3 +1,5 @@
+from functools import partial
+
 import pyomo.environ as pyo
 
 from omlt.base import OmltConstraintFactory, OmltVarFactory
@@ -138,7 +140,7 @@ class FullSpaceNNFormulation(_PyomoFormulation):
         return network_outputs[0].output_indexes
 
 
-def _build_neural_network_formulation(
+def _build_neural_network_formulation(  # noqa: C901
     block, network_structure, layer_constraints, activation_constraints
 ):
     """Adds the neural network formulation to the given Pyomo block.
@@ -419,14 +421,6 @@ class ReducedSpaceNNFormulation(_PyomoFormulation):
                 == block.layer[id(output_layer)].z[output_index]
             )
 
-    # @property
-    # def layer_constraints(self):
-    #     return self._layer_constraints
-
-    # @property
-    # def activation_constraints(self):
-    #     return self._activation_constraints
-
     @property
     def input_indexes(self):
         """The indexes of the formulation inputs."""
@@ -490,11 +484,11 @@ class ReluPartitionFormulation(_PyomoFormulation):
         self.__scaled_input_bounds = network_structure.scaled_input_bounds
 
         if split_func is None:
-            split_func = lambda w: default_partition_split_func(w, 2)
+            split_func = partial(default_partition_split_func, n=2)
 
         self.__split_func = split_func
 
-    def _build_formulation(self):
+    def _build_formulation(self):  # noqa: C901
         _setup_scaled_inputs_outputs(
             self.block, self.__scaling_object, self.__scaled_input_bounds
         )

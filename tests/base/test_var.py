@@ -3,6 +3,10 @@ import pytest
 from omlt.base import OmltVarFactory
 from omlt.dependencies import julia_available
 
+VAR_VALUE = 3
+FIX_VALUE = 2
+UPPER_BOUND = 5
+
 var_factory = OmltVarFactory()
 
 
@@ -20,12 +24,12 @@ def _test_scalar_var(lang):
     assert v.is_constructed()
 
     v.value = 3
-    assert v.value == 3
+    assert v.value == VAR_VALUE
 
     v.fix(2, skip_validation=True)
     v.bounds = (0, 5)
     assert v.lb == 0
-    assert v.ub == 5
+    assert v.ub == UPPER_BOUND
     v.lb = 1
     v.ub = 3
     assert v.bounds == (1, 3)
@@ -62,11 +66,11 @@ def _test_indexed_var(lang):
     assert v.is_constructed()
 
     v.value = 3
-    assert v.value == 3
+    assert v.value == VAR_VALUE
 
     v.fix(2, skip_validation=True)
     for e in v:
-        assert v[e].value == 2
+        assert v[e].value == FIX_VALUE
 
     v.fix()
 

@@ -130,7 +130,7 @@ class ComplementarityReLUActivation:
             transform = "mpec.simple_nonlinear"
         self.transform = transform
 
-    def __call__(self, net_block, net, layer_block, layer):
+    def __call__(self, net_block, net, layer_block, layer):  # noqa: ARG002
         layer_block._complementarity = mpec.Complementarity(
             layer.output_indexes, rule=_relu_complementarity
         )

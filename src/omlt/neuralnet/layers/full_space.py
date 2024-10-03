@@ -257,25 +257,24 @@ def full_space_maxpool2d_layer(net_block, net, layer_block, layer):
         \end{align*}
 
     where:
+
     :math:`w` is the convolution kernel on the preceding convolutional layer;
     :math:`d` is the number of features in each of the :math:`N` max pooling windows;
     :math:`x_{i}` is the set of :math:`d` features in the :math:`i`-th max pooling
-        window;
+    window;
     :math:`\Delta^{d}` is the :math:`d`-dimensional simplex; and [L_{i},U_{i}] are the
-        bounds on x_{i}.
+    bounds on x_{i}.
 
     NOTE This formulation is adapted from the Anderson et al. (2020) formulation,
     section 5.1, with the following changes:
 
     - OMLT presently does not support biases on convolutional layers. Bias terms from
-    the original formulation are removed.
-
+      the original formulation are removed.
     - The original formulation formulates the max of :math:`w^{l}\cdot x + b^{l}`,
       varying the weights :math:`w` and biases :math:`b` and keeping the input :math:`x`
       constant. Since convolutional layers have constant weights and biases convolved
       with varying portions of the feature map, this formulation formulates the max of
       :math:`w\cdot x^{l} + b`.
-
     - Due to the above 2 changes, the calculation of :math:`N^{l,k}` is changed.
 
     """
@@ -289,9 +288,6 @@ def full_space_maxpool2d_layer(net_block, net, layer_block, layer):
             " are not supported."
         )
         raise ValueError(msg)
-    # TODO @cog-imperial: add support for non-increasing activation functions on
-    # preceding convolutional layer
-    # https://github.com/cog-imperial/OMLT/issues/154
 
     # note kernel indexes are the same set of values for any output index, so wlog get
     # kernel indexes for (0, 0, 0)
@@ -344,30 +340,32 @@ def full_space_maxpool2d_layer(net_block, net, layer_block, layer):
             == 1
         )
 
-        for l, input_index in layer.kernel_index_with_input_indexes(
+        for layer_index, input_index in layer.kernel_index_with_input_indexes(
             out_d, out_r, out_c
         ):
             mapped_input_index = layer.input_index_mapper(input_index)
 
             # Since biases are zero,
             # input_layer_block.z[input_index] is equal to w dot x in the formulation.
-            layer_block._zhat_upper_bound[output_index, l] = layer_block.zhat[
+            layer_block._zhat_upper_bound[output_index, layer_index] = layer_block.zhat[
                 output_index
             ] <= input_layer_block.z[mapped_input_index] + sum(
                 layer_block.q_maxpool[output_index, k]
-                * _calculate_n_plus(output_index, l, k, layer, input_layer_block)
+                * _calculate_n_plus(
+                    output_index, layer_index, k, layer, input_layer_block
+                )
                 for k in layer_block._kernel_indexes
             )
-            layer_block._zhat_lower_bound[output_index, l] = (
+            layer_block._zhat_lower_bound[output_index, layer_index] = (
                 layer_block.zhat[output_index]
                 >= input_layer_block.z[mapped_input_index]
             )
 
 
-def _calculate_n_plus(out_index, l, k, layer, input_layer_block):
-    if l == k:
+def _calculate_n_plus(out_index, kernel_index, k, layer, input_layer_block):
+    if kernel_index == k:
         return 0
-    x_l_index = layer.input_index_mapper(layer.get_input_index(out_index, l))
+    x_l_index = layer.input_index_mapper(layer.get_input_index(out_index, kernel_index))
     x_k_index = layer.input_index_mapper(layer.get_input_index(out_index, k))
     return max(
         x_k_bound - x_l_bound

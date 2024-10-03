@@ -120,8 +120,7 @@ class OffsetScaling(ScalingInterface):
 
         scaled_x = scaled_input_vars
         return {
-            k: scaled_x[k] * self.__x_factor[k] + self.__x_offset[k]
-            for k in scaled_x
+            k: scaled_x[k] * self.__x_factor[k] + self.__x_offset[k] for k in scaled_x
         }
 
     def get_scaled_output_expressions(self, output_vars):
@@ -163,6 +162,5 @@ class OffsetScaling(ScalingInterface):
 
         scaled_y = scaled_output_vars
         return {
-            k: scaled_y[k] * self.__y_factor[k] + self.__y_offset[k]
-            for k in scaled_y
+            k: scaled_y[k] * self.__y_factor[k] + self.__y_offset[k] for k in scaled_y
         }

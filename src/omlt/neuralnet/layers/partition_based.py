@@ -77,7 +77,7 @@ def partition_based_dense_relu_layer(net_block, net, layer_block, layer, split_f
     prev_layer_block = net_block.layer[id(prev_layer)]
 
     @layer_block.Block(layer.output_indexes)
-    def output_node_block(b, *output_index):
+    def output_node_block(b, *output_index):  # noqa: PLR0915
         # dense layers multiply only the last dimension of
         # their inputs
         weights = layer.weights[:, output_index[-1]]

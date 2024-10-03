@@ -12,8 +12,6 @@ from omlt.scaling import OffsetScaling
 ALMOST_EXACTLY_EQUAL = 1e-8
 
 
-# TODO @cog-imperial: Build more tests with different activations and edge cases
-# https://github.com/cog-imperial/OMLT/issues/158
 def test_two_node_full_space():
     """Two node full space network.
 

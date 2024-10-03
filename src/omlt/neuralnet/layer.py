@@ -17,6 +17,7 @@ We use the following notations to define a layer:
 """
 
 import itertools
+from typing import ClassVar
 
 import numpy as np
 
@@ -195,7 +196,7 @@ class DenseLayer(Layer):
         map indexes from this layer index to the input layer index size
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         input_size,
         output_size,
@@ -321,7 +322,7 @@ class GNNLayer(DenseLayer):
         map indexes from this layer index to the input layer index size
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         input_size,
         output_size,
@@ -380,7 +381,6 @@ class GNNLayer(DenseLayer):
             if self.input_index_mapper is not None
             else x[:]
         )
-        assert x_reshaped.shape == tuple(self.input_size)
         y = np.zeros(shape=self.output_size)
         for output_index in self.output_indexes:
             for input_index in self.input_indexes:
@@ -447,7 +447,7 @@ class Layer2D(Layer):
         """Return the depth of the kernel."""
         raise NotImplementedError
 
-    def kernel_index_with_input_indexes(self, out_d, out_r, out_c):
+    def kernel_index_with_input_indexes(self, out_d, out_r, out_c):  # noqa: ARG002
         """Kernel index with input indexes.
 
         Returns an iterator over the index within the kernel and input index
@@ -468,16 +468,12 @@ class Layer2D(Layer):
         start_in_d = 0
         start_in_r = out_r * rows_stride
         start_in_c = out_c * cols_stride
-        mapper = lambda x: x
-        if self.input_index_mapper is not None:
-            mapper = self.input_index_mapper
 
         for k_d in range(kernel_d):
             for k_r in range(kernel_r):
                 for k_c in range(kernel_c):
                     input_index = (start_in_d + k_d, start_in_r + k_r, start_in_c + k_c)
 
-                    assert len(input_index) == len(self.input_size)
                     # don't yield an out-of-bounds input index;
                     # can happen if ceil mode is enabled for pooling layers
                     # as this could require using a partial kernel
@@ -542,9 +538,9 @@ class PoolingLayer2D(Layer2D):
         map indexes from this layer index to the input layer index size
     """
 
-    _POOL_FUNCTIONS = {"max": max}
+    _POOL_FUNCTIONS: ClassVar = {"max": max}
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         input_size,
         output_size,
@@ -618,7 +614,7 @@ class ConvLayer2D(Layer2D):
         map indexes from this layer index to the input layer index size
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         input_size,
         output_size,
@@ -677,7 +673,8 @@ class ConvLayer2D(Layer2D):
         return (
             f"ConvLayer(input_size={self.input_size}, output_size={self.output_size},"
             f" strides={self.strides}, kernel_shape={self.kernel_shape})"
-            )
+        )
+
     def _eval_at_index(self, x, out_d, out_r, out_c):
         acc = 0.0
         for k, index in self.kernel_with_input_indexes(out_d, out_r, out_c):

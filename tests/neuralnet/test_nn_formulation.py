@@ -1,4 +1,6 @@
 import re
+from functools import partial
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pyomo.environ as pyo
@@ -31,6 +33,9 @@ from omlt.neuralnet.layers.partition_based import (
 )
 from omlt.neuralnet.layers.reduced_space import reduced_space_dense_layer
 from pyomo.contrib.fbbt import interval
+
+if TYPE_CHECKING:
+    from omlt.formulation import _PyomoFormulation
 
 formulations = {
     "FullSpace": FullSpaceNNFormulation,
@@ -344,8 +349,6 @@ def test_maxpool_full_space_nn_formulation():
 
     net, y = _maxpool_conv_network(inputs)
     m.neural_net_block.build_formulation(FullSpaceNNFormulation(net))
-    # assert m.nvariables() == 15
-    # assert m.nconstraints() == 14
 
     for inputs_d in range(inputs.shape[0]):
         for inputs_r in range(inputs.shape[1]):
@@ -524,7 +527,7 @@ def test_partition_based_unbounded_below():
     prev_layer_block = m.neural_net_block.layer[prev_layer_id]
     prev_layer_block.z.setlb(-interval.inf)
 
-    split_func = lambda w: default_partition_split_func(w, 2)
+    split_func = partial(default_partition_split_func, n=2)
 
     expected_msg = "Expression is unbounded below."
     with pytest.raises(ValueError, match=expected_msg):
@@ -550,7 +553,7 @@ def test_partition_based_unbounded_above():
     prev_layer_block = m.neural_net_block.layer[prev_layer_id]
     prev_layer_block.z.setub(interval.inf)
 
-    split_func = lambda w: default_partition_split_func(w, 2)
+    split_func = partial(default_partition_split_func, n=2)
 
     expected_msg = "Expression is unbounded above."
     with pytest.raises(ValueError, match=expected_msg):
@@ -573,7 +576,7 @@ def test_partition_based_bias_unbounded_below():
     m.neural_net_block.build_formulation(formulation)
 
     test_layer.biases[0] = -interval.inf
-    split_func = lambda w: default_partition_split_func(w, 2)
+    split_func = partial(default_partition_split_func, n=2)
 
     expected_msg = "Expression is unbounded below."
     with pytest.raises(ValueError, match=expected_msg):
@@ -592,7 +595,7 @@ def test_partition_based_bias_unbounded_above():
     m.neural_net_block.build_formulation(formulation)
 
     test_layer.biases[0] = interval.inf
-    split_func = lambda w: default_partition_split_func(w, 2)
+    split_func = partial(default_partition_split_func, n=2)
     expected_msg = "Expression is unbounded above."
     with pytest.raises(ValueError, match=expected_msg):
         partition_based_dense_relu_layer(

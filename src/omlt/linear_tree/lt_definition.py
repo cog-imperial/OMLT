@@ -230,7 +230,7 @@ def _reassign_none_bounds(leaves, input_bounds):
     return leaves
 
 
-def _parse_tree_data(model, input_bounds):
+def _parse_tree_data(model, input_bounds):  # noqa: C901, PLR0915, PLR0912
     """Parse tree data.
 
     This function creates the data structures with the information required
@@ -241,7 +241,7 @@ def _parse_tree_data(model, input_bounds):
     Arguments:
         model: Trained linear-tree model or dic containing linear-tree model
             summary (e.g. dict = model.summary())
-        input_bounds:
+        input_bounds: The input bounds
 
     Returns:
         leaves - Dict containing the following information for each leaf:

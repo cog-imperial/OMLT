@@ -1,5 +1,5 @@
 import math
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 from onnx import numpy_helper
@@ -12,6 +12,9 @@ from omlt.neuralnet.layer import (
     PoolingLayer2D,
 )
 from omlt.neuralnet.network_definition import NetworkDefinition
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 _ACTIVATION_OP_TYPES = ["Relu", "Sigmoid", "LogSoftmax", "Tanh", "Softplus"]
 _POOLING_OP_TYPES = ["MaxPool"]
@@ -33,8 +36,7 @@ class NetworkParser:
     """Network Parser.
 
     References:
-    ----------
-    * https://github.com/onnx/onnx/blob/master/docs/Operators.md
+        * https://github.com/onnx/onnx/blob/master/docs/Operators.md
     """
 
     def __init__(self):
@@ -51,7 +53,7 @@ class NetworkParser:
         self._node_stack = []
         self._node_map = {}
 
-    def parse_network(self, graph, scaling_object, input_bounds):
+    def parse_network(self, graph, scaling_object, input_bounds):  # noqa: C901, PLR0912, PLR0915
         self._reset_state()
         self._graph = graph
 
@@ -92,7 +94,6 @@ class NetworkParser:
                     f'All dimensions in graph "{graph.name}" input tensor have 0 value.'
                 )
                 raise ValueError(msg)
-            assert network_input is None
             network_input = InputLayer(size)
             self._node_map[input_node.name] = network_input
             network.add_layer(network_input)
@@ -193,7 +194,7 @@ class NetworkParser:
 
         return new_layer, new_layer_inputs
 
-    def _consume_dense_nodes(
+    def _consume_dense_nodes(  # noqa: C901, PLR0912
         self, node: Any, next_nodes: Any
     ) -> tuple[Any, Any, list[Any]]:
         """Starting from a MatMul node, consume nodes to form a dense Ax + b node."""
@@ -342,7 +343,7 @@ class NetworkParser:
 
         return next_nodes, dense_layer, [input_layer]
 
-    def _consume_conv_nodes(self, node, next_nodes):
+    def _consume_conv_nodes(self, node, next_nodes):  # noqa: PLR0912, C901, PLR0915
         """Consume Conv nodes.
 
         Starting from a Conv node, consume nodes to form a convolution node with
@@ -484,7 +485,7 @@ class NetworkParser:
         self._node_map[node.output[0]] = (transformer, input_layer)
         return next_nodes
 
-    def _consume_pool_nodes(self, node, next_nodes):
+    def _consume_pool_nodes(self, node, next_nodes):  # noqa: PLR0912, C901, PLR0915
         """Consume MaxPool nodes.
 
         Starting from a MaxPool node, consume nodes to form a pooling node with
@@ -569,7 +570,7 @@ class NetworkParser:
             )
             raise ValueError(msg)
 
-        output_shape_wrapper = math.floor
+        output_shape_wrapper: Callable[[float], int] = math.floor
         if "ceil_mode" in attr and attr["ceil_mode"] == 1:
             output_shape_wrapper = math.ceil
 

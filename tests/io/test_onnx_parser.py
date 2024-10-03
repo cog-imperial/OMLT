@@ -287,6 +287,7 @@ def test_consume_maxpool_wrong_dims(datadir):
     parser._nodes["node1"][1].input.append("abcd")
     expected_msg_maxpool = (
         "node1 input has 2 dimensions, only nodes with 1 input "
-                            "dimension can be used as starting points for parsing.")
-    with pytest.raises(ValueError, match = expected_msg_maxpool):
+        "dimension can be used as starting points for parsing."
+    )
+    with pytest.raises(ValueError, match=expected_msg_maxpool):
         parser._consume_pool_nodes(parser._nodes["node1"][1], parser._nodes["node1"][2])
