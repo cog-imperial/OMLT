@@ -273,7 +273,9 @@ def _add_gdp_formulation_to_block(  # noqa: PLR0913
         epsilon: Tolerance to use in enforcing that choosing the right
             branch of a linear tree node can only happen if the feature
             is strictly greater than the branch value.
-
+        include_leaf_equalities: boolean to indicate if the formulation
+            should include the equalities setting the leaf values or not.
+            (default: True)
     """
     leaves = model_definition.leaves
     input_bounds = model_definition.scaled_input_bounds
