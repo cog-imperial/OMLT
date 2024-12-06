@@ -1,5 +1,4 @@
 from omlt.base.language import DEFAULT_MODELING_LANGUAGE
-# from omlt.dependencies import julia_available
 
 from omlt.base.constraint import (
     OmltConstraint,
@@ -16,17 +15,6 @@ from omlt.base.pyomo import (
     OmltScalarPyomo,
 )
 from omlt.base.var import OmltIndexed, OmltScalar, OmltVar, OmltVarFactory
-
-# if julia_available:
-#     from omlt.base.julia import (
-#         OmltConstraintIndexedJuMP,
-#         OmltConstraintScalarJuMP,
-#         OmltExprJuMP,
-#         OmltIndexedJuMP,
-#         OmltScalarJuMP,
-#         Jl,
-#         jump,
-#     )
 
 __all__ = [
     "DEFAULT_MODELING_LANGUAGE",
