@@ -16,6 +16,7 @@ from omlt.base.pyomo import (
 )
 from omlt.base.var import OmltIndexed, OmltScalar, OmltVar, OmltVarFactory
 
+
 __all__ = [
     "DEFAULT_MODELING_LANGUAGE",
     "julia_available",
