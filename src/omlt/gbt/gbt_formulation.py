@@ -168,7 +168,7 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars): 
         for f in continuous_vars
         for bi, _ in enumerate(branch_value_by_feature_id[f])
     ]
-    block.y = var_factory.new_var(y_index, lang=block._format, domain=pe.Binary)
+    block.y = var_factory.new_var(y_index, lang=block._format, binary=True)
 
     constraint_factory = OmltConstraintFactory()
 

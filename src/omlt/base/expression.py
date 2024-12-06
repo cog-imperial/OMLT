@@ -21,11 +21,6 @@ class OmltExpr(ABC):
     def is_expression_type(self):
         return True
 
-    @abstractmethod
-    def is_indexed(self):
-        """Return False for a scalar expression, True for an indexed expression."""
-
-
     def valid_model_component(self):
         """Return True if this can be used as a model component."""
         return True
@@ -35,21 +30,57 @@ class OmltExpr(ABC):
         """Return the current value of the expression."""
 
     @abstractmethod
-    def is_potentially_variable(self):
-        """Return True if the expression has variable arguments, False if constant."""
-
-    @property
-    @abstractmethod
-    def args(self):
-        """Return a list of the args of the expression."""
+    def exp(self):
+        """Return an expression representing the exponent of this expression."""
 
     @abstractmethod
-    def arg(self, index):
-        """Return the arg corresponding to the given index."""
+    def log(self):
+        """Return an expression representing the logarithm of this expression."""
 
     @abstractmethod
-    def nargs(self):
-        """Return the number of arguments."""
+    def tanh(self):
+        """Return an expression representing the hyperbolic tangent of this expression."""
+
+    @abstractmethod
+    def __add__(self, other):
+        """Return an expression representing the sum."""
+
+    @abstractmethod
+    def __sub__(self, other):
+        """Return an expression representing the difference."""
+
+    @abstractmethod
+    def __mul__(self, other):
+        """Return an expression representing the product."""
+
+    @abstractmethod
+    def __truediv__(self, other):
+        """Return an expression representing the quotient."""
+
+    @abstractmethod
+    def __radd__(self, other):
+        """Return an expression representing the sum."""
+
+    @abstractmethod
+    def __rmul__(self, other):
+        """Return an expression representing the product."""
+
+    @abstractmethod
+    def __rtruediv__(self, other):
+        """Return an expression representing the quotient."""
+
+    @abstractmethod
+    def __eq__(self, other):
+        """Return an equality constraint between this expression and the other."""
+
+    @abstractmethod
+    def __le__(self, other):
+        """Return an inequality constraint between this expression and the other."""
+
+    @abstractmethod
+    def __ge__(self, other):
+        """Return an inequality constraint between this expression and the other."""
+
 
 class OmltExprFactory:
     def __init__(self):

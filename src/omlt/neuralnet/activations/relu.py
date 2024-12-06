@@ -42,21 +42,21 @@ def bigm_relu_activation_constraint(net_block, net, layer_block, layer):
     """
     var_factory = OmltVarFactory()
     layer_block.q_relu = var_factory.new_var(
-        layer.output_indexes, lang=net_block._format, within=pyo.Binary
+        layer.output_indexes, lang=net_block._format, binary=True
     )
 
     constraint_factory = OmltConstraintFactory()
     layer_block._z_lower_bound_relu = constraint_factory.new_constraint(
-        layer.output_indexes, lang=net_block._format, model=layer_block.model
+        layer.output_indexes, lang=net_block._format
     )
     layer_block._z_lower_bound_zhat_relu = constraint_factory.new_constraint(
-        layer.output_indexes, lang=net_block._format, model=layer_block.model
+        layer.output_indexes, lang=net_block._format
     )
     layer_block._z_upper_bound_relu = constraint_factory.new_constraint(
-        layer.output_indexes, lang=net_block._format, model=layer_block.model
+        layer.output_indexes, lang=net_block._format
     )
     layer_block._z_upper_bound_zhat_relu = constraint_factory.new_constraint(
-        layer.output_indexes, lang=net_block._format, model=layer_block.model
+        layer.output_indexes, lang=net_block._format
     )
 
     # set dummy parameters here to avoid warning message from Pyomo
@@ -66,6 +66,10 @@ def bigm_relu_activation_constraint(net_block, net, layer_block, layer):
     layer_block._big_m_ub_relu = pyo.Param(
         layer.output_indexes, default=1e6, mutable=True
     )
+
+    if net_block._format != "pyomo":
+        layer_block._big_m_lb_relu.construct()
+        layer_block._big_m_ub_relu.construct()
 
     for output_index in layer.output_indexes:
         lb, ub = layer_block.zhat[output_index].bounds
@@ -80,7 +84,6 @@ def bigm_relu_activation_constraint(net_block, net, layer_block, layer):
         layer_block._z_lower_bound_zhat_relu[output_index] = (
             layer_block.z[output_index] >= layer_block.zhat[output_index]
         )
-
         layer_block._z_upper_bound_relu[output_index] = (
             layer_block.z[output_index]
             <= layer_block._big_m_ub_relu[output_index]

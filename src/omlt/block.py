@@ -24,7 +24,6 @@ Example:
         pyo.assert_optimal_termination(status)
 """
 
-
 import pyomo.environ as pyo
 from pyomo.core.base.block import BlockData, declare_custom_block
 
@@ -51,10 +50,12 @@ class OmltBlockCore:
         self.__var_factory = OmltVarFactory()
 
         self.inputs_set = pyo.Set(initialize=input_indexes)
+        self.inputs_set.construct()
         self.inputs = self.__var_factory.new_var(
             self.inputs_set, initialize=0, lang=self._format
         )
         self.outputs_set = pyo.Set(initialize=output_indexes)
+        self.outputs_set.construct()
         self.outputs = self.__var_factory.new_var(
             self.outputs_set, initialize=0, lang=self._format
         )
@@ -105,6 +106,22 @@ class OmltBlockCore:
 
         # tell the formulation object to construct the necessary models
         self.__formulation._build_formulation()
+
+    def __setattr__(self, name, value):
+        """Set attribute.
+
+        This method passes attributes up the hierarchy, which is necessary for
+        building some formulations. Classes that inherit from OmltBlockCore must
+        extend __setattr__ to add model components to the underlying model or block.
+        See OmltBlockJuMP for an example.
+        """
+        if (
+            hasattr(self, "_parent")
+            and self._parent is not None
+            and isinstance(self._parent, OmltBlockCore)
+        ):
+            self._parent.__setattr__(self.name + name, value)
+        super().__setattr__(name, value)
 
 
 @declare_custom_block(name="OmltBlock")

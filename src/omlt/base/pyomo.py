@@ -23,7 +23,11 @@ class OmltScalarPyomo(OmltScalar, pyo.ScalarVar):
         OmltScalar.__init__(self)
         kwargs.pop("lang", None)
         self._format = "pyomo"
-        self._pyovar = pyo.ScalarVar(*args, **kwargs)
+        binary = kwargs.pop("binary", False)
+        if binary:
+            self._pyovar = pyo.ScalarVar(*args, within=pyo.Binary, **kwargs)
+        else:
+            self._pyovar = pyo.ScalarVar(*args, **kwargs)
         self._name = None
         self._parent = None
         self._constructed = self._pyovar._constructed
@@ -95,7 +99,11 @@ class OmltIndexedPyomo(OmltIndexed, pyo.Var):
     def __init__(self, *indexes: Any, **kwargs: Any):
         kwargs.pop("lang", None)
         self._format = "pyomo"
-        self._pyovar = pyo.Var(*indexes, **kwargs)
+        binary = kwargs.pop("binary", False)
+        if binary:
+            self._pyovar = pyo.Var(*indexes, within=pyo.Binary, **kwargs)
+        else:
+            self._pyovar = pyo.Var(*indexes, **kwargs)
         self._name = None
         self._parent = None
         self._pyovar._parent = None
@@ -355,7 +363,6 @@ class OmltExprScalarPyomo(OmltExpr, pyo.Expression):
     def as_numeric(self):
         return self._expression._apply_operation(self._expression.args)
 
-
     @property
     def args(self):
         return self._expression.args
@@ -374,6 +381,15 @@ class OmltExprScalarPyomo(OmltExpr, pyo.Expression):
 
     def is_indexed(self):
         return False
+
+    def exp(self):
+        return pyo.exp(self._expression)
+
+    def log(self):
+        return pyo.log(self._expression)
+
+    def tanh(self):
+        return pyo.tanh(self._expression)
 
     def __add__(self, other):
         if isinstance(other, OmltExprScalarPyomo):
@@ -396,7 +412,7 @@ class OmltExprScalarPyomo(OmltExpr, pyo.Expression):
             expr = self._expression * other
         return self.expr_factory.new_expression(lang=self._format, expr=expr)
 
-    def __div__(self, other):
+    def __truediv__(self, other):
         if isinstance(other, OmltExprScalarPyomo):
             expr = self._expression / other._expression
         elif isinstance(other, (int, float, pyo.Expression)):
@@ -422,6 +438,13 @@ class OmltExprScalarPyomo(OmltExpr, pyo.Expression):
             expr = other._expression * self._expression
         elif isinstance(other, (int, float, pyo.Expression)):
             expr = other * self._expression
+        return self.expr_factory.new_expression(lang=self._format, expr=expr)
+
+    def __rtruediv__(self, other):
+        if isinstance(other, OmltExprScalarPyomo):
+            expr = other._expression / self._expression
+        elif isinstance(other, (int, float, pyo.Expression)):
+            expr = other / self._expression
         return self.expr_factory.new_expression(lang=self._format, expr=expr)
 
     def __ge__(self, other):

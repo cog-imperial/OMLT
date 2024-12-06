@@ -49,11 +49,6 @@ class OmltConstraintScalar(OmltConstraint):
         self._parent = None
 
 
-    @property
-    def args(self):
-        """Return an iterator over the arguments of the constraint."""
-
-
 class OmltConstraintIndexed(OmltConstraint):
 
     def __init__(
@@ -70,20 +65,6 @@ class OmltConstraintIndexed(OmltConstraint):
     def keys(self, sort=False):
         yield from self._index_set
 
-    @property
-    @abstractmethod
-    def _constructed(self):
-        """Return True if the constraint has been constructed."""
-
-    @property
-    @abstractmethod
-    def _active(self):
-        """Return True if the constraint is active."""
-
-    @property
-    @abstractmethod
-    def _data(self):
-        """Return data from the constraint."""
 
 
 class OmltConstraintFactory:

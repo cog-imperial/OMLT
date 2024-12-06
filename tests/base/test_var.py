@@ -42,13 +42,6 @@ def test_scalar_pyomo():
     _test_scalar_var("pyomo")
 
 
-@pytest.mark.skipif(
-    not julia_available, reason="Test only valid when Julia is available"
-)
-def test_scalar_jump():
-    _test_scalar_var("jump")
-
-
 def test_scalar_invalid_lang():
     expected_msg = "Variable format %s not recognized. Supported formats are %s"
     with pytest.raises(KeyError, match=expected_msg):

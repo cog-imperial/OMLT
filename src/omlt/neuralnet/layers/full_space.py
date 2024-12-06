@@ -26,16 +26,36 @@ def full_space_dense_layer(net_block, net, layer_block, layer):
         # dense layers multiply only the last dimension of
         # their inputs
         expr = 0.0
+        lb = 0.0
+        ub = 0.0
         for local_index, input_index in layer.input_indexes_with_input_layer_indexes:
             w = layer.weights[local_index[-1], output_index[-1]]
             expr += input_layer_block.z[input_index] * w
+            if w >= 0:
+                if input_layer_block.z[input_index].lb is not None:
+                    lb += input_layer_block.z[input_index].lb * w
+                else:
+                    lb += -float('inf')
+                if input_layer_block.z[input_index].ub is not None:
+                    ub += input_layer_block.z[input_index].ub * w
+                else:
+                    ub += float('inf')
+            else:
+                if input_layer_block.z[input_index].ub is not None:
+                    lb += input_layer_block.z[input_index].ub * w
+                else:
+                    lb += -float('inf')
+                if input_layer_block.z[input_index].lb is not None:
+                    ub += input_layer_block.z[input_index].lb * w
+                else:
+                    ub += float('inf')
+
         # move this at the end to avoid numpy/pyomo var bug
         expr += layer.biases[output_index[-1]]
-
-        lb, ub = compute_bounds_on_expr(expr)
+        if net_block._format == "pyomo":
+            lb, ub = compute_bounds_on_expr(expr)
         layer_block.zhat[output_index].setlb(lb)
         layer_block.zhat[output_index].setub(ub)
-
         layer_block.dense_layer[output_index] = layer_block.zhat[output_index] == expr
 
 
@@ -303,7 +323,7 @@ def full_space_maxpool2d_layer(net_block, net, layer_block, layer):
         layer.output_indexes,
         layer_block._kernel_indexes,
         lang=net_block._format,
-        within=pyo.Binary,
+        binary=True,
     )
     layer_block._q_sum_maxpool = constraint_factory.new_constraint(
         layer.output_indexes, lang=net_block._format

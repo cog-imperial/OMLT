@@ -1,6 +1,8 @@
 import pyomo.environ as pyo
 import pytest
+
 from omlt.base import OmltExpr, OmltExprFactory, OmltVarFactory
+from omlt.dependencies import julia_available
 
 VAR1_VALUE = 6
 VAR2_VALUE = 3
@@ -55,7 +57,6 @@ def _test_build_scalar_expressions(lang):
 
 def test_build_scalar_exp_pyomo():
     _test_build_scalar_expressions("pyomo")
-
 
 def test_init_scalar_expression():
     v1 = var_factory.new_var()
