@@ -63,7 +63,7 @@ def gnn_with_non_fixed_graph(  # noqa: PLR0913
     block.A = var_factory.new_var(
         pyo.Set(initialize=range(N)),
         pyo.Set(initialize=range(N)),
-        within=pyo.Binary,
+        binary=True,
         lang=block._format,
     )
     # assume that the self contribution always exists
@@ -150,7 +150,7 @@ def gnn_with_fixed_graph(  # noqa: PLR0913
     block.A = var_factory.new_var(
         pyo.Set(initialize=range(N)),
         pyo.Set(initialize=range(N)),
-        within=pyo.Binary,
+        binary=True,
         lang=block._format,
     )
     # fix A using given values

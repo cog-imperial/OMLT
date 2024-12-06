@@ -3,6 +3,7 @@ from functools import partial
 import pyomo.environ as pyo
 
 from omlt.base import OmltConstraintFactory, OmltVarFactory
+from omlt.block import OmltBlockCore
 from omlt.formulation import _PyomoFormulation, _setup_scaled_inputs_outputs
 from omlt.neuralnet.activations import (
     ACTIVATION_FUNCTION_MAP as _DEFAULT_ACTIVATION_FUNCTIONS,
@@ -164,38 +165,58 @@ def _build_neural_network_formulation(  # noqa: C901
     # create the z and z_hat variables for each of the layers
     var_factory = OmltVarFactory()
 
-    @block.Block(block.layers)
-    def layer(b, layer_id):
-        net_layer = net.layer(layer_id)
-        b.z = var_factory.new_var(
-            net_layer.output_indexes, initialize=0, lang=block._format
-        )
-        if isinstance(net_layer, InputLayer):
-            for index in net_layer.output_indexes:
-                input_var = block.scaled_inputs[index]
-                z_var = b.z[index]
-                z_var.setlb(input_var.lb)
-                z_var.setub(input_var.ub)
-        else:
-            # add zhat only to non input layers
-            b.zhat = var_factory.new_var(
+    if block._format == "pyomo":
+        @block.Block(block.layers)
+        def layer(b, layer_id):
+            net_layer = net.layer(layer_id)
+            b.z = var_factory.new_var(
                 net_layer.output_indexes, initialize=0, lang=block._format
             )
+            if isinstance(net_layer, InputLayer):
+                for index in net_layer.output_indexes:
+                    input_var = block.scaled_inputs[index]
+                    z_var = b.z[index]
+                    z_var.setlb(input_var.lb)
+                    z_var.setub(input_var.ub)
+            else:
+                # add zhat only to non input layers
+                b.zhat = var_factory.new_var(
+                    net_layer.output_indexes, initialize=0, lang=block._format
+                )
 
-        return b
+            return b
+    else:
+        block.layers.construct()
+        block.layer = {lyr : OmltBlockCore() for lyr in block.layers}
+        for lyr in block.layer:
+            block.layer[lyr]._format = block._format
+        for layer_id in block.layers:
+            net_layer = net.layer(layer_id)
+            block.layer[layer_id].z = var_factory.new_var(
+                net_layer.output_indexes, initialize=0, lang=block._format
+            )
+            if isinstance(net_layer, InputLayer):
+                for index in net_layer.output_indexes:
+                    input_var = block.scaled_inputs[index]
+                    z_var = block.layer[layer_id].z[index]
+                    z_var.setlb(input_var.lb)
+                    z_var.setub(input_var.ub)
+            else:
+                # add zhat only to non input layers
+                block.layer[layer_id].zhat = var_factory.new_var(
+                    net_layer.output_indexes, initialize=0, lang=block._format
+                )
 
     for layer in layers:
         if isinstance(layer, InputLayer):
             continue
         layer_id = id(layer)
         layer_block = block.layer[layer_id]
-
         layer_constraints_func = layer_constraints.get(type(layer), None)
         if layer_constraints_func is None:
             msg = f"Layer type {type(layer)} is not supported by this formulation."
             raise ValueError(msg)
         layer_constraints_func(block, net, layer_block, layer)
-
         activation_constraints_func = activation_constraints.get(layer.activation, None)
         if activation_constraints_func is None:
             msg = f"Activation {layer.activation} is not supported by this formulation."
@@ -352,8 +373,13 @@ class ReducedSpaceNNFormulation(_PyomoFormulation):
 
         # create the blocks for each layer
         block.layers = pyo.Set(initialize=[id(layer) for layer in layers], ordered=True)
-        block.layer = pyo.Block(block.layers)
-
+        if block._format == "pyomo":
+            block.layer = pyo.Block(block.layers)
+        else:
+            block.layers.construct()
+            block.layer = {lyr : OmltBlockCore() for lyr in block.layers}
+            for lyr in block.layer:
+                block.layer[lyr]._format = block._format
         # currently only support a single input layer
         input_layers = list(net.input_layers)
         if len(input_layers) != 1:
@@ -365,14 +391,32 @@ class ReducedSpaceNNFormulation(_PyomoFormulation):
         input_layer = input_layers[0]
         input_layer_id = id(input_layer)
         input_layer_block = block.layer[input_layer_id]
-
         # connect the outputs of the input layer to
         # the main inputs on the block
-        @input_layer_block.Expression(input_layer.output_indexes)
-        def z(b, *output_index):
-            pb = b.parent_block()
-            return pb.scaled_inputs[output_index]
+        var_factory = OmltVarFactory()
+        constraint_factory = OmltConstraintFactory()
 
+        input_layer_block.z = var_factory.new_var(
+            *input_layer.output_indexes, lang=block._format
+        )
+        block.connect_inputs = constraint_factory.new_constraint(
+            *input_layer.output_indexes, lang=block._format
+        )
+
+        for output_index in input_layer.output_indexes:
+            if isinstance(output_index, tuple) and len(output_index) == 1:
+                idx_0 = output_index[0]
+            else:
+                idx_0 = output_index
+
+            block.connect_inputs[idx_0] = (
+                input_layer_block.z[output_index] == block.scaled_inputs[idx_0]
+            )
+
+        # @input_layer_block.Expression(input_layer.output_indexes)
+        # def z(b, *output_index):
+        #     pb = b.parent_block()
+        #     return pb.scaled_inputs[output_index]
         # loop over the layers and build the expressions
         for layer in layers:
             if isinstance(layer, InputLayer):
@@ -397,12 +441,10 @@ class ReducedSpaceNNFormulation(_PyomoFormulation):
                     " formulation."
                 )
                 raise ValueError(msg)
-
             layer_func(block, net, layer_block, layer, activation_func)
 
         # setup output variable constraints
         # currently only support a single output layer
-        constraint_factory = OmltConstraintFactory()
         output_layers = list(net.output_layers)
         if len(output_layers) != 1:
             msg = (
@@ -502,26 +544,47 @@ class ReluPartitionFormulation(_PyomoFormulation):
         # create the z and z_hat variables for each of the layers
         var_factory = OmltVarFactory()
 
-        @block.Block(block.layers)
-        def layer(b, layer_id):
-            b._format = block._format
-            net_layer = net.layer(layer_id)
-            b.z = var_factory.new_var(
-                net_layer.output_indexes, lang=b._format, initialize=0
-            )
-            if isinstance(net_layer, InputLayer):
-                for index in net_layer.output_indexes:
-                    input_var = block.scaled_inputs[index]
-                    z_var = b.z[index]
-                    z_var.setlb(input_var.lb)
-                    z_var.setub(input_var.ub)
-            else:
-                # add zhat only to non input layers
-                b.zhat = var_factory.new_var(
+        if block._format == "pyomo":
+            @block.Block(block.layers)
+            def layer(b, layer_id):
+                b._format = block._format
+                net_layer = net.layer(layer_id)
+                b.z = var_factory.new_var(
                     net_layer.output_indexes, lang=b._format, initialize=0
                 )
+                if isinstance(net_layer, InputLayer):
+                    for index in net_layer.output_indexes:
+                        input_var = block.scaled_inputs[index]
+                        z_var = b.z[index]
+                        z_var.setlb(input_var.lb)
+                        z_var.setub(input_var.ub)
+                else:
+                    # add zhat only to non input layers
+                    b.zhat = var_factory.new_var(
+                        net_layer.output_indexes, lang=b._format, initialize=0
+                    )
 
-            return b
+                return b
+        else:
+            block.layers.construct()
+            block.layer = {lyr : OmltBlockCore() for lyr in block.layers}
+            for layer_id in block.layers:
+                block.layer[layer_id]._format = block._format
+                net_layer = net.layer(layer_id)
+                block.layer[layer_id].z = var_factory.new_var(
+                    net_layer.output_indexes, initialize=0, lang=block._format
+                )
+                if isinstance(net_layer, InputLayer):
+                    for index in net_layer.output_indexes:
+                        input_var = block.scaled_inputs[index]
+                        z_var = block.layer[layer_id].z[index]
+                        z_var.setlb(input_var.lb)
+                        z_var.setub(input_var.ub)
+                else:
+                    # add zhat only to non input layers
+                    block.layer[layer_id].zhat = var_factory.new_var(
+                        net_layer.output_indexes, initialize=0, lang=block._format
+                    )
 
         for layer in layers:
             if isinstance(layer, InputLayer):

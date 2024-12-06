@@ -1,17 +1,23 @@
 from typing import Any
 
-import pyomo.environ as pyo
+from pyomo.core.base import ParamData
 
+from numpy import float32
+
+from omlt.block import OmltBlockCore
 from omlt.base.constraint import OmltConstraintIndexed, OmltConstraintScalar
 from omlt.base.expression import OmltExpr
-from omlt.base.var import OmltIndexed, OmltScalar
+from omlt.base.var import OmltElement, OmltIndexed, OmltScalar
 from omlt.dependencies import julia_available
 
 if julia_available:
     from juliacall import Base
     from juliacall import Main as Jl
+    from juliacall import convert
 
     jl_err = Base.error
+    Jl.seval("import Pkg")
+    Jl.Pkg.add("JuMP")
     Jl.seval("import JuMP")
     jump = Jl.JuMP
 
@@ -66,24 +72,21 @@ class JuMPVarInfo:
         self.upper_bound = value
 
     def to_jump(self):
-        return jump.build_variable(
-            jl_err,
-            jump.VariableInfo(
-                self.has_lb,
-                self.lower_bound,
-                self.has_ub,
-                self.upper_bound,
-                self.has_fix,
-                self.fixed_value,
-                self.has_start,
-                self.start_value,
-                self.binary,
-                self.integer,
-            ),
+        return jump.VariableInfo(
+            self.has_lb,
+            self.lower_bound,
+            self.has_ub,
+            self.upper_bound,
+            self.has_fix,
+            self.fixed_value,
+            self.has_start,
+            self.start_value,
+            self.binary,
+            self.integer,
         )
 
 
-class JumpVar:
+class JumpVar(OmltElement):
     def __init__(self, varinfo: JuMPVarInfo, name):
         self.info = varinfo
         self.name = name
@@ -91,19 +94,28 @@ class JumpVar:
         self.index = None
         self.construct()
 
-    def __str__(self):
-        return self.name
-
     def setlb(self, value):
         self.info.setlb(value)
         self.construct()
 
     def setub(self, value):
-        self.info.setlb(value)
+        self.info.setub(value)
         self.construct()
 
     def construct(self):
         self.var = jump.build_variable(jl_err, self.info.to_jump())
+
+    @property
+    def lb(self):
+        return self.info.lb
+
+    @property
+    def ub(self):
+        return self.info.ub
+
+    @property
+    def bounds(self):
+        return self.info.lb, self.info.ub
 
     @property
     def value(self):
@@ -116,12 +128,47 @@ class JumpVar:
         self.construct()
 
     def add_to_model(self, model, name=None):
-        if name is None:
-            name = self.name
-        return jump.add_variable(model, self.var, name)
+        self.varref = jump.add_variable(model, self.var, name)
+        return self.varref
 
     def to_jump(self):
         return self.var
+
+    def __neg__(self):
+        return OmltExprJuMP((self, "*", -1))
+
+    def __add__(self, other):
+        return OmltExprJuMP((self, "+", other))
+
+    def __sub__(self, other):
+        return OmltExprJuMP((self, "-", other))
+
+    def __mul__(self, other):
+        return OmltExprJuMP((self, "*", other))
+
+    def __radd__(self, other):
+        return OmltExprJuMP((self, "+", other))
+
+    def __rsub__(self, other):
+        return OmltExprJuMP((other, "-", self))
+
+    def __rmul__(self, other):
+        return OmltExprJuMP((self, "*", other))
+
+    def __eq__(self, other):
+        return OmltConstraintScalarJuMP(lhs=self, rhs=other, sense="==")
+
+    def __ge__(self, other):
+        return OmltConstraintScalarJuMP(lhs=self, rhs=other, sense=">=")
+
+    def exp(self):
+        return OmltExprJuMP(("exp", self))
+
+    def log(self):
+        return OmltExprJuMP(("log", self))
+
+    def tanh(self):
+        return OmltExprJuMP(("tanh", self))
 
 
 # Variables
@@ -130,18 +177,10 @@ class JumpVar:
 class OmltScalarJuMP(OmltScalar):
     format = "jump"
 
-    # Claim to be a Pyomo Var so blocks will register
-    # properly.
-    @property
-    def __class__(self):
-        return pyo.ScalarVar
-
-    def __init__(self, **kwargs):
+    def __init__(self, *, binary=False, **kwargs):
         super().__init__()
-        self._block = kwargs.pop("block", None)
 
         self._bounds = kwargs.pop("bounds", None)
-
         if isinstance(self._bounds, tuple) and len(self._bounds) == 2:
             _lb = self._bounds[0]
             _ub = self._bounds[1]
@@ -155,14 +194,6 @@ class OmltScalarJuMP(OmltScalar):
         _domain = kwargs.pop("domain", None)
         _within = kwargs.pop("within", None)
 
-        if _domain and _within and _domain != _within:
-            msg = (
-                "'domain' and 'within' keywords have both "
-                "been supplied and do not agree. Please try "
-                "with a single keyword for the domain of this "
-                "variable."
-            )
-            raise ValueError(msg)
         if _domain:
             self._domain = _domain
         elif _within:
@@ -170,14 +201,7 @@ class OmltScalarJuMP(OmltScalar):
         else:
             self._domain = None
 
-        if self._domain == pyo.Binary:
-            self.binary = True
-        else:
-            self.binary = False
-        if self._domain == pyo.Integers:
-            self.integer = True
-        else:
-            self.integer = False
+        self.binary = binary
 
         _initialize = kwargs.pop("initialize", None)
 
@@ -187,9 +211,6 @@ class OmltScalarJuMP(OmltScalar):
             elif len(_initialize) == 1 and isinstance(_initialize[0], (int, float)):
                 self._value = _initialize[0]
             else:
-                # Pyomo's "scalar" variables can be multidimensional, they're
-                # just not indexed. JuMP scalar variables can only be a single
-                # dimension. Rewrite this error to be more helpful.
                 msg = (
                     "Initial value for JuMP variables must be an int"
                     f" or float, but {type(_initialize)} was provided."
@@ -204,24 +225,14 @@ class OmltScalarJuMP(OmltScalar):
             None,  # fix value
             self._value,
             binary=self.binary,
-            integer=self.integer,
+            integer=False,
         )
         self._constructed = False
         self._parent = None
-        self._ctype = pyo.ScalarVar
         self._name = None
 
-    def construct(self, data=None):
         self._var = JumpVar(self._varinfo, self._name)
         self._var.omltvar = self
-        self._constructed = True
-        if self._parent:
-            self._blockvar = jump.add_variable(
-                self._parent()._jumpmodel, self.to_jumpvar()
-            )
-
-    def is_constructed(self):
-        return self._constructed
 
     @property
     def domain(self):
@@ -230,35 +241,15 @@ class OmltScalarJuMP(OmltScalar):
     @domain.setter
     def domain(self, val):
         self._domain = val
-        if self._domain == pyo.Binary:
-            self.binary = True
-        else:
-            self.binary = False
-        if self._domain == pyo.Integers:
-            self.integer = True
-        else:
-            self.integer = False
-
-    def fix(self, value, *, skip_validation=True):
-        self.fixed = True
-        self._value = value
-        self._varinfo.fixed_value = value
-        self._varinfo.has_fix = value is not None
-        if self._constructed:
-            self.construct()
 
     @property
-    def bounds(self):
-        return (self.lb, self.ub)
+    def varref(self):
+        return self._varref
 
-    @bounds.setter
-    def bounds(self, val):
-        if val is None:
-            self.lb = None
-            self.ub = None
-        elif len(val) == 2:
-            self.lb = val[0]
-            self.ub = val[1]
+    @varref.setter
+    def varref(self, value):
+        self._varref = value
+        self._var.varref = value
 
     @property
     def lb(self):
@@ -267,8 +258,7 @@ class OmltScalarJuMP(OmltScalar):
     @lb.setter
     def lb(self, val):
         self._varinfo.setlb(val)
-        if self._constructed:
-            self.construct()
+        self._var.setlb(val)
 
     @property
     def ub(self):
@@ -277,25 +267,17 @@ class OmltScalarJuMP(OmltScalar):
     @ub.setter
     def ub(self, val):
         self._varinfo.setub(val)
-        if self._constructed:
-            self.construct()
+        self._var.setub(val)
 
     @property
     def value(self):
-        if self._constructed:
-            return self._var.value
-        return self._varinfo.start_value
+        return self._var.value
+
 
     @value.setter
     def value(self, val):
-        if self._constructed:
-            self._var.value = val
-        else:
-            self._varinfo.start_value = val
+        self._var.value = val
 
-    @property
-    def ctype(self):
-        return self._ctype
 
     @property
     def name(self):
@@ -304,37 +286,21 @@ class OmltScalarJuMP(OmltScalar):
     @name.setter
     def name(self, value):
         self._name = value
+        self._var.name = value
 
     def to_jumpvar(self):
-        if self._constructed:
-            return self._var.to_jump()
-        return self._varinfo.to_jump()
-
-    def to_jumpexpr(self):
-        return jump.AffExpr(0, jump.OrderedDict([(self._blockvar, 1)]))
+        return self._var.to_jump()
 
 
 class OmltIndexedJuMP(OmltIndexed):
     format = "jump"
 
-    # Claim to be a Pyomo Var so blocks will register
-    # properly.
-    @property
-    def __class__(self):
-        return pyo.Var
-
-    def __init__(self, *indexes: Any, **kwargs: Any):
-        if len(indexes) == 1:
-            index_set = indexes[0]
-            i_dict = {}
-            for i, val in enumerate(index_set):
-                i_dict[i] = val
-            self._index_set = tuple(i_dict[i] for i in range(len(index_set)))
-        else:
-            msg = "Currently index cross-products are unsupported."
-            raise ValueError(msg)
-
-        self._block = kwargs.pop("block", None)
+    def __init__(self, *indexes: Any, binary: bool = False, **kwargs: Any):
+        index_set = indexes[0]
+        i_dict = {}
+        for i, val in enumerate(index_set):
+            i_dict[i] = val
+        self._index_set = tuple(i_dict[i] for i in range(len(index_set)))
 
         self._bounds = kwargs.pop("bounds", None)
 
@@ -354,50 +320,12 @@ class OmltIndexedJuMP(OmltIndexed):
             )
             raise TypeError(msg)
 
-        _domain = kwargs.pop("domain", None)
-        _within = kwargs.pop("within", None)
+        self.binary = binary
 
-        if _domain and _within and _domain != _within:
-            msg = (
-                "'domain' and 'within' keywords have both "
-                "been supplied and do not agree. Please try "
-                "with a single keyword for the domain of this "
-                "variable."
-            )
-            raise ValueError(msg)
-        if _domain:
-            self.domain = _domain
-        elif _within:
-            self.domain = _within
-        else:
-            self.domain = None
-
-        _initialize = kwargs.pop("initialize", None)
-
-        if _initialize:
-            # If starting value is an int or float, use it for all
-            # variables in index.
-            if isinstance(_initialize, (int, float)):
-                self._value = {i: _initialize for i in self._index_set}
-            # If there's a single starting value, use it for all
-            # variables in index.
-            elif len(_initialize) == 1:
-                self._value = {i: _initialize[0] for i in self._index_set}
-            # If starting values have same length as index set,
-            # take one for each variable in index.
-            elif len(self._index_set) == len(_initialize):
-                self._value = _initialize
-            else:
-                msg = (
-                    "Index set has length %s, but initializer has length %s.",
-                    len(self._index_set),
-                    len(_initialize),
-                )
-                raise ValueError(msg)
-        else:
-            self._value = {i: None for i in self._index_set}
+        self._value = {i: None for i in self._index_set}
 
         self._varinfo = {}
+        self._vars = {}
         for idx in self._index_set:
             self._varinfo[idx] = JuMPVarInfo(
                 _lb[idx],
@@ -405,12 +333,13 @@ class OmltIndexedJuMP(OmltIndexed):
                 None,  # fix value
                 self._value[idx],
                 binary=self.binary,
-                integer=self.integer,
+                integer=False,
             )
-        self._vars = {}
+            self._vars[idx] = JumpVar(self._varinfo[idx], str(idx))
+            self._vars[idx].omltvar = self
+            self._vars[idx].index = idx
         self._varrefs = {}
         self._constructed = False
-        self._ctype = pyo.Var
         self._parent = None
         self._name = None
 
@@ -421,22 +350,19 @@ class OmltIndexedJuMP(OmltIndexed):
     @domain.setter
     def domain(self, val):
         self._domain = val
-        if self._domain == pyo.Binary:
-            self.binary = True
-        else:
-            self.binary = False
-        if self._domain == pyo.Integers:
-            self.integer = True
-        else:
-            self.integer = False
 
     def __getitem__(self, item):
+        if item in self._index_set:
+            return self._vars[item]
         if isinstance(item, tuple) and len(item) == 1:
             return self._vars[item[0]]
         return self._vars[item]
 
     def __setitem__(self, item, value):
-        self._varinfo[item] = value
+        if isinstance(item, tuple) and len(item) == 1:
+            self._varinfo[item[0]] = value
+        else:
+            self._varinfo[item] = value
         if self._constructed:
             self.construct()
 
@@ -455,16 +381,6 @@ class OmltIndexedJuMP(OmltIndexed):
             return self._varrefs.items()
         return self._vars.items()
 
-    def fix(self, value=None, *, skip_validation=True):
-        self.fixed = True
-        if value is not None:
-            for vardata in self._varinfo.values():
-                vardata.has_fix = True
-                vardata.fixed_value = value
-        else:
-            for vardata in self._varinfo.values():
-                vardata.has_fix = True
-
     def __len__(self):
         """Return the number of component data objects stored by this component."""
         return len(self._vars)
@@ -473,10 +389,6 @@ class OmltIndexedJuMP(OmltIndexed):
         """Return true if the index is in the dictionary."""
         return idx in self._vars
 
-    # The default implementation is for keys() and __iter__ to be
-    # synonyms.  The logic is implemented in keys() so that
-    # keys/values/items continue to work for components that implement
-    # other definitions for __iter__ (e.g., Set)
     def __iter__(self):
         """Return an iterator of the component data keys."""
         return self._vars.__iter__()
@@ -497,87 +409,34 @@ class OmltIndexedJuMP(OmltIndexed):
 
         self._constructed = True
 
-    def is_constructed(self):
-        return self._constructed
-
-    @property
-    def bounds(self):
-        return (self.lb, self.ub)
-
-    @bounds.setter
-    def bounds(self, val):
-        if val is None:
-            self.setlb(None)
-            self.setub(None)
-        elif len(val) == 2:
-            self.setlb(val[0])
-            self.setub(val[1])
-
-    def setub(self, value):
-        self.ub = value
-        for idx in self.index_set():
-            self._varinfo[idx].has_ub = True
-            self._varinfo[idx].upper_bound = value
-        if self._constructed:
-            self.construct()
-
-    def setlb(self, value):
-        self.lb = value
-        for idx in self.index_set():
-            self._varinfo[idx].has_lb = True
-            self._varinfo[idx].lower_bound = value
-        if self._constructed:
-            self.construct()
-
-    @property
-    def ctype(self):
-        return self._ctype
-
-    def index_set(self):
-        return self._index_set
-
     @property
     def name(self):
         return self._name
 
-    def to_jumpvar(self):
-        if self._constructed:
-            return jump.Containers.DenseAxisArray(list(self.values()), self.index_set())
-        msg = "Variable must be constructed before exporting to JuMP."
-        raise ValueError(msg)
-
-    def to_jumpexpr(self):
-        return {k: jump.AffExpr(0, jump.OrderedDict([(v, 1)])) for k, v in self.items()}
+    @name.setter
+    def name(self, value):
+        self._name = value
+        self.construct()
 
 
 # Constraints
 class OmltConstraintScalarJuMP(OmltConstraintScalar):
     format = "jump"
 
-    @property
-    def ctype(self):
-        return pyo.Constraint
-
-    def is_component_type(self):
-        return True
-
-    def is_expression_type(self, enum):
-        # The Pyomo ExpressionType.RELATIONAL is enum 1.
-        return enum.value == 1
-
-    def valid_model_component(self):
-        """Return True if this can be used as a model component."""
-        return True
-
     def __init__(self, **kwargs: Any):
         super().__init__(lang="jump", **kwargs)
-
-    def __call__(self, *args: Any, **kwds: Any) -> Any:
-        """Return the value of the body of the constraint."""
-
-    @property
-    def args(self):
-        """Return an iterator over the arguments of the constraint."""
+        if self.sense == "==":
+            self._jumpcon = jump.build_constraint(
+                jl_err, (self.lhs - self.rhs)._jumpexpr, jump.Zeros()
+            )
+        if self.sense == "<=":
+            self._jumpcon = jump.build_constraint(
+                jl_err, (self.lhs - self.rhs)._jumpexpr, jump.Nonpositives()
+            )
+        if self.sense == ">=":
+            self._jumpcon = jump.build_constraint(
+                jl_err, (self.lhs - self.rhs)._jumpexpr, jump.Nonnegatives()
+            )
 
 
 class OmltConstraintIndexedJuMP(OmltConstraintIndexed):
@@ -589,44 +448,21 @@ class OmltConstraintIndexedJuMP(OmltConstraintIndexed):
         self.model = kwargs.pop("model", None)
         self._parent = None
         self.name = None
-        self.format = lang
-
-    def __call__(self, *args: Any, **kwds: Any) -> Any:
-        pass
+        self.format = "jump"
+        self._jumpcons = {idx: None for idx in self._index_set[0]}
 
     def keys(self, sort=False):
         yield from self._index_set
 
-    @property
-    def _constructed(self):
-        """Return True if the constraint has been constructed."""
+    def __setitem__(self, label, item):
+        self._jumpcons[label] = item
+        if self.model is not None and self.name is not None:
+            jump.add_constraint(
+                self.model._jumpmodel, item._jumpcon, self.name + "[" + str(label) + "]"
+            )
 
-    @property
-    def _active(self):
-        """Return True if the constraint is active."""
-
-    @_active.setter
-    def _active(self, val):
-        """Set the constraint status to active or inactive."""
-
-    @property
-    def _data(self):
-        """Return data from the constraint."""
-
-    @property
-    def ctype(self):
-        return pyo.Constraint
-
-    def is_component_type(self):
-        return True
-
-    def is_expression_type(self, enum):
-        # The Pyomo ExpressionType.RELATIONAL is enum 1.
-        return enum.value == 1
-
-    def valid_model_component(self):
-        """Return True if this can be used as a model component."""
-        return True
+    def __getitem__(self, label):
+        return self._jumpcons[label]
 
 
 # Expressions
@@ -637,63 +473,309 @@ class OmltExprJuMP(OmltExpr):
 
     def __init__(self, expr):
         """Build an expression from a tuple."""
-        print("I am building an expression.")
-        print(expr)
-        print(expr[0].to_jumpvar())
-        print(expr[2].to_jumpvar())
-
-        if expr[1] == "+":
-            self._jumpexpr = self.add(expr[0], expr[2])
-        elif expr[1] == "-":
-            self._jumpexpr = self.subtract(expr[0], expr[2])
-        elif expr[1] == "*":
-            self._jumpexpr = self.multiply(expr[0], expr[2])
-        elif expr[1] == "/":
-            self._jumpexpr = self.divide(expr[0], expr[2])
-
-        print(self._jumpexpr)
+        msg = (
+            "Tried to create an OmltExprJuMP with an invalid expression. Expressions "
+            "must be tuples (a, b, c) where b is +, -, *, or /, or tuples (d, e) where "
+            "d is exp, log, or tanh. %s was provided",
+            expr,
+        )
+        if len(expr) == 3:
+            if expr[1] == "+":
+                self._jumpexpr = self.add(expr[0], expr[2])
+            elif expr[1] == "-":
+                self._jumpexpr = self.subtract(expr[0], expr[2])
+            elif expr[1] == "*":
+                self._jumpexpr = self.multiply(expr[0], expr[2])
+            elif expr[1] == "/":
+                self._jumpexpr = self.divide(expr[0], expr[2])
+            else:
+                raise ValueError(msg)
+        elif len(expr) == 2:
+            if expr[0] == "exp":
+                self._jumpexpr = self.exponent(expr[1])
+            elif expr[0] == "log":
+                self._jumpexpr = self.logarithm(expr[1])
+            elif expr[0] == "tanh":
+                self._jumpexpr = self.hyptangent(expr[1])
+            else:
+                raise ValueError(msg)
+        else:
+            raise ValueError(msg)
 
     def add(self, a, b):
-        if isinstance(a, (int, float)):
-            if isinstance(b, (int, float)):
-                return jump.AffExpr(a + b, jump.OrderedDict([]))
-            return jump.AffExpr(a, jump.OrderedDict([(b, 1)]))
-        return jump.AffExpr(
-            0, jump.OrderedDict([(a.to_jumpvar(), 1), (b.to_jumpvar(), 1)])
-        )
+        if isinstance(a, (JumpVar, OmltScalarJuMP)) and isinstance(b, (int, float)):
+            return jump.AffExpr(b, jump.OrderedDict([(a.varref, 1)]))
 
-    @property
-    def ctype(self):
-        return pyo.Expression
+        if (
+            isinstance(a, OmltExprJuMP)
+            and Jl.typeof(a._jumpexpr) == jump.AffExpr
+            and isinstance(b, (int, float, float32))
+        ):
+            return jump.AffExpr(
+                b + a._jumpexpr.constant,
+                jump.OrderedDict(
+                    [(var, a._jumpexpr.terms[var]) for var in a._jumpexpr.terms]
+                ),
+            )
+        if (
+            isinstance(a, OmltExprJuMP)
+            and Jl.typeof(a._jumpexpr) == jump.AffExpr
+            and isinstance(b, OmltExprJuMP)
+            and Jl.typeof(b._jumpexpr) == jump.AffExpr
+        ):
+            return a._jumpexpr + b._jumpexpr
+        if (
+            isinstance(a, OmltExprJuMP)
+            and Jl.typeof(a._jumpexpr) == jump.NonlinearExpr
+            and isinstance(b, (int, float, float32))
+        ):
+            return jump.NonlinearExpr(
+                convert(Jl.Symbol, "+"), convert(Jl.Vector, [a._jumpexpr, b])
+            )
+        msg = ("Unrecognized types for addition, %s, %s", type(a), type(b))
+        raise TypeError(msg)
 
-    def is_component_type(self):
-        return True
+    def subtract(self, a, b):
+        if isinstance(a, (int, float)) and isinstance(b, (JumpVar, OmltScalarJuMP)):
+            return jump.AffExpr(a, jump.OrderedDict([(b.varref, -1)]))
+        if isinstance(a, JumpVar) and isinstance(b, (int, float)):
+            return jump.AffExpr(-b, jump.OrderedDict([(a.varref, 1)]))
+        if isinstance(a, JumpVar) and isinstance(b, JumpVar):
+            return jump.AffExpr(0, jump.OrderedDict([(a.varref, 1), (b.varref, -1)]))
+        if isinstance(a, JumpVar) and isinstance(b, OmltExprJuMP):
+            return self.multiply(b - a, -1)
+        if (
+            isinstance(a, OmltExprJuMP)
+            and Jl.typeof(a._jumpexpr) == jump.AffExpr
+            and isinstance(b, (int, float))
+        ):
+            return jump.AffExpr(
+                a._jumpexpr.constant - b,
+                jump.OrderedDict(
+                    [(var, a._jumpexpr.terms[var]) for var in a._jumpexpr.terms]
+                ),
+            )
+        if (
+            isinstance(a, OmltExprJuMP)
+            and Jl.typeof(a._jumpexpr) == jump.AffExpr
+            and isinstance(b, JumpVar)
+            and b.varref not in a._jumpexpr.terms
+        ):
+            return jump.AffExpr(
+                a._jumpexpr.constant,
+                jump.OrderedDict(
+                    [(var, a._jumpexpr.terms[var]) for var in a._jumpexpr.terms]
+                    + [(b.varref, -1)]
+                ),
+            )
+        if (
+            isinstance(a, OmltExprJuMP)
+            and Jl.typeof(a._jumpexpr) == jump.AffExpr
+            and isinstance(b, OmltExprJuMP)
+        ):
+            return a._jumpexpr - b._jumpexpr
+        if (
+            isinstance(a, OmltExprJuMP)
+            and Jl.typeof(a._jumpexpr) == jump.NonlinearExpr
+            and isinstance(b, (int, float))
+        ):
+            return jump.NonlinearExpr(
+                convert(Jl.Symbol, "-"), convert(Jl.Vector, (a._jumpexpr, b))
+            )
+        if (
+            isinstance(a, OmltExprJuMP)
+            and Jl.typeof(a._jumpexpr) == jump.NonlinearExpr
+            and isinstance(b, JumpVar)
+        ):
+            return a._jumpexpr - b.varref
 
-    def is_expression_type(self):
-        return True
+        msg = ("Unrecognized types for subtraction, %s, %s", type(a), type(b))
+        raise TypeError(msg)
 
-    def is_indexed(self):
-        """Return False for a scalar expression, True for an indexed expression."""
+    def multiply(self, a, b):
+        if isinstance(a, (int, float)) and isinstance(b, (JumpVar, OmltScalarJuMP)):
+            return jump.AffExpr(0, jump.OrderedDict([(b.varref, a)]))
+        if isinstance(a, (JumpVar, OmltScalarJuMP)):
+            if isinstance(b, (int, float, float32)):
+                return jump.AffExpr(0, jump.OrderedDict([(a.varref, b)]))
+            if isinstance(b, ParamData):
+                return jump.AffExpr(0, jump.OrderedDict([(a.varref, b.value)]))
+        if (
+            isinstance(a, OmltExprJuMP)
+            and Jl.typeof(a._jumpexpr) == jump.AffExpr
+            and isinstance(b, (int, float, float32))
+        ):
+            return jump.AffExpr(
+                a._jumpexpr.constant * b,
+                jump.OrderedDict(
+                    [(var, a._jumpexpr.terms[var] * b) for var in a._jumpexpr.terms]
+                ),
+            )
+        if (
+            isinstance(a, OmltExprJuMP)
+            and Jl.typeof(a._jumpexpr) == jump.AffExpr
+            and isinstance(b, ParamData)
+        ):
+            return jump.AffExpr(
+                a._jumpexpr.constant * b.value,
+                jump.OrderedDict(
+                    [
+                        (var, a._jumpexpr.terms[var] * b.value)
+                        for var in a._jumpexpr.terms
+                    ]
+                ),
+            )
+        if (
+            isinstance(a, OmltExprJuMP)
+            and Jl.typeof(a._jumpexpr) == jump.NonlinearExpr
+            and isinstance(b, (int, float, float32))
+        ):
+            return jump.NonlinearExpr(
+                convert(Jl.Symbol, "*"), convert(Jl.Vector, (a._jumpexpr, b))
+            )
 
-    def valid_model_component(self):
-        """Return True if this can be used as a model component."""
-        return True
+        msg = ("Unrecognized types for multiplication, %s, %s", type(a), type(b))
+        raise TypeError(msg)
+
+    def divide(self, a, b):
+        if (
+            isinstance(a, OmltExprJuMP)
+            and Jl.typeof(a._jumpexpr) == jump.AffExpr
+            and isinstance(b, (int, float))
+        ):
+            return jump.AffExpr(
+                a._jumpexpr.constant / b,
+                jump.OrderedDict(
+                    [(var, a._jumpexpr.terms[var] / b) for var in a._jumpexpr.terms]
+                ),
+            )
+        if isinstance(b, OmltExprJuMP):
+            return jump.NonlinearExpr(
+                convert(Jl.Symbol, "/"), convert(Jl.Vector, (a, b._jumpexpr))
+            )
+        msg = ("Unrecognized types for division, %s, %s", type(a), type(b))
+        raise TypeError(msg)
+
+    def exponent(self, a):
+        if isinstance(a, OmltExprJuMP):
+            return jump.NonlinearExpr(convert(Jl.Symbol, "exp"), a._jumpexpr)
+        if isinstance(a, (JumpVar, OmltScalarJuMP)):
+            return jump.NonlinearExpr(convert(Jl.Symbol, "exp"), a.varref)
+        raise NotImplementedError
+
+    def logarithm(self, a):
+        if isinstance(a, OmltExprJuMP):
+            return jump.NonlinearExpr(convert(Jl.Symbol, "log"), a._jumpexpr)
+        if isinstance(a, (JumpVar, OmltScalarJuMP)):
+            return jump.NonlinearExpr(convert(Jl.Symbol, "log"), a.varref)
+        raise NotImplementedError
+
+    def hyptangent(self, a):
+        if isinstance(a, OmltExprJuMP):
+            return jump.NonlinearExpr(convert(Jl.Symbol, "tanh"), a._jumpexpr)
+        if isinstance(a, (JumpVar, OmltScalarJuMP)):
+            return jump.NonlinearExpr(convert(Jl.Symbol, "tanh"), a.varref)
+        raise NotImplementedError
+
+    def exp(self):
+        return OmltExprJuMP(("exp", self))
+
+    def log(self):
+        return OmltExprJuMP(("log", self))
+
+    def tanh(self):
+        return OmltExprJuMP(("tanh", self))
 
     def __call__(self):
         """Return the current value of the expression."""
         return self._jumpexpr.constant + sum(
-            c * v.start_value for v, c in self._jumpexpr.terms
+            [
+                self._jumpexpr.terms[v] * jump.start_value(v)
+                for v in self._jumpexpr.terms
+            ]
         )
 
-    def is_potentially_variable(self):
-        """Return True if the expression has variable arguments, False if constant."""
+    def __add__(self, other):
+        return OmltExprJuMP((self, "+", other))
 
-    @property
-    def args(self):
-        """Return a list of the args of the expression."""
+    def __sub__(self, other):
+        return OmltExprJuMP((self, "-", other))
 
-    def arg(self, index):
-        """Return the arg corresponding to the given index."""
+    def __mul__(self, other):
+        return OmltExprJuMP((self, "*", other))
 
-    def nargs(self):
-        """Return the number of arguments."""
+    def __truediv__(self, other):
+        return OmltExprJuMP((self, "/", other))
+
+    def __radd__(self, other):
+        return OmltExprJuMP((self, "+", other))
+
+    def __rmul__(self, other):
+        return OmltExprJuMP((self, "*", other))
+
+    def __rtruediv__(self, other):
+        return OmltExprJuMP((other, "/", self))
+
+    def __eq__(self, other):
+        return OmltConstraintScalarJuMP(lhs=self, sense="==", rhs=other)
+
+    def __le__(self, other):
+        return OmltConstraintScalarJuMP(lhs=self, sense="<=", rhs=other)
+
+    def __ge__(self, other):
+        return OmltConstraintScalarJuMP(lhs=self, sense=">=", rhs=other)
+
+
+# Block
+class OmltBlockJuMP(OmltBlockCore):
+    def __init__(self):
+        self.__formulation = None
+        self.__input_indexes = None
+        self.__output_indexes = None
+        self._format = "jump"
+        self._jumpmodel = jump.Model()
+        self._varrefs = {}
+        self._conrefs = {}
+
+    def __setattr__(self, name, value):
+        super().__setattr__(name, value)
+
+        if isinstance(value, OmltScalarJuMP):
+            value.name = name
+            self._varrefs[name] = jump.add_variable(
+                self._jumpmodel, value.to_jumpvar(), name
+            )
+            value.varref = self._varrefs[name]
+        elif isinstance(value, OmltIndexedJuMP):
+            value.name = name
+            for idx, var in value._vars.items():
+                varname = name + "_" + str(idx)
+                self.__getattribute__(name)[idx].varref = var.add_to_model(
+                    self._jumpmodel, name=varname
+                )
+                self._varrefs[varname] = self.__getattribute__(name)[idx].varref
+
+        elif isinstance(value, OmltConstraintScalarJuMP):
+            self._conrefs[name] = jump.add_constraint(
+                self._jumpmodel, value._jumpcon, name
+            )
+        elif isinstance(value, OmltConstraintIndexedJuMP):
+            value.model = self
+            value.name = name
+            # for idx, constr in value._jumpcons:
+            #     self._conrefs[(name, idx)] = jump.add_constraint(
+            #         self._jumpmodel, constr._jumpcon, (name, idx)
+            #     )
+        elif isinstance(value, OmltBlockCore):
+            value.name = name
+            value._parent = self
+        elif isinstance(value, dict):
+            for k, v in value.items():
+                v.name = name + "_" + str(k) + "_"
+                v._parent = self
+
+    def set_optimizer(self, optimizer):
+        jump.set_optimizer(self._jumpmodel, optimizer)
+
+    def get_model(self):
+        return self._jumpmodel

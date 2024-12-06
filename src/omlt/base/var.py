@@ -13,23 +13,76 @@ from typing import Any
 from omlt.base import DEFAULT_MODELING_LANGUAGE, expression
 
 
+class OmltElement(ABC):
+    """Base class for OMLT elements.
+
+    An OMLT element represents a single dimension of a variable. Scalar variables
+    have a single OMLT element, indexed variables have an OMLT element for each
+    member of the index set.
+    """
+
+    @abstractmethod
+    def __neg__(self):
+        """Return an expression representing the negation of the element."""
+
+    @abstractmethod
+    def __sub__(self, other):
+        """Return an expression representing the difference."""
+
+    @abstractmethod
+    def __mul__(self, other):
+        """Return an expression representing the product."""
+
+    @abstractmethod
+    def __radd__(self, other):
+        """Return an expression representing the sum."""
+
+    @abstractmethod
+    def __rsub__(self, other):
+        """Return an expression representing the difference."""
+
+    @abstractmethod
+    def __rmul__(self, other):
+        """Return an expression representing the product."""
+
+    @abstractmethod
+    def __eq__(self, other):
+        """Return an equality constraint between this element and the other."""
+
+    @abstractmethod
+    def __ge__(self, other):
+        """Return an inequality constraint between this element and the other."""
+
+    @abstractmethod
+    def exp(self):
+        """Return an expression representing the exponent of the element."""
+
+    @abstractmethod
+    def log(self):
+        """Return an expression representing the logarithm of the element."""
+
+    @abstractmethod
+    def tanh(self):
+        """Return an expression representing the hyperbolic tangent of the element."""
+
+
 class OmltVar(ABC):
-    @abstractmethod
-    def construct(self, data):
-        """Construct the variable."""
+    # @abstractmethod
+    # def construct(self, data):
+    #     """Construct the variable."""
 
-    @abstractmethod
-    def is_constructed(self):
-        """Return True if the variable has been constructed."""
+    # @abstractmethod
+    # def is_constructed(self):
+    #     """Return True if the variable has been constructed."""
 
-    @abstractmethod
-    def fix(self, value, *, skip_validation=False):
-        """Fix the value of the variable."""
+    # @abstractmethod
+    # def fix(self, value, *, skip_validation=False):
+    #     """Fix the value of the variable."""
 
-    @property
-    @abstractmethod
-    def ctype(self):
-        """Return the type of the variable."""
+    # @property
+    # @abstractmethod
+    # def ctype(self):
+    #     """Return the type of the variable."""
 
     @property
     @abstractmethod
@@ -60,15 +113,15 @@ class OmltScalar(OmltVar):
         return False
 
     # Bound-setting interface for scalar variables:
-    @property
-    @abstractmethod
-    def bounds(self):
-        """Return a tuple with the lower and upper bounds."""
+    # @property
+    # @abstractmethod
+    # def bounds(self):
+    #     """Return a tuple with the lower and upper bounds."""
 
-    @bounds.setter
-    @abstractmethod
-    def bounds(self, val):
-        """Set lower and upper bounds to the given tuple."""
+    # @bounds.setter
+    # @abstractmethod
+    # def bounds(self, val):
+    #     """Set lower and upper bounds to the given tuple."""
 
     @property
     @abstractmethod
@@ -160,19 +213,19 @@ class OmltIndexed(OmltVar):
     def is_indexed(self):
         return True
 
-    @property
-    @abstractmethod
-    def index_set(self):
-        """Return the index set for the variable."""
+    # @property
+    # @abstractmethod
+    # def index_set(self):
+    #     """Return the index set for the variable."""
 
-    # Bound-setting interface for indexed variables:
-    @abstractmethod
-    def setub(self, value):
-        """Set upper bounds on all component variables."""
+    # # Bound-setting interface for indexed variables:
+    # @abstractmethod
+    # def setub(self, value):
+    #     """Set upper bounds on all component variables."""
 
-    @abstractmethod
-    def setlb(self, value):
-        """Set lower bounds on all component variables."""
+    # @abstractmethod
+    # def setlb(self, value):
+    #     """Set lower bounds on all component variables."""
 
     # Interface: act as a dict for the sub-variables.
     @abstractmethod
@@ -224,7 +277,11 @@ class OmltVarFactory:
             self.scalars[lang] = varclass
 
     def new_var(
-        self, *indexes: Any, lang: str = DEFAULT_MODELING_LANGUAGE, **kwargs: Any
+        self,
+        *indexes: Any,
+        lang: str = DEFAULT_MODELING_LANGUAGE,
+        binary: bool = False,
+        **kwargs: Any,
     ) -> Any:
         if indexes:
             if lang not in self.indexed:
@@ -234,7 +291,7 @@ class OmltVarFactory:
                     list(self.indexed.keys()),
                 )
                 raise KeyError(msg)
-            return self.indexed[lang](*indexes, **kwargs)
+            return self.indexed[lang](*indexes, binary=binary, **kwargs)
         if lang not in self.scalars:
             msg = (
                 "Variable format %s not recognized. Supported formats are %s",
@@ -243,4 +300,4 @@ class OmltVarFactory:
             )
             raise KeyError(msg)
 
-        return self.scalars[lang](**kwargs)
+        return self.scalars[lang](binary=binary, **kwargs)

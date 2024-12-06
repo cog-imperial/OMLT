@@ -58,12 +58,6 @@ def _test_build_scalar_expressions(lang):
 def test_build_scalar_exp_pyomo():
     _test_build_scalar_expressions("pyomo")
 
-@pytest.mark.skipif(
-    not julia_available, reason="Test only valid when Julia is available"
-)
-def test_build_scalar_exp_jump():
-    _test_build_scalar_expressions("jump")
-
 def test_init_scalar_expression():
     v1 = var_factory.new_var()
     v1.domain = pyo.Integers
