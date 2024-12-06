@@ -1,27 +1,30 @@
 import re
 
+import pytest
+
 from omlt.base.julia import (
-    OmltConstraintScalarJuMP,
-    OmltScalarJuMP,
     OmltBlockJuMP,
+    OmltConstraintScalarJuMP,
     OmltExprJuMP,
+    OmltScalarJuMP,
 )
+from omlt.dependencies import julia_available, onnx, onnx_available
 from omlt.neuralnet import (
-    ReluBigMFormulation,
-    ReluPartitionFormulation,
     FullSpaceSmoothNNFormulation,
     ReducedSpaceSmoothNNFormulation,
+    ReluBigMFormulation,
+    ReluPartitionFormulation,
 )
-from omlt.dependencies import onnx, onnx_available
 
 if onnx_available:
     from omlt.io.onnx import load_onnx_neural_network
+
 from omlt import OffsetScaling
-import pytest
 
 
+@pytest.mark.skipif(not julia_available, reason="Need JuMP for this test")
 def test_variable_jump():
-    v = OmltScalarJuMP(bounds=(0,5), initialize=(3,))
+    v = OmltScalarJuMP(bounds=(0, 5), initialize=(3,))
 
     assert v.name is None
     assert v.lb == 0
@@ -31,6 +34,7 @@ def test_variable_jump():
     assert v.value == 4
 
 
+@pytest.mark.skipif(not julia_available, reason="Need JuMP for this test")
 def test_expression_linear_jump():
     # JumpVar + int
     # OmltExprJuMP/AffExpr + OmltExprJuMP/AffExpr
@@ -87,7 +91,7 @@ def test_expression_linear_jump():
     constraint = var_minus_expr == expr_div_int
     assert isinstance(constraint, OmltConstraintScalarJuMP)
 
-
+@pytest.mark.skipif(not julia_available, reason="Need JuMP for this test")
 def test_expression_nonlinear_jump():
     jump_block = OmltBlockJuMP()
     jump_block.v1 = OmltScalarJuMP(initialize=2)
@@ -108,6 +112,7 @@ def test_expression_nonlinear_jump():
     assert isinstance(hypt.tanh(), OmltExprJuMP)
 
 
+@pytest.mark.skipif(not julia_available, reason="Need JuMP for this test")
 def test_expression_bad_definition_jump():
     expected_msg1 = re.escape(
         "('Tried to create an OmltExprJuMP with an invalid expression. Expressions "
@@ -122,16 +127,17 @@ def test_expression_bad_definition_jump():
         "d is exp, log, or tanh. %s was provided', ('invalid', 'pair'))"
     )
     with pytest.raises(ValueError, match=expected_msg2):
-        OmltExprJuMP(("invalid","pair"))
+        OmltExprJuMP(("invalid", "pair"))
     expected_msg3 = re.escape(
         "('Tried to create an OmltExprJuMP with an invalid expression. Expressions "
         "must be tuples (a, b, c) where b is +, -, *, or /, or tuples (d, e) where "
         "d is exp, log, or tanh. %s was provided', ('invalid', 'triple', 'expression'))"
     )
     with pytest.raises(ValueError, match=expected_msg3):
-        OmltExprJuMP(("invalid","triple","expression"))
+        OmltExprJuMP(("invalid", "triple", "expression"))
 
 
+@pytest.mark.skipif(not julia_available, reason="Need JuMP for this test")
 def test_expression_bad_arithmetic_jump():
     v = OmltScalarJuMP()
     expected_msg = (
@@ -163,19 +169,23 @@ def test_expression_bad_arithmetic_jump():
         v / "invalid"
 
 
+@pytest.mark.skipif(not julia_available, reason="Need JuMP for this test")
 def test_two_node_relu_big_m_jump(two_node_network_relu):
     m_neural_net_block = OmltBlockJuMP()
     formulation = ReluBigMFormulation(two_node_network_relu)
     m_neural_net_block.build_formulation(formulation)
 
 
+@pytest.mark.skipif(not julia_available, reason="Need JuMP for this test")
 def test_two_node_relu_partition_jump(two_node_network_relu):
     m_neural_net_block = OmltBlockJuMP()
     formulation = ReluPartitionFormulation(two_node_network_relu)
     m_neural_net_block.build_formulation(formulation)
 
 
-@pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
+@pytest.mark.skipif(
+    not onnx_available or not julia_available, reason="Need JuMP and ONNX for this test"
+)
 def test_full_space_sigmoid_jump(datadir):
     m_neural_net_block = OmltBlockJuMP()
     neural_net = onnx.load(datadir.file("keras_linear_131_sigmoid.onnx"))
@@ -196,7 +206,9 @@ def test_full_space_sigmoid_jump(datadir):
     m_neural_net_block.build_formulation(formulation)
 
 
-@pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
+@pytest.mark.skipif(
+    not onnx_available or not julia_available, reason="Need JuMP and ONNX for this test"
+)
 def test_reduced_space_linear_jump(datadir):
     m_neural_net_block = OmltBlockJuMP()
     neural_net = onnx.load(datadir.file("keras_linear_131.onnx"))

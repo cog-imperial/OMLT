@@ -1,5 +1,6 @@
 import pyomo.environ as pyo
 import pytest
+
 from omlt.base import (
     OmltConstraintFactory,
     OmltVarFactory,

@@ -1,7 +1,7 @@
 import pyomo.environ as pyo
 import pytest
+
 from omlt.base import OmltVarFactory
-from omlt.dependencies import julia_available
 
 VAR_VALUE = 3
 FIX_VALUE = 2

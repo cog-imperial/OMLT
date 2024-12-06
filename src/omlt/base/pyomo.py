@@ -7,6 +7,7 @@ Pyomo objects as the underlying data storage mechanism.
 from typing import Any
 
 import pyomo.environ as pyo
+from numpy import float32
 from pyomo.core.base.var import _GeneralVarData
 
 from omlt.base.constraint import OmltConstraintIndexed, OmltConstraintScalar
@@ -185,6 +186,7 @@ class OmltIndexedPyomo(OmltIndexed, pyo.Var):
             for idx in self.keys():
                 self[idx]._parent = value
 
+
 # Constraints
 
 
@@ -332,7 +334,9 @@ class OmltExprScalarPyomo(OmltExpr, pyo.Expression):
             return term._expression
         if isinstance(term, OmltScalarPyomo):
             return term._pyovar
-        if isinstance(term, (pyo.Expression, pyo.Var, _GeneralVarData, int, float)):
+        if isinstance(
+            term, (pyo.Expression, pyo.Var, _GeneralVarData, int, float, float32)
+        ):
             return term
         msg = ("Term of expression %s is an unsupported type. %s", term, type(term))
         raise TypeError(msg)
@@ -355,7 +359,6 @@ class OmltExprScalarPyomo(OmltExpr, pyo.Expression):
 
         msg = ("Expression middle term was {%s}.", expr[1])
         raise ValueError(msg)
-
 
     def is_potentially_variable(self):
         return self._expression.is_potentially_variable()

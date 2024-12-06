@@ -2,7 +2,6 @@ import pyomo.environ as pyo
 import pytest
 
 from omlt.base import OmltExpr, OmltExprFactory, OmltVarFactory
-from omlt.dependencies import julia_available
 
 VAR1_VALUE = 6
 VAR2_VALUE = 3
