@@ -32,9 +32,9 @@ from omlt.neuralnet.nn_formulation import (
 )
 
 __all__ = [
-    "NetworkDefinition",
     "FullSpaceNNFormulation",
     "FullSpaceSmoothNNFormulation",
+    "NetworkDefinition",
     "ReducedSpaceNNFormulation",
     "ReducedSpaceSmoothNNFormulation",
     "ReluBigMFormulation",

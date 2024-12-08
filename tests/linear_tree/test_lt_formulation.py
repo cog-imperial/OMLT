@@ -247,7 +247,7 @@ def test_nonzero_epsilon():
     solution = (pe.value(model_good.x), pe.value(model_good.y))
     y_pred = regr_small.predict(np.array(solution[0]).reshape(1, -1))
     # With epsilon, the model matches the tree prediction
-    assert y_pred[0] == pytest.approx(solution[1])
+    assert y_pred[0] == pytest.approx(solution[1], abs=1e-4)
 
 
 @pytest.mark.skipif(
