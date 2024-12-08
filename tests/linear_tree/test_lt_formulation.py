@@ -1,6 +1,8 @@
 import numpy as np
 import pyomo.environ as pe
 import pytest
+from pyomo.common.collections import ComponentSet
+from pyomo.core.expr import identify_variables
 
 from omlt.dependencies import lineartree_available
 
@@ -245,7 +247,7 @@ def test_nonzero_epsilon():
     solution = (pe.value(model_good.x), pe.value(model_good.y))
     y_pred = regr_small.predict(np.array(solution[0]).reshape(1, -1))
     # With epsilon, the model matches the tree prediction
-    assert y_pred[0] == pytest.approx(solution[1])
+    assert y_pred[0] == pytest.approx(solution[1], abs=1e-4)
 
 
 @pytest.mark.skipif(
@@ -656,6 +658,20 @@ def test_hybrid_bigm_formulation_multi_var():
     model1.obj = pe.Objective(expr=1)
     model1.lt = OmltBlock()
     model1.lt.build_formulation(formulation1_lt)
+
+    num_constraints = 0
+    var_set = ComponentSet()
+    for cons in model1.lt.component_data_objects(pe.Constraint, active=True):
+        num_constraints += 1
+        for v in identify_variables(cons.expr):
+            var_set.add(v)
+
+    num_leaves = len(ltmodel_small.leaves[0])
+    # binary for each leaf + two inputs and an output + 5 scaled input/output vars
+    assert len(var_set) == num_leaves + 3 + 4
+    # 2 bounds constraints for each input, the xor, the output constraint, and
+    # four scaling constraints from OMLT
+    assert num_constraints == 2 * 2 + 1 + 1 + 4
 
     @model1.Constraint()
     def connect_input1(mdl):

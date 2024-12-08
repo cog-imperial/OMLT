@@ -30,16 +30,16 @@ ACTIVATION_FUNCTION_MAP = {
 NON_INCREASING_ACTIVATIONS: list[Any] = []
 
 __all__ = [
-    "linear_activation_constraint",
-    "linear_activation_function",
+    "ACTIVATION_FUNCTION_MAP",
+    "NON_INCREASING_ACTIVATIONS",
     "ComplementarityReLUActivation",
     "bigm_relu_activation_constraint",
+    "linear_activation_constraint",
+    "linear_activation_function",
     "sigmoid_activation_constraint",
     "sigmoid_activation_function",
     "softplus_activation_constraint",
     "softplus_activation_function",
     "tanh_activation_constraint",
     "tanh_activation_function",
-    "ACTIVATION_FUNCTION_MAP",
-    "NON_INCREASING_ACTIVATIONS",
 ]
