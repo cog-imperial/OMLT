@@ -74,7 +74,6 @@ extend-exclude = ["src/omlt/_version.py"]
 [tool.ruff.lint]
 select = ["ALL"]
 ignore = [
-  "ANN101",
   "ANN401",
   "COM812",
   "ISC001",
