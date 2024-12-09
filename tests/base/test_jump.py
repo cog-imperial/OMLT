@@ -21,6 +21,11 @@ if onnx_available:
 
 from omlt import OffsetScaling
 
+TWO = 2
+FOUR = 4
+FIVE = 5
+SIX = 6
+ELEVEN = 11
 
 @pytest.mark.skipif(not julia_available, reason="Need JuMP for this test")
 def test_variable_jump():
@@ -28,10 +33,10 @@ def test_variable_jump():
 
     assert v.name is None
     assert v.lb == 0
-    assert v.ub == 5
+    assert v.ub == FIVE
 
     v.value = 4
-    assert v.value == 4
+    assert v.value == FOUR
 
 
 @pytest.mark.skipif(not julia_available, reason="Need JuMP for this test")
@@ -58,7 +63,7 @@ def test_expression_linear_jump():
 
     var_plus_three = jump_block.v1 + 3
     assert isinstance(var_plus_three, OmltExprJuMP)
-    assert var_plus_three() == 5
+    assert var_plus_three() == FIVE
 
     three_minus_var = 3 - jump_block.v1
     assert isinstance(three_minus_var, OmltExprJuMP)
@@ -66,23 +71,23 @@ def test_expression_linear_jump():
 
     three_times_var = 3 * jump_block.v1
     assert isinstance(three_times_var, OmltExprJuMP)
-    assert three_times_var() == 6
+    assert three_times_var() == SIX
 
     var_times_three = jump_block.v1 * 3
     assert isinstance(var_times_three, OmltExprJuMP)
-    assert var_times_three() == 6
+    assert var_times_three() == SIX
 
     expr_sum = var_plus_three + var_times_three
     assert isinstance(expr_sum, OmltExprJuMP)
-    assert expr_sum() == 11
+    assert expr_sum() == ELEVEN
 
     var_minus_expr = element2 - three_minus_var
     assert isinstance(var_minus_expr, OmltExprJuMP)
-    assert var_minus_expr() == 2
+    assert var_minus_expr() == TWO
 
     expr_minus_expr = var_plus_three - three_minus_var
     assert isinstance(expr_minus_expr, OmltExprJuMP)
-    assert expr_minus_expr() == 4
+    assert expr_minus_expr() == FOUR
 
     expr_div_int = var_plus_three / 5
     assert isinstance(expr_div_int, OmltExprJuMP)

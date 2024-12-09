@@ -61,7 +61,7 @@ class OmltConstraintIndexed(OmltConstraint):
         self.format = lang
 
 
-    def keys(self, sort=False):
+    def keys(self, *, sort=False): # noqa: ARG002
         yield from self._index_set
 
 

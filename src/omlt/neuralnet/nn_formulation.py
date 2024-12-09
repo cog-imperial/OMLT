@@ -141,7 +141,7 @@ class FullSpaceNNFormulation(_PyomoFormulation):
         return network_outputs[0].output_indexes
 
 
-def _build_neural_network_formulation(  # noqa: C901
+def _build_neural_network_formulation(  # noqa: C901,PLR0912,PLR0915
     block, network_structure, layer_constraints, activation_constraints
 ):
     """Adds the neural network formulation to the given Pyomo block.
@@ -362,7 +362,7 @@ class ReducedSpaceNNFormulation(_PyomoFormulation):
     def _supported_default_activation_functions(self):
         return dict(_DEFAULT_ACTIVATION_FUNCTIONS)
 
-    def _build_formulation(self):
+    def _build_formulation(self): # noqa: C901,PLR0912
         _setup_scaled_inputs_outputs(
             self.block, self.__scaling_object, self.__scaled_input_bounds
         )
@@ -413,11 +413,6 @@ class ReducedSpaceNNFormulation(_PyomoFormulation):
                 input_layer_block.z[output_index] == block.scaled_inputs[idx_0]
             )
 
-        # @input_layer_block.Expression(input_layer.output_indexes)
-        # def z(b, *output_index):
-        #     pb = b.parent_block()
-        #     return pb.scaled_inputs[output_index]
-        # loop over the layers and build the expressions
         for layer in layers:
             if isinstance(layer, InputLayer):
                 # skip the InputLayer
@@ -530,7 +525,7 @@ class ReluPartitionFormulation(_PyomoFormulation):
 
         self.__split_func = split_func
 
-    def _build_formulation(self):  # noqa: C901
+    def _build_formulation(self):  # noqa: C901,PLR0912,PLR0915
         _setup_scaled_inputs_outputs(
             self.block, self.__scaling_object, self.__scaled_input_bounds
         )

@@ -39,7 +39,7 @@ class OmltExpr(ABC):
 
     @abstractmethod
     def tanh(self):
-        """Return an expression representing the hyperbolic tangent of this expression."""
+        """Return an expression representing the hyperbolic tangent of expression."""
 
     @abstractmethod
     def __add__(self, other):
@@ -85,8 +85,7 @@ class OmltExpr(ABC):
 class OmltExprFactory:
     def __init__(self):
         self.exprs = {
-            subclass.format: subclass
-            for subclass in OmltExpr.__subclasses__()
+            subclass.format: subclass for subclass in OmltExpr.__subclasses__()
         }
 
     def register(self, lang, varclass):

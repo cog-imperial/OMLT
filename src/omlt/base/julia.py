@@ -19,12 +19,15 @@ if julia_available:
     Jl.seval("import JuMP")
     jump = Jl.JuMP
 
+PAIR = 2
+EXPR_TWO = 2
+EXPR_THREE = 3
 
 # Elements
 
 
 class JuMPVarInfo:
-    def __init__(
+    def __init__( # noqa: PLR0913
         self,
         lower_bound=None,
         upper_bound=None,
@@ -175,11 +178,11 @@ class JumpVar(OmltElement):
 class OmltScalarJuMP(OmltScalar):
     format = "jump"
 
-    def __init__(self, *, binary=False, **kwargs):
+    def __init__(self, *, binary=False, **kwargs: Any):
         super().__init__()
 
         self._bounds = kwargs.pop("bounds", None)
-        if isinstance(self._bounds, tuple) and len(self._bounds) == 2:
+        if isinstance(self._bounds, tuple) and len(self._bounds) == PAIR:
             _lb = self._bounds[0]
             _ub = self._bounds[1]
         elif self._bounds is None:
@@ -295,9 +298,7 @@ class OmltIndexedJuMP(OmltIndexed):
 
     def __init__(self, *indexes: Any, binary: bool = False, **kwargs: Any):
         index_set = indexes[0]
-        i_dict = {}
-        for i, val in enumerate(index_set):
-            i_dict[i] = val
+        i_dict = dict(enumerate(index_set))
         self._index_set = tuple(i_dict[i] for i in range(len(index_set)))
 
         self._bounds = kwargs.pop("bounds", None)
@@ -305,7 +306,7 @@ class OmltIndexedJuMP(OmltIndexed):
         if isinstance(self._bounds, dict) and len(self._bounds) == len(self._index_set):
             _lb = {k: v[0] for k, v in self._bounds.items()}
             _ub = {k: v[1] for k, v in self._bounds.items()}
-        elif isinstance(self._bounds, tuple) and len(self._bounds) == 2:
+        elif isinstance(self._bounds, tuple) and len(self._bounds) == PAIR:
             _lb = {i: self._bounds[0] for i in self._index_set}
             _ub = {i: self._bounds[1] for i in self._index_set}
         elif self._bounds is None:
@@ -391,7 +392,7 @@ class OmltIndexedJuMP(OmltIndexed):
         """Return an iterator of the component data keys."""
         return self._vars.__iter__()
 
-    def construct(self, data=None):
+    def construct(self, *, data=None): # noqa: ARG002
         for idx in self._index_set:
             if isinstance(idx, int):
                 name = str(self.name) + "[" + str(idx) + "]"
@@ -449,7 +450,7 @@ class OmltConstraintIndexedJuMP(OmltConstraintIndexed):
         self.format = "jump"
         self._jumpcons = {idx: None for idx in self._index_set[0]}
 
-    def keys(self, sort=False):
+    def keys(self, *, sort=False): # noqa: ARG002
         yield from self._index_set
 
     def __setitem__(self, label, item):
@@ -477,7 +478,7 @@ class OmltExprJuMP(OmltExpr):
             "d is exp, log, or tanh. %s was provided",
             expr,
         )
-        if len(expr) == 3:
+        if len(expr) == EXPR_THREE:
             if expr[1] == "+":
                 self._jumpexpr = self.add(expr[0], expr[2])
             elif expr[1] == "-":
@@ -488,7 +489,7 @@ class OmltExprJuMP(OmltExpr):
                 self._jumpexpr = self.divide(expr[0], expr[2])
             else:
                 raise ValueError(msg)
-        elif len(expr) == 2:
+        elif len(expr) == EXPR_TWO:
             if expr[0] == "exp":
                 self._jumpexpr = self.exponent(expr[1])
             elif expr[0] == "log":
@@ -533,7 +534,7 @@ class OmltExprJuMP(OmltExpr):
         msg = ("Unrecognized types for addition, %s, %s", type(a), type(b))
         raise TypeError(msg)
 
-    def subtract(self, a, b):
+    def subtract(self, a, b): # noqa: PLR0911
         if isinstance(a, (int, float)) and isinstance(b, (JumpVar, OmltScalarJuMP)):
             return jump.AffExpr(a, jump.OrderedDict([(b.varref, -1)]))
         if isinstance(a, JumpVar) and isinstance(b, (int, float)):
@@ -760,10 +761,6 @@ class OmltBlockJuMP(OmltBlockCore):
         elif isinstance(value, OmltConstraintIndexedJuMP):
             value.model = self
             value.name = name
-            # for idx, constr in value._jumpcons:
-            #     self._conrefs[(name, idx)] = jump.add_constraint(
-            #         self._jumpmodel, constr._jumpcon, (name, idx)
-            #     )
         elif isinstance(value, OmltBlockCore):
             value.name = name
             value._parent = self

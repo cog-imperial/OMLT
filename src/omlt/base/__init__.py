@@ -1,4 +1,4 @@
-from omlt.base.language import DEFAULT_MODELING_LANGUAGE
+from omlt.base.language import DEFAULT_MODELING_LANGUAGE # noqa: I001
 
 from omlt.base.constraint import (
     OmltConstraint,
