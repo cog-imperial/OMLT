@@ -27,6 +27,7 @@ FIVE = 5
 SIX = 6
 ELEVEN = 11
 
+
 @pytest.mark.skipif(not julia_available, reason="Need JuMP for this test")
 def test_variable_jump():
     v = OmltScalarJuMP(bounds=(0, 5), initialize=(3,))
@@ -95,6 +96,7 @@ def test_expression_linear_jump():
 
     constraint = var_minus_expr == expr_div_int
     assert isinstance(constraint, OmltConstraintScalarJuMP)
+
 
 @pytest.mark.skipif(not julia_available, reason="Need JuMP for this test")
 def test_expression_nonlinear_jump():

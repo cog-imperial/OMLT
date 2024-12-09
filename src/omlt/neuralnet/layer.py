@@ -23,6 +23,7 @@ import numpy as np
 
 OUTPUT_DIMENSIONS = 3
 
+
 class Layer:
     """Base layer class.
 

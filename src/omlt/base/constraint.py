@@ -9,7 +9,6 @@ from omlt.base import DEFAULT_MODELING_LANGUAGE
 
 
 class OmltConstraint:
-
     @property
     def ctype(self):
         return pyo.Constraint
@@ -19,9 +18,7 @@ class OmltConstraint:
         return True
 
 
-
 class OmltConstraintScalar(OmltConstraint):
-
     def __init__(self, lang: str = DEFAULT_MODELING_LANGUAGE, **kwargs: Any):
         lhs = kwargs.pop("lhs", None)
         if lhs is not None:
@@ -49,7 +46,6 @@ class OmltConstraintScalar(OmltConstraint):
 
 
 class OmltConstraintIndexed(OmltConstraint):
-
     def __init__(
         self, *indexes: Any, lang: str = DEFAULT_MODELING_LANGUAGE, **kwargs: Any
     ):
@@ -60,10 +56,8 @@ class OmltConstraintIndexed(OmltConstraint):
         self.name = None
         self.format = lang
 
-
-    def keys(self, *, sort=False): # noqa: ARG002
+    def keys(self, *, sort=False):  # noqa: ARG002
         yield from self._index_set
-
 
 
 class OmltConstraintFactory:

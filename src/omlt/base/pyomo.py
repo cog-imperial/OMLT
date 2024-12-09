@@ -334,9 +334,7 @@ class OmltExprScalarPyomo(OmltExpr, pyo.Expression):
             return term._expression
         if isinstance(term, OmltScalarPyomo):
             return term._pyovar
-        if isinstance(
-            term, (pyo.Expression, pyo.Var, VarData, int, float, float32)
-        ):
+        if isinstance(term, (pyo.Expression, pyo.Var, VarData, int, float, float32)):
             return term
         msg = ("Term of expression %s is an unsupported type. %s", term, type(term))
         raise TypeError(msg)

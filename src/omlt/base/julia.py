@@ -27,7 +27,7 @@ EXPR_THREE = 3
 
 
 class JuMPVarInfo:
-    def __init__( # noqa: PLR0913
+    def __init__(  # noqa: PLR0913
         self,
         lower_bound=None,
         upper_bound=None,
@@ -274,11 +274,9 @@ class OmltScalarJuMP(OmltScalar):
     def value(self):
         return self._var.value
 
-
     @value.setter
     def value(self, val):
         self._var.value = val
-
 
     @property
     def name(self):
@@ -392,7 +390,7 @@ class OmltIndexedJuMP(OmltIndexed):
         """Return an iterator of the component data keys."""
         return self._vars.__iter__()
 
-    def construct(self, *, data=None): # noqa: ARG002
+    def construct(self, *, data=None):  # noqa: ARG002
         for idx in self._index_set:
             if isinstance(idx, int):
                 name = str(self.name) + "[" + str(idx) + "]"
@@ -450,7 +448,7 @@ class OmltConstraintIndexedJuMP(OmltConstraintIndexed):
         self.format = "jump"
         self._jumpcons = {idx: None for idx in self._index_set[0]}
 
-    def keys(self, *, sort=False): # noqa: ARG002
+    def keys(self, *, sort=False):  # noqa: ARG002
         yield from self._index_set
 
     def __setitem__(self, label, item):
@@ -534,7 +532,7 @@ class OmltExprJuMP(OmltExpr):
         msg = ("Unrecognized types for addition, %s, %s", type(a), type(b))
         raise TypeError(msg)
 
-    def subtract(self, a, b): # noqa: PLR0911
+    def subtract(self, a, b):  # noqa: PLR0911
         if isinstance(a, (int, float)) and isinstance(b, (JumpVar, OmltScalarJuMP)):
             return jump.AffExpr(a, jump.OrderedDict([(b.varref, -1)]))
         if isinstance(a, JumpVar) and isinstance(b, (int, float)):

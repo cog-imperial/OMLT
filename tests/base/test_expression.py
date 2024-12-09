@@ -57,6 +57,7 @@ def _test_build_scalar_expressions(lang):
 def test_build_scalar_exp_pyomo():
     _test_build_scalar_expressions("pyomo")
 
+
 def test_init_scalar_expression():
     v1 = var_factory.new_var()
     v1.domain = pyo.Integers

@@ -6,7 +6,7 @@ from omlt.neuralnet.activations import NON_INCREASING_ACTIVATIONS
 from omlt.neuralnet.layer import ConvLayer2D, PoolingLayer2D
 
 
-def full_space_dense_layer(net_block, net, layer_block, layer): # noqa: PLR0912
+def full_space_dense_layer(net_block, net, layer_block, layer):  # noqa: PLR0912
     r"""Add full-space formulation of the dense layer to the block.
 
     .. math::

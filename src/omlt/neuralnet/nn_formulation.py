@@ -166,6 +166,7 @@ def _build_neural_network_formulation(  # noqa: C901,PLR0912,PLR0915
     var_factory = OmltVarFactory()
 
     if block._format == "pyomo":
+
         @block.Block(block.layers)
         def layer(b, layer_id):
             net_layer = net.layer(layer_id)
@@ -187,7 +188,7 @@ def _build_neural_network_formulation(  # noqa: C901,PLR0912,PLR0915
             return b
     else:
         block.layers.construct()
-        block.layer = {lyr : OmltBlockCore() for lyr in block.layers}
+        block.layer = {lyr: OmltBlockCore() for lyr in block.layers}
         for lyr in block.layer:
             block.layer[lyr]._format = block._format
         for layer_id in block.layers:
@@ -362,7 +363,7 @@ class ReducedSpaceNNFormulation(_PyomoFormulation):
     def _supported_default_activation_functions(self):
         return dict(_DEFAULT_ACTIVATION_FUNCTIONS)
 
-    def _build_formulation(self): # noqa: C901,PLR0912
+    def _build_formulation(self):  # noqa: C901,PLR0912
         _setup_scaled_inputs_outputs(
             self.block, self.__scaling_object, self.__scaled_input_bounds
         )
@@ -377,7 +378,7 @@ class ReducedSpaceNNFormulation(_PyomoFormulation):
             block.layer = pyo.Block(block.layers)
         else:
             block.layers.construct()
-            block.layer = {lyr : OmltBlockCore() for lyr in block.layers}
+            block.layer = {lyr: OmltBlockCore() for lyr in block.layers}
             for lyr in block.layer:
                 block.layer[lyr]._format = block._format
         # currently only support a single input layer
@@ -540,6 +541,7 @@ class ReluPartitionFormulation(_PyomoFormulation):
         var_factory = OmltVarFactory()
 
         if block._format == "pyomo":
+
             @block.Block(block.layers)
             def layer(b, layer_id):
                 b._format = block._format
@@ -562,7 +564,7 @@ class ReluPartitionFormulation(_PyomoFormulation):
                 return b
         else:
             block.layers.construct()
-            block.layer = {lyr : OmltBlockCore() for lyr in block.layers}
+            block.layer = {lyr: OmltBlockCore() for lyr in block.layers}
             for layer_id in block.layers:
                 block.layer[layer_id]._format = block._format
                 net_layer = net.layer(layer_id)

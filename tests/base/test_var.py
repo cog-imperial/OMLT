@@ -81,8 +81,6 @@ def test_indexed_pyomo():
 
 
 def test_indexed_invalid_lang():
-    expected_msg = (
-        "Variable format %s not recognized. Supported formats are %s"
-    )
+    expected_msg = "Variable format %s not recognized. Supported formats are %s"
     with pytest.raises(KeyError, match=expected_msg):
         var_factory.new_var(range(3), lang="test")
