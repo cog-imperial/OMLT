@@ -80,6 +80,7 @@ ignore = [
   "ISC001",
   "SLF001",
   "ARG001",
+  "PLC0206",
   "N803",
   "N806",
   # Remove these after issue https://github.com/cog-imperial/OMLT/issues/153 is fixed.
@@ -96,7 +97,7 @@ ignore = [
   "ANN002",
   "ANN201",
   "ANN202",
-  "ANN204",
+  "ANN204"
 ]
 
 [tool.ruff.lint.pydocstyle]
