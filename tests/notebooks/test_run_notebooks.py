@@ -12,8 +12,6 @@ from omlt.dependencies import (
     torch_geometric_available,
 )
 
-# TODO @cog-imperial: These will be replaced with stronger tests using testbook soon
-# https://github.com/cog-imperial/OMLT/issues/159
 
 def _test_run_notebook(folder, notebook_fname, n_cells):
     # Change to notebook directory to allow for testing
