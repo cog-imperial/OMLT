@@ -17,12 +17,12 @@ SPLITS = 140
 
 var_factory = OmltVarFactory()
 
+
 @pytest.mark.skip("Francesco and Alex need to check this test")
 def test_formulation_with_continuous_variables():
     model = onnx.load(Path(__file__).parent / "continuous_model.onnx")
 
     m = pe.ConcreteModel()
-
 
     m.x = var_factory.new_var(range(4), bounds=(-2.0, 2.0))
     m.x[3].setlb(0.0)
