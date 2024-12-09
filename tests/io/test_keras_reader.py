@@ -1,4 +1,5 @@
 import pytest
+
 from omlt.dependencies import keras, keras_available
 
 NUM_LAYERS_131 = 3

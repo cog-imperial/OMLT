@@ -1,4 +1,4 @@
-from omlt.base import OmltVarFactory, OmltConstraintFactory
+from omlt.base import OmltConstraintFactory, OmltVarFactory
 
 
 def reduced_space_dense_layer(net_block, net, layer_block, layer, activation):

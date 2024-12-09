@@ -2,6 +2,7 @@ from pathlib import Path
 
 import pyomo.environ as pe
 import pytest
+
 from omlt import OmltBlock
 from omlt.base import OmltVarFactory
 from omlt.dependencies import onnx, onnx_available

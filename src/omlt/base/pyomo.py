@@ -8,7 +8,7 @@ from typing import Any
 
 import pyomo.environ as pyo
 from numpy import float32
-from pyomo.core.base.var import _GeneralVarData
+from pyomo.core.base.var import VarData
 
 from omlt.base.constraint import OmltConstraintIndexed, OmltConstraintScalar
 from omlt.base.expression import OmltExpr, OmltExprFactory
@@ -335,7 +335,7 @@ class OmltExprScalarPyomo(OmltExpr, pyo.Expression):
         if isinstance(term, OmltScalarPyomo):
             return term._pyovar
         if isinstance(
-            term, (pyo.Expression, pyo.Var, _GeneralVarData, int, float, float32)
+            term, (pyo.Expression, pyo.Var, VarData, int, float, float32)
         ):
             return term
         msg = ("Term of expression %s is an unsupported type. %s", term, type(term))
@@ -411,7 +411,7 @@ class OmltExprScalarPyomo(OmltExpr, pyo.Expression):
     def __mul__(self, other):
         if isinstance(other, OmltExprScalarPyomo):
             expr = self._expression * other._expression
-        elif isinstance(other, (int, float, pyo.Expression)):
+        elif isinstance(other, (int, float, float32, pyo.Expression)):
             expr = self._expression * other
         return self.expr_factory.new_expression(lang=self._format, expr=expr)
 

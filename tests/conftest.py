@@ -2,9 +2,10 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+from pyomo.common.fileutils import this_file_dir
+
 from omlt.neuralnet.layer import DenseLayer, InputLayer
 from omlt.neuralnet.network_definition import NetworkDefinition
-from pyomo.common.fileutils import this_file_dir
 
 
 def get_neural_network_data(desc):
@@ -47,13 +48,13 @@ class _Datadir:
         return str(self._basedir / filename)
 
 
-@pytest.fixture()
+@pytest.fixture
 def datadir():
     basedir = Path(this_file_dir()) / "models"
     return _Datadir(basedir)
 
 
-@pytest.fixture()
+@pytest.fixture
 def two_node_network_relu():
     """Two node network with ReLU activation.
 

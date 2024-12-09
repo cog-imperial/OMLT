@@ -1,4 +1,4 @@
-from omlt.base import OmltConstraintFactory, DEFAULT_MODELING_LANGUAGE
+from omlt.base import DEFAULT_MODELING_LANGUAGE, OmltConstraintFactory
 
 
 def linear_activation_function(zhat, lang=DEFAULT_MODELING_LANGUAGE):

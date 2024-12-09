@@ -27,6 +27,7 @@ linear-tree = ["linear-tree"]
 keras = ["tensorflow", "keras"]
 keras-gpu = ["tensorflow[and-cuda]", "keras"]
 torch = ["torch", "torch-geometric"]
+jump = ["juliacall"]
 dev-tools = [
   "ruff",
   "mypy",
@@ -52,10 +53,10 @@ docs = [
   "linear-tree",
 ]
 dev = [
-  "omlt[dev-tools,keras,torch,linear-tree,docs]",
+  "omlt[dev-tools,jump,keras,torch,linear-tree,docs]",
 ]
 dev-gpu = [
-  "omlt[dev-tools,keras-gpu,torch,linear-tree,docs]",
+  "omlt[dev-tools,jump,keras-gpu,torch,linear-tree,docs]",
 ]
 
 
@@ -74,7 +75,6 @@ extend-exclude = ["src/omlt/_version.py"]
 [tool.ruff.lint]
 select = ["ALL"]
 ignore = [
-  "ANN101",
   "ANN401",
   "COM812",
   "ISC001",

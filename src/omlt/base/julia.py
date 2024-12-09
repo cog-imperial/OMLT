@@ -1,19 +1,17 @@
 from typing import Any
 
+from numpy import float32
 from pyomo.core.base import ParamData
 
-from numpy import float32
-
-from omlt.block import OmltBlockCore
 from omlt.base.constraint import OmltConstraintIndexed, OmltConstraintScalar
 from omlt.base.expression import OmltExpr
 from omlt.base.var import OmltElement, OmltIndexed, OmltScalar
+from omlt.block import OmltBlockCore
 from omlt.dependencies import julia_available
 
 if julia_available:
-    from juliacall import Base
+    from juliacall import Base, convert
     from juliacall import Main as Jl
-    from juliacall import convert
 
     jl_err = Base.error
     Jl.seval("import Pkg")

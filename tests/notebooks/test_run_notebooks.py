@@ -2,14 +2,15 @@ import os
 from pathlib import Path
 
 import pytest
+from pyomo.common.fileutils import this_file_dir
+from testbook import testbook
+
 from omlt.dependencies import (
     keras_available,
     onnx_available,
     torch_available,
     torch_geometric_available,
 )
-from pyomo.common.fileutils import this_file_dir
-from testbook import testbook
 
 # TODO @cog-imperial: These will be replaced with stronger tests using testbook soon
 # https://github.com/cog-imperial/OMLT/issues/159

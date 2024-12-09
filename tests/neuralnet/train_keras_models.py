@@ -3,8 +3,9 @@ from conftest import get_neural_network_data
 from keras.layers import Conv2D, Dense
 from keras.models import Sequential
 from keras.optimizers import Adamax
-from omlt.io import write_onnx_model_with_bounds
 from pyomo.common.fileutils import this_file_dir
+
+from omlt.io import write_onnx_model_with_bounds
 
 
 def train_models():  # noqa: PLR0915

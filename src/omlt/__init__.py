@@ -15,7 +15,7 @@ from omlt.block import OmltBlock  # type: ignore[attr-defined]
 from omlt.scaling import OffsetScaling
 
 __all__ = [
-    "OmltBlock",
     "OffsetScaling",
+    "OmltBlock",
     "__version__",
 ]

@@ -1,13 +1,15 @@
 import numpy as np
 import pyomo.environ as pyo
 import pytest
-from omlt.dependencies import keras, keras_available
 from pyomo.common.dependencies import DeferredImportError
+
+from omlt.dependencies import keras, keras_available
 
 if keras_available:
     from omlt.io import load_keras_sequential
 
 from conftest import get_neural_network_data
+
 from omlt import OmltBlock
 from omlt.neuralnet import FullSpaceNNFormulation, ReducedSpaceNNFormulation
 from omlt.neuralnet.activations import ComplementarityReLUActivation

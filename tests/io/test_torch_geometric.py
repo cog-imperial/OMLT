@@ -1,6 +1,7 @@
 import numpy as np
 import pyomo.environ as pyo
 import pytest
+
 from omlt import OmltBlock
 from omlt.dependencies import (
     torch_available,
@@ -8,11 +9,6 @@ from omlt.dependencies import (
 )
 
 if torch_available and torch_geometric_available:
-    from omlt.io.torch_geometric import (
-        gnn_with_fixed_graph,
-        gnn_with_non_fixed_graph,
-        load_torch_geometric_sequential,
-    )
     from torch.nn import Linear, ReLU, Sigmoid, Tanh
     from torch_geometric.nn import (
         GCNConv,
@@ -21,6 +17,12 @@ if torch_available and torch_geometric_available:
         global_add_pool,
         global_max_pool,
         global_mean_pool,
+    )
+
+    from omlt.io.torch_geometric import (
+        gnn_with_fixed_graph,
+        gnn_with_non_fixed_graph,
+        load_torch_geometric_sequential,
     )
 
 

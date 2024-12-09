@@ -35,20 +35,20 @@ def full_space_dense_layer(net_block, net, layer_block, layer):
                 if input_layer_block.z[input_index].lb is not None:
                     lb += input_layer_block.z[input_index].lb * w
                 else:
-                    lb += -float('inf')
+                    lb += -float("inf")
                 if input_layer_block.z[input_index].ub is not None:
                     ub += input_layer_block.z[input_index].ub * w
                 else:
-                    ub += float('inf')
+                    ub += float("inf")
             else:
                 if input_layer_block.z[input_index].ub is not None:
                     lb += input_layer_block.z[input_index].ub * w
                 else:
-                    lb += -float('inf')
+                    lb += -float("inf")
                 if input_layer_block.z[input_index].lb is not None:
                     ub += input_layer_block.z[input_index].lb * w
                 else:
-                    ub += float('inf')
+                    ub += float("inf")
 
         # move this at the end to avoid numpy/pyomo var bug
         expr += layer.biases[output_index[-1]]
