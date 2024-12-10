@@ -205,7 +205,7 @@ class OmltScalarJuMP(OmltScalar):
 
         self.binary = binary
 
-        self._value : None | int | float
+        self._value: None | int | float
         _initialize = kwargs.pop("initialize", None)
         if _initialize:
             if isinstance(_initialize, (int, float)):
