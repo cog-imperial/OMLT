@@ -66,6 +66,7 @@ class GBTBigMFormulation(_PyomoFormulation):
     def pyomo_only(self):
         return True
 
+
 def add_formulation_to_block(block, model_definition, input_vars, output_vars):  # noqa: C901, PLR0912, PLR0915
     r"""Adds the gradient-boosted trees formulation to the given Pyomo block.
 
