@@ -312,7 +312,7 @@ class OmltExprScalarPyomo(OmltExpr, pyo.Expression):
     def __init__(self, expr=None):
         self._index_set = {}
         if isinstance(expr, OmltExprScalarPyomo):
-            self._expression = expr._expression
+            self._expression : pyo.Expression = expr._expression
         elif isinstance(expr, (pyo.Expression, pyo.NumericValue)):
             self._expression = expr
         elif isinstance(expr, tuple):
@@ -336,7 +336,7 @@ class OmltExprScalarPyomo(OmltExpr, pyo.Expression):
             return term._pyovar
         if isinstance(term, (pyo.Expression, pyo.Var, VarData, int, float, float32)):
             return term
-        msg = ("Term of expression %s is an unsupported type. %s", term, type(term))
+        msg = ("Term of expression %s is an unsupported type. %s", term, type(term))  # type: ignore[unreachable]
         raise TypeError(msg)
 
     def _parse_expression_tuple(self, expr):

@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import Any
 
 from numpy import float32
@@ -88,10 +89,10 @@ class JuMPVarInfo:
 
 
 class JumpVar(OmltElement):
-    def __init__(self, varinfo: JuMPVarInfo, name):
+    def __init__(self, varinfo: JuMPVarInfo, name: None | str):
         self.info = varinfo
         self.name = name
-        self.omltvar = None
+        self.omltvar: None | OmltScalarJuMP | OmltIndexedJuMP = None
         self.index = None
         self.construct()
 
@@ -178,7 +179,7 @@ class JumpVar(OmltElement):
 class OmltScalarJuMP(OmltScalar):
     format = "jump"
 
-    def __init__(self, *, binary=False, **kwargs: Any):
+    def __init__(self, *, binary: bool = False, **kwargs: Any):
         super().__init__()
 
         self._bounds = kwargs.pop("bounds", None)
@@ -204,8 +205,8 @@ class OmltScalarJuMP(OmltScalar):
 
         self.binary = binary
 
+        self._value : None | int | float
         _initialize = kwargs.pop("initialize", None)
-
         if _initialize:
             if isinstance(_initialize, (int, float)):
                 self._value = _initialize
@@ -214,7 +215,8 @@ class OmltScalarJuMP(OmltScalar):
             else:
                 msg = (
                     "Initial value for JuMP variables must be an int"
-                    f" or float, but {type(_initialize)} was provided."
+                    " or float, but %s was provided.",
+                    type(_initialize),
                 )
                 raise ValueError(msg)
         else:
@@ -335,7 +337,7 @@ class OmltIndexedJuMP(OmltIndexed):
             self._vars[idx] = JumpVar(self._varinfo[idx], str(idx))
             self._vars[idx].omltvar = self
             self._vars[idx].index = idx
-        self._varrefs = {}
+        self._varrefs: dict[Any, Any] = {}
         self._constructed = False
         self._parent = None
         self._name = None
@@ -364,18 +366,12 @@ class OmltIndexedJuMP(OmltIndexed):
             self.construct()
 
     def keys(self):
-        if self._parent is not None:
-            return self._varrefs.keys()
         return self._vars.keys()
 
-    def values(self):
-        if self._parent is not None:
-            return self._varrefs.values()
+    def values(self, sort=Any):  # noqa: ARG002
         return self._vars.values()
 
     def items(self):
-        if self._parent is not None:
-            return self._varrefs.items()
         return self._vars.items()
 
     def __len__(self):
@@ -400,7 +396,7 @@ class OmltIndexedJuMP(OmltIndexed):
             self._vars[idx].omltvar = self
             self._vars[idx].index = idx
             if self._parent is not None:
-                block = self._parent()
+                block = self._parent()  # type: ignore[unreachable]
                 if block._format == "jump" and block._jumpmodel is not None:
                     self._varrefs[idx] = self._vars[idx].add_to_model(block._jumpmodel)
 
@@ -454,7 +450,7 @@ class OmltConstraintIndexedJuMP(OmltConstraintIndexed):
     def __setitem__(self, label, item):
         self._jumpcons[label] = item
         if self.model is not None and self.name is not None:
-            jump.add_constraint(
+            jump.add_constraint(  # type: ignore[unreachable]
                 self.model._jumpmodel, item._jumpcon, self.name + "[" + str(label) + "]"
             )
 

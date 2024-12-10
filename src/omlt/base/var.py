@@ -106,7 +106,7 @@ class OmltVar(ABC):
 class OmltScalar(OmltVar):
     format: str | None = None
 
-    def __init__(self):
+    def __init__(self, binary=False):  # noqa: ARG002, FBT002
         self.expr_factory = expression.OmltExprFactory()
 
     def is_indexed(self):
@@ -291,7 +291,7 @@ class OmltVarFactory:
                     list(self.indexed.keys()),
                 )
                 raise KeyError(msg)
-            return self.indexed[lang](*indexes, binary=binary, **kwargs)
+            return self.indexed[lang](*indexes, binary=binary, **kwargs)  # type: ignore[abstract, call-arg]
         if lang not in self.scalars:
             msg = (
                 "Variable format %s not recognized. Supported formats are %s",
@@ -300,4 +300,4 @@ class OmltVarFactory:
             )
             raise KeyError(msg)
 
-        return self.scalars[lang](binary=binary, **kwargs)
+        return self.scalars[lang](binary=binary, **kwargs)  # type: ignore[abstract]

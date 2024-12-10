@@ -106,4 +106,4 @@ class OmltExprFactory:
                 list(self.exprs.keys()),
             )
             raise KeyError(msg)
-        return self.exprs[lang](**kwargs)
+        return self.exprs[lang](**kwargs)  # type: ignore[abstract]
