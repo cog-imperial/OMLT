@@ -140,6 +140,10 @@ class FullSpaceNNFormulation(_PyomoFormulation):
             raise ValueError(MULTI_OUTPUTS_UNSUPPORTED)
         return network_outputs[0].output_indexes
 
+    @property
+    def pyomo_only(self):
+        return False
+
 
 def _build_neural_network_formulation(  # noqa: C901,PLR0912,PLR0915
     block, network_structure, layer_constraints, activation_constraints
@@ -325,6 +329,10 @@ class ReluComplementarityFormulation(FullSpaceNNFormulation):
             "relu": ComplementarityReLUActivation(),
         }
 
+    @property
+    def pyomo_only(self):
+        return True
+
 
 class ReducedSpaceNNFormulation(_PyomoFormulation):
     """Reduced Space Neural Network Formulation.
@@ -474,6 +482,10 @@ class ReducedSpaceNNFormulation(_PyomoFormulation):
         if len(network_outputs) != 1:
             raise ValueError(MULTI_OUTPUTS_UNSUPPORTED)
         return network_outputs[0].output_indexes
+
+    @property
+    def pyomo_only(self):
+        return False
 
 
 class ReducedSpaceSmoothNNFormulation(ReducedSpaceNNFormulation):
@@ -659,3 +671,7 @@ class ReluPartitionFormulation(_PyomoFormulation):
         if len(network_outputs) != 1:
             raise ValueError(MULTI_OUTPUTS_UNSUPPORTED)
         return network_outputs[0].output_indexes
+
+    @property
+    def pyomo_only(self):
+        return False

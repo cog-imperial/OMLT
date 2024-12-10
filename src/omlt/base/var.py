@@ -67,23 +67,6 @@ class OmltElement(ABC):
 
 
 class OmltVar(ABC):
-    # @abstractmethod
-    # def construct(self, data):
-    #     """Construct the variable."""
-
-    # @abstractmethod
-    # def is_constructed(self):
-    #     """Return True if the variable has been constructed."""
-
-    # @abstractmethod
-    # def fix(self, value, *, skip_validation=False):
-    #     """Fix the value of the variable."""
-
-    # @property
-    # @abstractmethod
-    # def ctype(self):
-    #     """Return the type of the variable."""
-
     @property
     @abstractmethod
     def name(self):
@@ -111,17 +94,6 @@ class OmltScalar(OmltVar):
 
     def is_indexed(self):
         return False
-
-    # Bound-setting interface for scalar variables:
-    # @property
-    # @abstractmethod
-    # def bounds(self):
-    #     """Return a tuple with the lower and upper bounds."""
-
-    # @bounds.setter
-    # @abstractmethod
-    # def bounds(self, val):
-    #     """Set lower and upper bounds to the given tuple."""
 
     @property
     @abstractmethod
@@ -212,20 +184,6 @@ class OmltIndexed(OmltVar):
 
     def is_indexed(self):
         return True
-
-    # @property
-    # @abstractmethod
-    # def index_set(self):
-    #     """Return the index set for the variable."""
-
-    # # Bound-setting interface for indexed variables:
-    # @abstractmethod
-    # def setub(self, value):
-    #     """Set upper bounds on all component variables."""
-
-    # @abstractmethod
-    # def setlb(self, value):
-    #     """Set lower bounds on all component variables."""
 
     # Interface: act as a dict for the sub-variables.
     @abstractmethod

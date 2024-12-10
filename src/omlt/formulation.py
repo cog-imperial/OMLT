@@ -55,6 +55,16 @@ class _PyomoFormulationInterface(abc.ABC):
         corresponding mathematical formulation of the model.
         """
 
+    @property
+    @abc.abstractmethod
+    def pyomo_only(self):
+        """Pyomo Only.
+
+        Return True if this formulation can only be built on a Pyomo
+        block, and False if it can be built on blocks using other
+        modeling languages.
+        """
+
 
 class _PyomoFormulation(_PyomoFormulationInterface):
     """Pyomo Formulation.
