@@ -448,7 +448,7 @@ class OmltConstraintIndexedJuMP(OmltConstraintIndexed):
         self.format = "jump"
         self._jumpcons = {idx: None for idx in self._index_set[0]}
 
-    def keys(self, *, sort=False):  # noqa: ARG002
+    def keys(self, sort=False):  # noqa: ARG002, FBT002
         yield from self._index_set
 
     def __setitem__(self, label, item):
