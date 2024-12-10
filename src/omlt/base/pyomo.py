@@ -312,7 +312,7 @@ class OmltExprScalarPyomo(OmltExpr, pyo.Expression):
     def __init__(self, expr=None):
         self._index_set = {}
         if isinstance(expr, OmltExprScalarPyomo):
-            self._expression : pyo.Expression = expr._expression
+            self._expression: pyo.Expression = expr._expression
         elif isinstance(expr, (pyo.Expression, pyo.NumericValue)):
             self._expression = expr
         elif isinstance(expr, tuple):
