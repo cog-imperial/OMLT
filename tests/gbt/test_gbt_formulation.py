@@ -4,6 +4,7 @@ import pyomo.environ as pe
 import pytest
 
 from omlt import OmltBlock
+from omlt.base import OmltVarFactory
 from omlt.dependencies import onnx, onnx_available
 from omlt.gbt.gbt_formulation import GBTBigMFormulation
 from omlt.gbt.model import GradientBoostedTreeModel
@@ -14,6 +15,8 @@ Z_L_VARS = 160
 SINGLE_LEAVES = 20
 SPLITS = 140
 
+var_factory = OmltVarFactory()
+
 
 @pytest.mark.skip("Francesco and Alex need to check this test")
 def test_formulation_with_continuous_variables():
@@ -21,11 +24,11 @@ def test_formulation_with_continuous_variables():
 
     m = pe.ConcreteModel()
 
-    m.x = pe.Var(range(4), bounds=(-2.0, 2.0))
+    m.x = var_factory.new_var(range(4), bounds=(-2.0, 2.0))
     m.x[3].setlb(0.0)
     m.x[3].setub(1.0)
 
-    m.z = pe.Var()
+    m.z = var_factory.new_var()
 
     m.gbt = OmltBlock()
     m.gbt.build_formulation(GBTBigMFormulation(GradientBoostedTreeModel(model)))

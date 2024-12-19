@@ -27,6 +27,7 @@ linear-tree = ["linear-tree"]
 keras = ["tensorflow", "keras"]
 keras-gpu = ["tensorflow[and-cuda]", "keras"]
 torch = ["torch", "torch-geometric"]
+jump = ["juliacall"]
 dev-tools = [
   "ruff",
   "mypy",
@@ -52,10 +53,10 @@ docs = [
   "linear-tree",
 ]
 dev = [
-  "omlt[dev-tools,keras,torch,linear-tree,docs]",
+  "omlt[dev-tools,jump,keras,torch,linear-tree,docs]",
 ]
 dev-gpu = [
-  "omlt[dev-tools,keras-gpu,torch,linear-tree,docs]",
+  "omlt[dev-tools,jump,keras-gpu,torch,linear-tree,docs]",
 ]
 
 
@@ -153,6 +154,7 @@ check_untyped_defs = true
 disallow_untyped_decorators = true
 warn_unreachable = true
 disallow_any_generics = true
+disable_error_code = "attr-defined,misc"
 
 [[tool.mypy.overrides]]
 module = [
@@ -167,6 +169,7 @@ module = [
   "keras.*",
   "tensorflow.*",
   "torch_geometric.*",
+  "juliacall.*",
 ]
 ignore_missing_imports = true
 
