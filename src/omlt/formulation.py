@@ -3,6 +3,8 @@ import weakref
 
 import pyomo.environ as pyo
 
+from omlt.base import OmltConstraintFactory, OmltVarFactory
+
 
 class _PyomoFormulationInterface(abc.ABC):
     """Pyomo Formulation Interface.
@@ -53,6 +55,16 @@ class _PyomoFormulationInterface(abc.ABC):
         corresponding mathematical formulation of the model.
         """
 
+    @property
+    @abc.abstractmethod
+    def pyomo_only(self):
+        """Pyomo Only.
+
+        Return True if this formulation can only be built on a Pyomo
+        block, and False if it can be built on blocks using other
+        modeling languages.
+        """
+
 
 class _PyomoFormulation(_PyomoFormulationInterface):
     """Pyomo Formulation.
@@ -72,12 +84,9 @@ class _PyomoFormulation(_PyomoFormulationInterface):
     def block(self):
         """Block.
 
-        The underlying block containing the constraints / variables for this
-        formulation.
+        The underlying block containing the constraints/variables for this formulation.
         """
-        if self.__block is not None:
-            return self.__block()
-        return None
+        return self.__block()
 
 
 def scalar_or_tuple(x):
@@ -87,16 +96,23 @@ def scalar_or_tuple(x):
 
 
 def _setup_scaled_inputs_outputs(block, scaler=None, scaled_input_bounds=None):
+    var_factory = OmltVarFactory()
     if scaled_input_bounds is not None:
         bnds = {
             k: (float(scaled_input_bounds[k][0]), float(scaled_input_bounds[k][1]))
             for k in block.inputs_set
         }
-        block.scaled_inputs = pyo.Var(block.inputs_set, initialize=0, bounds=bnds)
+        block.scaled_inputs = var_factory.new_var(
+            block.inputs_set, initialize=0, lang=block._format, bounds=bnds
+        )
     else:
-        block.scaled_inputs = pyo.Var(block.inputs_set, initialize=0)
+        block.scaled_inputs = var_factory.new_var(
+            block.inputs_set, initialize=0, lang=block._format
+        )
 
-    block.scaled_outputs = pyo.Var(block.outputs_set, initialize=0)
+    block.scaled_outputs = var_factory.new_var(
+        block.outputs_set, initialize=0, lang=block._format
+    )
 
     if scaled_input_bounds is not None and scaler is None:
         # set the bounds on the inputs to be the same as the scaled inputs
@@ -128,16 +144,21 @@ def _setup_scaled_inputs_outputs(block, scaler=None, scaled_input_bounds=None):
         output_unscaling_expressions = scaler.get_unscaled_output_expressions(
             output_unscaling_expressions
         )
+    constraint_factory = OmltConstraintFactory()
 
-    @block.Constraint(block.scaled_inputs.index_set())
-    def _scale_input_constraint(b, *args):
-        return (
-            block.scaled_inputs[args]
-            == input_scaling_expressions[scalar_or_tuple(args)]
+    block._scale_input_constraint = constraint_factory.new_constraint(
+        block.inputs_set, lang=block._format
+    )
+
+    for idx in block.inputs_set:
+        block._scale_input_constraint[idx] = (
+            block.scaled_inputs[idx] == input_scaling_expressions[idx]
         )
 
-    @block.Constraint(block.outputs.index_set())
-    def _scale_output_constraint(b, *args):
-        return (
-            block.outputs[args] == output_unscaling_expressions[scalar_or_tuple(args)]
+    block._scale_output_constraint = constraint_factory.new_constraint(
+        block.outputs_set, lang=block._format
+    )
+    for idx in block.outputs_set:
+        block._scale_output_constraint[idx] = (
+            block.outputs[idx] == output_unscaling_expressions[idx]
         )

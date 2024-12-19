@@ -2,6 +2,8 @@ from functools import partial
 
 import pyomo.environ as pyo
 
+from omlt.base import OmltConstraintFactory, OmltVarFactory
+from omlt.block import OmltBlockCore
 from omlt.formulation import _PyomoFormulation, _setup_scaled_inputs_outputs
 from omlt.neuralnet.activations import (
     ACTIVATION_FUNCTION_MAP as _DEFAULT_ACTIVATION_FUNCTIONS,
@@ -138,8 +140,12 @@ class FullSpaceNNFormulation(_PyomoFormulation):
             raise ValueError(MULTI_OUTPUTS_UNSUPPORTED)
         return network_outputs[0].output_indexes
 
+    @property
+    def pyomo_only(self):
+        return False
 
-def _build_neural_network_formulation(  # noqa: C901
+
+def _build_neural_network_formulation(  # noqa: C901,PLR0912,PLR0915
     block, network_structure, layer_constraints, activation_constraints
 ):
     """Adds the neural network formulation to the given Pyomo block.
@@ -161,34 +167,61 @@ def _build_neural_network_formulation(  # noqa: C901
     block.layers = pyo.Set(initialize=[id(layer) for layer in layers], ordered=True)
 
     # create the z and z_hat variables for each of the layers
-    @block.Block(block.layers)
-    def layer(b, layer_id):
-        net_layer = net.layer(layer_id)
-        b.z = pyo.Var(net_layer.output_indexes, initialize=0)
-        if isinstance(net_layer, InputLayer):
-            for index in net_layer.output_indexes:
-                input_var = block.scaled_inputs[index]
-                z_var = b.z[index]
-                z_var.setlb(input_var.lb)
-                z_var.setub(input_var.ub)
-        else:
-            # add zhat only to non input layers
-            b.zhat = pyo.Var(net_layer.output_indexes, initialize=0)
+    var_factory = OmltVarFactory()
 
-        return b
+    if block._format == "pyomo":
+
+        @block.Block(block.layers)
+        def layer(b, layer_id):
+            net_layer = net.layer(layer_id)
+            b.z = var_factory.new_var(
+                net_layer.output_indexes, initialize=0, lang=block._format
+            )
+            if isinstance(net_layer, InputLayer):
+                for index in net_layer.output_indexes:
+                    input_var = block.scaled_inputs[index]
+                    z_var = b.z[index]
+                    z_var.setlb(input_var.lb)
+                    z_var.setub(input_var.ub)
+            else:
+                # add zhat only to non input layers
+                b.zhat = var_factory.new_var(
+                    net_layer.output_indexes, initialize=0, lang=block._format
+                )
+
+            return b
+    else:
+        block.layers.construct()
+        block.layer = {lyr: OmltBlockCore() for lyr in block.layers}
+        for lyr in block.layer:
+            block.layer[lyr]._format = block._format
+        for layer_id in block.layers:
+            net_layer = net.layer(layer_id)
+            block.layer[layer_id].z = var_factory.new_var(
+                net_layer.output_indexes, initialize=0, lang=block._format
+            )
+            if isinstance(net_layer, InputLayer):
+                for index in net_layer.output_indexes:
+                    input_var = block.scaled_inputs[index]
+                    z_var = block.layer[layer_id].z[index]
+                    z_var.setlb(input_var.lb)
+                    z_var.setub(input_var.ub)
+            else:
+                # add zhat only to non input layers
+                block.layer[layer_id].zhat = var_factory.new_var(
+                    net_layer.output_indexes, initialize=0, lang=block._format
+                )
 
     for layer in layers:
         if isinstance(layer, InputLayer):
             continue
         layer_id = id(layer)
         layer_block = block.layer[layer_id]
-
         layer_constraints_func = layer_constraints.get(type(layer), None)
         if layer_constraints_func is None:
             msg = f"Layer type {type(layer)} is not supported by this formulation."
             raise ValueError(msg)
         layer_constraints_func(block, net, layer_block, layer)
-
         activation_constraints_func = activation_constraints.get(layer.activation, None)
         if activation_constraints_func is None:
             msg = f"Activation {layer.activation} is not supported by this formulation."
@@ -197,14 +230,20 @@ def _build_neural_network_formulation(  # noqa: C901
 
     # setup input variables constraints
     # currently only support a single input layer
+    constraint_factory = OmltConstraintFactory()
     input_layers = list(net.input_layers)
     if len(input_layers) != 1:
         raise ValueError(MULTI_INPUTS_UNSUPPORTED)
     input_layer = input_layers[0]
 
-    @block.Constraint(input_layer.output_indexes)
-    def input_assignment(b, *output_index):
-        return b.scaled_inputs[output_index] == b.layer[id(input_layer)].z[output_index]
+    block.input_assignment = constraint_factory.new_constraint(
+        input_layer.output_indexes, lang=block._format
+    )
+    for output_index in input_layer.output_indexes:
+        block.input_assignment[output_index] = (
+            block.scaled_inputs[output_index]
+            == block.layer[id(input_layer)].z[output_index]
+        )
 
     # setup output variables constraints
     # currently only support a single output layer
@@ -213,10 +252,13 @@ def _build_neural_network_formulation(  # noqa: C901
         raise ValueError(MULTI_OUTPUTS_UNSUPPORTED)
     output_layer = output_layers[0]
 
-    @block.Constraint(output_layer.output_indexes)
-    def output_assignment(b, *output_index):
-        return (
-            b.scaled_outputs[output_index] == b.layer[id(output_layer)].z[output_index]
+    block.output_assignment = constraint_factory.new_constraint(
+        output_layer.output_indexes, lang=block._format
+    )
+    for output_index in output_layer.output_indexes:
+        block.output_assignment[output_index] = (
+            block.scaled_outputs[output_index]
+            == block.layer[id(output_layer)].z[output_index]
         )
 
 
@@ -287,6 +329,10 @@ class ReluComplementarityFormulation(FullSpaceNNFormulation):
             "relu": ComplementarityReLUActivation(),
         }
 
+    @property
+    def pyomo_only(self):
+        return True
+
 
 class ReducedSpaceNNFormulation(_PyomoFormulation):
     """Reduced Space Neural Network Formulation.
@@ -325,7 +371,7 @@ class ReducedSpaceNNFormulation(_PyomoFormulation):
     def _supported_default_activation_functions(self):
         return dict(_DEFAULT_ACTIVATION_FUNCTIONS)
 
-    def _build_formulation(self):
+    def _build_formulation(self):  # noqa: C901,PLR0912
         _setup_scaled_inputs_outputs(
             self.block, self.__scaling_object, self.__scaled_input_bounds
         )
@@ -336,8 +382,13 @@ class ReducedSpaceNNFormulation(_PyomoFormulation):
 
         # create the blocks for each layer
         block.layers = pyo.Set(initialize=[id(layer) for layer in layers], ordered=True)
-        block.layer = pyo.Block(block.layers)
-
+        if block._format == "pyomo":
+            block.layer = pyo.Block(block.layers)
+        else:
+            block.layers.construct()
+            block.layer = {lyr: OmltBlockCore() for lyr in block.layers}
+            for lyr in block.layer:
+                block.layer[lyr]._format = block._format
         # currently only support a single input layer
         input_layers = list(net.input_layers)
         if len(input_layers) != 1:
@@ -349,15 +400,28 @@ class ReducedSpaceNNFormulation(_PyomoFormulation):
         input_layer = input_layers[0]
         input_layer_id = id(input_layer)
         input_layer_block = block.layer[input_layer_id]
-
         # connect the outputs of the input layer to
         # the main inputs on the block
-        @input_layer_block.Expression(input_layer.output_indexes)
-        def z(b, *output_index):
-            pb = b.parent_block()
-            return pb.scaled_inputs[output_index]
+        var_factory = OmltVarFactory()
+        constraint_factory = OmltConstraintFactory()
 
-        # loop over the layers and build the expressions
+        input_layer_block.z = var_factory.new_var(
+            *input_layer.output_indexes, lang=block._format
+        )
+        block.connect_inputs = constraint_factory.new_constraint(
+            *input_layer.output_indexes, lang=block._format
+        )
+
+        for output_index in input_layer.output_indexes:
+            if isinstance(output_index, tuple) and len(output_index) == 1:
+                idx_0 = output_index[0]
+            else:
+                idx_0 = output_index
+
+            block.connect_inputs[idx_0] = (
+                input_layer_block.z[output_index] == block.scaled_inputs[idx_0]
+            )
+
         for layer in layers:
             if isinstance(layer, InputLayer):
                 # skip the InputLayer
@@ -381,7 +445,6 @@ class ReducedSpaceNNFormulation(_PyomoFormulation):
                     " formulation."
                 )
                 raise ValueError(msg)
-
             layer_func(block, net, layer_block, layer, activation_func)
 
         # setup output variable constraints
@@ -395,12 +458,13 @@ class ReducedSpaceNNFormulation(_PyomoFormulation):
             raise ValueError(msg)
         output_layer = output_layers[0]
 
-        @block.Constraint(output_layer.output_indexes)
-        def output_assignment(b, *output_index):
-            b.parent_block()
-            return (
-                b.scaled_outputs[output_index]
-                == b.layer[id(output_layer)].z[output_index]
+        block.output_assignment = constraint_factory.new_constraint(
+            output_layer.output_indexes, lang=block._format
+        )
+        for output_index in output_layer.output_indexes:
+            block.output_assignment[output_index] = (
+                block.scaled_outputs[output_index]
+                == block.layer[id(output_layer)].z[output_index]
             )
 
     @property
@@ -418,6 +482,10 @@ class ReducedSpaceNNFormulation(_PyomoFormulation):
         if len(network_outputs) != 1:
             raise ValueError(MULTI_OUTPUTS_UNSUPPORTED)
         return network_outputs[0].output_indexes
+
+    @property
+    def pyomo_only(self):
+        return False
 
 
 class ReducedSpaceSmoothNNFormulation(ReducedSpaceNNFormulation):
@@ -470,7 +538,7 @@ class ReluPartitionFormulation(_PyomoFormulation):
 
         self.__split_func = split_func
 
-    def _build_formulation(self):  # noqa: C901
+    def _build_formulation(self):  # noqa: C901,PLR0912,PLR0915
         _setup_scaled_inputs_outputs(
             self.block, self.__scaling_object, self.__scaled_input_bounds
         )
@@ -482,21 +550,50 @@ class ReluPartitionFormulation(_PyomoFormulation):
         block.layers = pyo.Set(initialize=[id(layer) for layer in layers], ordered=True)
 
         # create the z and z_hat variables for each of the layers
-        @block.Block(block.layers)
-        def layer(b, layer_id):
-            net_layer = net.layer(layer_id)
-            b.z = pyo.Var(net_layer.output_indexes, initialize=0)
-            if isinstance(net_layer, InputLayer):
-                for index in net_layer.output_indexes:
-                    input_var = block.scaled_inputs[index]
-                    z_var = b.z[index]
-                    z_var.setlb(input_var.lb)
-                    z_var.setub(input_var.ub)
-            else:
-                # add zhat only to non input layers
-                b.zhat = pyo.Var(net_layer.output_indexes, initialize=0)
+        var_factory = OmltVarFactory()
 
-            return b
+        if block._format == "pyomo":
+
+            @block.Block(block.layers)
+            def layer(b, layer_id):
+                b._format = block._format
+                net_layer = net.layer(layer_id)
+                b.z = var_factory.new_var(
+                    net_layer.output_indexes, lang=b._format, initialize=0
+                )
+                if isinstance(net_layer, InputLayer):
+                    for index in net_layer.output_indexes:
+                        input_var = block.scaled_inputs[index]
+                        z_var = b.z[index]
+                        z_var.setlb(input_var.lb)
+                        z_var.setub(input_var.ub)
+                else:
+                    # add zhat only to non input layers
+                    b.zhat = var_factory.new_var(
+                        net_layer.output_indexes, lang=b._format, initialize=0
+                    )
+
+                return b
+        else:
+            block.layers.construct()
+            block.layer = {lyr: OmltBlockCore() for lyr in block.layers}
+            for layer_id in block.layers:
+                block.layer[layer_id]._format = block._format
+                net_layer = net.layer(layer_id)
+                block.layer[layer_id].z = var_factory.new_var(
+                    net_layer.output_indexes, initialize=0, lang=block._format
+                )
+                if isinstance(net_layer, InputLayer):
+                    for index in net_layer.output_indexes:
+                        input_var = block.scaled_inputs[index]
+                        z_var = block.layer[layer_id].z[index]
+                        z_var.setlb(input_var.lb)
+                        z_var.setub(input_var.ub)
+                else:
+                    # add zhat only to non input layers
+                    block.layer[layer_id].zhat = var_factory.new_var(
+                        net_layer.output_indexes, initialize=0, lang=block._format
+                    )
 
         for layer in layers:
             if isinstance(layer, InputLayer):
@@ -528,16 +625,19 @@ class ReluPartitionFormulation(_PyomoFormulation):
 
         # setup input variables constraints
         # currently only support a single input layer
+        constraint_factory = OmltConstraintFactory()
         input_layers = list(net.input_layers)
         if len(input_layers) != 1:
             raise ValueError(MULTI_INPUTS_UNSUPPORTED)
         input_layer = input_layers[0]
 
-        @block.Constraint(input_layer.output_indexes)
-        def input_assignment(b, *output_index):
-            return (
-                b.scaled_inputs[output_index]
-                == b.layer[id(input_layer)].z[output_index]
+        block.input_assignment = constraint_factory.new_constraint(
+            input_layer.output_indexes, lang=block._format
+        )
+        for output_index in input_layer.output_indexes:
+            block.input_assignment[output_index] = (
+                block.scaled_inputs[output_index]
+                == block.layer[id(input_layer)].z[output_index]
             )
 
         # setup output variables constraints
@@ -547,11 +647,13 @@ class ReluPartitionFormulation(_PyomoFormulation):
             raise ValueError(MULTI_OUTPUTS_UNSUPPORTED)
         output_layer = output_layers[0]
 
-        @block.Constraint(output_layer.output_indexes)
-        def output_assignment(b, *output_index):
-            return (
-                b.scaled_outputs[output_index]
-                == b.layer[id(output_layer)].z[output_index]
+        block.output_assignment = constraint_factory.new_constraint(
+            output_layer.output_indexes, lang=block._format
+        )
+        for output_index in output_layer.output_indexes:
+            block.output_assignment[output_index] = (
+                block.scaled_outputs[output_index]
+                == block.layer[id(output_layer)].z[output_index]
             )
 
     @property
@@ -569,3 +671,7 @@ class ReluPartitionFormulation(_PyomoFormulation):
         if len(network_outputs) != 1:
             raise ValueError(MULTI_OUTPUTS_UNSUPPORTED)
         return network_outputs[0].output_indexes
+
+    @property
+    def pyomo_only(self):
+        return False
