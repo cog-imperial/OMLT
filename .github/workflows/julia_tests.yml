@@ -1,0 +1,17 @@
+name: Julia testing for OMLT
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+  # You may pin to the exact commit or the version.
+  # uses: julia-actions/setup-julia@5c9647d97b78a5debe5164e9eec09d653d29bd71
+jobs:
+  install:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: julia-actions/setup-julia@v2.6.1
+        with:
+          version: '1.10' # currently doesn't work with Julia 1.11 due to an issue with the attempt_import function.
+      - run: echo "Hello world!"
