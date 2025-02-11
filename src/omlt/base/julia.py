@@ -659,16 +659,16 @@ class OmltExprJuMP(OmltExpr):
 
     def logarithm(self, a):
         if isinstance(a, OmltExprJuMP):
-            return jump.NonlinearExpr(convert(Jl.Symbol, "log"), a._jumpexpr)
+            return jump.NonlinearExpr(convert(Jl.Symbol, ":log"), a._jumpexpr)
         if isinstance(a, (JumpVar, OmltScalarJuMP)):
-            return jump.NonlinearExpr(convert(Jl.Symbol, "log"), a.varref)
+            return jump.NonlinearExpr(convert(Jl.Symbol, ":log"), a.varref)
         raise NotImplementedError
 
     def hyptangent(self, a):
         if isinstance(a, OmltExprJuMP):
-            return jump.NonlinearExpr(convert(Jl.Symbol, "tanh"), a._jumpexpr)
+            return jump.NonlinearExpr(convert(Jl.Symbol, ":tanh"), a._jumpexpr)
         if isinstance(a, (JumpVar, OmltScalarJuMP)):
-            return jump.NonlinearExpr(convert(Jl.Symbol, "tanh"), a.varref)
+            return jump.NonlinearExpr(convert(Jl.Symbol, ":tanh"), a.varref)
         raise NotImplementedError
 
     def exp(self):
