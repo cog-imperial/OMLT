@@ -5,7 +5,7 @@ Pkg.add(name="IJulia", version="1.25.0")
 Pkg.add(["Test", "JuMP", "Ipopt", "HiGHS"])
 
 using CondaPkg
-CondaPkg.add_pip("omlt", version="@.")
+CondaPkg.add_pip("omlt", version="@$GITHUB_WORKSPACE")
 
 using PythonCall
 using JuMP
