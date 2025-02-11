@@ -1,7 +1,8 @@
 using Pkg
-Pkg.add(name="PythonCall", version="0.9.23")
 Pkg.add(name="CondaPkg", version="0.2.23")
-Pkg.add(["Test", "IJulia", "JuMP", "Ipopt", "HiGHS"])
+Pkg.add(name="PythonCall", version="0.9.23")
+Pkg.add(name="IJulia", version="1.25.0")
+Pkg.add(["Test", "JuMP", "Ipopt", "HiGHS"])
 
 using CondaPkg
 CondaPkg.add_pip("omlt")
