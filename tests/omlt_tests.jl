@@ -1,3 +1,10 @@
+using Pkg
+
+Pkg.add(["Test", "PythonCall", "CondaPkg", "JuMP", "Ipopt", "HiGHS"])
+
+using CondaPkg
+CondaPkg.add_pip("omlt")
+
 using PythonCall
 using JuMP
 using Ipopt
