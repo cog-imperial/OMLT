@@ -315,7 +315,7 @@ class OmltIndexedJuMP(OmltIndexed):
             _ub = {i: None for i in self._index_set}
         else:
             msg = (
-                "Bounds must be given as a tuple," " but %s was given.",
+                "Bounds must be given as a tuple, but %s was given.",
                 self._bounds,
             )
             raise TypeError(msg)
