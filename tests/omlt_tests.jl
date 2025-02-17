@@ -5,10 +5,10 @@ Pkg.add(name="IJulia", version="1.25.0")
 Pkg.add(["Test", "JuMP", "Ipopt", "HiGHS"])
 
 println(Pkg.status())
-println(CondaPkg.status())
 
 using CondaPkg
 CondaPkg.add_pip("omlt", version="@file:///home/runner/work/OMLT/OMLT/")
+println(CondaPkg.status())
 
 using PythonCall
 using JuMP
