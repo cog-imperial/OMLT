@@ -153,7 +153,7 @@ end
     )
     scaled_input_bounds = Dict(0 => (0,5))
     
-    path = "models/keras_linear_131_sigmoid.onnx"
+    path = "tests/models/keras_linear_131_sigmoid.onnx"
     
     py_model = onnx_py.load(path)
     net = omlt_io.load_onnx_neural_network(py_model, scaler, scaled_input_bounds)
@@ -190,7 +190,7 @@ end
     )
     scaled_input_bounds = Dict(0 => (0,5))
     
-    path = "models/keras_linear_131.onnx"
+    path = "tests/models/keras_linear_131.onnx"
     
     py_model = onnx_py.load(path)
     net = omlt_io.load_onnx_neural_network(py_model, scaler, scaled_input_bounds)
