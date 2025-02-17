@@ -13,5 +13,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: julia-actions/setup-julia@v2.6.1
-      - run: julia tests/test_setup.jl
-      - run: julia tests/omlt_tests.jl
+      - run: cd tests/
+      - run: julia test_setup.jl
+      - run: julia omlt_tests.jl
