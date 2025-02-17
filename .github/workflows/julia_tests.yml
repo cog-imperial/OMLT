@@ -15,4 +15,5 @@ jobs:
       - uses: julia-actions/setup-julia@v2.6.1
         with:
           version: '1.10' # currently doesn't work with Julia 1.11 due to an issue with the attempt_import function.
+      - run: julia tests/test_setup.jl
       - run: julia tests/omlt_tests.jl
