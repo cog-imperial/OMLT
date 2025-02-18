@@ -98,7 +98,7 @@ class OmltExprFactory:
 
     def new_expression(
         self, lang: str | None = DEFAULT_MODELING_LANGUAGE, **kwargs: Any
-    ) -> Any:
+    ) -> OmltExpr:
         if lang not in self.exprs:
             msg = (
                 "Expression format %s not recognized. Supported formats are %s",

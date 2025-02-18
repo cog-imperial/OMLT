@@ -240,7 +240,7 @@ class OmltVarFactory:
         lang: str = DEFAULT_MODELING_LANGUAGE,
         binary: bool = False,
         **kwargs: Any,
-    ) -> Any:
+    ) -> OmltVar:
         if indexes:
             if lang not in self.indexed:
                 msg = (

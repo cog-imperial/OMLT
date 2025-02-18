@@ -87,7 +87,7 @@ class OmltConstraintFactory:
 
     def new_constraint(
         self, *indexes: Any, lang: str = DEFAULT_MODELING_LANGUAGE, **kwargs: Any
-    ) -> Any:
+    ) -> OmltConstraint:
         if indexes:
             if lang not in self.indexed:
                 msg = (
