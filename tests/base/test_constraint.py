@@ -3,6 +3,8 @@ import pytest
 
 from omlt.base import (
     OmltConstraintFactory,
+    OmltConstraintIndexed,
+    OmltScalar,
     OmltVarFactory,
 )
 
@@ -18,11 +20,13 @@ def test_build_constraint():
     v1 = var_factory.new_var()
     v1.domain = pyo.Integers
     v1.value = VAR1_VALUE
+    assert isinstance(v1, OmltScalar)
     e1 = v1 + CONST_VALUE
 
     v2 = var_factory.new_var()
     v2.domain = pyo.Integers
     v2.value = VAR2_VALUE
+    assert isinstance(v2, OmltScalar)
     e2 = v2 + CONST_VALUE
 
     c_equal_expressions = e1 == e2
@@ -68,9 +72,12 @@ def test_constraint_invalid_index():
     v1 = var_factory.new_var()
     v1.domain = pyo.Integers
     v1.value = VAR1_VALUE
+    assert isinstance(v1, OmltScalar)
     e1 = v1 + CONST_VALUE
 
     c = constraint_factory.new_constraint(range(3))
+
+    assert isinstance(c, OmltConstraintIndexed)
     expected_msg = "Couldn't find index %s in index set %s."
     with pytest.raises(KeyError, match=expected_msg):
         c[4] = e1 >= 0

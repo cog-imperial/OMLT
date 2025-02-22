@@ -91,6 +91,7 @@ def partition_based_dense_relu_layer(net_block, net, layer_block, layer, split_f
 
             var_factory = OmltVarFactory()
             b.sig = var_factory.new_var(binary=True, lang=net_block._format)
+            minus_sig = 1 - b.sig # type: ignore[operator]
             b.z2 = var_factory.new_var(range(num_splits), lang=net_block._format)
 
             mapper = layer.input_index_mapper
@@ -138,7 +139,6 @@ def partition_based_dense_relu_layer(net_block, net, layer_block, layer, split_f
                 b.eq_16_lb[split_index] = b.sig * lb <= expr - z2
                 b.eq_16_ub[split_index] = b.sig * ub >= expr - z2
 
-                minus_sig = 1 - b.sig
                 b.eq_17_lb[split_index] = minus_sig * lb <= z2
                 b.eq_17_ub[split_index] = minus_sig * ub >= z2
 
@@ -180,14 +180,14 @@ def partition_based_dense_relu_layer(net_block, net, layer_block, layer, split_f
             )
             b.eq_14 = constraint_factory.new_constraint(
                 expr=sum(b.z2[s] for s in range(num_splits))
-                + bias * (1 - b.sig)._expression
+                + bias * minus_sig._expression
                 >= 0,
                 lang=net_block._format,
             )
             b.eq_15 = constraint_factory.new_constraint(
                 expr=layer_block.z[output_index]
                 == sum(b.z2[s] for s in range(num_splits))
-                + bias * (1 - b.sig)._expression,
+                + bias * minus_sig._expression,
                 lang=net_block._format,
             )
     else:

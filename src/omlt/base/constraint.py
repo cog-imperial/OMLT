@@ -56,6 +56,12 @@ class OmltConstraintIndexed(OmltConstraint):
         self.name = None
         self.format = lang
 
+    def __getitem__(self, item):
+        pass
+
+    def __setitem__(self, item, value):
+        pass
+
     def keys(self, sort=False):  # noqa: ARG002, FBT002
         yield from self._index_set
 

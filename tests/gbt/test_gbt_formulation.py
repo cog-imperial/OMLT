@@ -4,7 +4,7 @@ import pyomo.environ as pe
 import pytest
 
 from omlt import OmltBlock
-from omlt.base import OmltVarFactory
+from omlt.base import OmltIndexed, OmltVarFactory
 from omlt.dependencies import onnx, onnx_available
 from omlt.gbt.gbt_formulation import GBTBigMFormulation
 from omlt.gbt.model import GradientBoostedTreeModel
@@ -25,6 +25,7 @@ def test_formulation_with_continuous_variables():
     m = pe.ConcreteModel()
 
     m.x = var_factory.new_var(range(4), bounds=(-2.0, 2.0))
+    assert isinstance(m.x, OmltIndexed)
     m.x[3].setlb(0.0)
     m.x[3].setub(1.0)
 

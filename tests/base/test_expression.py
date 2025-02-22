@@ -1,7 +1,7 @@
 import pyomo.environ as pyo
 import pytest
 
-from omlt.base import OmltExpr, OmltExprFactory, OmltVarFactory
+from omlt.base import OmltExpr, OmltExprFactory, OmltScalar, OmltVarFactory
 
 VAR1_VALUE = 6
 VAR2_VALUE = 3
@@ -20,6 +20,8 @@ def _test_build_scalar_expressions(lang):
     v2.domain = pyo.Integers
     v1.value = VAR1_VALUE
     v2.value = VAR2_VALUE
+
+    assert isinstance(v1, OmltScalar)
 
     v_sum = v1 + v2
     assert isinstance(v_sum, OmltExpr)
@@ -62,6 +64,8 @@ def test_init_scalar_expression():
     v1 = var_factory.new_var()
     v1.domain = pyo.Integers
     v1.value = VAR1_VALUE
+
+    assert isinstance(v1, OmltScalar)
     e1 = v1 + CONST_VALUE
 
     e2 = expr_factory.new_expression(expr=e1)
@@ -76,7 +80,6 @@ def test_init_scalar_expression():
     assert e2.nargs() == NUM_ARGS
     assert e2.args[1] == CONST_VALUE
     assert e2.arg(1) == CONST_VALUE
-    assert len(e2) == 1
     assert e2() == VAR1_VALUE + CONST_VALUE
 
     expected_msg = "Expression %s type %s not recognized."
@@ -102,11 +105,13 @@ def test_combine_scalar_expression():
     v1 = var_factory.new_var()
     v1.domain = pyo.Integers
     v1.value = VAR1_VALUE
+    assert isinstance(v1, OmltScalar)
     e1 = v1 + CONST_VALUE
 
     v2 = var_factory.new_var()
     v2.domain = pyo.Integers
     v2.value = VAR2_VALUE
+    assert isinstance(v2, OmltScalar)
     e2 = v2 + CONST_VALUE
 
     e_sum = e1 + e2

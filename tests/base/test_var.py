@@ -1,7 +1,7 @@
 import pyomo.environ as pyo
 import pytest
 
-from omlt.base import OmltVarFactory
+from omlt.base import OmltIndexed, OmltVarFactory
 
 VAR_VALUE = 3
 FIX_VALUE = 2
@@ -62,6 +62,7 @@ def _test_indexed_var(lang):
     assert v.value == VAR_VALUE
 
     v.fix(2, skip_validation=True)
+    assert isinstance(v, OmltIndexed)
     for e in v:
         assert v[e].value == FIX_VALUE
 
