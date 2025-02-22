@@ -258,4 +258,4 @@ class OmltVarFactory:
             )
             raise KeyError(msg)
 
-        return self.scalars[lang](binary=binary, **kwargs) # type: ignore[abstract]
+        return self.scalars[lang](binary=binary, **kwargs)  # type: ignore[abstract]

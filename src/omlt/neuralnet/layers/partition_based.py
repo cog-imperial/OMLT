@@ -91,7 +91,7 @@ def partition_based_dense_relu_layer(net_block, net, layer_block, layer, split_f
 
             var_factory = OmltVarFactory()
             b.sig = var_factory.new_var(binary=True, lang=net_block._format)
-            minus_sig = 1 - b.sig # type: ignore[operator]
+            minus_sig = 1 - b.sig  # type: ignore[operator]
             b.z2 = var_factory.new_var(range(num_splits), lang=net_block._format)
 
             mapper = layer.input_index_mapper
