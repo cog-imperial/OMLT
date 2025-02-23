@@ -1,5 +1,5 @@
 using Pkg
-Pkg.add(name="CondaPkg", version="==0.2.24")
+Pkg.add(name="CondaPkg", version="0.2.24")
 Pkg.add(["Test", "PythonCall", "JuMP", "Ipopt", "HiGHS"])
 
 using CondaPkg
