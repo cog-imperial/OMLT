@@ -287,34 +287,16 @@ def partition_based_dense_relu_layer(net_block, net, layer_block, layer, split_f
                 w = layer.weights[local_index[-1], output_index[-1]]
                 expr += prev_layer_block.z[input_index] * w
                 if w >= 0:
-                    if prev_layer_block.z[input_index].lb is not None:
-                        lb += prev_layer_block.z[input_index].lb * w
-                    else:
-                        lb += -float("inf")
-                    if prev_layer_block.z[input_index].ub is not None:
-                        ub += prev_layer_block.z[input_index].ub * w
-                    else:
-                        ub += float("inf")
+                    lb += prev_layer_block.z[input_index].lb * w
+                    ub += prev_layer_block.z[input_index].ub * w
                 else:
-                    if prev_layer_block.z[input_index].ub is not None:
-                        lb += prev_layer_block.z[input_index].ub * w
-                    else:
-                        lb += -float("inf")
-                    if prev_layer_block.z[input_index].lb is not None:
-                        ub += prev_layer_block.z[input_index].lb * w
-                    else:
-                        ub += float("inf")
+                    lb += prev_layer_block.z[input_index].ub * w
+                    ub += prev_layer_block.z[input_index].lb * w
+
             # move this at the end to avoid numpy/pyomo var bug
             expr += bias
             lb += bias
             ub += bias
-
-            if lb == -float("inf"):
-                msg = "Expression is unbounded below."
-                raise ValueError(msg)
-            if ub == float("inf"):
-                msg = "Expression is unbounded above."
-                raise ValueError(msg)
 
             layer_block.z[output_index].setlb(0)
             layer_block.z[output_index].setub(max(0, ub))

@@ -95,10 +95,12 @@ class OmltBlockCore:
             self._format = lang
 
         if self._format != DEFAULT_MODELING_LANGUAGE and formulation.pyomo_only:
-            msg = (
-                f"OMLT does not support building {formulation} with modeling languages"
-                " other than Pyomo."
+            lang_msg = (
+                "OMLT does not support building %s with modeling languages"
+                " other than Pyomo.",
+                type(formulation),
             )
+            raise TypeError(lang_msg)
 
         self._setup_inputs_outputs(
             input_indexes=list(formulation.input_indexes),

@@ -9,6 +9,8 @@ from omlt.base.julia import (
     OmltScalarJuMP,
 )
 from omlt.dependencies import julia_available, onnx, onnx_available
+from omlt.gbt.gbt_formulation import GBTBigMFormulation
+from omlt.gbt.model import GradientBoostedTreeModel
 from omlt.neuralnet import (
     FullSpaceSmoothNNFormulation,
     ReducedSpaceSmoothNNFormulation,
@@ -234,3 +236,16 @@ def test_reduced_space_linear_jump(datadir):
     net = load_onnx_neural_network(neural_net, scaler, input_bounds=scaled_input_bounds)
     formulation = ReducedSpaceSmoothNNFormulation(net)
     m_neural_net_block.build_formulation(formulation)
+
+
+def test_invalid_formulations(datadir):
+    gbt_model = onnx.load(datadir.file("../gbt/continuous_model.onnx"))
+
+    m_block = OmltBlockJuMP()
+    expected_msg = (
+        "OMLT does not support building %s with modeling languages other than Pyomo."
+    )
+    with pytest.raises(TypeError, match=expected_msg):
+        m_block.build_formulation(
+            GBTBigMFormulation(GradientBoostedTreeModel(gbt_model))
+        )
