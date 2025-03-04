@@ -188,7 +188,7 @@ class OmltIndexed(OmltVar):
     # Interface: act as a dict for the sub-variables.
     @abstractmethod
     def __getitem__(self, item):
-        pass
+        """Return the element corresponding to the given index."""
 
     @abstractmethod
     def keys(self):

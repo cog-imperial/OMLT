@@ -1,6 +1,6 @@
 import pyomo.environ as pyo
 import pytest
-
+import numpy as np
 from omlt.base import OmltExpr, OmltExprFactory, OmltScalar, OmltVarFactory
 
 VAR1_VALUE = 6
@@ -123,6 +123,9 @@ def test_combine_scalar_expression():
     e_prod = e1 * e2
     assert e_prod() == (VAR1_VALUE + CONST_VALUE) * (VAR2_VALUE + CONST_VALUE)
 
+    e_quot = e1 / e2
+    assert e_quot() == (VAR1_VALUE + CONST_VALUE) / (VAR2_VALUE + CONST_VALUE)
+
     p_sum = e1 + CONST_VALUE
     assert p_sum() == VAR1_VALUE + 2 * CONST_VALUE
 
@@ -132,6 +135,9 @@ def test_combine_scalar_expression():
     p_prod = e1 * CONST_VALUE
     assert p_prod() == (VAR1_VALUE + CONST_VALUE) * CONST_VALUE
 
+    p_quot = e1 / CONST_VALUE
+    assert p_quot() == (VAR1_VALUE + CONST_VALUE) / CONST_VALUE
+
     r_sum = CONST_VALUE + e1
     assert r_sum() == VAR1_VALUE + 2 * CONST_VALUE
 
@@ -140,3 +146,21 @@ def test_combine_scalar_expression():
 
     r_prod = CONST_VALUE * e1
     assert r_prod() == (VAR1_VALUE + CONST_VALUE) * CONST_VALUE
+
+    r_quot = CONST_VALUE / e1
+    assert r_quot() == CONST_VALUE / (VAR1_VALUE + CONST_VALUE)
+
+def test_function_scalar_expression():
+    v1 = var_factory.new_var()
+    v1.domain = pyo.Integers
+    v1.value = VAR1_VALUE
+    e1 = v1 + CONST_VALUE
+
+    e_log = e1.log()
+    assert e_log() == np.log(VAR1_VALUE + CONST_VALUE)
+
+    e_exp = e1.exp()
+    assert e_exp() == np.exp(VAR1_VALUE + CONST_VALUE)
+
+    e_tanh = e1.tanh()
+    assert e_tanh() == np.tanh(VAR1_VALUE + CONST_VALUE)

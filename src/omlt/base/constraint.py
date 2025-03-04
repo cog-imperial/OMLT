@@ -57,10 +57,10 @@ class OmltConstraintIndexed(OmltConstraint):
         self.format = lang
 
     def __getitem__(self, item):
-        pass
+        """Return the scalar constraint corresponding to the given index."""
 
     def __setitem__(self, item, value):
-        pass
+        """Add the scalar constraint to the dict, at the given index."""
 
     def keys(self, sort=False):  # noqa: ARG002, FBT002
         yield from self._index_set
