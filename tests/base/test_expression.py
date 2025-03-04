@@ -151,10 +151,12 @@ def test_combine_scalar_expression():
     r_quot = CONST_VALUE / e1
     assert r_quot() == CONST_VALUE / (VAR1_VALUE + CONST_VALUE)
 
+
 def test_function_scalar_expression():
     v1 = var_factory.new_var()
     v1.domain = pyo.Integers
     v1.value = VAR1_VALUE
+    assert isinstance(v1, OmltScalar)
     e1 = v1 + CONST_VALUE
 
     e_log = e1.log()
