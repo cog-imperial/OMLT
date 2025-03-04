@@ -1,6 +1,7 @@
+import numpy as np
 import pyomo.environ as pyo
 import pytest
-import numpy as np
+
 from omlt.base import OmltExpr, OmltExprFactory, OmltScalar, OmltVarFactory
 
 VAR1_VALUE = 6
