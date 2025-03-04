@@ -77,7 +77,7 @@ class OmltConstraintFactory:
             for subclass in OmltConstraintIndexed.__subclasses__()
         }
 
-    def register(self, lang, indexed, varclass):
+    def register(self, lang, varclass, *, indexed=False):
         if lang is None:
             lang = varclass.format
         if indexed:

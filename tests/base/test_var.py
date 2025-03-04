@@ -1,7 +1,7 @@
 import pyomo.environ as pyo
 import pytest
 
-from omlt.base import OmltIndexed, OmltVarFactory
+from omlt.base import OmltIndexed, OmltIndexedPyomo, OmltScalarPyomo, OmltVarFactory
 
 VAR_VALUE = 3
 FIX_VALUE = 2
@@ -85,3 +85,15 @@ def test_indexed_invalid_lang():
     expected_msg = "Variable format %s not recognized. Supported formats are %s"
     with pytest.raises(KeyError, match=expected_msg):
         var_factory.new_var(range(3), lang="test")
+
+
+def test_factory_scalar_var_exists():
+    expected_msg = "Scalar variable format %s is already registered."
+    with pytest.raises(KeyError, match=expected_msg):
+        var_factory.register(None, OmltScalarPyomo, indexed=False)
+
+
+def test_factory_indexed_var_exists():
+    expected_msg = "Indexed variable format %s is already registered."
+    with pytest.raises(KeyError, match=expected_msg):
+        var_factory.register(None, OmltIndexedPyomo, indexed=True)

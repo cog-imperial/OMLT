@@ -4,6 +4,8 @@ import pytest
 from omlt.base import (
     OmltConstraintFactory,
     OmltConstraintIndexed,
+    OmltConstraintIndexedPyomo,
+    OmltConstraintScalarPyomo,
     OmltScalar,
     OmltVarFactory,
 )
@@ -84,3 +86,15 @@ def test_constraint_invalid_index():
 
     with pytest.raises(KeyError, match=expected_msg):
         _ = c[4]
+
+
+def test_factory_scalar_constraint_exists():
+    expected_msg = "Scalar constraint format %s is already registered."
+    with pytest.raises(KeyError, match=expected_msg):
+        constraint_factory.register(None, OmltConstraintScalarPyomo, indexed=False)
+
+
+def test_factory_indexed_constraint_exists():
+    expected_msg = "Indexed constraint format %s is already registered."
+    with pytest.raises(KeyError, match=expected_msg):
+        constraint_factory.register(None, OmltConstraintIndexedPyomo, indexed=True)

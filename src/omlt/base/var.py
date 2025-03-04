@@ -220,7 +220,7 @@ class OmltVarFactory:
             subclass.format: subclass for subclass in OmltIndexed.__subclasses__()
         }
 
-    def register(self, lang, indexed, varclass):
+    def register(self, lang, varclass, *, indexed):
         if lang is None:
             lang = varclass.format
         if indexed:

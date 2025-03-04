@@ -2,7 +2,13 @@ import numpy as np
 import pyomo.environ as pyo
 import pytest
 
-from omlt.base import OmltExpr, OmltExprFactory, OmltScalar, OmltVarFactory
+from omlt.base import (
+    OmltExpr,
+    OmltExprFactory,
+    OmltExprScalarPyomo,
+    OmltScalar,
+    OmltVarFactory,
+)
 
 VAR1_VALUE = 6
 VAR2_VALUE = 3
@@ -167,3 +173,9 @@ def test_function_scalar_expression():
 
     e_tanh = e1.tanh()
     assert e_tanh() == np.tanh(VAR1_VALUE + CONST_VALUE)
+
+
+def test_factory_expr_exists():
+    expected_msg = "Expression format %s is already registered."
+    with pytest.raises(KeyError, match=expected_msg):
+        expr_factory.register(None, OmltExprScalarPyomo)
