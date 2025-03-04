@@ -251,30 +251,11 @@ def partition_based_dense_relu_layer(net_block, net, layer_block, layer, split_f
                     w = weights[local_index[-1]]
                     expr += prev_layer_block.z[input_index] * w
                     if w >= 0:
-                        if prev_layer_block.z[input_index].lb is not None:
-                            lb += prev_layer_block.z[input_index].lb * w
-                        else:
-                            lb += -float("inf")
-                        if prev_layer_block.z[input_index].ub is not None:
-                            ub += prev_layer_block.z[input_index].ub * w
-                        else:
-                            ub += float("inf")
+                        lb += prev_layer_block.z[input_index].lb * w
+                        ub += prev_layer_block.z[input_index].ub * w
                     else:
-                        if prev_layer_block.z[input_index].ub is not None:
-                            lb += prev_layer_block.z[input_index].ub * w
-                        else:
-                            lb += -float("inf")
-                        if prev_layer_block.z[input_index].lb is not None:
-                            ub += prev_layer_block.z[input_index].lb * w
-                        else:
-                            ub += float("inf")
-
-                if lb == -float("inf"):
-                    msg = "Expression is unbounded below."
-                    raise ValueError(msg)
-                if ub == float("inf"):
-                    msg = "Expression is unbounded above."
-                    raise ValueError(msg)
+                        lb += prev_layer_block.z[input_index].ub * w
+                        ub += prev_layer_block.z[input_index].lb * w
 
                 z2 = layer_block.output_node_block[output_index].z2[split_index]
                 z2.setlb(min(0, lb))
