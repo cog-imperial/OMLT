@@ -67,7 +67,7 @@ class GBTBigMFormulation(_PyomoFormulation):
         return True
 
 
-def add_formulation_to_block(block, model_definition, input_vars, output_vars):  # noqa: C901, PLR0912, PLR0915
+def add_formulation_to_block(block, model_definition, input_vars, output_vars):  # noqa: C901, PLR0915
     r"""Adds the gradient-boosted trees formulation to the given Pyomo block.
 
     .. math::
@@ -292,8 +292,8 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars): 
             _sum_of_z_l(tree_id, subtree_root) <= 1 - y
         )
 
-    block.order_y = constraint_factory.new_constraint(y_index, lang=block._format)
-    for feature_id, branch_y_idx in y_index:
+    @block.Constraint(y_index)
+    def order_y(b, feature_id, branch_y_idx):
         r"""Add constraint to activate splits in the correct order.
 
         Mistry et al. Equ. (3e).
@@ -304,11 +304,9 @@ def add_formulation_to_block(block, model_definition, input_vars, output_vars): 
             \end{align*}
         """
         branch_values = branch_value_by_feature_id[feature_id]
-        if branch_y_idx < len(branch_values) - 1:
-            block.order_y[feature_id, branch_y_idx] = (
-                block.y[feature_id, branch_y_idx]
-                <= block.y[feature_id, branch_y_idx + 1]
-            )
+        if branch_y_idx >= len(branch_values) - 1:
+            return pe.Constraint.Skip
+        return b.y[feature_id, branch_y_idx] <= b.y[feature_id, branch_y_idx + 1]
 
     block.var_lower = constraint_factory.new_constraint(y_index, lang=block._format)
     for feature_id, branch_y_idx in y_index:

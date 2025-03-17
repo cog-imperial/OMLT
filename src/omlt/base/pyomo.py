@@ -259,12 +259,10 @@ class OmltConstraintIndexedPyomo(OmltConstraintIndexed, pyo.Constraint):
         self.constraint.construct()
         self.model = self.constraint.model
 
-        self.constraints: dict[Any, Any] = {}
-
     def __setitem__(self, index, expr):
-        if index in self._index_set:
+        if index in self.constraint._index_set:
             self.constraint[index] = expr
-            self.constraints[index] = self.constraint[index]
+
         else:
             msg = (
                 "Couldn't find index %s in index set %s.",
