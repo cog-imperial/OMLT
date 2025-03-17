@@ -404,14 +404,12 @@ class ReducedSpaceNNFormulation(_PyomoFormulation):
         # the main inputs on the block
         var_factory = OmltVarFactory()
         constraint_factory = OmltConstraintFactory()
-
         input_layer_block.z = var_factory.new_var(
-            *input_layer.output_indexes, lang=block._format
+            input_layer.output_indexes, lang=block._format
         )
         block.connect_inputs = constraint_factory.new_constraint(
-            *input_layer.output_indexes, lang=block._format
+            input_layer.output_indexes, lang=block._format
         )
-
         for output_index in input_layer.output_indexes:
             if isinstance(output_index, tuple) and len(output_index) == 1:
                 idx_0 = output_index[0]
