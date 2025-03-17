@@ -308,11 +308,11 @@ class OmltIndexedJuMP(OmltIndexed):
             _lb = {k: v[0] for k, v in self._bounds.items()}
             _ub = {k: v[1] for k, v in self._bounds.items()}
         elif isinstance(self._bounds, tuple) and len(self._bounds) == PAIR:
-            _lb = {i: self._bounds[0] for i in self._index_set}
-            _ub = {i: self._bounds[1] for i in self._index_set}
+            _lb = dict.fromkeys(self._index_set, self._bounds[0])
+            _ub = dict.fromkeys(self._index_set, self._bounds[1])
         elif self._bounds is None:
-            _lb = {i: None for i in self._index_set}
-            _ub = {i: None for i in self._index_set}
+            _lb = dict.fromkeys(self._index_set)
+            _ub = dict.fromkeys(self._index_set)
         else:
             msg = (
                 "Bounds must be given as a tuple, but %s was given.",
@@ -322,7 +322,7 @@ class OmltIndexedJuMP(OmltIndexed):
 
         self.binary = binary
 
-        self._value = {i: None for i in self._index_set}
+        self._value = dict.fromkeys(self._index_set)
 
         self._varinfo = {}
         self._vars = {}
@@ -443,7 +443,7 @@ class OmltConstraintIndexedJuMP(OmltConstraintIndexed):
         self._parent = None
         self.name = None
         self.format = "jump"
-        self._jumpcons = {idx: None for idx in self._index_set[0]}
+        self._jumpcons = dict.fromkeys(self._index_set[0])
 
     def keys(self, sort=False):  # noqa: ARG002, FBT002
         yield from self._index_set
