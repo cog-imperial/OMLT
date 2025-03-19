@@ -95,13 +95,17 @@ def test_linear_tree_model_single_var():  # noqa: C901
     ltmodel_small = LinearTreeDefinition(regr_small, unscaled_input_bounds=input_bounds)
 
     scaled_input_bounds = ltmodel_small.scaled_input_bounds
+    unscaled_input_bounds = ltmodel_small.unscaled_input_bounds
     n_inputs = ltmodel_small.n_inputs
     n_outputs = ltmodel_small.n_outputs
     splits = ltmodel_small.splits
     leaves = ltmodel_small.leaves
     thresholds = ltmodel_small.thresholds
+    is_scaled = ltmodel_small.is_scaled
 
     assert scaled_input_bounds is not None
+    assert unscaled_input_bounds is not None
+    assert is_scaled == False
     assert n_inputs == 1
     assert n_outputs == 1
     # test for splits
