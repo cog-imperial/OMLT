@@ -111,6 +111,7 @@ class LinearTreeDefinition:
     def is_scaled(self):
         """Returns bool indicating whether model is scaled"""
         return self.__is_scaled
+
     @property
     def splits(self):
         """Returns dict containing split information."""

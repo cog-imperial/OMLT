@@ -99,12 +99,12 @@ class LinearTreeGDPFormulation(_PyomoFormulation):
             self.model_definition.scaled_input_bounds,
         )
 
-        input_vars=self.block.scaled_inputs
+        input_vars = self.block.scaled_inputs
         if self.model_definition.is_scaled is True:
             output_vars = self.block.scaled_outputs
         else:
             output_vars = self.block.outputs
-        
+
         _add_gdp_formulation_to_block(
             block=self.block,
             model_definition=self.model_definition,
@@ -307,7 +307,9 @@ def _add_gdp_formulation_to_block(  # noqa: PLR0913
     # Use the input_bounds and the linear models in the leaves to calculate
     # the lower and upper bounds on the output variable. Required for Pyomo.GDP
     scaled_output_bounds = _build_output_bounds(model_definition, scaled_input_bounds)
-    unscaled_output_bounds = _build_output_bounds(model_definition, unscaled_input_bounds)
+    unscaled_output_bounds = _build_output_bounds(
+        model_definition, unscaled_input_bounds
+    )
 
     # Ouptuts are automatically scaled based on whether inputs are scaled
     block.outputs.setub(unscaled_output_bounds[1])
