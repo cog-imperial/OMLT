@@ -105,7 +105,7 @@ def test_linear_tree_model_single_var():  # noqa: C901
 
     assert scaled_input_bounds is not None
     assert unscaled_input_bounds is not None
-    assert is_scaled == False
+    assert not is_scaled
     assert n_inputs == 1
     assert n_outputs == 1
     # test for splits
