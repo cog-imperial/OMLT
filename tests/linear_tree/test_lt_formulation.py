@@ -387,7 +387,7 @@ def test_scaling():
         Exception, match="Input Bounds needed to represent linear trees as MIPs"
     ):
         LinearTreeDefinition(regr)
-    
+
     formulation = LinearTreeHybridBigMFormulation(lt_def2)
 
     model1 = pe.ConcreteModel()
@@ -410,10 +410,10 @@ def test_scaling():
     status_1_bigm = pe.SolverFactory("scip").solve(model1, tee=True)
     pe.assert_optimal_termination(status_1_bigm)
     solution_1_bigm = (pe.value(model1.x), pe.value(model1.y))
-    y_pred = regr.predict(np.array((solution_1_bigm[0] - mean_x_small)/std_x_small).reshape(1, -1))
-    assert y_pred[0] == pytest.approx((solution_1_bigm[1] - mean_y_small)/ std_y_small)
-
-
+    y_pred = regr.predict(
+        np.array((solution_1_bigm[0] - mean_x_small) / std_x_small).reshape(1, -1)
+    )
+    assert y_pred[0] == pytest.approx((solution_1_bigm[1] - mean_y_small) / std_y_small)
 
 
 #### MULTIVARIATE INPUT TESTING ####
