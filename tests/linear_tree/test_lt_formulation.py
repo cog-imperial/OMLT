@@ -95,13 +95,13 @@ def test_linear_tree_model_single_var():  # noqa: C901
     ltmodel_small = LinearTreeDefinition(regr_small, unscaled_input_bounds=input_bounds)
 
     scaled_input_bounds = ltmodel_small.scaled_input_bounds
-    unscaled_input_bounds = ltmodel_small.unscaled_input_bounds
     n_inputs = ltmodel_small.n_inputs
     n_outputs = ltmodel_small.n_outputs
     splits = ltmodel_small.splits
     leaves = ltmodel_small.leaves
     thresholds = ltmodel_small.thresholds
     is_scaled = ltmodel_small.is_scaled
+    unscaled_input_bounds = ltmodel_small.unscaled_input_bounds
 
     assert scaled_input_bounds is not None
     assert unscaled_input_bounds is not None
@@ -387,6 +387,33 @@ def test_scaling():
         Exception, match="Input Bounds needed to represent linear trees as MIPs"
     ):
         LinearTreeDefinition(regr)
+    
+    formulation = LinearTreeHybridBigMFormulation(lt_def2)
+
+    model1 = pe.ConcreteModel()
+    model1.x = pe.Var(initialize=0)
+    model1.y = pe.Var(initialize=0)
+    model1.obj = pe.Objective(expr=1)
+    model1.lt = OmltBlock()
+    model1.lt.build_formulation(formulation)
+
+    @model1.Constraint()
+    def connect_inputs(mdl):
+        return mdl.x == mdl.lt.inputs[0]
+
+    @model1.Constraint()
+    def connect_outputs(mdl):
+        return mdl.y == mdl.lt.outputs[0]
+
+    model1.x.fix(0.5)
+
+    status_1_bigm = pe.SolverFactory("scip").solve(model1, tee=True)
+    pe.assert_optimal_termination(status_1_bigm)
+    solution_1_bigm = (pe.value(model1.x), pe.value(model1.y))
+    y_pred = regr.predict(np.array((solution_1_bigm[0] - mean_x_small)/std_x_small).reshape(1, -1))
+    assert y_pred[0] == pytest.approx((solution_1_bigm[1] - mean_y_small)/ std_y_small)
+
+
 
 
 #### MULTIVARIATE INPUT TESTING ####
