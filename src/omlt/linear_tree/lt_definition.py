@@ -104,12 +104,12 @@ class LinearTreeDefinition:
 
     @property
     def unscaled_input_bounds(self):
-        """Returns dict containing unscaled input bounds"""
+        """Returns dict containing unscaled input bounds."""
         return self.__unscaled_input_bounds
 
     @property
     def is_scaled(self):
-        """Returns bool indicating whether model is scaled"""
+        """Returns bool indicating whether model is scaled."""
         return self.__is_scaled
 
     @property
