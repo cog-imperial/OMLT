@@ -151,6 +151,12 @@ OMLT uses `just <https://github.com/casey/just>`_ to manage development tasks:
 * ``just dev-gpu`` same as ``dev`` but with GPU support
 * ``just docs`` to build the documentation
 
+OMLT also includes a workflow for publishing new releases. This workflow can be triggered by pushing a new tag with an updated version number: ::
+
+     git tag <version> # e.g. git tag v1.2.0
+     git push upstream --tags
+
+
 Contributors
 ============
 
