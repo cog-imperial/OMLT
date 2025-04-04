@@ -115,6 +115,10 @@ class LinearTreeGDPFormulation(_PyomoFormulation):
             include_leaf_equalities=True,
         )
 
+    @property
+    def pyomo_only(self):
+        return True
+
 
 class LinearTreeHybridBigMFormulation(_PyomoFormulation):
     r"""Class to add a Linear Tree Hybrid Big-M formulation to OmltBlock.
@@ -170,6 +174,10 @@ class LinearTreeHybridBigMFormulation(_PyomoFormulation):
     def output_indexes(self):
         """The indexes of the formulation output."""
         return list(range(self.model_definition.n_outputs))
+
+    @property
+    def pyomo_only(self):
+        return True
 
     def _build_formulation(self):
         """Build formulation.
