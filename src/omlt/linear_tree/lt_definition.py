@@ -90,7 +90,7 @@ class LinearTreeDefinition:
         )
 
         self.__n_inputs = _find_n_inputs(self.__leaves)
-        self.__n_outputs = 1
+        self.__n_outputs = lt_regressor[0]['models'][0].params.shape[1]
 
     @property
     def scaling_object(self):

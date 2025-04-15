@@ -2,6 +2,8 @@ import numpy as np
 import pyomo.environ as pe
 from pyomo.gdp import Disjunct
 
+from itertools import product
+
 from omlt.formulation import _PyomoFormulation, _setup_scaled_inputs_outputs
 
 
@@ -252,28 +254,38 @@ def _build_output_bounds(model_def, input_bounds):
     """
     leaves = model_def.leaves
     n_inputs = model_def.n_inputs
-    tree_ids = np.array(list(leaves.keys()))
+    n_outputs = model_def.n_outputs
+
     features = np.arange(0, n_inputs)
 
-    # Initialize bounds and variables
-    bounds = [0, 0]
-    upper_bound = 0
-    lower_bound = 0
-    for tree in tree_ids:
+    # Initialize bounds for all outputs
+    bounds = [float('inf'), float('-inf')]
+
+    for tree in leaves:
         for leaf in leaves[tree]:
             slopes = leaves[tree][leaf]["slope"]
             intercept = leaves[tree][leaf]["intercept"]
-            for k in features:
-                if slopes[k] <= 0:
-                    upper_bound += slopes[k] * input_bounds[k][0] + intercept
-                    lower_bound += slopes[k] * input_bounds[k][1] + intercept
-                else:
-                    upper_bound += slopes[k] * input_bounds[k][1] + intercept
-                    lower_bound += slopes[k] * input_bounds[k][0] + intercept
+
+            # Compute bounds for each output
+            for output_idx in range(n_outputs):
+                upper_bound = 0
+                lower_bound = 0
+                for k in features:
+                    try:
+                        if slopes[k][output_idx] <= 0:
+                            upper_bound += slopes[k][output_idx] * input_bounds[k][0]
+                            lower_bound += slopes[k][output_idx] * input_bounds[k][1]
+                        else:
+                            upper_bound += slopes[k][output_idx] * input_bounds[k][1]
+                            lower_bound += slopes[k][output_idx] * input_bounds[k][0]
+                    except:
+                        import pdb; pdb.set_trace()
+                upper_bound += intercept[output_idx]
+                lower_bound += intercept[output_idx]
+
+                # Update global bounds
                 bounds[1] = max(bounds[1], upper_bound)
                 bounds[0] = min(bounds[0], lower_bound)
-            upper_bound = 0
-            lower_bound = 0
 
     return bounds
 
@@ -306,11 +318,16 @@ def _add_gdp_formulation_to_block(  # noqa: PLR0913
     scaled_input_bounds = model_definition.scaled_input_bounds
     unscaled_input_bounds = model_definition.unscaled_input_bounds
     n_inputs = model_definition.n_inputs
+    n_outputs = model_definition.n_outputs
 
     # The set of leaves and the set of features
     tree_ids = list(leaves.keys())
     t_l = [(tree, leaf) for tree in tree_ids for leaf in leaves[tree]]
     features = np.arange(0, n_inputs)
+
+    # Create a list which is the product of the tree_ids and outputs indices using itertools
+    output_indices = np.arange(0, n_outputs)
+    set_index = list(product(tree_ids, output_indices))
 
     # Use the input_bounds and the linear models in the leaves to calculate
     # the lower and upper bounds on the output variable. Required for Pyomo.GDP
@@ -327,11 +344,11 @@ def _add_gdp_formulation_to_block(  # noqa: PLR0913
 
     if model_definition.is_scaled is True:
         block.intermediate_output = pe.Var(
-            tree_ids, bounds=(scaled_output_bounds[0], scaled_output_bounds[1])
+            set_index, bounds=(scaled_output_bounds[0], scaled_output_bounds[1])
         )
     else:
         block.intermediate_output = pe.Var(
-            tree_ids, bounds=(unscaled_output_bounds[0], unscaled_output_bounds[1])
+            set_index, bounds=(unscaled_output_bounds[0], unscaled_output_bounds[1])
         )
 
     # Create a disjunct for each leaf containing the bound constraints
@@ -350,10 +367,13 @@ def _add_gdp_formulation_to_block(  # noqa: PLR0913
         if include_leaf_equalities:
             slope = leaves[tree][leaf]["slope"]
             intercept = leaves[tree][leaf]["intercept"]
-            dsj.linear_exp = pe.Constraint(
-                expr=sum(slope[k] * input_vars[k] for k in features) + intercept
-                == block.intermediate_output[tree]
-            )
+            dsj.linear_exp = pe.ConstraintList()
+            for output_idx in output_indices:
+                dsj.linear_exp.add(
+                    sum(slope[k][output_idx] * input_vars[k] for k in features)
+                    + intercept[output_idx]
+                    == block.intermediate_output[tree, output_idx]
+                )
 
     block.disjunct = Disjunct(t_l, rule=disjuncts_rule)
 
@@ -362,9 +382,13 @@ def _add_gdp_formulation_to_block(  # noqa: PLR0913
         leaf_ids = list(leaves[tree].keys())
         return [block.disjunct[tree, leaf] for leaf in leaf_ids]
 
-    block.total_output = pe.Constraint(
-        expr=output_vars[0] == sum(block.intermediate_output[tree] for tree in tree_ids)
-    )
+    block.total_output = pe.ConstraintList()
+    for output_idx in output_indices:
+        block.total_output.add(
+            output_vars[output_idx] == sum(
+                block.intermediate_output[tree, output_idx] for tree in tree_ids
+            )
+        )
 
     transformation_string = "gdp." + transformation
 
