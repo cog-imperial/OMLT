@@ -259,7 +259,7 @@ def _build_output_bounds(model_def, input_bounds):
     features = np.arange(0, n_inputs)
 
     # Initialize bounds for all outputs
-    bounds = [float('inf'), float('-inf')]
+    bounds = np.full((n_outputs, 2), [float("inf"), float("-inf")])
 
     for tree in leaves:
         for leaf in leaves[tree]:
@@ -279,23 +279,20 @@ def _build_output_bounds(model_def, input_bounds):
                 upper_bound = 0
                 lower_bound = 0
                 for k in features:
-                    try:
-                        if slopes[k][output_idx] <= 0:
-                            upper_bound += slopes[k][output_idx] * input_bounds[k][0]
-                            lower_bound += slopes[k][output_idx] * input_bounds[k][1]
-                        else:
-                            upper_bound += slopes[k][output_idx] * input_bounds[k][1]
-                            lower_bound += slopes[k][output_idx] * input_bounds[k][0]
-                    except:
-                        import pdb; pdb.set_trace()
+                    if slopes[k][output_idx] <= 0:
+                        upper_bound += slopes[k][output_idx] * input_bounds[k][0]
+                        lower_bound += slopes[k][output_idx] * input_bounds[k][1]
+                    else:
+                        upper_bound += slopes[k][output_idx] * input_bounds[k][1]
+                        lower_bound += slopes[k][output_idx] * input_bounds[k][0]
                 upper_bound += intercept[output_idx]
                 lower_bound += intercept[output_idx]
 
                 # Update global bounds
-                bounds[1] = max(bounds[1], upper_bound)
-                bounds[0] = min(bounds[0], lower_bound)
+                bounds[output_idx, 1] = max(bounds[output_idx, 1], upper_bound)
+                bounds[output_idx, 0] = min(bounds[output_idx, 0], lower_bound)
 
-    return bounds
+    return bounds.T
 
 
 def _add_gdp_formulation_to_block(  # noqa: PLR0913
@@ -344,20 +341,23 @@ def _add_gdp_formulation_to_block(  # noqa: PLR0913
         model_definition, unscaled_input_bounds
     )
 
-    # Ouptuts are automatically scaled based on whether inputs are scaled
-    block.outputs.setub(unscaled_output_bounds[1])
-    block.outputs.setlb(unscaled_output_bounds[0])
-    block.scaled_outputs.setub(scaled_output_bounds[1])
-    block.scaled_outputs.setlb(scaled_output_bounds[0])
+    # Outputs are automatically scaled based on whether inputs are scaled
+    for output_idx in output_indices:
+        block.outputs[output_idx].setub(unscaled_output_bounds[1, output_idx])
+        block.outputs[output_idx].setlb(unscaled_output_bounds[0, output_idx])
+        block.scaled_outputs[output_idx].setub(scaled_output_bounds[1, output_idx])
+        block.scaled_outputs[output_idx].setlb(scaled_output_bounds[0, output_idx])
+
+    # Find the maximum and minimum bounds for the output variable
+    max_unscaled_output = np.max(unscaled_output_bounds[1])
+    min_unscaled_output = np.min(unscaled_output_bounds[0])
+    max_scaled_output = np.max(scaled_output_bounds[1])
+    min_scaled_output = np.min(scaled_output_bounds[0])
 
     if model_definition.is_scaled is True:
-        block.intermediate_output = pe.Var(
-            set_index, bounds=(scaled_output_bounds[0], scaled_output_bounds[1])
-        )
+        block.intermediate_output = pe.Var(set_index, bounds = (min_scaled_output, max_scaled_output))
     else:
-        block.intermediate_output = pe.Var(
-            set_index, bounds=(unscaled_output_bounds[0], unscaled_output_bounds[1])
-        )
+        block.intermediate_output = pe.Var(set_index, bounds = (min_unscaled_output, max_unscaled_output))
 
     # Create a disjunct for each leaf containing the bound constraints
     # and the linear model expression.
