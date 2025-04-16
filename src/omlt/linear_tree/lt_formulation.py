@@ -99,6 +99,7 @@ class LinearTreeGDPFormulation(_PyomoFormulation):
             self.block,
             self.model_definition.scaling_object,
             self.model_definition.scaled_input_bounds,
+            initialize=None
         )
 
         input_vars = self.block.scaled_inputs
@@ -194,6 +195,7 @@ class LinearTreeHybridBigMFormulation(_PyomoFormulation):
             block,
             self.model_definition.scaling_object,
             self.model_definition.scaled_input_bounds,
+            initialize=None,
         )
 
         input_vars = self.block.scaled_inputs
@@ -201,6 +203,8 @@ class LinearTreeHybridBigMFormulation(_PyomoFormulation):
             output_vars = self.block.scaled_outputs
         else:
             output_vars = self.block.outputs
+
+        output_indices = np.arange(0, len(self.block.outputs))
 
         _add_gdp_formulation_to_block(
             block=block,
@@ -222,20 +226,37 @@ class LinearTreeHybridBigMFormulation(_PyomoFormulation):
         # manually.
         features = np.arange(0, self.model_definition.n_inputs)
 
-        @block.Constraint(list(leaves.keys()))
-        def linear_constraint(mdl, tree):
-            leaf_ids = list(leaves[tree].keys())
-            return block.intermediate_output[tree] == sum(
+        if len(output_indices) == 1:
+            @block.Constraint(list(leaves.keys()), output_indices)
+            def linear_constraint(mdl, tree, output_idx):
+                leaf_ids = list(leaves[tree].keys())
+                return block.intermediate_output[tree, output_idx] == sum(
+                    (
+                        sum(
+                            leaves[tree][leaf]["slope"][feat] * input_vars[feat]
+                            for feat in features
+                        )
+                        + leaves[tree][leaf]["intercept"]
+                    )
+                    * block.disjunct[tree, leaf].binary_indicator_var
+                    for leaf in leaf_ids
+                )
+
+        else:
+            @block.Constraint(list(leaves.keys()), output_indices)
+            def linear_constraint(mdl, tree, output_idx):
+                leaf_ids = list(leaves[tree].keys())
+                return block.intermediate_output[tree, output_idx] == sum(
                 (
                     sum(
-                        leaves[tree][leaf]["slope"][feat] * input_vars[feat]
-                        for feat in features
+                    leaves[tree][leaf]["slope"][feat][output_idx] * input_vars[feat]
+                    for feat in features
                     )
-                    + leaves[tree][leaf]["intercept"]
+                    + leaves[tree][leaf]["intercept"][output_idx]
                 )
                 * block.disjunct[tree, leaf].binary_indicator_var
                 for leaf in leaf_ids
-            )
+                )
 
 
 def _build_output_bounds(model_def, input_bounds):
@@ -271,7 +292,7 @@ def _build_output_bounds(model_def, input_bounds):
             if slopes.ndim == 1:
                 slopes = slopes.reshape(-1, 1)
 
-            if isinstance(intercept, float):
+            if not isinstance(intercept, np.ndarray):
                 intercept = np.array([intercept])
 
             # Compute bounds for each output
