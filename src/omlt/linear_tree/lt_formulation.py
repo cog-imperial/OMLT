@@ -266,6 +266,14 @@ def _build_output_bounds(model_def, input_bounds):
             slopes = leaves[tree][leaf]["slope"]
             intercept = leaves[tree][leaf]["intercept"]
 
+            # Make sure slopes and intercept have at least 2 and 1 dimensions
+            slopes = np.array(slopes)  # Ensure slopes is a numpy array
+            if slopes.ndim == 1:
+                slopes = slopes.reshape(-1, 1)
+
+            if isinstance(intercept, float):
+                intercept = np.array([intercept])
+
             # Compute bounds for each output
             for output_idx in range(n_outputs):
                 upper_bound = 0
@@ -367,6 +375,15 @@ def _add_gdp_formulation_to_block(  # noqa: PLR0913
         if include_leaf_equalities:
             slope = leaves[tree][leaf]["slope"]
             intercept = leaves[tree][leaf]["intercept"]
+
+            # Make sure slopes and intercept have at least 2 and 1 dimensions
+            slope = np.array(slope)  # Ensure slope is a numpy array
+            if slope.ndim == 1:
+                slope = slope.reshape(-1, 1)
+
+            if isinstance(intercept, float):
+                intercept = np.array([intercept])
+
             dsj.linear_exp = pe.ConstraintList()
             for output_idx in output_indices:
                 dsj.linear_exp.add(

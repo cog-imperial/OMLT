@@ -90,7 +90,20 @@ class LinearTreeDefinition:
         )
 
         self.__n_inputs = _find_n_inputs(self.__leaves)
-        self.__n_outputs = lt_regressor[0]['models'][0].params.shape[1]
+
+        # get one of the models
+        if isinstance(lt_regressor, dict):
+            example_model = lt_regressor[0]['models'][0]
+        elif isinstance(lt_regressor, lineartree.lineartree.LinearTreeRegressor):
+            example_model = lt_regressor.summary()[0]["models"][0]
+        else:
+            msg = "Model entry must be dict or linear-tree instance"
+            raise TypeError(msg)
+
+        if hasattr(example_model.intercept_, "__len__") > 1:
+            self.__n_outputs = len(example_model.intercept_)
+        else:
+            self.__n_outputs = 1
 
     @property
     def scaling_object(self):
