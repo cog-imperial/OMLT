@@ -90,20 +90,7 @@ class LinearTreeDefinition:
         )
 
         self.__n_inputs = _find_n_inputs(self.__leaves)
-
-        # get one of the models
-        if isinstance(lt_regressor, dict):
-            example_model = lt_regressor[0]['models'][0]
-        elif isinstance(lt_regressor, lineartree.lineartree.LinearTreeRegressor):
-            example_model = lt_regressor.summary()[0]["models"][0]
-        else:
-            msg = "Model entry must be dict or linear-tree instance"
-            raise TypeError(msg)
-
-        if hasattr(example_model.intercept_, "__len__") > 1:
-            self.__n_outputs = len(example_model.intercept_)
-        else:
-            self.__n_outputs = 1
+        self.__n_outputs = _find_n_outputs(self.__leaves)
 
     @property
     def scaling_object(self):
@@ -226,6 +213,31 @@ def _find_n_inputs(leaves):
     tree_one = tree_indices[0]
     leaf_one = leaf_indices[0]
     return len(np.arange(0, len(leaves[tree_one][leaf_one]["slope"])))
+
+
+def _find_n_outputs(leaves):
+    """Find n outputs.
+
+    Finds the number of outputs using the length of the intercept vector in the
+    first leaf
+
+    Arguments:
+        leaves: Dictionary of leaf information
+
+    Returns:
+        Number of outputs
+    """
+    tree_indices = np.array(list(leaves.keys()))
+    leaf_indices = np.array(list(leaves[tree_indices[0]].keys()))
+    tree_one = tree_indices[0]
+    leaf_one = leaf_indices[0]
+
+    intercept = leaves[tree_one][leaf_one]["intercept"]
+
+    if hasattr(intercept, "__len__"):
+        return len(intercept)
+    else:
+        return 1
 
 
 def _reassign_none_bounds(leaves, input_bounds):
