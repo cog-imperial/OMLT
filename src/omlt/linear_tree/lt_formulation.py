@@ -292,7 +292,7 @@ def _build_output_bounds(model_def, input_bounds):
                 bounds[output_idx, 1] = max(bounds[output_idx, 1], upper_bound)
                 bounds[output_idx, 0] = min(bounds[output_idx, 0], lower_bound)
 
-    return bounds.T
+    return bounds
 
 
 def _add_gdp_formulation_to_block(  # noqa: PLR0913
@@ -343,16 +343,16 @@ def _add_gdp_formulation_to_block(  # noqa: PLR0913
 
     # Outputs are automatically scaled based on whether inputs are scaled
     for output_idx in output_indices:
-        block.outputs[output_idx].setub(unscaled_output_bounds[1, output_idx])
-        block.outputs[output_idx].setlb(unscaled_output_bounds[0, output_idx])
-        block.scaled_outputs[output_idx].setub(scaled_output_bounds[1, output_idx])
-        block.scaled_outputs[output_idx].setlb(scaled_output_bounds[0, output_idx])
+        block.outputs[output_idx].setub(unscaled_output_bounds[output_idx, 1])
+        block.outputs[output_idx].setlb(unscaled_output_bounds[output_idx, 0])
+        block.scaled_outputs[output_idx].setub(scaled_output_bounds[output_idx, 1])
+        block.scaled_outputs[output_idx].setlb(scaled_output_bounds[output_idx, 0])
 
     # Find the maximum and minimum bounds for the output variable
-    max_unscaled_output = np.max(unscaled_output_bounds[1])
-    min_unscaled_output = np.min(unscaled_output_bounds[0])
-    max_scaled_output = np.max(scaled_output_bounds[1])
-    min_scaled_output = np.min(scaled_output_bounds[0])
+    max_unscaled_output = np.max(unscaled_output_bounds[:, 1])
+    min_unscaled_output = np.min(unscaled_output_bounds[:, 0])
+    max_scaled_output = np.max(scaled_output_bounds[:, 1])
+    min_scaled_output = np.min(scaled_output_bounds[:, 0])
 
     if model_definition.is_scaled is True:
         block.intermediate_output = pe.Var(set_index, bounds = (min_scaled_output, max_scaled_output))
