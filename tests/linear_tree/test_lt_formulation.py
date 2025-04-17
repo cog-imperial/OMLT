@@ -424,6 +424,7 @@ def test_scaling_bounds_and_scaler():
     scaled_x = (X_small - mean_x_small) / std_x_small
     scaled_y = (y_small - mean_y_small) / std_y_small
     scaled_input_bounds = {0: (np.min(scaled_x), np.max(scaled_x))}
+    unscaled_input_bounds = {0: (np.min(X_small), np.max(X_small))}
 
     scaler = omlt.scaling.OffsetScaling(
         offset_inputs=[mean_x_small],
@@ -441,6 +442,8 @@ def test_scaling_bounds_and_scaler():
     )
     assert lt_def2.scaled_input_bounds[0][0] == pytest.approx(scaled_input_bounds[0][0])
     assert lt_def2.scaled_input_bounds[0][1] == pytest.approx(scaled_input_bounds[0][1])
+    assert lt_def2.unscaled_input_bounds[0][0] == pytest.approx(unscaled_input_bounds[0][0])
+    assert lt_def2.unscaled_input_bounds[0][1] == pytest.approx(unscaled_input_bounds[0][1])
     with pytest.raises(
         Exception, match="Input Bounds needed to represent linear trees as MIPs"
     ):

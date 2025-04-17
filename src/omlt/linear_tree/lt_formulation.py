@@ -319,16 +319,18 @@ def _add_gdp_formulation_to_block(  # noqa: PLR0913
     block.scaled_outputs.setub(scaled_output_bounds[1])
     block.scaled_outputs.setlb(scaled_output_bounds[0])
 
-    if model_definition.is_scaled is True:
-        block.intermediate_output = pe.Var(
-            tree_ids, bounds=(scaled_output_bounds[0], scaled_output_bounds[1])
-        )
-    else:
+    if unscaled_input_bounds is not None:
         unscaled_output_bounds = _build_output_bounds(
             model_definition, unscaled_input_bounds
         )
         block.outputs.setub(unscaled_output_bounds[1])
         block.outputs.setlb(unscaled_output_bounds[0])
+
+    if model_definition.is_scaled is True:
+        block.intermediate_output = pe.Var(
+            tree_ids, bounds=(scaled_output_bounds[0], scaled_output_bounds[1])
+        )
+    else:
         block.intermediate_output = pe.Var(
             tree_ids, bounds=(unscaled_output_bounds[0], unscaled_output_bounds[1])
         )
