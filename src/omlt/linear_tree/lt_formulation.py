@@ -402,7 +402,7 @@ def _add_gdp_formulation_to_block(  # noqa: PLR0913
             if slope.ndim == 1:
                 slope = slope.reshape(-1, 1)
 
-            if isinstance(intercept, float):
+            if isinstance(intercept, (int, float, np.number)):
                 intercept = np.array([intercept])
 
             dsj.linear_exp = pe.ConstraintList()
