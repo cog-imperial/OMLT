@@ -80,17 +80,16 @@ class LinearTreeDefinition:
             elif unscaled_input_bounds is None:
                 msg = "Input Bounds needed to represent linear trees as MIPs"
                 raise ValueError(msg)
-        else:
-            if scaling_object is not None:
-                factors = scaling_object._OffsetScaling__x_factor
-                offsets = scaling_object._OffsetScaling__x_offset
-                unscaled_input_bounds = {}
-                for i in scaled_input_bounds.keys():
-                    scaled_lb = scaled_input_bounds[i][0]
-                    scaled_ub = scaled_input_bounds[i][1]
-                    unscaled_lb = scaled_lb * factors[i] + offsets[i]
-                    unscaled_ub = scaled_ub * factors[i] + offsets[i]
-                    unscaled_input_bounds[i] = (unscaled_lb, unscaled_ub)
+        elif scaling_object is not None:
+            factors = scaling_object._OffsetScaling__x_factor
+            offsets = scaling_object._OffsetScaling__x_offset
+            unscaled_input_bounds = {}
+            for key in scaled_input_bounds:
+                scaled_lb = scaled_input_bounds[key][0]
+                scaled_ub = scaled_input_bounds[key][1]
+                unscaled_lb = scaled_lb * factors[key] + offsets[key]
+                unscaled_ub = scaled_ub * factors[key] + offsets[key]
+                unscaled_input_bounds[key] = (unscaled_lb, unscaled_ub)
 
         self.__unscaled_input_bounds = unscaled_input_bounds
         self.__scaled_input_bounds = scaled_input_bounds

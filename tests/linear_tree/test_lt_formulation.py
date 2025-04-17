@@ -415,6 +415,7 @@ def test_scaling_only_scaler():
     )
     assert y_pred[0] == pytest.approx((solution_1_bigm[1] - mean_y_small) / std_y_small)
 
+
 @pytest.mark.skipif(not lineartree_available, reason="Need Linear-Tree Package")
 def test_scaling_bounds_and_scaler():
     mean_x_small = np.mean(X_small)
@@ -442,8 +443,12 @@ def test_scaling_bounds_and_scaler():
     )
     assert lt_def2.scaled_input_bounds[0][0] == pytest.approx(scaled_input_bounds[0][0])
     assert lt_def2.scaled_input_bounds[0][1] == pytest.approx(scaled_input_bounds[0][1])
-    assert lt_def2.unscaled_input_bounds[0][0] == pytest.approx(unscaled_input_bounds[0][0])
-    assert lt_def2.unscaled_input_bounds[0][1] == pytest.approx(unscaled_input_bounds[0][1])
+    assert lt_def2.unscaled_input_bounds[0][0] == pytest.approx(
+        unscaled_input_bounds[0][0]
+    )
+    assert lt_def2.unscaled_input_bounds[0][1] == pytest.approx(
+        unscaled_input_bounds[0][1]
+    )
     with pytest.raises(
         Exception, match="Input Bounds needed to represent linear trees as MIPs"
     ):
