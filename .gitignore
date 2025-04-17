@@ -27,6 +27,7 @@ share/python-wheels/
 *.egg
 MANIFEST
 src/omlt/_version.py
+oryx-build-commands.txt
 
 # PyInstaller
 #  Usually these files are written by a python script from a template

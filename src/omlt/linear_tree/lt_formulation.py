@@ -99,15 +99,25 @@ class LinearTreeGDPFormulation(_PyomoFormulation):
             self.model_definition.scaled_input_bounds,
         )
 
+        input_vars = self.block.scaled_inputs
+        if self.model_definition.is_scaled is True:
+            output_vars = self.block.scaled_outputs
+        else:
+            output_vars = self.block.outputs
+
         _add_gdp_formulation_to_block(
             block=self.block,
             model_definition=self.model_definition,
-            input_vars=self.block.scaled_inputs,
-            output_vars=self.block.scaled_outputs,
+            input_vars=input_vars,
+            output_vars=output_vars,
             transformation=self.transformation,
             epsilon=self.epsilon,
             include_leaf_equalities=True,
         )
+
+    @property
+    def pyomo_only(self):
+        return True
 
 
 class LinearTreeHybridBigMFormulation(_PyomoFormulation):
@@ -165,6 +175,10 @@ class LinearTreeHybridBigMFormulation(_PyomoFormulation):
         """The indexes of the formulation output."""
         return list(range(self.model_definition.n_outputs))
 
+    @property
+    def pyomo_only(self):
+        return True
+
     def _build_formulation(self):
         """Build formulation.
 
@@ -181,12 +195,16 @@ class LinearTreeHybridBigMFormulation(_PyomoFormulation):
         )
 
         input_vars = self.block.scaled_inputs
+        if self.model_definition.is_scaled is True:
+            output_vars = self.block.scaled_outputs
+        else:
+            output_vars = self.block.outputs
 
         _add_gdp_formulation_to_block(
             block=block,
             model_definition=self.model_definition,
             input_vars=input_vars,
-            output_vars=self.block.scaled_outputs,
+            output_vars=output_vars,
             transformation="custom",
             epsilon=self.epsilon,
             include_leaf_equalities=False,
@@ -285,7 +303,8 @@ def _add_gdp_formulation_to_block(  # noqa: PLR0913
             (default: True)
     """
     leaves = model_definition.leaves
-    input_bounds = model_definition.scaled_input_bounds
+    scaled_input_bounds = model_definition.scaled_input_bounds
+    unscaled_input_bounds = model_definition.unscaled_input_bounds
     n_inputs = model_definition.n_inputs
 
     # The set of leaves and the set of features
@@ -295,17 +314,25 @@ def _add_gdp_formulation_to_block(  # noqa: PLR0913
 
     # Use the input_bounds and the linear models in the leaves to calculate
     # the lower and upper bounds on the output variable. Required for Pyomo.GDP
-    output_bounds = _build_output_bounds(model_definition, input_bounds)
+    scaled_output_bounds = _build_output_bounds(model_definition, scaled_input_bounds)
+    unscaled_output_bounds = _build_output_bounds(
+        model_definition, unscaled_input_bounds
+    )
 
     # Ouptuts are automatically scaled based on whether inputs are scaled
-    block.outputs.setub(output_bounds[1])
-    block.outputs.setlb(output_bounds[0])
-    block.scaled_outputs.setub(output_bounds[1])
-    block.scaled_outputs.setlb(output_bounds[0])
+    block.outputs.setub(unscaled_output_bounds[1])
+    block.outputs.setlb(unscaled_output_bounds[0])
+    block.scaled_outputs.setub(scaled_output_bounds[1])
+    block.scaled_outputs.setlb(scaled_output_bounds[0])
 
-    block.intermediate_output = pe.Var(
-        tree_ids, bounds=(output_bounds[0], output_bounds[1])
-    )
+    if model_definition.is_scaled is True:
+        block.intermediate_output = pe.Var(
+            tree_ids, bounds=(scaled_output_bounds[0], scaled_output_bounds[1])
+        )
+    else:
+        block.intermediate_output = pe.Var(
+            tree_ids, bounds=(unscaled_output_bounds[0], unscaled_output_bounds[1])
+        )
 
     # Create a disjunct for each leaf containing the bound constraints
     # and the linear model expression.

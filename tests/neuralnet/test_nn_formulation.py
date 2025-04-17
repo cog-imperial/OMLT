@@ -8,6 +8,7 @@ import pytest
 from pyomo.contrib.fbbt import interval
 
 from omlt import OmltBlock
+from omlt.formulation import _PyomoFormulation
 from omlt.neuralnet import (
     FullSpaceNNFormulation,
     FullSpaceSmoothNNFormulation,
@@ -48,8 +49,8 @@ FULLSPACE_SMOOTH_VARS = 15
 FULLSPACE_SMOOTH_CONSTRAINTS = 14
 FULLSPACE_RELU_VARS = 19
 FULLSPACE_RELU_CONSTRAINTS = 26
-REDUCED_VARS = 6
-REDUCED_CONSTRAINTS = 5
+REDUCED_VARS = 7
+REDUCED_CONSTRAINTS = 6
 THREE_NODE_VARS = 81
 THREE_NODE_CONSTRAINTS = 120
 
@@ -519,6 +520,7 @@ def test_partition_based_unbounded_below():
     m.neural_net_block = OmltBlock()
     net, y = two_node_network(None, -2.0)
     test_layer = list(net.layers)[2]
+    test_layer_id = id(test_layer)
     prev_layer_id = id(list(net.layers)[1])
     formulation = ReluPartitionFormulation(net)
 
@@ -531,7 +533,11 @@ def test_partition_based_unbounded_below():
     expected_msg = "Expression is unbounded below."
     with pytest.raises(ValueError, match=expected_msg):
         partition_based_dense_relu_layer(
-            m.neural_net_block, net, m.neural_net_block, test_layer, split_func
+            m.neural_net_block,
+            net,
+            m.neural_net_block.layer[test_layer_id],
+            test_layer,
+            split_func,
         )
 
 
@@ -540,6 +546,7 @@ def test_partition_based_unbounded_above():
     m.neural_net_block = OmltBlock()
     net, y = two_node_network(None, -2.0)
     test_layer = list(net.layers)[2]
+    test_layer_id = id(test_layer)
     prev_layer_id = id(list(net.layers)[1])
     formulation = ReluPartitionFormulation(net)
 
@@ -552,7 +559,11 @@ def test_partition_based_unbounded_above():
     expected_msg = "Expression is unbounded above."
     with pytest.raises(ValueError, match=expected_msg):
         partition_based_dense_relu_layer(
-            m.neural_net_block, net, m.neural_net_block, test_layer, split_func
+            m.neural_net_block,
+            net,
+            m.neural_net_block.layer[test_layer_id],
+            test_layer,
+            split_func,
         )
 
 

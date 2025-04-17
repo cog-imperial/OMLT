@@ -1,7 +1,9 @@
 from pyomo.environ import exp, log, tanh
 
+from omlt.base import DEFAULT_MODELING_LANGUAGE, OmltConstraintFactory
 
-def softplus_activation_function(x):
+
+def softplus_activation_function(x, lang=DEFAULT_MODELING_LANGUAGE):
     r"""Applies the softplus function.
 
     .. math::
@@ -11,10 +13,12 @@ def softplus_activation_function(x):
         \end{align*}
 
     """
-    return log(exp(x) + 1)
+    if lang == DEFAULT_MODELING_LANGUAGE:
+        return log(exp(x) + 1)
+    return (x.exp() + 1).log()
 
 
-def sigmoid_activation_function(x):
+def sigmoid_activation_function(x, lang=DEFAULT_MODELING_LANGUAGE):
     r"""Applies the sigmoid function.
 
     .. math::
@@ -24,10 +28,12 @@ def sigmoid_activation_function(x):
         \end{align*}
 
     """
-    return 1 / (1 + exp(-x))
+    if lang == DEFAULT_MODELING_LANGUAGE:
+        return 1 / (1 + exp(-x))
+    return 1 / ((-x).exp() + 1)
 
 
-def tanh_activation_function(x):
+def tanh_activation_function(x, lang=DEFAULT_MODELING_LANGUAGE):
     r"""Applies the tanh function.
 
     .. math::
@@ -37,7 +43,9 @@ def tanh_activation_function(x):
         \end{align*}
 
     """
-    return tanh(x)
+    if lang == DEFAULT_MODELING_LANGUAGE:
+        return tanh(x)
+    return x.tanh()
 
 
 def softplus_activation_constraint(net_block, net, layer_block, layer):
@@ -74,12 +82,17 @@ def smooth_monotonic_activation_constraint(net_block, net, layer_block, layer, f
         \end{align*}
 
     """
-
-    @layer_block.Constraint(layer.output_indexes)
-    def _smooth_monotonic_activation_constraint(b, *output_index):
-        zhat_lb, zhat_ub = b.zhat[output_index].bounds
+    constraint_factory = OmltConstraintFactory()
+    layer_block._smooth_monotonic_activation_constraint = (
+        constraint_factory.new_constraint(layer.output_indexes, lang=net_block._format)
+    )
+    for output_index in layer.output_indexes:
+        zhat_lb, zhat_ub = layer_block.zhat[output_index].bounds
         if zhat_lb is not None:
-            b.z[output_index].setlb(fcn(zhat_lb))
+            layer_block.z[output_index].setlb(fcn(zhat_lb))
         if zhat_ub is not None:
-            b.z[output_index].setub(fcn(zhat_ub))
-        return b.z[output_index] == fcn(b.zhat[output_index])
+            layer_block.z[output_index].setub(fcn(zhat_ub))
+        layer_block._smooth_monotonic_activation_constraint[output_index] = (
+            layer_block.z[output_index]
+            == fcn(layer_block.zhat[output_index], lang=net_block._format)
+        )
