@@ -212,7 +212,7 @@ def _find_n_inputs(leaves):
     leaf_indices = np.array(list(leaves[tree_indices[0]].keys()))
     tree_one = tree_indices[0]
     leaf_one = leaf_indices[0]
-    return len(np.arange(0, len(leaves[tree_one][leaf_one]["slope"])))
+    return len(np.arange(0, leaves[tree_one][leaf_one]["slope"].shape[-1]))
 
 
 def _find_n_outputs(leaves):
@@ -256,7 +256,8 @@ def _reassign_none_bounds(leaves, input_bounds):
     """
     leaf_indices = np.array(list(leaves.keys()))
     leaf_one = leaf_indices[0]
-    features = np.arange(0, len(leaves[leaf_one]["slope"]))
+
+    features = np.arange(0, leaves[leaf_one]["slope"].shape[-1])
 
     for leaf in leaf_indices:
         for feat in features:
@@ -339,7 +340,7 @@ def _parse_tree_data(model, input_bounds):  # noqa: C901, PLR0915, PLR0912
     # keys in the splits dictionary
     for leaf in leaves:
         del splits[leaf]
-        leaves[leaf]["slope"] = list(leaves[leaf]["models"].coef_)
+        leaves[leaf]["slope"] = leaves[leaf]["models"].coef_
         leaves[leaf]["intercept"] = leaves[leaf]["models"].intercept_
 
     # This loop creates an parent node id entry for each node in the tree

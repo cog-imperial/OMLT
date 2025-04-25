@@ -870,3 +870,136 @@ def test_raise_exception_for_wrong_transformation():
         match="Supported transformations are: bigm, mbigm, hull, and custom",
     ):
         LinearTreeGDPFormulation(model_def, transformation="hello")
+
+
+#### MULTIVARIATE OUTPUT TESTING ####
+
+
+@pytest.mark.skipif(not lineartree_available, reason="Need Linear-Tree Package")
+def test_linear_tree_model_multi_output():
+    X = np.array(
+        [
+            [4.98534526, 1.8977914],
+            [4.38751717, 4.48456528],
+            [2.65451539, 2.44426211],
+            [3.32761277, 4.58757063],
+            [0.36806515, 0.82428634],
+            [4.16036314, 1.09680059],
+            [2.29025371, 0.72246559],
+            [1.92725929, 0.34359974],
+            [4.02101578, 1.39448628],
+            [3.28019501, 1.22160752],
+            [2.73026047, 3.9482306],
+            [0.45621172, 0.56130164],
+            [2.64296795, 4.75411397],
+            [4.72526084, 3.35223772],
+            [2.39270941, 4.41622262],
+            [4.42707908, 0.35276571],
+            [1.58452501, 3.28957671],
+            [0.20009184, 2.90255483],
+            [4.36453075, 3.61985047],
+            [1.05576503, 2.57532169],
+        ]
+    )
+
+    Y = np.array(
+        [
+            [10.23341638],
+            [4.00860872],
+            [3.85046103],
+            [9.48457266],
+            [6.36974536],
+            [3.19763555],
+            [4.78390803],
+            [1.51994021],
+            [3.18768132],
+            [3.7972809],
+            [7.93779383],
+            [3.46714285],
+            [7.89435163],
+            [10.62832561],
+            [1.50713442],
+            [7.44321537],
+            [9.39437373],
+            [4.38891182],
+            [1.32105126],
+            [3.37287403],
+        ]
+    )
+
+    # Stack Y and X horizontally to create a 2D array
+    Y = np.hstack((Y, X))
+
+    # construct a LinearTreeDefinition
+    regr = linear_model_tree(X=X, y=Y)
+    input_bounds = {0: (min(X[:,0]), max(X[:,0])), 1: (min(X[:,1]), max(X[:,1]))}
+    ltmodel_small = LinearTreeDefinition(regr, unscaled_input_bounds=input_bounds)
+
+    scaled_input_bounds = ltmodel_small.scaled_input_bounds
+    n_inputs = ltmodel_small.n_inputs
+    n_outputs = ltmodel_small.n_outputs
+    splits = ltmodel_small.splits
+    leaves = ltmodel_small.leaves
+    thresholds = ltmodel_small.thresholds
+
+    # assert attributes in LinearTreeDefinition
+    assert scaled_input_bounds is not None
+    assert n_inputs == 2
+    assert n_outputs == 3
+
+    # test for splits
+    # assert the number of splits
+    assert len(splits[0].keys()) == NUM_SPLITS
+    splits_key_list = [
+        "col",
+        "th",
+        "loss",
+        "samples",
+        "parent",
+        "children",
+        "models",
+        "left_leaves",
+        "right_leaves",
+        "y_index",
+    ]
+    # assert whether all the dicts have such keys
+    for i in splits[0]:
+        for key in splits[0][i]:
+            assert key in splits_key_list
+    # test for leaves
+    # assert the number of leaves
+    assert len(leaves[0].keys()) == NUM_LEAVES
+    # assert whether all the dicts have such keys
+    leaves_key_list = [
+        "loss",
+        "samples",
+        "models",
+        "slope",
+        "intercept",
+        "parent",
+        "bounds",
+    ]
+    for j in leaves[0]:
+        for key in leaves[0][j]:
+            assert key in leaves_key_list
+            # if the key is slope, test the shape of it
+            if key == "slope":
+                assert leaves[0][j][key].shape[-1] == n_inputs
+            # elif the key is bounds, test the lb <= ub
+            elif key == "bounds":
+                features = leaves[0][j][key].keys()
+                for k in range(len(features)):
+                    lb = leaves[0][j][key][k][0]
+                    ub = leaves[0][j][key][k][1]
+                    # there is chance that don't have lb and ub at this step
+                    if lb is not None and ub is not None:
+                        assert lb <= ub
+    # test for thresholds
+    # assert whether each feature has threshold
+    assert len(thresholds[0].keys()) == n_inputs
+    # assert the number of thresholds
+    thresholds_count = 0
+    for k in range(len(thresholds[0].keys())):
+        for _ in range(len(thresholds[0][k].keys())):
+            thresholds_count += 1
+    assert thresholds_count == len(splits[0].keys())
