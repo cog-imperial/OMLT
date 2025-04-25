@@ -874,65 +874,65 @@ def test_raise_exception_for_wrong_transformation():
 
 #### MULTIVARIATE OUTPUT TESTING ####
 
+X_multi = np.array(
+    [
+        [4.98534526, 1.8977914],
+        [4.38751717, 4.48456528],
+        [2.65451539, 2.44426211],
+        [3.32761277, 4.58757063],
+        [0.36806515, 0.82428634],
+        [4.16036314, 1.09680059],
+        [2.29025371, 0.72246559],
+        [1.92725929, 0.34359974],
+        [4.02101578, 1.39448628],
+        [3.28019501, 1.22160752],
+        [2.73026047, 3.9482306],
+        [0.45621172, 0.56130164],
+        [2.64296795, 4.75411397],
+        [4.72526084, 3.35223772],
+        [2.39270941, 4.41622262],
+        [4.42707908, 0.35276571],
+        [1.58452501, 3.28957671],
+        [0.20009184, 2.90255483],
+        [4.36453075, 3.61985047],
+        [1.05576503, 2.57532169],
+    ]
+)
+
+Y_multi = np.array(
+    [
+        [10.23341638],
+        [4.00860872],
+        [3.85046103],
+        [9.48457266],
+        [6.36974536],
+        [3.19763555],
+        [4.78390803],
+        [1.51994021],
+        [3.18768132],
+        [3.7972809],
+        [7.93779383],
+        [3.46714285],
+        [7.89435163],
+        [10.62832561],
+        [1.50713442],
+        [7.44321537],
+        [9.39437373],
+        [4.38891182],
+        [1.32105126],
+        [3.37287403],
+    ]
+)
+
+# Stack Y and X horizontally to create a 2D array
+Y_multi = np.hstack((Y_multi, X_multi))
+
 
 @pytest.mark.skipif(not lineartree_available, reason="Need Linear-Tree Package")
 def test_linear_tree_model_multi_output():
-    X = np.array(
-        [
-            [4.98534526, 1.8977914],
-            [4.38751717, 4.48456528],
-            [2.65451539, 2.44426211],
-            [3.32761277, 4.58757063],
-            [0.36806515, 0.82428634],
-            [4.16036314, 1.09680059],
-            [2.29025371, 0.72246559],
-            [1.92725929, 0.34359974],
-            [4.02101578, 1.39448628],
-            [3.28019501, 1.22160752],
-            [2.73026047, 3.9482306],
-            [0.45621172, 0.56130164],
-            [2.64296795, 4.75411397],
-            [4.72526084, 3.35223772],
-            [2.39270941, 4.41622262],
-            [4.42707908, 0.35276571],
-            [1.58452501, 3.28957671],
-            [0.20009184, 2.90255483],
-            [4.36453075, 3.61985047],
-            [1.05576503, 2.57532169],
-        ]
-    )
-
-    Y = np.array(
-        [
-            [10.23341638],
-            [4.00860872],
-            [3.85046103],
-            [9.48457266],
-            [6.36974536],
-            [3.19763555],
-            [4.78390803],
-            [1.51994021],
-            [3.18768132],
-            [3.7972809],
-            [7.93779383],
-            [3.46714285],
-            [7.89435163],
-            [10.62832561],
-            [1.50713442],
-            [7.44321537],
-            [9.39437373],
-            [4.38891182],
-            [1.32105126],
-            [3.37287403],
-        ]
-    )
-
-    # Stack Y and X horizontally to create a 2D array
-    Y = np.hstack((Y, X))
-
     # construct a LinearTreeDefinition
-    regr = linear_model_tree(X=X, y=Y)
-    input_bounds = {0: (min(X[:,0]), max(X[:,0])), 1: (min(X[:,1]), max(X[:,1]))}
+    regr = linear_model_tree(X=X_multi, y=Y_multi)
+    input_bounds = {0: (min(X_multi[:,0]), max(X_multi[:,0])), 1: (min(X_multi[:,1]), max(X_multi[:,1]))}
     ltmodel_small = LinearTreeDefinition(regr, unscaled_input_bounds=input_bounds)
 
     scaled_input_bounds = ltmodel_small.scaled_input_bounds
@@ -1003,3 +1003,184 @@ def test_linear_tree_model_multi_output():
         for _ in range(len(thresholds[0][k].keys())):
             thresholds_count += 1
     assert thresholds_count == len(splits[0].keys())
+
+@pytest.mark.skipif(
+    not lineartree_available or not cbc_available,
+    reason="Need Linear-Tree Package and cbc",
+)
+def test_bigm_formulation_multi_output():
+    regr = linear_model_tree(X=X_multi, y=Y_multi)
+    input_bounds = {0: (min(X_multi[:, 0]), max(X_multi[:, 0])), 1: (min(X_multi[:, 1]), max(X_multi[:, 1]))}
+    ltmodel_small = LinearTreeDefinition(regr, unscaled_input_bounds=input_bounds)
+    formulation1_lt = LinearTreeGDPFormulation(ltmodel_small, transformation="bigm")
+
+    model1 = pe.ConcreteModel()
+    model1.x0 = pe.Var(initialize=0)
+    model1.x1 = pe.Var(initialize=0)
+    model1.y = pe.Var(initialize=0)
+    model1.obj = pe.Objective(expr=1)
+    model1.lt = OmltBlock()
+    model1.lt.build_formulation(formulation1_lt)
+
+    @model1.Constraint()
+    def connect_input1(mdl):
+        return mdl.x0 == mdl.lt.inputs[0]
+
+    @model1.Constraint()
+    def connect_input2(mdl):
+        return mdl.x1 == mdl.lt.inputs[1]
+
+    @model1.Constraint()
+    def connect_outputs(mdl):
+        return mdl.y == mdl.lt.outputs[0]
+
+    model1.x0.fix(0.5)
+    model1.x1.fix(0.8)
+
+    status_1_bigm = pe.SolverFactory("cbc").solve(model1, tee=True)
+    pe.assert_optimal_termination(status_1_bigm)
+    solution_1_bigm = pe.value(model1.y)
+    y_pred = regr.predict(
+        np.array([pe.value(model1.x0), pe.value(model1.x1)]).reshape(1, -1)
+    )
+    assert y_pred[0, 0] == pytest.approx(solution_1_bigm)
+
+
+@pytest.mark.skipif(
+    not lineartree_available or not cbc_available,
+    reason="Need Linear-Tree Package and cbc",
+)
+def test_hull_formulation_multi_output():
+    regr = linear_model_tree(X=X_multi, y=Y_multi)
+    input_bounds = {0: (min(X_multi[:, 0]), max(X_multi[:, 0])), 1: (min(X_multi[:, 1]), max(X_multi[:, 1]))}
+    ltmodel_small = LinearTreeDefinition(regr, unscaled_input_bounds=input_bounds)
+    formulation1_lt = LinearTreeGDPFormulation(ltmodel_small, transformation="hull")
+
+    model1 = pe.ConcreteModel()
+    model1.x0 = pe.Var(initialize=0)
+    model1.x1 = pe.Var(initialize=0)
+    model1.y = pe.Var(initialize=0)
+    model1.obj = pe.Objective(expr=1)
+    model1.lt = OmltBlock()
+    model1.lt.build_formulation(formulation1_lt)
+
+    @model1.Constraint()
+    def connect_input1(mdl):
+        return mdl.x0 == mdl.lt.inputs[0]
+
+    @model1.Constraint()
+    def connect_input2(mdl):
+        return mdl.x1 == mdl.lt.inputs[1]
+
+    @model1.Constraint()
+    def connect_outputs(mdl):
+        return mdl.y == mdl.lt.outputs[0]
+
+    model1.x0.fix(0.5)
+    model1.x1.fix(0.8)
+
+    status_1_bigm = pe.SolverFactory("cbc").solve(model1, tee=True)
+    pe.assert_optimal_termination(status_1_bigm)
+    solution_1_bigm = pe.value(model1.y)
+    y_pred = regr.predict(
+        np.array([pe.value(model1.x0), pe.value(model1.x1)]).reshape(1, -1)
+    )
+    assert y_pred[0,0] == pytest.approx(solution_1_bigm)
+
+
+@pytest.mark.skipif(
+    not lineartree_available or not gurobi_available,
+    reason="Need Linear-Tree Package and gurobi",
+)
+def test_mbigm_formulation_multi_output():
+    regr = linear_model_tree(X=X_multi, y=Y_multi)
+    input_bounds = {0: (min(X_multi[:, 0]), max(X_multi[:, 0])), 1: (min(X_multi[:, 1]), max(X_multi[:, 1]))}
+    ltmodel_small = LinearTreeDefinition(regr, unscaled_input_bounds=input_bounds)
+    formulation1_lt = LinearTreeGDPFormulation(ltmodel_small, transformation="mbigm")
+
+    model1 = pe.ConcreteModel()
+    model1.x0 = pe.Var(initialize=0)
+    model1.x1 = pe.Var(initialize=0)
+    model1.y = pe.Var(initialize=0)
+    model1.obj = pe.Objective(expr=1)
+    model1.lt = OmltBlock()
+    model1.lt.build_formulation(formulation1_lt)
+
+    @model1.Constraint()
+    def connect_input1(mdl):
+        return mdl.x0 == mdl.lt.inputs[0]
+
+    @model1.Constraint()
+    def connect_input2(mdl):
+        return mdl.x1 == mdl.lt.inputs[1]
+
+    @model1.Constraint()
+    def connect_outputs(mdl):
+        return mdl.y == mdl.lt.outputs[0]
+
+    model1.x0.fix(0.5)
+    model1.x1.fix(0.8)
+
+    status_1_bigm = pe.SolverFactory("gurobi").solve(model1, tee=True)
+    pe.assert_optimal_termination(status_1_bigm)
+    solution_1_bigm = pe.value(model1.y)
+    y_pred = regr.predict(
+        np.array([pe.value(model1.x0), pe.value(model1.x1)]).reshape(1, -1)
+    )
+    assert y_pred[0,0] == pytest.approx(solution_1_bigm)
+
+
+@pytest.mark.skipif(
+    not lineartree_available or not scip_available,
+    reason="Need Linear-Tree Package and scip",
+)
+def test_hybrid_bigm_formulation_multi_output():
+    regr = linear_model_tree(X=X_multi, y=Y_multi)
+    input_bounds = {0: (min(X_multi[:, 0]), max(X_multi[:, 0])), 1: (min(X_multi[:, 1]), max(X_multi[:, 1]))}
+    ltmodel_small = LinearTreeDefinition(regr, unscaled_input_bounds=input_bounds)
+    formulation1_lt = LinearTreeHybridBigMFormulation(ltmodel_small)
+
+    model1 = pe.ConcreteModel()
+    model1.x0 = pe.Var(initialize=0)
+    model1.x1 = pe.Var(initialize=0)
+    model1.y = pe.Var(initialize=0)
+    model1.obj = pe.Objective(expr=1)
+    model1.lt = OmltBlock()
+    model1.lt.build_formulation(formulation1_lt)
+
+    num_constraints = 0
+    var_set = ComponentSet()
+    for cons in model1.lt.component_data_objects(pe.Constraint, active=True):
+        num_constraints += 1
+        for v in identify_variables(cons.expr):
+            var_set.add(v)
+
+    num_leaves = len(ltmodel_small.leaves[0])
+    # binary for each leaf + some more from the formulation
+    assert len(var_set) == num_leaves + 13
+    # 2 bounds constraints for each input, the xor, the output constraint, and
+    # four scaling constraints from OMLT
+    assert num_constraints == 16
+
+    @model1.Constraint()
+    def connect_input1(mdl):
+        return mdl.x0 == mdl.lt.inputs[0]
+
+    @model1.Constraint()
+    def connect_input2(mdl):
+        return mdl.x1 == mdl.lt.inputs[1]
+
+    @model1.Constraint()
+    def connect_outputs(mdl):
+        return mdl.y == mdl.lt.outputs[0]
+
+    model1.x0.fix(0.5)
+    model1.x1.fix(0.8)
+
+    status_1_bigm = pe.SolverFactory("scip").solve(model1, tee=True)
+    pe.assert_optimal_termination(status_1_bigm)
+    solution_1_bigm = pe.value(model1.y)
+    y_pred = regr.predict(
+        np.array([pe.value(model1.x0), pe.value(model1.x1)]).reshape(1, -1)
+    )
+    assert y_pred[0, 0] == pytest.approx(solution_1_bigm)

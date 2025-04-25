@@ -249,7 +249,7 @@ class LinearTreeHybridBigMFormulation(_PyomoFormulation):
                 return block.intermediate_output[tree, output_idx] == sum(
                 (
                     sum(
-                    leaves[tree][leaf]["slope"][feat][output_idx] * input_vars[feat]
+                    leaves[tree][leaf]["slope"][output_idx][feat] * input_vars[feat]
                     for feat in features
                     )
                     + leaves[tree][leaf]["intercept"][output_idx]
@@ -284,7 +284,7 @@ def _build_output_bounds(model_def, input_bounds):
 
     for tree in leaves:
         for leaf in leaves[tree]:
-            slopes = leaves[tree][leaf]["slope"]
+            slopes = leaves[tree][leaf]["slope"].T
             intercept = leaves[tree][leaf]["intercept"]
 
             # Make sure slopes and intercept have at least 2 and 1 dimensions
@@ -394,7 +394,7 @@ def _add_gdp_formulation_to_block(  # noqa: PLR0913
         dsj.ub_constraint = pe.Constraint(features, rule=ub_rule)
 
         if include_leaf_equalities:
-            slope = leaves[tree][leaf]["slope"]
+            slope = leaves[tree][leaf]["slope"].T
             intercept = leaves[tree][leaf]["intercept"]
 
             # Make sure slopes and intercept have at least 2 and 1 dimensions
