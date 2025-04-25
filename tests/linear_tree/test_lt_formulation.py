@@ -1184,3 +1184,81 @@ def test_hybrid_bigm_formulation_multi_output():
         np.array([pe.value(model1.x0), pe.value(model1.x1)]).reshape(1, -1)
     )
     assert y_pred[0, 0] == pytest.approx(solution_1_bigm)
+
+
+@pytest.mark.skipif(not lineartree_available, reason="Need Linear-Tree Package")
+def test_summary_dict_as_argument_multi_output():
+    # construct a LinearTreeDefinition
+    regr = linear_model_tree(X=X_multi, y=Y_multi)
+    input_bounds = {0: (min(X_multi[:, 0]), max(X_multi[:, 0])), 1: (min(X_multi[:, 1]), max(X_multi[:, 1]))}
+    ltmodel_small = LinearTreeDefinition(
+        regr.summary(), unscaled_input_bounds=input_bounds
+    )
+
+    scaled_input_bounds = ltmodel_small.scaled_input_bounds
+    n_inputs = ltmodel_small.n_inputs
+    n_outputs = ltmodel_small.n_outputs
+    splits = ltmodel_small.splits
+    leaves = ltmodel_small.leaves
+    thresholds = ltmodel_small.thresholds
+
+    # assert attributes in LinearTreeDefinition
+    assert scaled_input_bounds is not None
+    assert n_inputs == NUM_INPUTS
+    assert n_outputs == 3
+    # test for splits
+    # assert the number of splits
+    assert len(splits[0].keys()) == NUM_SPLITS
+    splits_key_list = [
+        "col",
+        "th",
+        "loss",
+        "samples",
+        "parent",
+        "children",
+        "models",
+        "left_leaves",
+        "right_leaves",
+        "y_index",
+    ]
+    # assert whether all the dicts have such keys
+    for i in splits[0]:
+        for key in splits[0][i]:
+            assert key in splits_key_list
+    # test for leaves
+    # assert the number of leaves
+    assert len(leaves[0].keys()) == NUM_LEAVES
+    # assert whether all the dicts have such keys
+    leaves_key_list = [
+        "loss",
+        "samples",
+        "models",
+        "slope",
+        "intercept",
+        "parent",
+        "bounds",
+    ]
+    for j in leaves[0]:
+        for key in leaves[0][j]:
+            assert key in leaves_key_list
+            # if the key is slope, test the shape of it
+            if key == "slope":
+                assert leaves[0][j][key].shape[-1] == n_inputs
+            # elif the key is bounds, test the lb <= ub
+            elif key == "bounds":
+                features = leaves[0][j][key].keys()
+                for k in range(len(features)):
+                    lb = leaves[0][j][key][k][0]
+                    ub = leaves[0][j][key][k][1]
+                    # there is chance that don't have lb and ub at this step
+                    if lb is not None and ub is not None:
+                        assert lb <= ub
+    # test for thresholds
+    # assert whether each feature has threshold
+    assert len(thresholds[0].keys()) == n_inputs
+    # assert the number of thresholds
+    thresholds_count = 0
+    for k in range(len(thresholds[0].keys())):
+        for _ in range(len(thresholds[0][k].keys())):
+            thresholds_count += 1
+    assert thresholds_count == len(splits[0].keys())

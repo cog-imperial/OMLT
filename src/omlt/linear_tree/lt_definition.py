@@ -212,7 +212,7 @@ def _find_n_inputs(leaves):
     leaf_indices = np.array(list(leaves[tree_indices[0]].keys()))
     tree_one = tree_indices[0]
     leaf_one = leaf_indices[0]
-    return len(np.arange(0, leaves[tree_one][leaf_one]["slope"].shape[-1]))
+    return leaves[tree_one][leaf_one]["slope"].shape[-1]
 
 
 def _find_n_outputs(leaves):
@@ -411,7 +411,7 @@ def _parse_tree_data(model, input_bounds):  # noqa: C901, PLR0915, PLR0912
         leaves[leaf]["bounds"] = {}
 
     leaf_ids = np.array(list(leaves.keys()))
-    features = np.arange(0, len(leaves[leaf_ids[0]]["slope"]))
+    features = np.arange(0, leaves[leaf_ids[0]]["slope"].shape[-1])
 
     # For each feature in each leaf, initialize lower and upper bounds to None
     for feat in features:
