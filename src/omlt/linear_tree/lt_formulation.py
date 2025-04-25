@@ -1,8 +1,8 @@
+from itertools import product
+
 import numpy as np
 import pyomo.environ as pe
 from pyomo.gdp import Disjunct
-
-from itertools import product
 
 from omlt.formulation import _PyomoFormulation, _setup_scaled_inputs_outputs
 
@@ -99,7 +99,7 @@ class LinearTreeGDPFormulation(_PyomoFormulation):
             self.block,
             self.model_definition.scaling_object,
             self.model_definition.scaled_input_bounds,
-            initialize=None
+            initialize=None,
         )
 
         input_vars = self.block.scaled_inputs
@@ -227,6 +227,7 @@ class LinearTreeHybridBigMFormulation(_PyomoFormulation):
         features = np.arange(0, self.model_definition.n_inputs)
 
         if len(output_indices) == 1:
+
             @block.Constraint(list(leaves.keys()), output_indices)
             def linear_constraint(mdl, tree, output_idx):
                 leaf_ids = list(leaves[tree].keys())
@@ -243,19 +244,21 @@ class LinearTreeHybridBigMFormulation(_PyomoFormulation):
                 )
 
         else:
+
             @block.Constraint(list(leaves.keys()), output_indices)
             def linear_constraint(mdl, tree, output_idx):
                 leaf_ids = list(leaves[tree].keys())
                 return block.intermediate_output[tree, output_idx] == sum(
-                (
-                    sum(
-                    leaves[tree][leaf]["slope"][output_idx][feat] * input_vars[feat]
-                    for feat in features
+                    (
+                        sum(
+                            leaves[tree][leaf]["slope"][output_idx][feat]
+                            * input_vars[feat]
+                            for feat in features
+                        )
+                        + leaves[tree][leaf]["intercept"][output_idx]
                     )
-                    + leaves[tree][leaf]["intercept"][output_idx]
-                )
-                * block.disjunct[tree, leaf].binary_indicator_var
-                for leaf in leaf_ids
+                    * block.disjunct[tree, leaf].binary_indicator_var
+                    for leaf in leaf_ids
                 )
 
 
@@ -316,7 +319,7 @@ def _build_output_bounds(model_def, input_bounds):
     return bounds
 
 
-def _add_gdp_formulation_to_block(  # noqa: PLR0913
+def _add_gdp_formulation_to_block(  # noqa: PLR0913 C901
     block,
     model_definition,
     input_vars,
@@ -351,7 +354,6 @@ def _add_gdp_formulation_to_block(  # noqa: PLR0913
     t_l = [(tree, leaf) for tree in tree_ids for leaf in leaves[tree]]
     features = np.arange(0, n_inputs)
 
-    # Create a list which is the product of the tree_ids and outputs indices using itertools
     output_indices = np.arange(0, n_outputs)
     set_index = list(product(tree_ids, output_indices))
 
@@ -376,9 +378,13 @@ def _add_gdp_formulation_to_block(  # noqa: PLR0913
     min_scaled_output = np.min(scaled_output_bounds[:, 0])
 
     if model_definition.is_scaled is True:
-        block.intermediate_output = pe.Var(set_index, bounds = (min_scaled_output, max_scaled_output))
+        block.intermediate_output = pe.Var(
+            set_index, bounds=(min_scaled_output, max_scaled_output)
+        )
     else:
-        block.intermediate_output = pe.Var(set_index, bounds = (min_unscaled_output, max_unscaled_output))
+        block.intermediate_output = pe.Var(
+            set_index, bounds=(min_unscaled_output, max_unscaled_output)
+        )
 
     # Create a disjunct for each leaf containing the bound constraints
     # and the linear model expression.
@@ -423,9 +429,8 @@ def _add_gdp_formulation_to_block(  # noqa: PLR0913
     block.total_output = pe.ConstraintList()
     for output_idx in output_indices:
         block.total_output.add(
-            output_vars[output_idx] == sum(
-                block.intermediate_output[tree, output_idx] for tree in tree_ids
-            )
+            output_vars[output_idx]
+            == sum(block.intermediate_output[tree, output_idx] for tree in tree_ids)
         )
 
     transformation_string = "gdp." + transformation

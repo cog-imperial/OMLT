@@ -95,7 +95,9 @@ def scalar_or_tuple(x):
     return x
 
 
-def _setup_scaled_inputs_outputs(block, scaler=None, scaled_input_bounds=None, initialize=0):
+def _setup_scaled_inputs_outputs(
+    block, scaler=None, scaled_input_bounds=None, initialize=0
+):
     var_factory = OmltVarFactory()
     if scaled_input_bounds is not None:
         bnds = {

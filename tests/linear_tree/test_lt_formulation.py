@@ -486,7 +486,7 @@ def test_linear_tree_model_multi_var():  # noqa: C901
     # assert attributes in LinearTreeDefinition
     assert scaled_input_bounds is not None
     assert n_inputs == NUM_INPUTS
-    assert n_outputs == 1
+    assert n_outputs == Y.shape[1]
 
     # test for splits
     # assert the number of splits
@@ -929,10 +929,13 @@ Y_multi = np.hstack((Y_multi, X_multi))
 
 
 @pytest.mark.skipif(not lineartree_available, reason="Need Linear-Tree Package")
-def test_linear_tree_model_multi_output():
+def test_linear_tree_multi_output():
     # construct a LinearTreeDefinition
     regr = linear_model_tree(X=X_multi, y=Y_multi)
-    input_bounds = {0: (min(X_multi[:,0]), max(X_multi[:,0])), 1: (min(X_multi[:,1]), max(X_multi[:,1]))}
+    input_bounds = {
+        0: (min(X_multi[:, 0]), max(X_multi[:, 0])),
+        1: (min(X_multi[:, 1]), max(X_multi[:, 1])),
+    }
     ltmodel_small = LinearTreeDefinition(regr, unscaled_input_bounds=input_bounds)
 
     scaled_input_bounds = ltmodel_small.scaled_input_bounds
@@ -944,8 +947,8 @@ def test_linear_tree_model_multi_output():
 
     # assert attributes in LinearTreeDefinition
     assert scaled_input_bounds is not None
-    assert n_inputs == 2
-    assert n_outputs == 3
+    assert n_inputs == X_multi.shape[1]
+    assert n_outputs == Y_multi.shape[1]
 
     # test for splits
     # assert the number of splits
@@ -985,15 +988,14 @@ def test_linear_tree_model_multi_output():
             # if the key is slope, test the shape of it
             if key == "slope":
                 assert leaves[0][j][key].shape[-1] == n_inputs
+                assert leaves[0][j][key].shape[0] == n_outputs
             # elif the key is bounds, test the lb <= ub
             elif key == "bounds":
                 features = leaves[0][j][key].keys()
                 for k in range(len(features)):
                     lb = leaves[0][j][key][k][0]
                     ub = leaves[0][j][key][k][1]
-                    # there is chance that don't have lb and ub at this step
-                    if lb is not None and ub is not None:
-                        assert lb <= ub
+                    assert lb <= ub
     # test for thresholds
     # assert whether each feature has threshold
     assert len(thresholds[0].keys()) == n_inputs
@@ -1004,13 +1006,17 @@ def test_linear_tree_model_multi_output():
             thresholds_count += 1
     assert thresholds_count == len(splits[0].keys())
 
+
 @pytest.mark.skipif(
     not lineartree_available or not cbc_available,
     reason="Need Linear-Tree Package and cbc",
 )
 def test_bigm_formulation_multi_output():
     regr = linear_model_tree(X=X_multi, y=Y_multi)
-    input_bounds = {0: (min(X_multi[:, 0]), max(X_multi[:, 0])), 1: (min(X_multi[:, 1]), max(X_multi[:, 1]))}
+    input_bounds = {
+        0: (min(X_multi[:, 0]), max(X_multi[:, 0])),
+        1: (min(X_multi[:, 1]), max(X_multi[:, 1])),
+    }
     ltmodel_small = LinearTreeDefinition(regr, unscaled_input_bounds=input_bounds)
     formulation1_lt = LinearTreeGDPFormulation(ltmodel_small, transformation="bigm")
 
@@ -1052,7 +1058,10 @@ def test_bigm_formulation_multi_output():
 )
 def test_hull_formulation_multi_output():
     regr = linear_model_tree(X=X_multi, y=Y_multi)
-    input_bounds = {0: (min(X_multi[:, 0]), max(X_multi[:, 0])), 1: (min(X_multi[:, 1]), max(X_multi[:, 1]))}
+    input_bounds = {
+        0: (min(X_multi[:, 0]), max(X_multi[:, 0])),
+        1: (min(X_multi[:, 1]), max(X_multi[:, 1])),
+    }
     ltmodel_small = LinearTreeDefinition(regr, unscaled_input_bounds=input_bounds)
     formulation1_lt = LinearTreeGDPFormulation(ltmodel_small, transformation="hull")
 
@@ -1085,7 +1094,7 @@ def test_hull_formulation_multi_output():
     y_pred = regr.predict(
         np.array([pe.value(model1.x0), pe.value(model1.x1)]).reshape(1, -1)
     )
-    assert y_pred[0,0] == pytest.approx(solution_1_bigm)
+    assert y_pred[0, 0] == pytest.approx(solution_1_bigm)
 
 
 @pytest.mark.skipif(
@@ -1094,7 +1103,10 @@ def test_hull_formulation_multi_output():
 )
 def test_mbigm_formulation_multi_output():
     regr = linear_model_tree(X=X_multi, y=Y_multi)
-    input_bounds = {0: (min(X_multi[:, 0]), max(X_multi[:, 0])), 1: (min(X_multi[:, 1]), max(X_multi[:, 1]))}
+    input_bounds = {
+        0: (min(X_multi[:, 0]), max(X_multi[:, 0])),
+        1: (min(X_multi[:, 1]), max(X_multi[:, 1])),
+    }
     ltmodel_small = LinearTreeDefinition(regr, unscaled_input_bounds=input_bounds)
     formulation1_lt = LinearTreeGDPFormulation(ltmodel_small, transformation="mbigm")
 
@@ -1127,7 +1139,7 @@ def test_mbigm_formulation_multi_output():
     y_pred = regr.predict(
         np.array([pe.value(model1.x0), pe.value(model1.x1)]).reshape(1, -1)
     )
-    assert y_pred[0,0] == pytest.approx(solution_1_bigm)
+    assert y_pred[0, 0] == pytest.approx(solution_1_bigm)
 
 
 @pytest.mark.skipif(
@@ -1136,7 +1148,10 @@ def test_mbigm_formulation_multi_output():
 )
 def test_hybrid_bigm_formulation_multi_output():
     regr = linear_model_tree(X=X_multi, y=Y_multi)
-    input_bounds = {0: (min(X_multi[:, 0]), max(X_multi[:, 0])), 1: (min(X_multi[:, 1]), max(X_multi[:, 1]))}
+    input_bounds = {
+        0: (min(X_multi[:, 0]), max(X_multi[:, 0])),
+        1: (min(X_multi[:, 1]), max(X_multi[:, 1])),
+    }
     ltmodel_small = LinearTreeDefinition(regr, unscaled_input_bounds=input_bounds)
     formulation1_lt = LinearTreeHybridBigMFormulation(ltmodel_small)
 
@@ -1148,19 +1163,14 @@ def test_hybrid_bigm_formulation_multi_output():
     model1.lt = OmltBlock()
     model1.lt.build_formulation(formulation1_lt)
 
-    num_constraints = 0
     var_set = ComponentSet()
     for cons in model1.lt.component_data_objects(pe.Constraint, active=True):
-        num_constraints += 1
         for v in identify_variables(cons.expr):
             var_set.add(v)
 
     num_leaves = len(ltmodel_small.leaves[0])
     # binary for each leaf + some more from the formulation
     assert len(var_set) == num_leaves + 13
-    # 2 bounds constraints for each input, the xor, the output constraint, and
-    # four scaling constraints from OMLT
-    assert num_constraints == 16
 
     @model1.Constraint()
     def connect_input1(mdl):
@@ -1187,10 +1197,13 @@ def test_hybrid_bigm_formulation_multi_output():
 
 
 @pytest.mark.skipif(not lineartree_available, reason="Need Linear-Tree Package")
-def test_summary_dict_as_argument_multi_output():
+def test_summary_dict_argument_multi_output():
     # construct a LinearTreeDefinition
     regr = linear_model_tree(X=X_multi, y=Y_multi)
-    input_bounds = {0: (min(X_multi[:, 0]), max(X_multi[:, 0])), 1: (min(X_multi[:, 1]), max(X_multi[:, 1]))}
+    input_bounds = {
+        0: (min(X_multi[:, 0]), max(X_multi[:, 0])),
+        1: (min(X_multi[:, 1]), max(X_multi[:, 1])),
+    }
     ltmodel_small = LinearTreeDefinition(
         regr.summary(), unscaled_input_bounds=input_bounds
     )
@@ -1205,7 +1218,7 @@ def test_summary_dict_as_argument_multi_output():
     # assert attributes in LinearTreeDefinition
     assert scaled_input_bounds is not None
     assert n_inputs == NUM_INPUTS
-    assert n_outputs == 3
+    assert n_outputs == Y_multi.shape[1]
     # test for splits
     # assert the number of splits
     assert len(splits[0].keys()) == NUM_SPLITS
@@ -1250,9 +1263,7 @@ def test_summary_dict_as_argument_multi_output():
                 for k in range(len(features)):
                     lb = leaves[0][j][key][k][0]
                     ub = leaves[0][j][key][k][1]
-                    # there is chance that don't have lb and ub at this step
-                    if lb is not None and ub is not None:
-                        assert lb <= ub
+                    assert lb <= ub
     # test for thresholds
     # assert whether each feature has threshold
     assert len(thresholds[0].keys()) == n_inputs

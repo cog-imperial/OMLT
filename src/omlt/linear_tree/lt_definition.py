@@ -236,8 +236,7 @@ def _find_n_outputs(leaves):
 
     if hasattr(intercept, "__len__"):
         return len(intercept)
-    else:
-        return 1
+    return 1
 
 
 def _reassign_none_bounds(leaves, input_bounds):
