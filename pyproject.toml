@@ -15,6 +15,7 @@ dependencies = [
   "pyomo>=6.7.3",
   "onnx",
   "onnxruntime",
+  "onnxscript",
 ]
 requires-python = ">=3.9"
 dynamic = ["version"]
@@ -23,7 +24,7 @@ license = { file = "LICENSE.rst" }
 description = "OMLT is a Python package for representing machine learning models (such as neural networks) within the Pyomo optimization environment."
 
 [project.optional-dependencies]
-linear-tree = ["linear-tree"]
+linear-tree = ["linear-tree @ git+https://github.com/All-Things-Optimal/linear-tree.git@fix-skl-dependency"]
 keras = ["tensorflow", "keras"]
 keras-gpu = ["tensorflow[and-cuda]", "keras"]
 torch = ["torch", "torch-geometric"]
@@ -171,6 +172,7 @@ module = [
   "tensorflow.*",
   "torch_geometric.*",
   "juliacall.*",
+  "onnxscript.*",
 ]
 ignore_missing_imports = true
 
