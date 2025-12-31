@@ -369,8 +369,5 @@ def _add_gdp_formulation_to_block(  # noqa: PLR0913
 
     transformation_string = "gdp." + transformation
 
-    if transformation == 'mbigm':
-        pe.TransformationFactory(transformation_string).apply_to(block, threads=1)
-
     if transformation != "custom":
         pe.TransformationFactory(transformation_string).apply_to(block)
