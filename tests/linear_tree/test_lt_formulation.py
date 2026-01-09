@@ -1,6 +1,9 @@
 import numpy as np
 import pyomo.environ as pe
 import pytest
+import pyomo
+
+from packaging.version import Version
 from pyomo.common.collections import ComponentSet
 from pyomo.core.expr import identify_variables
 
@@ -26,6 +29,8 @@ NUM_LEAVES = 6
 scip_available = pe.SolverFactory("scip").available()
 cbc_available = pe.SolverFactory("cbc").available()
 gurobi_available = pe.SolverFactory("gurobi").available()
+
+pyomo_version = pyomo.__version__
 
 
 def linear_model_tree(X, y):
@@ -288,6 +293,7 @@ def test_hull_formulation_single_var():
     assert y_pred[0] == pytest.approx(solution_1_bigm[1])
 
 
+@pytest.mark.skipif(Version(pyomo_version) <= Version("6.9.5"))
 @pytest.mark.skipif(
     not lineartree_available or not gurobi_available,
     reason="Need Linear-Tree Package and gurobi",
@@ -696,6 +702,7 @@ def test_hull_formulation_multi_var():
     assert y_pred[0] == pytest.approx(solution_1_bigm)
 
 
+@pytest.mark.skipif(Version(pyomo_version) <= Version("6.9.5"))
 @pytest.mark.skipif(
     not lineartree_available or not gurobi_available,
     reason="Need Linear-Tree Package and gurobi",
