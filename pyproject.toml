@@ -24,7 +24,7 @@ license = { file = "LICENSE.rst" }
 description = "OMLT is a Python package for representing machine learning models (such as neural networks) within the Pyomo optimization environment."
 
 [project.optional-dependencies]
-linear-tree = ["linear-tree @ git+https://github.com/All-Things-Optimal/linear-tree.git@fix-skl-dependency"]
+linear-tree = ["linear-tree @ git+https://github.com/All-Things-Optimal/linear-tree.git@main"]
 keras = ["tensorflow", "keras"]
 keras-gpu = ["tensorflow[and-cuda]", "keras"]
 torch = ["torch", "torch-geometric"]
