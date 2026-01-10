@@ -37,7 +37,8 @@ def test_build_network():
 
 
 @pytest.mark.skip(
-    reason="tf2onnx v1.16.1 fails due to outdated protobuf and numpy. Skip until tf2onnx releases with patches"
+    reason="tf2onnx v1.16.1 fails due to outdated protobuf "
+    "and numpy. Skip until tf2onnx releases with patches"
 )
 @pytest.mark.skipif(
     (not onnx_available) or (not keras_available),

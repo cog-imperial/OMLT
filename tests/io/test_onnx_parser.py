@@ -123,7 +123,8 @@ def test_input_tensor_invalid_dims(datadir):
     model.graph.input[0].type.tensor_type.shape.dim[1].dim_value = 0
     parser = NetworkParser()
     with pytest.raises(
-        ValueError, match='All dimensions in graph "tf2onnx" input tensor have 0 value.'
+        ValueError,
+        match=r'All dimensions in graph "tf2onnx" input tensor have 0 value.',
     ):
         parser.parse_network(model.graph, None, None)
 
@@ -134,7 +135,7 @@ def test_no_input_layers(datadir):
     model.graph.input.remove(model.graph.input[0])
     parser = NetworkParser()
     with pytest.raises(
-        ValueError, match='No valid input layer found in graph "tf2onnx".'
+        ValueError, match=r'No valid input layer found in graph "tf2onnx".'
     ):
         parser.parse_network(model.graph, None, None)
 

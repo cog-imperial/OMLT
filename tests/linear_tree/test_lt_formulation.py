@@ -364,7 +364,9 @@ def test_hybrid_bigm_formulation_single_var():
     assert y_pred[0] == pytest.approx(solution_1_bigm[1])
 
 
-@pytest.mark.skipif(not lineartree_available, reason="Need Linear-Tree Package")
+@pytest.mark.skipif(
+    not lineartree_available or not scip_available, reason="Need Linear-Tree Package"
+)
 def test_scaling_only_scaler():
     mean_x_small = np.mean(X_small)
     std_x_small = np.std(X_small)
@@ -424,7 +426,9 @@ def test_scaling_only_scaler():
     assert y_pred[0] == pytest.approx((solution_1_bigm[1] - mean_y_small) / std_y_small)
 
 
-@pytest.mark.skipif(not lineartree_available, reason="Need Linear-Tree Package")
+@pytest.mark.skipif(
+    not lineartree_available or not scip_available, reason="Need Linear-Tree Package"
+)
 def test_scaling_bounds_and_scaler():
     mean_x_small = np.mean(X_small)
     std_x_small = np.std(X_small)
@@ -893,8 +897,8 @@ def test_raise_exception_if_wrong_model_instance():
     with pytest.raises(
         Exception,
         match=(
-            "Input dict must be the summary of the linear-tree model"
-            " e.g. dict = model.summary()"
+            r"Input dict must be the summary of the linear-tree model"
+            r" e.g. dict = model.summary()"
         ),
     ):
         LinearTreeDefinition(
@@ -907,8 +911,8 @@ def test_raise_exception_if_wrong_model_instance():
     with pytest.raises(
         Exception,
         match=(
-            "Input dict must be the summary of the linear-tree model"
-            " e.g. dict = model.summary()"
+            r"Input dict must be the summary of the linear-tree model"
+            r" e.g. dict = model.summary()"
         ),
     ):
         LinearTreeDefinition(wrong_summary_dict, scaled_input_bounds=input_bounds)

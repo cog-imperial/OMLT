@@ -365,7 +365,7 @@ def test_maxpool_full_space_nn_formulation():
 
 def _test_formulation_initialize_extra_input(network_formulation):
     """network_formulation can be:'FullSpace', 'ReducedSpace'."""
-    net, y = two_node_network("linear", -2.0)
+    net, _ = two_node_network("linear", -2.0)
     extra_input = InputLayer([1])
     net.add_layer(extra_input)
 
@@ -380,7 +380,7 @@ def _test_formulation_initialize_extra_input(network_formulation):
 
 def _test_formulation_added_extra_input(network_formulation):
     """network_formulation can be:'FullSpace', 'ReducedSpace', 'relu'."""
-    net, y = two_node_network("linear", -2.0)
+    net, _ = two_node_network("linear", -2.0)
     extra_input = InputLayer([1])
     formulation: _PyomoFormulation = formulations[network_formulation](net)
     net.add_layer(extra_input)
@@ -391,7 +391,7 @@ def _test_formulation_added_extra_input(network_formulation):
 
 def _test_formulation_build_extra_input(network_formulation):
     """network_formulation can be:'FullSpace', 'ReducedSpace', 'relu'."""
-    net, y = two_node_network("linear", -2.0)
+    net, _ = two_node_network("linear", -2.0)
     extra_input = InputLayer([1])
     formulation: _PyomoFormulation = formulations[network_formulation](net)
     net.add_layer(extra_input)
@@ -404,7 +404,7 @@ def _test_formulation_build_extra_input(network_formulation):
 
 def _test_formulation_added_extra_output(network_formulation):
     """network_formulation can be: 'FullSpace', 'ReducedSpace' 'relu'."""
-    net, y = two_node_network("linear", -2.0)
+    net, _ = two_node_network("linear", -2.0)
     extra_output = DenseLayer(
         [1, 2],
         [1, 2],
@@ -422,7 +422,7 @@ def _test_formulation_added_extra_output(network_formulation):
 
 def _test_formulation_initialize_extra_output(network_formulation):
     """network_formulation can be: 'FullSpace', 'ReducedSpace'."""
-    net, y = two_node_network("linear", -2.0)
+    net, _ = two_node_network("linear", -2.0)
     extra_output = DenseLayer(
         [1, 2],
         [1, 2],
@@ -465,7 +465,7 @@ def test_relu_partition_formulation_invalid_network():
 def _test_dense_layer_multiple_predecessors(layer_type):
     m = pyo.ConcreteModel()
     m.neural_net_block = OmltBlock()
-    net, y = two_node_network(None, -2.0)
+    net, _ = two_node_network(None, -2.0)
     extra_input = InputLayer([1])
     test_layer = list(net.layers)[2]
     net.add_layer(extra_input)
@@ -518,7 +518,7 @@ def test_reduced_space_dense_layer_predecessors():
 def test_partition_based_unbounded_below():
     m = pyo.ConcreteModel()
     m.neural_net_block = OmltBlock()
-    net, y = two_node_network(None, -2.0)
+    net, _ = two_node_network(None, -2.0)
     test_layer = list(net.layers)[2]
     test_layer_id = id(test_layer)
     prev_layer_id = id(list(net.layers)[1])
@@ -544,7 +544,7 @@ def test_partition_based_unbounded_below():
 def test_partition_based_unbounded_above():
     m = pyo.ConcreteModel()
     m.neural_net_block = OmltBlock()
-    net, y = two_node_network(None, -2.0)
+    net, _ = two_node_network(None, -2.0)
     test_layer = list(net.layers)[2]
     test_layer_id = id(test_layer)
     prev_layer_id = id(list(net.layers)[1])
@@ -570,7 +570,7 @@ def test_partition_based_unbounded_above():
 def test_partition_based_bias_unbounded_below():
     m = pyo.ConcreteModel()
     m.neural_net_block = OmltBlock()
-    net, y = two_node_network(None, -2.0)
+    net, _ = two_node_network(None, -2.0)
     test_layer = list(net.layers)[2]
     formulation = ReluPartitionFormulation(net)
 
@@ -589,7 +589,7 @@ def test_partition_based_bias_unbounded_below():
 def test_partition_based_bias_unbounded_above():
     m = pyo.ConcreteModel()
     m.neural_net_block = OmltBlock()
-    net, y = two_node_network(None, -2.0)
+    net, _ = two_node_network(None, -2.0)
     test_layer = list(net.layers)[2]
     formulation = ReluPartitionFormulation(net)
 
@@ -607,7 +607,7 @@ def test_partition_based_bias_unbounded_above():
 def test_fullspace_internal_extra_input():
     m = pyo.ConcreteModel()
     m.neural_net_block = OmltBlock()
-    net, y = two_node_network("linear", -2.0)
+    net, _ = two_node_network("linear", -2.0)
     extra_input = InputLayer([1])
     test_layer = list(net.layers)[1]
     formulation = FullSpaceNNFormulation(net)
