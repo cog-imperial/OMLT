@@ -357,7 +357,7 @@ def test_hybrid_bigm_formulation_single_var():
 
 
 @pytest.mark.skipif(not lineartree_available, reason="Need Linear-Tree Package")
-def test_scaling():
+def test_scaling_only_scaler():
     mean_x_small = np.mean(X_small)
     std_x_small = np.std(X_small)
     mean_y_small = np.mean(y_small)
@@ -383,6 +383,72 @@ def test_scaling():
     )
     assert lt_def2.scaled_input_bounds[0][0] == pytest.approx(scaled_input_bounds[0][0])
     assert lt_def2.scaled_input_bounds[0][1] == pytest.approx(scaled_input_bounds[0][1])
+    with pytest.raises(
+        Exception, match="Input Bounds needed to represent linear trees as MIPs"
+    ):
+        LinearTreeDefinition(regr)
+
+    formulation = LinearTreeHybridBigMFormulation(lt_def2)
+
+    model1 = pe.ConcreteModel()
+    model1.x = pe.Var(initialize=0)
+    model1.y = pe.Var(initialize=0)
+    model1.obj = pe.Objective(expr=1)
+    model1.lt = OmltBlock()
+    model1.lt.build_formulation(formulation)
+
+    @model1.Constraint()
+    def connect_inputs(mdl):
+        return mdl.x == mdl.lt.inputs[0]
+
+    @model1.Constraint()
+    def connect_outputs(mdl):
+        return mdl.y == mdl.lt.outputs[0]
+
+    model1.x.fix(0.5)
+
+    status_1_bigm = pe.SolverFactory("scip").solve(model1, tee=True)
+    pe.assert_optimal_termination(status_1_bigm)
+    solution_1_bigm = (pe.value(model1.x), pe.value(model1.y))
+    y_pred = regr.predict(
+        np.array((solution_1_bigm[0] - mean_x_small) / std_x_small).reshape(1, -1)
+    )
+    assert y_pred[0] == pytest.approx((solution_1_bigm[1] - mean_y_small) / std_y_small)
+
+
+@pytest.mark.skipif(not lineartree_available, reason="Need Linear-Tree Package")
+def test_scaling_bounds_and_scaler():
+    mean_x_small = np.mean(X_small)
+    std_x_small = np.std(X_small)
+    mean_y_small = np.mean(y_small)
+    std_y_small = np.std(y_small)
+    scaled_x = (X_small - mean_x_small) / std_x_small
+    scaled_y = (y_small - mean_y_small) / std_y_small
+    scaled_input_bounds = {0: (np.min(scaled_x), np.max(scaled_x))}
+    unscaled_input_bounds = {0: (np.min(X_small), np.max(X_small))}
+
+    scaler = omlt.scaling.OffsetScaling(
+        offset_inputs=[mean_x_small],
+        factor_inputs=[std_x_small],
+        offset_outputs=[mean_y_small],
+        factor_outputs=[std_y_small],
+    )
+
+    regr = linear_model_tree(scaled_x, scaled_y)
+
+    regr.fit(np.reshape(scaled_x, (-1, 1)), scaled_y)
+
+    lt_def2 = LinearTreeDefinition(
+        regr, scaled_input_bounds=scaled_input_bounds, scaling_object=scaler
+    )
+    assert lt_def2.scaled_input_bounds[0][0] == pytest.approx(scaled_input_bounds[0][0])
+    assert lt_def2.scaled_input_bounds[0][1] == pytest.approx(scaled_input_bounds[0][1])
+    assert lt_def2.unscaled_input_bounds[0][0] == pytest.approx(
+        unscaled_input_bounds[0][0]
+    )
+    assert lt_def2.unscaled_input_bounds[0][1] == pytest.approx(
+        unscaled_input_bounds[0][1]
+    )
     with pytest.raises(
         Exception, match="Input Bounds needed to represent linear trees as MIPs"
     ):
