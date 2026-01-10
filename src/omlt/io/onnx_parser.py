@@ -30,6 +30,9 @@ ATTR_FLOAT = 1
 ATTR_INT = 2
 ATTR_TENSOR = 4
 ATTR_INTS = 7
+ATTR_STRING = 3
+ATTR_FLOATS = 6
+ATTR_STRINGS = 8
 
 
 class NetworkParser:
@@ -53,7 +56,9 @@ class NetworkParser:
         self._node_stack = []
         self._node_map = {}
 
-    def parse_network(self, graph, scaling_object, input_bounds):  # noqa: C901, PLR0912, PLR0915
+    def parse_network(
+        self, graph, scaling_object, input_bounds
+    ):  # noqa: C901, PLR0912, PLR0915
         self._reset_state()
         self._graph = graph
 
@@ -376,15 +381,21 @@ class NetworkParser:
         biases = np.zeros(out_channels) if in_2 is None else self._initializers[in_2]
 
         attr = _collect_attributes(node)
-
+        if "strides" not in attr:
+            raise ValueError(f"{node.name} is missing required 'strides' attribute.")
         strides = attr["strides"]
+
         # check only kernel shape and stride are set
-        if attr["kernel_shape"] != kernel_shape:
-            msg = (
-                f"Kernel shape attribute {attr['kernel_shape']} does not match"
-                f" initialized kernel shape {kernel_shape}."
-            )
-            raise ValueError(msg)
+        if "kernel_shape" in attr:
+            if attr["kernel_shape"] != kernel_shape:
+                msg = (
+                    f"Kernel shape attribute {attr['kernel_shape']} does not match"
+                    f" initialized kernel shape {kernel_shape}."
+                )
+                raise ValueError(msg)
+        else:
+            # infer kernel shape from weights (ONNX default behavior)
+            attr["kernel_shape"] = list(kernel_shape)
         if len(kernel_shape) != len(strides):
             msg = (
                 f"Initialized kernel shape {kernel_shape} has {len(kernel_shape)} "
@@ -479,7 +490,15 @@ class NetworkParser:
             raise ValueError(msg)
         [in_0, in_1] = list(node.input)
         input_layer = self._node_map[in_0]
-        new_shape = self._constants[in_1]
+        if in_1 in self._constants:
+            new_shape = self._constants[in_1]
+        elif in_1 in self._initializers:
+            new_shape = self._initializers[in_1]
+        else:
+            raise KeyError(
+                f"Reshape node {node.name} has shape input {in_1} "
+                "that is neither a Constant nor an initializer."
+            )
         output_size = np.empty(input_layer.output_size).reshape(new_shape).shape
         transformer = IndexMapper(input_layer.output_size, list(output_size))
         self._node_map[node.output[0]] = (transformer, input_layer)
@@ -624,9 +643,14 @@ def _collect_attributes(node):
             r[attr.name] = numpy_helper.to_array(attr.t)
         elif attr.type == ATTR_INTS:  # INTS
             r[attr.name] = list(attr.ints)
+        elif attr.type == ATTR_STRING:  # STRING
+            r[attr.name] = attr.s.decode("utf-8")
+        elif attr.type == ATTR_FLOATS:  # FLOATS
+            r[attr.name] = list(attr.floats)
+        elif attr.type == ATTR_STRINGS:  # STRINGS
+            r[attr.name] = [s.decode("utf-8") for s in attr.strings]
         else:
-            msg = f"unhandled attribute type {attr.type}"
-            raise RuntimeError(msg)
+            raise RuntimeError(f"unhandled attribute type {attr.type}")
     return r
 
 
