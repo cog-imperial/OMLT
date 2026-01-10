@@ -1,8 +1,7 @@
 import numpy as np
+import pyomo
 import pyomo.environ as pe
 import pytest
-import pyomo
-
 from packaging.version import Version
 from pyomo.common.collections import ComponentSet
 from pyomo.core.expr import identify_variables
