@@ -56,9 +56,7 @@ class NetworkParser:
         self._node_stack = []
         self._node_map = {}
 
-    def parse_network(
-        self, graph, scaling_object, input_bounds
-    ):  # noqa: C901, PLR0912, PLR0915
+    def parse_network(self, graph, scaling_object, input_bounds):  # noqa: C901, PLR0912, PLR0915
         self._reset_state()
         self._graph = graph
 
