@@ -226,8 +226,8 @@ def get_epsilon_test_model(formulation_lt):
 
 
 @pytest.mark.skipif(
-    not lineartree_available or not cbc_available,
-    reason="Need Linear-Tree Package and cbc",
+    not lineartree_available or not scip_available,
+    reason="Need Linear-Tree Package and scip",
 )
 def test_nonzero_epsilon():
     regr_small = linear_model_tree(X=X_small, y=y_small)
@@ -243,14 +243,14 @@ def test_nonzero_epsilon():
     model_good = get_epsilon_test_model(formulation1_lt)
     model_bad = get_epsilon_test_model(formulation_bad)
 
-    status_1_bigm = pe.SolverFactory("cbc").solve(model_bad)
+    status_1_bigm = pe.SolverFactory("scip").solve(model_bad)
     pe.assert_optimal_termination(status_1_bigm)
     solution_1_bigm = (pe.value(model_bad.x), pe.value(model_bad.y))
     y_pred = regr_small.predict(np.array(solution_1_bigm[0]).reshape(1, -1))
     # Without an epsilon, the model cheats and does not match the tree prediction
     assert y_pred[0] != pytest.approx(solution_1_bigm[1])
 
-    status = pe.SolverFactory("cbc").solve(model_good)
+    status = pe.SolverFactory("scip").solve(model_good)
     pe.assert_optimal_termination(status)
     solution = (pe.value(model_good.x), pe.value(model_good.y))
     y_pred = regr_small.predict(np.array(solution[0]).reshape(1, -1))
