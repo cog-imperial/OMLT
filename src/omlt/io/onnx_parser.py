@@ -263,7 +263,7 @@ class NetworkParser:
 
         input_output_size = _get_input_output_size(input_layer, transformer)
 
-        output_size = input_output_size[:-1] + [node_weights.shape[1]]
+        output_size = [*input_output_size[:-1], node_weights.shape[1]]
 
         activation = "linear"
         if len(next_nodes) == 1:
@@ -317,12 +317,12 @@ class NetworkParser:
         input_output_size = _get_input_output_size(input_layer, transformer)
 
         # output is the same size as input except for the last dimension
-        output_size = input_output_size[:-1] + [weights.shape[1]]
+        output_size = [*input_output_size[:-1], weights.shape[1]]
 
         activation = "linear"
         if len(next_nodes) == 1:
             # check if Relu
-            type_, maybe_node, maybe_next_nodes = self._nodes[next_nodes[0]]
+            _, maybe_node, maybe_next_nodes = self._nodes[next_nodes[0]]
             if maybe_node.op_type in _ACTIVATION_OP_TYPES:
                 node = maybe_node
                 activation = node.op_type.lower()
@@ -378,7 +378,9 @@ class NetworkParser:
 
         attr = _collect_attributes(node)
         if "strides" not in attr:
-            raise ValueError(f"{node.name} is missing required 'strides' attribute.")
+            node_name = node.name
+            msg = f"{node_name} is missing required 'strides' attribute."
+            raise ValueError(msg)
         strides = attr["strides"]
 
         # check only kernel shape and stride are set
@@ -446,7 +448,7 @@ class NetworkParser:
         activation = "linear"
         if len(next_nodes) == 1:
             # check if Relu
-            type_, maybe_node, maybe_next_nodes = self._nodes[next_nodes[0]]
+            _, maybe_node, maybe_next_nodes = self._nodes[next_nodes[0]]
             if maybe_node.op_type in _ACTIVATION_OP_TYPES:
                 node = maybe_node
                 activation = maybe_node.op_type.lower()
@@ -493,10 +495,11 @@ class NetworkParser:
         elif in_1 in self._initializers:
             new_shape = self._initializers[in_1]
         else:
-            raise KeyError(
+            msg = (
                 f"Reshape node {node.name} has shape input {in_1} "
                 "that is neither a Constant nor an initializer."
             )
+            raise KeyError(msg)
         output_size = np.empty(input_layer.output_size).reshape(new_shape).shape
         transformer = IndexMapper(input_layer.output_size, list(output_size))
         self._node_map[node.output[0]] = (transformer, input_layer)
@@ -601,7 +604,7 @@ class NetworkParser:
         activation = "linear"
         if len(next_nodes) == 1:
             # check if Relu
-            type_, maybe_node, maybe_next_nodes = self._nodes[next_nodes[0]]
+            _, maybe_node, maybe_next_nodes = self._nodes[next_nodes[0]]
             if maybe_node.op_type in _ACTIVATION_OP_TYPES:
                 node = maybe_node
                 activation = maybe_node.op_type.lower()
@@ -644,7 +647,8 @@ def _collect_attributes(node):
         elif attr.type == ATTR_STRING:  # STRING
             r[attr.name] = attr.s.decode("utf-8")
         else:
-            raise RuntimeError(f"unhandled attribute type {attr.type}")
+            msg = (f"unhandled attribute type {attr.type}")
+            raise RuntimeError(msg)
     return r
 
 
