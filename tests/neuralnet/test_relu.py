@@ -4,6 +4,7 @@ import pytest
 
 from omlt import OmltBlock
 from omlt.dependencies import onnx_available
+from omlt.io.onnx import load_onnx_neural_network_with_bounds
 from omlt.neuralnet import (
     FullSpaceNNFormulation,
     ReluBigMFormulation,
@@ -113,8 +114,6 @@ def test_two_node_relu_partition_formulation(two_node_network_relu):
 
 @pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
 def test_conv_relu_big_m_formulation(datadir):
-    from omlt.io.onnx import load_onnx_neural_network_with_bounds
-
     net = load_onnx_neural_network_with_bounds(datadir.file("keras_conv_7x7_relu.onnx"))
     m = pyo.ConcreteModel()
 

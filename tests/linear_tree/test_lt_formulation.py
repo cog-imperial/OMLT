@@ -1,6 +1,8 @@
 import numpy as np
+import pyomo
 import pyomo.environ as pe
 import pytest
+from packaging.version import Version
 from pyomo.common.collections import ComponentSet
 from pyomo.core.expr import identify_variables
 
@@ -26,6 +28,8 @@ NUM_LEAVES = 6
 scip_available = pe.SolverFactory("scip").available()
 cbc_available = pe.SolverFactory("cbc").available()
 gurobi_available = pe.SolverFactory("gurobi").available()
+
+pyomo_version = pyomo.__version__
 
 
 def linear_model_tree(X, y):
@@ -222,8 +226,8 @@ def get_epsilon_test_model(formulation_lt):
 
 
 @pytest.mark.skipif(
-    not lineartree_available or not cbc_available,
-    reason="Need Linear-Tree Package and cbc",
+    not lineartree_available or not scip_available,
+    reason="Need Linear-Tree Package and scip",
 )
 def test_nonzero_epsilon():
     regr_small = linear_model_tree(X=X_small, y=y_small)
@@ -239,14 +243,14 @@ def test_nonzero_epsilon():
     model_good = get_epsilon_test_model(formulation1_lt)
     model_bad = get_epsilon_test_model(formulation_bad)
 
-    status_1_bigm = pe.SolverFactory("cbc").solve(model_bad)
+    status_1_bigm = pe.SolverFactory("scip").solve(model_bad)
     pe.assert_optimal_termination(status_1_bigm)
     solution_1_bigm = (pe.value(model_bad.x), pe.value(model_bad.y))
     y_pred = regr_small.predict(np.array(solution_1_bigm[0]).reshape(1, -1))
     # Without an epsilon, the model cheats and does not match the tree prediction
     assert y_pred[0] != pytest.approx(solution_1_bigm[1])
 
-    status = pe.SolverFactory("cbc").solve(model_good)
+    status = pe.SolverFactory("scip").solve(model_good)
     pe.assert_optimal_termination(status)
     solution = (pe.value(model_good.x), pe.value(model_good.y))
     y_pred = regr_small.predict(np.array(solution[0]).reshape(1, -1))
@@ -288,6 +292,10 @@ def test_hull_formulation_single_var():
     assert y_pred[0] == pytest.approx(solution_1_bigm[1])
 
 
+@pytest.mark.skipif(
+    Version(pyomo_version) <= Version("6.9.5"),
+    reason="Need Pyomo version that can transform blocks",
+)
 @pytest.mark.skipif(
     not lineartree_available or not gurobi_available,
     reason="Need Linear-Tree Package and gurobi",
@@ -356,7 +364,9 @@ def test_hybrid_bigm_formulation_single_var():
     assert y_pred[0] == pytest.approx(solution_1_bigm[1])
 
 
-@pytest.mark.skipif(not lineartree_available, reason="Need Linear-Tree Package")
+@pytest.mark.skipif(
+    not lineartree_available or not scip_available, reason="Need Linear-Tree Package"
+)
 def test_scaling_only_scaler():
     mean_x_small = np.mean(X_small)
     std_x_small = np.std(X_small)
@@ -416,7 +426,9 @@ def test_scaling_only_scaler():
     assert y_pred[0] == pytest.approx((solution_1_bigm[1] - mean_y_small) / std_y_small)
 
 
-@pytest.mark.skipif(not lineartree_available, reason="Need Linear-Tree Package")
+@pytest.mark.skipif(
+    not lineartree_available or not scip_available, reason="Need Linear-Tree Package"
+)
 def test_scaling_bounds_and_scaler():
     mean_x_small = np.mean(X_small)
     std_x_small = np.std(X_small)
@@ -486,51 +498,51 @@ def test_scaling_bounds_and_scaler():
 
 X = np.array(
     [
-        [4.98534526, 1.8977914],
-        [4.38751717, 4.48456528],
-        [2.65451539, 2.44426211],
-        [3.32761277, 4.58757063],
-        [0.36806515, 0.82428634],
-        [4.16036314, 1.09680059],
-        [2.29025371, 0.72246559],
-        [1.92725929, 0.34359974],
-        [4.02101578, 1.39448628],
-        [3.28019501, 1.22160752],
-        [2.73026047, 3.9482306],
-        [0.45621172, 0.56130164],
-        [2.64296795, 4.75411397],
-        [4.72526084, 3.35223772],
-        [2.39270941, 4.41622262],
-        [4.42707908, 0.35276571],
-        [1.58452501, 3.28957671],
-        [0.20009184, 2.90255483],
-        [4.36453075, 3.61985047],
-        [1.05576503, 2.57532169],
+        [0.82, 0.32],
+        [0.72, 0.78],
+        [0.48, 0.44],
+        [0.60, 0.80],
+        [0.05, 0.14],
+        [0.68, 0.18],
+        [0.42, 0.12],
+        [0.35, 0.06],
+        [0.66, 0.24],
+        [0.59, 0.21],
+        [0.49, 0.69],
+        [0.06, 0.10],
+        [0.48, 0.83],
+        [0.78, 0.58],
+        [0.43, 0.76],
+        [0.73, 0.06],
+        [0.28, 0.56],
+        [0.03, 0.49],
+        [0.71, 0.63],
+        [0.19, 0.46],
     ]
 )
 
 Y = np.array(
     [
-        [10.23341638],
-        [4.00860872],
-        [3.85046103],
-        [9.48457266],
-        [6.36974536],
-        [3.19763555],
-        [4.78390803],
-        [1.51994021],
-        [3.18768132],
-        [3.7972809],
-        [7.93779383],
-        [3.46714285],
-        [7.89435163],
-        [10.62832561],
-        [1.50713442],
-        [7.44321537],
-        [9.39437373],
-        [4.38891182],
-        [1.32105126],
-        [3.37287403],
+        [1.82],
+        [0.72],
+        [0.69],
+        [1.68],
+        [1.14],
+        [0.57],
+        [0.86],
+        [0.27],
+        [0.57],
+        [0.68],
+        [1.41],
+        [0.62],
+        [1.40],
+        [1.90],
+        [0.27],
+        [1.33],
+        [1.67],
+        [0.78],
+        [0.24],
+        [0.60],
     ]
 )
 
@@ -613,8 +625,8 @@ def test_linear_tree_model_multi_var():  # noqa: C901
 
 
 @pytest.mark.skipif(
-    not lineartree_available or not cbc_available,
-    reason="Need Linear-Tree Package and cbc",
+    not lineartree_available or not scip_available,
+    reason="Need Linear-Tree Package and scip",
 )
 def test_bigm_formulation_multi_var():
     regr = linear_model_tree(X=X, y=Y)
@@ -645,7 +657,7 @@ def test_bigm_formulation_multi_var():
     model1.x0.fix(0.5)
     model1.x1.fix(0.8)
 
-    status_1_bigm = pe.SolverFactory("cbc").solve(model1, tee=True)
+    status_1_bigm = pe.SolverFactory("scip").solve(model1, tee=True)
     pe.assert_optimal_termination(status_1_bigm)
     solution_1_bigm = pe.value(model1.y)
     y_pred = regr.predict(
@@ -696,6 +708,10 @@ def test_hull_formulation_multi_var():
     assert y_pred[0] == pytest.approx(solution_1_bigm)
 
 
+@pytest.mark.skipif(
+    Version(pyomo_version) <= Version("6.9.5"),
+    reason="Need Pyomo version that can transform blocks",
+)
 @pytest.mark.skipif(
     not lineartree_available or not gurobi_available,
     reason="Need Linear-Tree Package and gurobi",
@@ -881,8 +897,8 @@ def test_raise_exception_if_wrong_model_instance():
     with pytest.raises(
         Exception,
         match=(
-            "Input dict must be the summary of the linear-tree model"
-            " e.g. dict = model.summary()"
+            r"Input dict must be the summary of the linear-tree model"
+            r" e.g. dict = model.summary()"
         ),
     ):
         LinearTreeDefinition(
@@ -895,8 +911,8 @@ def test_raise_exception_if_wrong_model_instance():
     with pytest.raises(
         Exception,
         match=(
-            "Input dict must be the summary of the linear-tree model"
-            " e.g. dict = model.summary()"
+            r"Input dict must be the summary of the linear-tree model"
+            r" e.g. dict = model.summary()"
         ),
     ):
         LinearTreeDefinition(wrong_summary_dict, scaled_input_bounds=input_bounds)
@@ -942,51 +958,51 @@ def test_raise_exception_for_wrong_transformation():
 
 X_multi = np.array(
     [
-        [4.98534526, 1.8977914],
-        [4.38751717, 4.48456528],
-        [2.65451539, 2.44426211],
-        [3.32761277, 4.58757063],
-        [0.36806515, 0.82428634],
-        [4.16036314, 1.09680059],
-        [2.29025371, 0.72246559],
-        [1.92725929, 0.34359974],
-        [4.02101578, 1.39448628],
-        [3.28019501, 1.22160752],
-        [2.73026047, 3.9482306],
-        [0.45621172, 0.56130164],
-        [2.64296795, 4.75411397],
-        [4.72526084, 3.35223772],
-        [2.39270941, 4.41622262],
-        [4.42707908, 0.35276571],
-        [1.58452501, 3.28957671],
-        [0.20009184, 2.90255483],
-        [4.36453075, 3.61985047],
-        [1.05576503, 2.57532169],
+        [0.82, 0.32],
+        [0.72, 0.78],
+        [0.48, 0.44],
+        [0.60, 0.80],
+        [0.05, 0.14],
+        [0.68, 0.18],
+        [0.42, 0.12],
+        [0.35, 0.06],
+        [0.66, 0.24],
+        [0.59, 0.21],
+        [0.49, 0.69],
+        [0.06, 0.10],
+        [0.48, 0.83],
+        [0.78, 0.58],
+        [0.43, 0.76],
+        [0.73, 0.06],
+        [0.28, 0.56],
+        [0.03, 0.49],
+        [0.71, 0.63],
+        [0.19, 0.46],
     ]
 )
 
 Y_multi = np.array(
     [
-        [10.23341638],
-        [4.00860872],
-        [3.85046103],
-        [9.48457266],
-        [6.36974536],
-        [3.19763555],
-        [4.78390803],
-        [1.51994021],
-        [3.18768132],
-        [3.7972809],
-        [7.93779383],
-        [3.46714285],
-        [7.89435163],
-        [10.62832561],
-        [1.50713442],
-        [7.44321537],
-        [9.39437373],
-        [4.38891182],
-        [1.32105126],
-        [3.37287403],
+        [1.82],
+        [0.72],
+        [0.69],
+        [1.68],
+        [1.14],
+        [0.57],
+        [0.86],
+        [0.27],
+        [0.57],
+        [0.68],
+        [1.41],
+        [0.62],
+        [1.40],
+        [1.90],
+        [0.27],
+        [1.33],
+        [1.67],
+        [0.78],
+        [0.24],
+        [0.60],
     ]
 )
 
@@ -1163,6 +1179,10 @@ def test_hull_formulation_multi_output():
     assert y_pred[0, 0] == pytest.approx(solution_1_bigm)
 
 
+@pytest.mark.skipif(
+    Version(pyomo_version) <= Version("6.9.5"),
+    reason="Need Pyomo version that can transform blocks",
+)
 @pytest.mark.skipif(
     not lineartree_available or not gurobi_available,
     reason="Need Linear-Tree Package and gurobi",

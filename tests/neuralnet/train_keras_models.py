@@ -1,4 +1,7 @@
+import tempfile
+
 import keras
+import tf2onnx
 from conftest import get_neural_network_data
 from keras.layers import Conv2D, Dense
 from keras.models import Sequential
@@ -9,7 +12,7 @@ from omlt.io import write_onnx_model_with_bounds
 
 
 def train_models():  # noqa: PLR0915
-    x, y, x_test = get_neural_network_data("131")
+    x, y, _ = get_neural_network_data("131")
     nn = Sequential(name="keras_linear_131")
     nn.add(
         Dense(
@@ -38,7 +41,7 @@ def train_models():  # noqa: PLR0915
     nn.fit(x=x, y=y, validation_split=0.2, batch_size=16, verbose=1, epochs=15)
     nn.save(this_file_dir() + "/models/keras_linear_131.keras")
 
-    x, y, x_test = get_neural_network_data("131")
+    x, y, _ = get_neural_network_data("131")
     nn = Sequential(name="keras_linear_131_sigmoid")
     nn.add(
         Dense(
@@ -68,7 +71,7 @@ def train_models():  # noqa: PLR0915
     nn.fit(x=x, y=y, validation_split=0.2, batch_size=16, verbose=1, epochs=15)
     nn.save(this_file_dir() + "/models/keras_linear_131_sigmoid.keras")
 
-    x, y, x_test = get_neural_network_data("131")
+    x, y, _ = get_neural_network_data("131")
     nn = Sequential(name="keras_linear_131_sigmoid_output_activation")
     nn.add(
         Dense(
@@ -101,7 +104,7 @@ def train_models():  # noqa: PLR0915
         this_file_dir() + "/models/keras_linear_131_sigmoid_output_activation.keras"
     )
 
-    x, y, x_test = get_neural_network_data("131")
+    x, y, _ = get_neural_network_data("131")
     nn = Sequential(name="keras_linear_131_relu")
     nn.add(
         Dense(
@@ -131,7 +134,7 @@ def train_models():  # noqa: PLR0915
     nn.fit(x=x, y=y, validation_split=0.2, batch_size=16, verbose=1, epochs=15)
     nn.save(this_file_dir() + "/models/keras_linear_131_relu.keras")
 
-    x, y, x_test = get_neural_network_data("131")
+    x, y, _ = get_neural_network_data("131")
     nn = Sequential(name="keras_linear_131_relu_output_activation")
     nn.add(
         Dense(
@@ -162,7 +165,7 @@ def train_models():  # noqa: PLR0915
     nn.fit(x=x, y=y, validation_split=0.2, batch_size=16, verbose=1, epochs=15)
     nn.save(this_file_dir() + "/models/keras_linear_131_relu_output_activation.keras")
 
-    x, y, x_test = get_neural_network_data("131")
+    x, y, _ = get_neural_network_data("131")
     nn = Sequential(name="keras_linear_131_sigmoid_softplus_output_activation")
     nn.add(
         Dense(
@@ -196,7 +199,7 @@ def train_models():  # noqa: PLR0915
         + "/models/keras_linear_131_sigmoid_softplus_output_activation.keras"
     )
 
-    x, y, x_test = get_neural_network_data("131")
+    x, y, _ = get_neural_network_data("131")
     nn = Sequential(name="keras_big")
     N = 100
     nn.add(
@@ -252,7 +255,7 @@ def train_models():  # noqa: PLR0915
     nn.fit(x=x, y=y, validation_split=0.2, batch_size=16, verbose=1, epochs=15)
     nn.save(this_file_dir() + "/models/big.keras")
 
-    x, y, x_test = get_neural_network_data("2353")
+    x, y, _ = get_neural_network_data("2353")
     nn = Sequential(name="keras_linear_2353")
     nn.add(
         Dense(
@@ -309,9 +312,6 @@ def train_conv():
         )
     )
     nn.compile(optimizer=Adamax(learning_rate=0.01), loss="mae")
-    import tempfile
-
-    import tf2onnx
 
     onnx_model, _ = tf2onnx.convert.from_keras(nn)
 
