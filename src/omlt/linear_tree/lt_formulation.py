@@ -360,6 +360,9 @@ def _add_gdp_formulation_to_block(  # noqa: PLR0913 C901
     # Use the input_bounds and the linear models in the leaves to calculate
     # the lower and upper bounds on the output variable. Required for Pyomo.GDP
     scaled_output_bounds = _build_output_bounds(model_definition, scaled_input_bounds)
+    unscaled_output_bounds = _build_output_bounds(
+            model_definition, unscaled_input_bounds
+        )
 
     # Outputs are automatically scaled based on whether inputs are scaled
     for output_idx in output_indices:
@@ -373,13 +376,6 @@ def _add_gdp_formulation_to_block(  # noqa: PLR0913 C901
     min_unscaled_output = np.min(unscaled_output_bounds[:, 0])
     max_scaled_output = np.max(scaled_output_bounds[:, 1])
     min_scaled_output = np.min(scaled_output_bounds[:, 0])
-
-    if unscaled_input_bounds is not None:
-        unscaled_output_bounds = _build_output_bounds(
-            model_definition, unscaled_input_bounds
-        )
-        block.outputs.setub(unscaled_output_bounds[1])
-        block.outputs.setlb(unscaled_output_bounds[0])
 
     if model_definition.is_scaled is True:
         block.intermediate_output = pe.Var(

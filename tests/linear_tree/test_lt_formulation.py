@@ -1180,6 +1180,10 @@ def test_hull_formulation_multi_output():
 
 
 @pytest.mark.skipif(
+    Version(pyomo_version) <= Version("6.9.5"),
+    reason="Need Pyomo version that can transform blocks",
+)
+@pytest.mark.skipif(
     not lineartree_available or not gurobi_available,
     reason="Need Linear-Tree Package and gurobi",
 )
