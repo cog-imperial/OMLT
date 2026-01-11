@@ -100,7 +100,7 @@ class LinearTreeDefinition:
         )
 
         self.__n_inputs = _find_n_inputs(self.__leaves)
-        self.__n_outputs = _find_n_outputs(self.__leaves)
+        self.__n_outputs = 1
 
     @property
     def scaling_object(self):
@@ -222,31 +222,7 @@ def _find_n_inputs(leaves):
     leaf_indices = np.array(list(leaves[tree_indices[0]].keys()))
     tree_one = tree_indices[0]
     leaf_one = leaf_indices[0]
-    return leaves[tree_one][leaf_one]["slope"].shape[-1]
-
-
-def _find_n_outputs(leaves):
-    """Find n outputs.
-
-    Finds the number of outputs using the length of the intercept vector in the
-    first leaf
-
-    Arguments:
-        leaves: Dictionary of leaf information
-
-    Returns:
-        Number of outputs
-    """
-    tree_indices = np.array(list(leaves.keys()))
-    leaf_indices = np.array(list(leaves[tree_indices[0]].keys()))
-    tree_one = tree_indices[0]
-    leaf_one = leaf_indices[0]
-
-    intercept = leaves[tree_one][leaf_one]["intercept"]
-
-    if hasattr(intercept, "__len__"):
-        return len(intercept)
-    return 1
+    return len(np.arange(0, len(leaves[tree_one][leaf_one]["slope"])))
 
 
 def _reassign_none_bounds(leaves, input_bounds):
@@ -265,8 +241,7 @@ def _reassign_none_bounds(leaves, input_bounds):
     """
     leaf_indices = np.array(list(leaves.keys()))
     leaf_one = leaf_indices[0]
-
-    features = np.arange(0, leaves[leaf_one]["slope"].shape[-1])
+    features = np.arange(0, len(leaves[leaf_one]["slope"]))
 
     for leaf in leaf_indices:
         for feat in features:
@@ -349,7 +324,7 @@ def _parse_tree_data(model, input_bounds):  # noqa: C901, PLR0915, PLR0912
     # keys in the splits dictionary
     for leaf in leaves:
         del splits[leaf]
-        leaves[leaf]["slope"] = leaves[leaf]["models"].coef_
+        leaves[leaf]["slope"] = list(leaves[leaf]["models"].coef_)
         leaves[leaf]["intercept"] = leaves[leaf]["models"].intercept_
 
     # This loop creates an parent node id entry for each node in the tree
@@ -420,7 +395,7 @@ def _parse_tree_data(model, input_bounds):  # noqa: C901, PLR0915, PLR0912
         leaves[leaf]["bounds"] = {}
 
     leaf_ids = np.array(list(leaves.keys()))
-    features = np.arange(0, leaves[leaf_ids[0]]["slope"].shape[-1])
+    features = np.arange(0, len(leaves[leaf_ids[0]]["slope"]))
 
     # For each feature in each leaf, initialize lower and upper bounds to None
     for feat in features:
