@@ -647,7 +647,7 @@ def _collect_attributes(node):
         elif attr.type == ATTR_STRING:  # STRING
             r[attr.name] = attr.s.decode("utf-8")
         else:
-            msg = (f"unhandled attribute type {attr.type}")
+            msg = f"unhandled attribute type {attr.type}"
             raise RuntimeError(msg)
     return r
 
