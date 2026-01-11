@@ -1,3 +1,5 @@
+from itertools import product
+
 import numpy as np
 import pyomo.environ as pe
 from pyomo.gdp import Disjunct
@@ -97,6 +99,7 @@ class LinearTreeGDPFormulation(_PyomoFormulation):
             self.block,
             self.model_definition.scaling_object,
             self.model_definition.scaled_input_bounds,
+            initialize=None,
         )
 
         input_vars = self.block.scaled_inputs
@@ -192,6 +195,7 @@ class LinearTreeHybridBigMFormulation(_PyomoFormulation):
             block,
             self.model_definition.scaling_object,
             self.model_definition.scaled_input_bounds,
+            initialize=None,
         )
 
         input_vars = self.block.scaled_inputs
@@ -199,6 +203,8 @@ class LinearTreeHybridBigMFormulation(_PyomoFormulation):
             output_vars = self.block.scaled_outputs
         else:
             output_vars = self.block.outputs
+
+        output_indices = np.arange(0, len(self.block.outputs))
 
         _add_gdp_formulation_to_block(
             block=block,
@@ -220,20 +226,40 @@ class LinearTreeHybridBigMFormulation(_PyomoFormulation):
         # manually.
         features = np.arange(0, self.model_definition.n_inputs)
 
-        @block.Constraint(list(leaves.keys()))
-        def linear_constraint(mdl, tree):
-            leaf_ids = list(leaves[tree].keys())
-            return block.intermediate_output[tree] == sum(
-                (
-                    sum(
-                        leaves[tree][leaf]["slope"][feat] * input_vars[feat]
-                        for feat in features
+        if len(output_indices) == 1:
+
+            @block.Constraint(list(leaves.keys()), output_indices)
+            def linear_constraint(mdl, tree, output_idx):
+                leaf_ids = list(leaves[tree].keys())
+                return block.intermediate_output[tree, output_idx] == sum(
+                    (
+                        sum(
+                            leaves[tree][leaf]["slope"][feat] * input_vars[feat]
+                            for feat in features
+                        )
+                        + leaves[tree][leaf]["intercept"]
                     )
-                    + leaves[tree][leaf]["intercept"]
+                    * block.disjunct[tree, leaf].binary_indicator_var
+                    for leaf in leaf_ids
                 )
-                * block.disjunct[tree, leaf].binary_indicator_var
-                for leaf in leaf_ids
-            )
+
+        else:
+
+            @block.Constraint(list(leaves.keys()), output_indices)
+            def linear_constraint(mdl, tree, output_idx):
+                leaf_ids = list(leaves[tree].keys())
+                return block.intermediate_output[tree, output_idx] == sum(
+                    (
+                        sum(
+                            leaves[tree][leaf]["slope"][output_idx][feat]
+                            * input_vars[feat]
+                            for feat in features
+                        )
+                        + leaves[tree][leaf]["intercept"][output_idx]
+                    )
+                    * block.disjunct[tree, leaf].binary_indicator_var
+                    for leaf in leaf_ids
+                )
 
 
 def _build_output_bounds(model_def, input_bounds):
@@ -252,33 +278,48 @@ def _build_output_bounds(model_def, input_bounds):
     """
     leaves = model_def.leaves
     n_inputs = model_def.n_inputs
-    tree_ids = np.array(list(leaves.keys()))
+    n_outputs = model_def.n_outputs
+
     features = np.arange(0, n_inputs)
 
-    # Initialize bounds and variables
-    bounds = [0, 0]
-    upper_bound = 0
-    lower_bound = 0
-    for tree in tree_ids:
+    # Initialize bounds for all outputs
+    bounds = np.full((n_outputs, 2), [float("inf"), float("-inf")])
+
+    for tree in leaves:
         for leaf in leaves[tree]:
-            slopes = leaves[tree][leaf]["slope"]
+            slopes = leaves[tree][leaf]["slope"].T
             intercept = leaves[tree][leaf]["intercept"]
-            for k in features:
-                if slopes[k] <= 0:
-                    upper_bound += slopes[k] * input_bounds[k][0] + intercept
-                    lower_bound += slopes[k] * input_bounds[k][1] + intercept
-                else:
-                    upper_bound += slopes[k] * input_bounds[k][1] + intercept
-                    lower_bound += slopes[k] * input_bounds[k][0] + intercept
-                bounds[1] = max(bounds[1], upper_bound)
-                bounds[0] = min(bounds[0], lower_bound)
-            upper_bound = 0
-            lower_bound = 0
+
+            # Make sure slopes and intercept have at least 2 and 1 dimensions
+            slopes = np.array(slopes)  # Ensure slopes is a numpy array
+            if slopes.ndim == 1:
+                slopes = slopes.reshape(-1, 1)
+
+            if not isinstance(intercept, np.ndarray):
+                intercept = np.array([intercept])
+
+            # Compute bounds for each output
+            for output_idx in range(n_outputs):
+                upper_bound = 0
+                lower_bound = 0
+                for k in features:
+                    if slopes[k][output_idx] <= 0:
+                        upper_bound += slopes[k][output_idx] * input_bounds[k][0]
+                        lower_bound += slopes[k][output_idx] * input_bounds[k][1]
+                    else:
+                        upper_bound += slopes[k][output_idx] * input_bounds[k][1]
+                        lower_bound += slopes[k][output_idx] * input_bounds[k][0]
+                upper_bound += intercept[output_idx]
+                lower_bound += intercept[output_idx]
+
+                # Update global bounds
+                bounds[output_idx, 1] = max(bounds[output_idx, 1], upper_bound)
+                bounds[output_idx, 0] = min(bounds[output_idx, 0], lower_bound)
 
     return bounds
 
 
-def _add_gdp_formulation_to_block(  # noqa: PLR0913
+def _add_gdp_formulation_to_block(  # noqa: PLR0913 C901
     block,
     model_definition,
     input_vars,
@@ -306,18 +347,32 @@ def _add_gdp_formulation_to_block(  # noqa: PLR0913
     scaled_input_bounds = model_definition.scaled_input_bounds
     unscaled_input_bounds = model_definition.unscaled_input_bounds
     n_inputs = model_definition.n_inputs
+    n_outputs = model_definition.n_outputs
 
     # The set of leaves and the set of features
     tree_ids = list(leaves.keys())
     t_l = [(tree, leaf) for tree in tree_ids for leaf in leaves[tree]]
     features = np.arange(0, n_inputs)
 
+    output_indices = np.arange(0, n_outputs)
+    set_index = list(product(tree_ids, output_indices))
+
     # Use the input_bounds and the linear models in the leaves to calculate
     # the lower and upper bounds on the output variable. Required for Pyomo.GDP
-    # Ouptuts are automatically scaled based on whether inputs are scaled
     scaled_output_bounds = _build_output_bounds(model_definition, scaled_input_bounds)
-    block.scaled_outputs.setub(scaled_output_bounds[1])
-    block.scaled_outputs.setlb(scaled_output_bounds[0])
+
+    # Outputs are automatically scaled based on whether inputs are scaled
+    for output_idx in output_indices:
+        block.outputs[output_idx].setub(unscaled_output_bounds[output_idx, 1])
+        block.outputs[output_idx].setlb(unscaled_output_bounds[output_idx, 0])
+        block.scaled_outputs[output_idx].setub(scaled_output_bounds[output_idx, 1])
+        block.scaled_outputs[output_idx].setlb(scaled_output_bounds[output_idx, 0])
+
+    # Find the maximum and minimum bounds for the output variable
+    max_unscaled_output = np.max(unscaled_output_bounds[:, 1])
+    min_unscaled_output = np.min(unscaled_output_bounds[:, 0])
+    max_scaled_output = np.max(scaled_output_bounds[:, 1])
+    min_scaled_output = np.min(scaled_output_bounds[:, 0])
 
     if unscaled_input_bounds is not None:
         unscaled_output_bounds = _build_output_bounds(
@@ -328,11 +383,11 @@ def _add_gdp_formulation_to_block(  # noqa: PLR0913
 
     if model_definition.is_scaled is True:
         block.intermediate_output = pe.Var(
-            tree_ids, bounds=(scaled_output_bounds[0], scaled_output_bounds[1])
+            set_index, bounds=(min_scaled_output, max_scaled_output)
         )
     else:
         block.intermediate_output = pe.Var(
-            tree_ids, bounds=(unscaled_output_bounds[0], unscaled_output_bounds[1])
+            set_index, bounds=(min_unscaled_output, max_unscaled_output)
         )
 
     # Create a disjunct for each leaf containing the bound constraints
@@ -349,12 +404,24 @@ def _add_gdp_formulation_to_block(  # noqa: PLR0913
         dsj.ub_constraint = pe.Constraint(features, rule=ub_rule)
 
         if include_leaf_equalities:
-            slope = leaves[tree][leaf]["slope"]
+            slope = leaves[tree][leaf]["slope"].T
             intercept = leaves[tree][leaf]["intercept"]
-            dsj.linear_exp = pe.Constraint(
-                expr=sum(slope[k] * input_vars[k] for k in features) + intercept
-                == block.intermediate_output[tree]
-            )
+
+            # Make sure slopes and intercept have at least 2 and 1 dimensions
+            slope = np.array(slope)  # Ensure slope is a numpy array
+            if slope.ndim == 1:
+                slope = slope.reshape(-1, 1)
+
+            if isinstance(intercept, (int, float, np.number)):
+                intercept = np.array([intercept])
+
+            dsj.linear_exp = pe.ConstraintList()
+            for output_idx in output_indices:
+                dsj.linear_exp.add(
+                    sum(slope[k][output_idx] * input_vars[k] for k in features)
+                    + intercept[output_idx]
+                    == block.intermediate_output[tree, output_idx]
+                )
 
     block.disjunct = Disjunct(t_l, rule=disjuncts_rule)
 
@@ -363,9 +430,12 @@ def _add_gdp_formulation_to_block(  # noqa: PLR0913
         leaf_ids = list(leaves[tree].keys())
         return [block.disjunct[tree, leaf] for leaf in leaf_ids]
 
-    block.total_output = pe.Constraint(
-        expr=output_vars[0] == sum(block.intermediate_output[tree] for tree in tree_ids)
-    )
+    block.total_output = pe.ConstraintList()
+    for output_idx in output_indices:
+        block.total_output.add(
+            output_vars[output_idx]
+            == sum(block.intermediate_output[tree, output_idx] for tree in tree_ids)
+        )
 
     transformation_string = "gdp." + transformation
 
