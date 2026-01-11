@@ -625,8 +625,8 @@ def test_linear_tree_model_multi_var():  # noqa: C901
 
 
 @pytest.mark.skipif(
-    not lineartree_available or not cbc_available,
-    reason="Need Linear-Tree Package and cbc",
+    not lineartree_available or not scip_available,
+    reason="Need Linear-Tree Package and scip",
 )
 def test_bigm_formulation_multi_var():
     regr = linear_model_tree(X=X, y=Y)
@@ -657,7 +657,7 @@ def test_bigm_formulation_multi_var():
     model1.x0.fix(0.5)
     model1.x1.fix(0.8)
 
-    status_1_bigm = pe.SolverFactory("cbc").solve(model1, tee=True)
+    status_1_bigm = pe.SolverFactory("scip").solve(model1, tee=True)
     pe.assert_optimal_termination(status_1_bigm)
     solution_1_bigm = pe.value(model1.y)
     y_pred = regr.predict(
@@ -1090,8 +1090,8 @@ def test_linear_tree_multi_output():
 
 
 @pytest.mark.skipif(
-    not lineartree_available or not cbc_available,
-    reason="Need Linear-Tree Package and cbc",
+    not lineartree_available or not scip_available,
+    reason="Need Linear-Tree Package and scip",
 )
 def test_bigm_formulation_multi_output():
     regr = linear_model_tree(X=X_multi, y=Y_multi)
@@ -1125,7 +1125,7 @@ def test_bigm_formulation_multi_output():
     model1.x0.fix(0.5)
     model1.x1.fix(0.8)
 
-    status_1_bigm = pe.SolverFactory("cbc").solve(model1, tee=True)
+    status_1_bigm = pe.SolverFactory("scip").solve(model1, tee=True)
     pe.assert_optimal_termination(status_1_bigm)
     solution_1_bigm = pe.value(model1.y)
     y_pred = regr.predict(
