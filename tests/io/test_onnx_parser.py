@@ -342,3 +342,13 @@ def test_kernel_strides_do_not_match(datadir):
     )
     with pytest.raises(ValueError, match=expected_error_msg):
         parser.parse_network(model.graph, None, None)
+
+
+@pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
+def test_reshape_node_in_initializer(datadir):
+    model = onnx.load(datadir.file("mnist_example.onnx"))
+    # Pop strides attribute from onnx model.graph
+    [_, in_1] = list(model.graph.node[4].input)
+    parser = NetworkParser()
+    parser.parse_network(model.graph, None, None)
+    assert in_1 in parser._initializers
