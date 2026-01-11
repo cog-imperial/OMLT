@@ -31,8 +31,6 @@ ATTR_INT = 2
 ATTR_TENSOR = 4
 ATTR_INTS = 7
 ATTR_STRING = 3
-ATTR_FLOATS = 6
-ATTR_STRINGS = 8
 
 
 class NetworkParser:
@@ -394,6 +392,8 @@ class NetworkParser:
         else:
             # infer kernel shape from weights (ONNX default behavior)
             attr["kernel_shape"] = list(kernel_shape)
+            # Assign to _kernel_shape attribute for testing purposes
+            self._kernel_shape = list(kernel_shape)
         if len(kernel_shape) != len(strides):
             msg = (
                 f"Initialized kernel shape {kernel_shape} has {len(kernel_shape)} "
@@ -643,10 +643,6 @@ def _collect_attributes(node):
             r[attr.name] = list(attr.ints)
         elif attr.type == ATTR_STRING:  # STRING
             r[attr.name] = attr.s.decode("utf-8")
-        elif attr.type == ATTR_FLOATS:  # FLOATS
-            r[attr.name] = list(attr.floats)
-        elif attr.type == ATTR_STRINGS:  # STRINGS
-            r[attr.name] = [s.decode("utf-8") for s in attr.strings]
         else:
             raise RuntimeError(f"unhandled attribute type {attr.type}")
     return r
