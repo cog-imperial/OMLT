@@ -492,8 +492,8 @@ class NetworkParser:
         input_layer = self._node_map[in_0]
         if in_1 in self._constants:
             new_shape = self._constants[in_1]
-        elif in_1 in self._initializers:
-            new_shape = self._initializers[in_1]
+        # elif in_1 in self._initializers:
+        #     new_shape = self._initializers[in_1]
         else:
             msg = (
                 f"Reshape node {node.name} has shape input {in_1} "
