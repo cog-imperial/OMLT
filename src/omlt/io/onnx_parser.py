@@ -185,6 +185,56 @@ class NetworkParser:
             next_nodes, new_layer, new_layer_inputs = self._consume_pool_nodes(
                 node, next_nodes
             )
+        elif node.op_type in _ACTIVATION_OP_TYPES:
+            # Activation nodes are usually consumed as part of Dense/Conv/Pooling
+            # But some ONNX exports include them as stand-alone nodes
+            # In that case, attach the activation to the previous layer directly.
+            if len(node.input) != 1 or len(node.output) != 1:
+                msg = (
+                    f"Activation node {node.name} ({node.op_type}) must have exactly "
+                    f"1 input and 1 output; got inputs={list(node.input)} "
+                    f"outputs={list(node.output)}"
+                )
+                raise ValueError(msg)
+
+            in_name = node.input[0]
+            out_name = node.output[0]
+
+            prev = self._node_map.get(in_name, None)
+            if prev is None:
+                msg = (
+                    f"Activation node {node.name} ({node.op_type}) input '{in_name}' "
+                    "not found in node map."
+                )
+                raise ValueError(msg)
+
+            # If the previous object is a (transformer, input_layer) tuple,
+            # we can't attach activation.
+            if isinstance(prev, tuple):
+                msg = (
+                    f"Cannot attach activation {node.op_type} to a transformer node "
+                    f"({in_name}). ONNX graph structure is not supported."
+                )
+                raise ValueError(msg)
+
+            # Attach activation to previous layer (Dense/Conv/Pooling)
+            # Matches how _consume_* functions handle activations.
+            try:
+                prev.activation = node.op_type.lower()
+            except Exception as e:
+                msg = (
+                    f"Failed to set activation '{node.op_type.lower()}' on previous "
+                    f"layer {prev}. Underlying error: {e}"
+                )
+                raise ValueError(msg) from e
+
+            # Map this activation node output to the same previous layer
+            self._node_map[node.name] = prev
+            self._node_map[out_name] = prev
+
+            # No new layer created
+            new_layer = None
+            new_layer_inputs = None
         else:
             msg = f"Unhandled node type {node.op_type}"
             raise ValueError(msg)
