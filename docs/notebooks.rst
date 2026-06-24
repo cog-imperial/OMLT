@@ -29,4 +29,15 @@ The second set of notebooks gives application-specific examples:
 * `auto-thermal-reformer.ipynb <https://github.com/cog-imperial/OMLT/blob/main/docs/notebooks/neuralnet/auto-thermal-reformer.ipynb>`_ develops a neural network surrogate (using sigmoid activations) with data from a process model built using `IDAES-PSE <https://github.com/IDAES/idaes-pse>`_.
 
 * `auto-thermal-reformer-relu.ipynb <https://github.com/cog-imperial/OMLT/blob/main/docs/notebooks/neuralnet/auto-thermal-reformer-relu.ipynb>`_ develops a neural network surrogate (using ReLU activations) with data from a process model built using `IDAES-PSE <https://github.com/IDAES/idaes-pse>`_.
-* 
+
+The third set of notebooks demonstrates conformal prediction for uncertainty quantification and optimization under uncertainty:
+
+* `regression/01_conformal_tutorial.ipynb <https://github.com/cog-imperial/OMLT/blob/main/docs/notebooks/conformal/regression/01_conformal_tutorial.ipynb>`_ introduces split conformal prediction and adaptive (normalized) conformal intervals for regression with heteroscedastic noise.
+
+* `regression/02_uncertainty_integration.ipynb <https://github.com/cog-imperial/OMLT/blob/main/docs/notebooks/conformal/regression/02_uncertainty_integration.ipynb>`_ embeds conformal predictive sets into a Pyomo/OMLT optimization model to enforce safety constraints with finite-sample feasibility guarantees.
+
+* `classification/01_conformal_tutorial.ipynb <https://github.com/cog-imperial/OMLT/blob/main/docs/notebooks/conformal/classification/01_conformal_tutorial.ipynb>`_ introduces conformal prediction sets for classification on MNIST, contrasting the traditional softmax-based nonconformity score with a logit-based score that avoids introducing extra nonlinearities when later embedded into an optimization formulation.
+
+* `classification/02_uncertainty_integration.ipynb <https://github.com/cog-imperial/OMLT/blob/main/docs/notebooks/conformal/classification/02_uncertainty_integration.ipynb>`_ embeds the logit-based conformal classifier into a Pyomo/OMLT MILP to find minimal-L1-norm input perturbations that break the conformal guarantee in a controlled way, and compares this to a standard (non-conformal) adversarial perturbation.
+
+* `regression/03_feasibility_verification.ipynb <https://github.com/cog-imperial/OMLT/blob/main/docs/notebooks/conformal/regression/03_feasibility_verification.ipynb>`_ optimizes a membrane reactor design under a conformal NN surrogate and a standard (non-conformal) NN surrogate, then checks each resulting design against a physics-based ODE oracle to compare how often each strategy yields a truly feasible design.

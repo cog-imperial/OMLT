@@ -70,6 +70,19 @@ When utilizing graph neural networks, please cite the following paper in additio
           doi = {https://doi.org/10.1016/j.compchemeng.2024.108684},
      }
 
+When utilizing conformal prediction for uncertainty quantification, please cite the following paper in addition:
+
+::
+
+     @article{ovalle2026conformal,
+          title={Conformal Mixed-Integer Constraint Learning with Feasibility Guarantees},
+          author={Ovalle, Daniel and Biegler, Lorenz and Grossmann, Ignacio and Laird, Carl and Dulce Rubio, Mateo},
+          journal={Advances in Neural Information Processing Systems},
+          volume={38},
+          pages={80387--80423},
+          year={2026}
+     }
+
 Documentation
 ==============
 The latest OMLT documentation can be found at the `readthedocs page <https://omlt.readthedocs.io/en/latest/index.html#>`_. Additionally, much of the current functionality is demonstrated using Jupyter notebooks available in the  `notebooks folder <https://github.com/cog-imperial/OMLT/tree/main/docs/notebooks>`_.
