@@ -36,6 +36,10 @@ def test_build_network():
     _test_run_notebook("neuralnet", "build_network.ipynb", 37)
 
 
+@pytest.mark.skip(
+    reason="tf2onnx v1.16.1 fails due to outdated protobuf "
+    "and numpy. Skip until tf2onnx releases with patches"
+)
 @pytest.mark.skipif(
     (not onnx_available) or (not keras_available),
     reason="onnx and keras needed for this notebook",

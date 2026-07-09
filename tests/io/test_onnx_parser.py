@@ -123,7 +123,8 @@ def test_input_tensor_invalid_dims(datadir):
     model.graph.input[0].type.tensor_type.shape.dim[1].dim_value = 0
     parser = NetworkParser()
     with pytest.raises(
-        ValueError, match='All dimensions in graph "tf2onnx" input tensor have 0 value.'
+        ValueError,
+        match=r'All dimensions in graph "tf2onnx" input tensor have 0 value.',
     ):
         parser.parse_network(model.graph, None, None)
 
@@ -134,7 +135,7 @@ def test_no_input_layers(datadir):
     model.graph.input.remove(model.graph.input[0])
     parser = NetworkParser()
     with pytest.raises(
-        ValueError, match='No valid input layer found in graph "tf2onnx".'
+        ValueError, match=r'No valid input layer found in graph "tf2onnx".'
     ):
         parser.parse_network(model.graph, None, None)
 
@@ -292,3 +293,62 @@ def test_consume_maxpool_wrong_dims(datadir):
     )
     with pytest.raises(ValueError, match=expected_msg_maxpool):
         parser._consume_pool_nodes(parser._nodes["node1"][1], parser._nodes["node1"][2])
+
+
+@pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
+def test_missing_strides_attribute(datadir):
+    model = onnx.load(datadir.file("convx1_gemmx1.onnx"))
+    # Pop strides attribute from onnx model.graph
+    model.graph.node[0].attribute.pop(4)
+    parser = NetworkParser()
+    expected_error_msg = "Conv_0 is missing required 'strides' attribute."
+    with pytest.raises(ValueError, match=expected_error_msg):
+        parser.parse_network(model.graph, None, None)
+
+
+@pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
+def test_inferred_kernel_shape(datadir):
+    model = onnx.load(datadir.file("convx1_gemmx1.onnx"))
+    # Pop strides attribute from onnx model.graph
+    model.graph.node[0].attribute.pop(2)
+    parser = NetworkParser()
+    parser.parse_network(model.graph, None, None)
+    assert parser._kernel_shape == [2, 2]
+
+
+@pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
+def test_wrong_kernel_shape(datadir):
+    model = onnx.load(datadir.file("convx1_gemmx1.onnx"))
+    # Pop strides attribute from onnx model.graph
+    model.graph.node[0].attribute[2].ints.append(1)
+    parser = NetworkParser()
+    expected_error_msg = (
+        r"Kernel shape attribute \[2, 2, 1\] does not match initialized "
+        r"kernel shape \[2, 2\]."
+    )
+    with pytest.raises(ValueError, match=expected_error_msg):
+        parser.parse_network(model.graph, None, None)
+
+
+@pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
+def test_kernel_strides_do_not_match(datadir):
+    model = onnx.load(datadir.file("convx1_gemmx1.onnx"))
+    # Pop strides attribute from onnx model.graph
+    model.graph.node[0].attribute[4].ints.append(1)
+    parser = NetworkParser()
+    expected_error_msg = (
+        r"Initialized kernel shape \[2, 2\] has 2 dimensions. Strides attribute "
+        r"has 3 dimensions. These must be equal."
+    )
+    with pytest.raises(ValueError, match=expected_error_msg):
+        parser.parse_network(model.graph, None, None)
+
+
+@pytest.mark.skipif(not onnx_available, reason="Need ONNX for this test")
+def test_reshape_node_in_initializer(datadir):
+    model = onnx.load(datadir.file("mnist_example.onnx"))
+    # Pop strides attribute from onnx model.graph
+    [_, in_1] = list(model.graph.node[4].input)
+    parser = NetworkParser()
+    parser.parse_network(model.graph, None, None)
+    assert in_1 in parser._initializers

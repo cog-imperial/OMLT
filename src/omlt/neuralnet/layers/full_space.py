@@ -16,7 +16,7 @@ def full_space_dense_layer(net_block, net, layer_block, layer):  # noqa: PLR0912
         \end{align*}
 
     """
-    input_layer, input_layer_block = _input_layer_and_block(net_block, net, layer)
+    _, input_layer_block = _input_layer_and_block(net_block, net, layer)
 
     constraint_factory = OmltConstraintFactory()
     layer_block.dense_layer = constraint_factory.new_constraint(
@@ -105,7 +105,7 @@ def full_space_gnn_layer(net_block, net, layer_block, layer):
             \end{cases}
         \end{align*}
     """
-    input_layer, input_layer_block = _input_layer_and_block(net_block, net, layer)
+    _, input_layer_block = _input_layer_and_block(net_block, net, layer)
 
     var_factory = OmltVarFactory()
     constraint_factory = OmltConstraintFactory()
@@ -237,7 +237,7 @@ def full_space_conv2d_layer(net_block, net, layer_block, layer):
         succ_layer.activation = layer.activation
         layer.activation = "linear"
 
-    input_layer, input_layer_block = _input_layer_and_block(net_block, net, layer)
+    _, input_layer_block = _input_layer_and_block(net_block, net, layer)
     constraint_factory = OmltConstraintFactory()
 
     layer_block.convolutional_layer = constraint_factory.new_constraint(

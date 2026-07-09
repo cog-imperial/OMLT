@@ -30,6 +30,7 @@ ATTR_FLOAT = 1
 ATTR_INT = 2
 ATTR_TENSOR = 4
 ATTR_INTS = 7
+ATTR_STRING = 3
 
 
 class NetworkParser:
@@ -262,7 +263,7 @@ class NetworkParser:
 
         input_output_size = _get_input_output_size(input_layer, transformer)
 
-        output_size = input_output_size[:-1] + [node_weights.shape[1]]
+        output_size = [*input_output_size[:-1], node_weights.shape[1]]
 
         activation = "linear"
         if len(next_nodes) == 1:
@@ -316,12 +317,12 @@ class NetworkParser:
         input_output_size = _get_input_output_size(input_layer, transformer)
 
         # output is the same size as input except for the last dimension
-        output_size = input_output_size[:-1] + [weights.shape[1]]
+        output_size = [*input_output_size[:-1], weights.shape[1]]
 
         activation = "linear"
         if len(next_nodes) == 1:
             # check if Relu
-            type_, maybe_node, maybe_next_nodes = self._nodes[next_nodes[0]]
+            _, maybe_node, maybe_next_nodes = self._nodes[next_nodes[0]]
             if maybe_node.op_type in _ACTIVATION_OP_TYPES:
                 node = maybe_node
                 activation = node.op_type.lower()
@@ -376,15 +377,25 @@ class NetworkParser:
         biases = np.zeros(out_channels) if in_2 is None else self._initializers[in_2]
 
         attr = _collect_attributes(node)
-
-        strides = attr["strides"]
-        # check only kernel shape and stride are set
-        if attr["kernel_shape"] != kernel_shape:
-            msg = (
-                f"Kernel shape attribute {attr['kernel_shape']} does not match"
-                f" initialized kernel shape {kernel_shape}."
-            )
+        if "strides" not in attr:
+            node_name = node.name
+            msg = f"{node_name} is missing required 'strides' attribute."
             raise ValueError(msg)
+        strides = attr["strides"]
+
+        # check only kernel shape and stride are set
+        if "kernel_shape" in attr:
+            if attr["kernel_shape"] != kernel_shape:
+                msg = (
+                    f"Kernel shape attribute {attr['kernel_shape']} does not match"
+                    f" initialized kernel shape {kernel_shape}."
+                )
+                raise ValueError(msg)
+        else:
+            # infer kernel shape from weights (ONNX default behavior)
+            attr["kernel_shape"] = list(kernel_shape)
+            # Assign to _kernel_shape attribute for testing purposes
+            self._kernel_shape = list(kernel_shape)
         if len(kernel_shape) != len(strides):
             msg = (
                 f"Initialized kernel shape {kernel_shape} has {len(kernel_shape)} "
@@ -437,7 +448,7 @@ class NetworkParser:
         activation = "linear"
         if len(next_nodes) == 1:
             # check if Relu
-            type_, maybe_node, maybe_next_nodes = self._nodes[next_nodes[0]]
+            _, maybe_node, maybe_next_nodes = self._nodes[next_nodes[0]]
             if maybe_node.op_type in _ACTIVATION_OP_TYPES:
                 node = maybe_node
                 activation = maybe_node.op_type.lower()
@@ -479,7 +490,16 @@ class NetworkParser:
             raise ValueError(msg)
         [in_0, in_1] = list(node.input)
         input_layer = self._node_map[in_0]
-        new_shape = self._constants[in_1]
+        if in_1 in self._constants:
+            new_shape = self._constants[in_1]
+        elif in_1 in self._initializers:
+            new_shape = self._initializers[in_1]
+        else:
+            msg = (
+                f"Reshape node {node.name} has shape input {in_1} "
+                "that is neither a Constant nor an initializer."
+            )
+            raise KeyError(msg)
         output_size = np.empty(input_layer.output_size).reshape(new_shape).shape
         transformer = IndexMapper(input_layer.output_size, list(output_size))
         self._node_map[node.output[0]] = (transformer, input_layer)
@@ -584,7 +604,7 @@ class NetworkParser:
         activation = "linear"
         if len(next_nodes) == 1:
             # check if Relu
-            type_, maybe_node, maybe_next_nodes = self._nodes[next_nodes[0]]
+            _, maybe_node, maybe_next_nodes = self._nodes[next_nodes[0]]
             if maybe_node.op_type in _ACTIVATION_OP_TYPES:
                 node = maybe_node
                 activation = maybe_node.op_type.lower()
@@ -624,6 +644,8 @@ def _collect_attributes(node):
             r[attr.name] = numpy_helper.to_array(attr.t)
         elif attr.type == ATTR_INTS:  # INTS
             r[attr.name] = list(attr.ints)
+        elif attr.type == ATTR_STRING:  # STRING
+            r[attr.name] = attr.s.decode("utf-8")
         else:
             msg = f"unhandled attribute type {attr.type}"
             raise RuntimeError(msg)
