@@ -80,7 +80,8 @@ When utilizing conformal prediction for uncertainty quantification, please cite 
           journal={Advances in Neural Information Processing Systems},
           volume={38},
           pages={80387--80423},
-          year={2026}
+          year={2026},
+          doi={https://doi.org/10.52202/085713-2687}
      }
 
 Documentation
